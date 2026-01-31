@@ -23,6 +23,8 @@
 		APP0014 /* partial_detection.json in Resources */ = {isa = PBXBuildFile; fileRef = RES0002; };
 		APP0015 /* low_confidence.json in Resources */ = {isa = PBXBuildFile; fileRef = RES0003; };
 		APP0016 /* empty_results.json in Resources */ = {isa = PBXBuildFile; fileRef = RES0004; };
+		APP0017 /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0013; };
+		APP0018 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0014; };
 		TEST0001 /* ScanResponseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0001; };
 		TEST0002 /* OverlayMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0002; };
 /* End PBXBuildFile section */
@@ -50,6 +52,8 @@
 		SRC0010 /* OverlayContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayContainerView.swift; sourceTree = "<group>"; };
 		SRC0011 /* RatingBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RatingBadge.swift; sourceTree = "<group>"; };
 		SRC0012 /* WineDetailSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WineDetailSheet.swift; sourceTree = "<group>"; };
+		SRC0013 /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
+		SRC0014 /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
 		RES0001 /* full_shelf.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = full_shelf.json; sourceTree = "<group>"; };
 		RES0002 /* partial_detection.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = partial_detection.json; sourceTree = "<group>"; };
 		RES0003 /* low_confidence.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = low_confidence.json; sourceTree = "<group>"; };
@@ -105,6 +109,7 @@
 			children = (
 				SRC0001 /* WineShelfScannerApp.swift */,
 				SRC0002 /* ContentView.swift */,
+				SRC0014 /* Config.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -123,6 +128,7 @@
 			isa = PBXGroup;
 			children = (
 				SRC0009 /* ResultsView.swift */,
+				SRC0013 /* CameraView.swift */,
 				GRP00006 /* Components */,
 			);
 			path = Views;
@@ -306,6 +312,8 @@
 				APP0010 /* OverlayContainerView.swift in Sources */,
 				APP0011 /* RatingBadge.swift in Sources */,
 				APP0012 /* WineDetailSheet.swift in Sources */,
+				APP0017 /* CameraView.swift in Sources */,
+				APP0018 /* Config.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -459,6 +467,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Wine Shelf Scanner needs camera access to photograph wine shelves and show you ratings.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Wine Shelf Scanner can scan wine photos from your library.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -488,6 +497,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Wine Shelf Scanner needs camera access to photograph wine shelves and show you ratings.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Wine Shelf Scanner can scan wine photos from your library.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

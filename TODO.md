@@ -12,14 +12,18 @@
 - [x] Mock ratings database (50+ wines)
 - [x] Response schema validation (match API contract exactly)
 - [x] Fuzzy wine matching with aliases
+- [x] Dockerfile for Cloud Run
+- [x] Deploy script (`deploy.sh`)
 
 ## iOS - Core
 
 - [x] Xcode project setup (SwiftUI, iOS 16+)
-- [ ] Camera view (photo capture)
+- [x] Camera view (photo capture)
+- [x] Photo library picker (for simulator testing)
 - [x] Static test image support
 - [x] API client for `/scan` endpoint
 - [x] Image upload handling
+- [x] Environment config (local/production URLs)
 
 ## iOS - Overlay System
 
@@ -59,6 +63,15 @@
 - [x] OCR normalization tests (26 tests passing)
 - [x] Wine matcher tests
 
+## Deployment
+
+- [x] Dockerfile
+- [x] .dockerignore
+- [x] cloudbuild.yaml
+- [x] deploy.sh script
+- [ ] Deploy to Cloud Run
+- [ ] Update iOS app with production URL
+
 ## Documentation
 
 - [x] CLAUDE.md (consolidated technical spec)
@@ -68,7 +81,8 @@
 
 ## Next Steps
 
-1. Set up Google Cloud credentials to enable real Vision API
-2. Add camera capture to iOS app (Phase 4)
-3. Deploy backend to Cloud Run (Phase 4)
-4. TestFlight build (Phase 5)
+1. Deploy backend: `cd Backend && ./deploy.sh YOUR_PROJECT_ID`
+2. Update `Config.swift` with Cloud Run URL
+3. Open Xcode: `open SwiftUI/WineShelfScanner.xcodeproj`
+4. Run on device to test camera
+5. TestFlight build (Phase 5)

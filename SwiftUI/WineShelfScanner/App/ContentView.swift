@@ -3,6 +3,9 @@ import SwiftUI
 /// Main content view that manages the scan flow
 struct ContentView: View {
     @StateObject private var viewModel = ScanViewModel()
+    @State private var showCamera = false
+    @State private var showPhotoPicker = false
+    @State private var capturedImage: UIImage?
 
     var body: some View {
         NavigationStack {
@@ -11,7 +14,10 @@ struct ContentView: View {
 
                 switch viewModel.state {
                 case .idle:
-                    IdleView(onScan: viewModel.startScan)
+                    IdleView(
+                        onScanCamera: { showCamera = true },
+                        onScanLibrary: { showPhotoPicker = true }
+                    )
 
                 case .processing:
                     ProcessingView()
@@ -20,20 +26,45 @@ struct ContentView: View {
                     ResultsView(
                         response: response,
                         image: image,
-                        onNewScan: viewModel.reset
+                        onNewScan: {
+                            viewModel.reset()
+                            capturedImage = nil
+                        }
                     )
 
                 case .error(let message):
                     ErrorView(
                         message: message,
-                        onRetry: viewModel.startScan,
-                        onReset: viewModel.reset
+                        onRetry: {
+                            if let image = capturedImage {
+                                viewModel.performScan(with: image)
+                            } else {
+                                showCamera = true
+                            }
+                        },
+                        onReset: {
+                            viewModel.reset()
+                            capturedImage = nil
+                        }
                     )
                 }
             }
             .navigationTitle("Wine Scanner")
             .navigationBarTitleDisplayMode(.inline)
             .preferredColorScheme(.dark)
+            .sheet(isPresented: $showCamera) {
+                CameraView(image: $capturedImage, isPresented: $showCamera)
+                    .ignoresSafeArea()
+            }
+            .sheet(isPresented: $showPhotoPicker) {
+                PhotoPicker(image: $capturedImage, isPresented: $showPhotoPicker)
+                    .ignoresSafeArea()
+            }
+            .onChange(of: capturedImage) { newImage in
+                if let image = newImage {
+                    viewModel.performScan(with: image)
+                }
+            }
         }
     }
 }
@@ -41,7 +72,10 @@ struct ContentView: View {
 // MARK: - Supporting Views
 
 struct IdleView: View {
-    let onScan: () -> Void
+    let onScanCamera: () -> Void
+    let onScanLibrary: () -> Void
+
+    @State private var cameraAvailable = UIImagePickerController.isSourceTypeAvailable(.camera)
 
     var body: some View {
         VStack(spacing: 24) {
@@ -57,14 +91,30 @@ struct IdleView: View {
                 .font(.subheadline)
                 .foregroundColor(.white.opacity(0.6))
 
-            Button(action: onScan) {
-                Label("Scan Shelf", systemImage: "camera.fill")
-                    .font(.headline)
-                    .foregroundColor(.black)
-                    .padding(.horizontal, 32)
-                    .padding(.vertical, 16)
-                    .background(Color.white)
-                    .cornerRadius(12)
+            VStack(spacing: 12) {
+                if cameraAvailable {
+                    Button(action: onScanCamera) {
+                        Label("Scan Shelf", systemImage: "camera.fill")
+                            .font(.headline)
+                            .foregroundColor(.black)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(Color.white)
+                            .cornerRadius(12)
+                    }
+                    .padding(.horizontal, 40)
+                }
+
+                Button(action: onScanLibrary) {
+                    Label(cameraAvailable ? "Choose Photo" : "Select Photo", systemImage: "photo.on.rectangle")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Color.white.opacity(0.2))
+                        .cornerRadius(12)
+                }
+                .padding(.horizontal, 40)
             }
             .padding(.top, 16)
         }

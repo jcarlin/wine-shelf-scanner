@@ -1,0 +1,33 @@
+{
+  "image_id": "mock-low-confidence-001",
+  "results": [
+    {
+      "wine_name": "Unknown Red Wine",
+      "rating": 3.5,
+      "confidence": 0.58,
+      "bbox": { "x": 0.10, "y": 0.15, "width": 0.12, "height": 0.35 }
+    },
+    {
+      "wine_name": "Unknown White Wine",
+      "rating": 3.3,
+      "confidence": 0.52,
+      "bbox": { "x": 0.30, "y": 0.12, "width": 0.12, "height": 0.38 }
+    },
+    {
+      "wine_name": "Unknown Rose",
+      "rating": 3.6,
+      "confidence": 0.48,
+      "bbox": { "x": 0.50, "y": 0.14, "width": 0.12, "height": 0.36 }
+    },
+    {
+      "wine_name": "Unknown Sparkling",
+      "rating": 3.4,
+      "confidence": 0.41,
+      "bbox": { "x": 0.70, "y": 0.13, "width": 0.12, "height": 0.37 }
+    }
+  ],
+  "fallback_list": [
+    { "wine_name": "Possible Cabernet", "rating": 3.8 },
+    { "wine_name": "Possible Chardonnay", "rating": 3.5 }
+  ]
+}

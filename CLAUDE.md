@@ -1,0 +1,218 @@
+# Wine Shelf Scanner
+
+## Goal
+Photo-based wine shelf scanner. Take photo → see ratings overlaid on bottles → choose confidently in <10 seconds.
+
+## Non-Goals (Strict)
+- Live AR scanning (post-MVP consideration only)
+- Accounts/auth
+- Social features
+- Price comparison
+- Recommendations/recommendation engine
+- Purchase links
+- Real-time web scraping
+
+If it doesn't help the user choose a bottle faster, leave it out.
+
+---
+
+## Directory Structure
+```
+wine-shelf-scanner/
+├── Backend/           # FastAPI + Vision API
+├── SwiftUI/           # iOS app
+├── Product/           # Product docs (archive)
+├── UX/                # UX specs (archive)
+├── PRD.md             # Product requirements (canonical)
+├── TODO.md            # Implementation checklist
+└── CLAUDE.md          # This file
+```
+
+---
+
+## API Contract (DO NOT CHANGE)
+
+```json
+{
+  "image_id": "string",
+  "results": [
+    {
+      "wine_name": "string",
+      "rating": 4.6,
+      "confidence": 0.92,
+      "bbox": {
+        "x": 0.25,
+        "y": 0.40,
+        "width": 0.10,
+        "height": 0.30
+      }
+    }
+  ],
+  "fallback_list": [
+    {
+      "wine_name": "string",
+      "rating": 4.3
+    }
+  ]
+}
+```
+
+- Bounding boxes are normalized (0–1)
+- UI relies on this contract — do not add/remove fields
+
+---
+
+## Overlay Placement Math
+
+All math must be centralized in `OverlayMath.swift` (no magic numbers in views).
+
+### Anchor Point
+```
+anchor_x = bbox.x + bbox.width / 2
+anchor_y = bbox.y + bbox.height * 0.25
+```
+
+### SwiftUI Mapping
+```swift
+screen_x = anchor_x * geo.width
+screen_y = anchor_y * geo.height
+```
+
+### Occlusion Rule
+If `bbox.height < 0.15` → treat as partial bottle, anchor at top-most visible region.
+
+### Collision Avoidance
+If overlay overlaps label text:
+- Shift upward by 5–10% of bbox height
+- Clamp to image bounds
+
+---
+
+## Confidence-Based UX Rules
+
+| Confidence | Opacity | Tap Enabled | Notes |
+|------------|---------|-------------|-------|
+| ≥ 0.85     | 1.0     | Yes         | Full emphasis |
+| 0.65–0.85  | 0.75    | Yes         | Normal |
+| 0.45–0.65  | 0.5     | No          | De-emphasized |
+| < 0.45     | Hidden  | No          | Fallback list only |
+
+Low-confidence overlays:
+- Never get top-3 emphasis
+- Never open detail sheet
+
+---
+
+## Top-3 Emphasis Logic
+
+1. Sort visible bottles by rating
+2. Top 3 get:
+   - Slight glow or thicker stroke
+   - Slightly larger rating badge
+3. Do NOT hide lower-rated bottles
+
+---
+
+## Detail Sheet (On Tap)
+
+Tap rating badge → modal sheet.
+
+**Content (max):**
+- Wine name (headline)
+- Star rating (large)
+- Confidence label:
+  - "Widely rated" (high confidence ≥0.85)
+  - "Limited data" (medium confidence 0.65–0.85)
+- Optional 1–2 sentence summary (future)
+
+**Rules:**
+- No scrolling if possible
+- Swipe down to dismiss
+- Must feel fast and lightweight
+
+---
+
+## Failure Handling
+
+### Partial Detection
+- Show overlays that passed confidence threshold
+- Toast: "Some bottles couldn't be recognized"
+
+### Full Failure
+- Auto-switch to fallback list view
+- Sort by rating descending
+- Never show a dead end
+
+---
+
+## Backend Pipeline
+
+1. Receive image at `/scan`
+2. Google Vision:
+   - `TEXT_DETECTION` (OCR)
+   - `OBJECT_LOCALIZATION` (bottles)
+3. Group OCR text fragments by spatial proximity to bottle bbox
+4. Normalize text:
+   - Remove years (19xx, 20xx)
+   - Remove sizes (750ml, 1L)
+   - Remove marketing text
+5. (Optional) Send grouped text to LLM for canonical name + confidence
+6. Match against local ratings DB
+7. Return response using schema above
+
+LLM step must be swappable or removable.
+
+---
+
+## Paywall Rules
+
+- Never block first successful scan
+- Allow 3–5 free scans
+- Show paywall AFTER results render (never before value)
+- Copy: "Want unlimited instant ratings? Unlock scans."
+- No hard interrupt. No modal before value.
+
+---
+
+## Tech Stack
+
+### iOS
+- SwiftUI
+- iOS 16+
+- Native camera (photo capture only, no live video)
+- Declarative overlay rendering
+
+### Backend
+- FastAPI (Python)
+- Google Cloud Vision API
+- Optional: Claude/LLM for OCR normalization (behind interface)
+
+---
+
+## Commands
+
+### Backend
+```bash
+cd Backend && python -m uvicorn main:app --reload
+```
+
+### iOS
+Open `SwiftUI/WineShelfScanner.xcodeproj` in Xcode.
+
+---
+
+## Performance Targets
+
+- End-to-end scan: ≤ 4 seconds
+- Battery friendly (single image processing)
+
+---
+
+## Success Criterion
+
+A casual user can:
+1. Take one photo
+2. Instantly see which bottles are best
+3. Choose confidently in under 10 seconds
+
+If something doesn't serve this, cut it.

@@ -1,0 +1,30 @@
+{
+  "image_id": "mock-partial-001",
+  "results": [
+    {
+      "wine_name": "Caymus Cabernet Sauvignon",
+      "rating": 4.5,
+      "confidence": 0.92,
+      "bbox": { "x": 0.10, "y": 0.15, "width": 0.10, "height": 0.35 }
+    },
+    {
+      "wine_name": "Opus One",
+      "rating": 4.8,
+      "confidence": 0.89,
+      "bbox": { "x": 0.30, "y": 0.12, "width": 0.10, "height": 0.38 }
+    },
+    {
+      "wine_name": "Silver Oak Alexander Valley",
+      "rating": 4.4,
+      "confidence": 0.86,
+      "bbox": { "x": 0.50, "y": 0.14, "width": 0.10, "height": 0.36 }
+    }
+  ],
+  "fallback_list": [
+    { "wine_name": "Jordan Cabernet Sauvignon", "rating": 4.3 },
+    { "wine_name": "Kendall-Jackson Vintner's Reserve", "rating": 3.8 },
+    { "wine_name": "La Crema Sonoma Coast Pinot Noir", "rating": 4.1 },
+    { "wine_name": "Meiomi Pinot Noir", "rating": 3.9 },
+    { "wine_name": "Bread & Butter Chardonnay", "rating": 3.7 }
+  ]
+}

@@ -1,0 +1,582 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		APP0001 /* WineShelfScannerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0001; };
+		APP0002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0002; };
+		APP0003 /* ScanResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0003; };
+		APP0004 /* ScanState.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0004; };
+		APP0005 /* ScanViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0005; };
+		APP0006 /* ScanService.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0006; };
+		APP0007 /* MockScanService.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0007; };
+		APP0008 /* OverlayMath.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0008; };
+		APP0009 /* ResultsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0009; };
+		APP0010 /* OverlayContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0010; };
+		APP0011 /* RatingBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0011; };
+		APP0012 /* WineDetailSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0012; };
+		APP0013 /* full_shelf.json in Resources */ = {isa = PBXBuildFile; fileRef = RES0001; };
+		APP0014 /* partial_detection.json in Resources */ = {isa = PBXBuildFile; fileRef = RES0002; };
+		APP0015 /* low_confidence.json in Resources */ = {isa = PBXBuildFile; fileRef = RES0003; };
+		APP0016 /* empty_results.json in Resources */ = {isa = PBXBuildFile; fileRef = RES0004; };
+		TEST0001 /* ScanResponseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0001; };
+		TEST0002 /* OverlayMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0002; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		PROXY001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = ROOT0001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = TARGET01;
+			remoteInfo = WineShelfScanner;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		SRC0001 /* WineShelfScannerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WineShelfScannerApp.swift; sourceTree = "<group>"; };
+		SRC0002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		SRC0003 /* ScanResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanResponse.swift; sourceTree = "<group>"; };
+		SRC0004 /* ScanState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanState.swift; sourceTree = "<group>"; };
+		SRC0005 /* ScanViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanViewModel.swift; sourceTree = "<group>"; };
+		SRC0006 /* ScanService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanService.swift; sourceTree = "<group>"; };
+		SRC0007 /* MockScanService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockScanService.swift; sourceTree = "<group>"; };
+		SRC0008 /* OverlayMath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayMath.swift; sourceTree = "<group>"; };
+		SRC0009 /* ResultsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultsView.swift; sourceTree = "<group>"; };
+		SRC0010 /* OverlayContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayContainerView.swift; sourceTree = "<group>"; };
+		SRC0011 /* RatingBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RatingBadge.swift; sourceTree = "<group>"; };
+		SRC0012 /* WineDetailSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WineDetailSheet.swift; sourceTree = "<group>"; };
+		RES0001 /* full_shelf.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = full_shelf.json; sourceTree = "<group>"; };
+		RES0002 /* partial_detection.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = partial_detection.json; sourceTree = "<group>"; };
+		RES0003 /* low_confidence.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = low_confidence.json; sourceTree = "<group>"; };
+		RES0004 /* empty_results.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = empty_results.json; sourceTree = "<group>"; };
+		TST0001 /* ScanResponseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanResponseTests.swift; sourceTree = "<group>"; };
+		TST0002 /* OverlayMathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayMathTests.swift; sourceTree = "<group>"; };
+		PROD0001 /* WineShelfScanner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WineShelfScanner.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		PROD0002 /* WineShelfScannerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WineShelfScannerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		FWK00001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FWK00002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		GRP00001 = {
+			isa = PBXGroup;
+			children = (
+				GRP00002 /* WineShelfScanner */,
+				GRP00010 /* WineShelfScannerTests */,
+				GRP00011 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		GRP00002 /* WineShelfScanner */ = {
+			isa = PBXGroup;
+			children = (
+				GRP00003 /* App */,
+				GRP00004 /* Models */,
+				GRP00005 /* Views */,
+				GRP00007 /* Services */,
+				GRP00008 /* Utils */,
+				GRP00009 /* Resources */,
+			);
+			path = WineShelfScanner;
+			sourceTree = "<group>";
+		};
+		GRP00003 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				SRC0001 /* WineShelfScannerApp.swift */,
+				SRC0002 /* ContentView.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		GRP00004 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				SRC0003 /* ScanResponse.swift */,
+				SRC0004 /* ScanState.swift */,
+				SRC0005 /* ScanViewModel.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		GRP00005 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				SRC0009 /* ResultsView.swift */,
+				GRP00006 /* Components */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		GRP00006 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				SRC0010 /* OverlayContainerView.swift */,
+				SRC0011 /* RatingBadge.swift */,
+				SRC0012 /* WineDetailSheet.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		GRP00007 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				SRC0006 /* ScanService.swift */,
+				SRC0007 /* MockScanService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		GRP00008 /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				SRC0008 /* OverlayMath.swift */,
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
+		GRP00009 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				GRP00012 /* MockData */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		GRP00010 /* WineShelfScannerTests */ = {
+			isa = PBXGroup;
+			children = (
+				TST0001 /* ScanResponseTests.swift */,
+				TST0002 /* OverlayMathTests.swift */,
+			);
+			path = WineShelfScannerTests;
+			sourceTree = "<group>";
+		};
+		GRP00011 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				PROD0001 /* WineShelfScanner.app */,
+				PROD0002 /* WineShelfScannerTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		GRP00012 /* MockData */ = {
+			isa = PBXGroup;
+			children = (
+				RES0001 /* full_shelf.json */,
+				RES0002 /* partial_detection.json */,
+				RES0003 /* low_confidence.json */,
+				RES0004 /* empty_results.json */,
+			);
+			path = MockData;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		TARGET01 /* WineShelfScanner */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CFGLST01 /* Build configuration list for PBXNativeTarget "WineShelfScanner" */;
+			buildPhases = (
+				SRC00001 /* Sources */,
+				FWK00001 /* Frameworks */,
+				RES00001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = WineShelfScanner;
+			productName = WineShelfScanner;
+			productReference = PROD0001 /* WineShelfScanner.app */;
+			productType = "com.apple.product-type.application";
+		};
+		TARGET02 /* WineShelfScannerTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CFGLST02 /* Build configuration list for PBXNativeTarget "WineShelfScannerTests" */;
+			buildPhases = (
+				SRC00002 /* Sources */,
+				FWK00002 /* Frameworks */,
+				RES00002 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				DEP00001 /* PBXTargetDependency */,
+			);
+			name = WineShelfScannerTests;
+			productName = WineShelfScannerTests;
+			productReference = PROD0002 /* WineShelfScannerTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		ROOT0001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					TARGET01 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+					TARGET02 = {
+						CreatedOnToolsVersion = 15.0;
+						TestTargetID = TARGET01;
+					};
+				};
+			};
+			buildConfigurationList = CFGLST00 /* Build configuration list for PBXProject "WineShelfScanner" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = GRP00001;
+			productRefGroup = GRP00011 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				TARGET01 /* WineShelfScanner */,
+				TARGET02 /* WineShelfScannerTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		RES00001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				APP0013 /* full_shelf.json in Resources */,
+				APP0014 /* partial_detection.json in Resources */,
+				APP0015 /* low_confidence.json in Resources */,
+				APP0016 /* empty_results.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		RES00002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		SRC00001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				APP0001 /* WineShelfScannerApp.swift in Sources */,
+				APP0002 /* ContentView.swift in Sources */,
+				APP0003 /* ScanResponse.swift in Sources */,
+				APP0004 /* ScanState.swift in Sources */,
+				APP0005 /* ScanViewModel.swift in Sources */,
+				APP0006 /* ScanService.swift in Sources */,
+				APP0007 /* MockScanService.swift in Sources */,
+				APP0008 /* OverlayMath.swift in Sources */,
+				APP0009 /* ResultsView.swift in Sources */,
+				APP0010 /* OverlayContainerView.swift in Sources */,
+				APP0011 /* RatingBadge.swift in Sources */,
+				APP0012 /* WineDetailSheet.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		SRC00002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				TEST0001 /* ScanResponseTests.swift in Sources */,
+				TEST0002 /* OverlayMathTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		DEP00001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = TARGET01 /* WineShelfScanner */;
+			targetProxy = PROXY001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		CFG00001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		CFG00002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		CFG00003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Wine Shelf Scanner needs camera access to photograph wine shelves and show you ratings.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.wineshelfscanner.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		CFG00004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Wine Shelf Scanner needs camera access to photograph wine shelves and show you ratings.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.wineshelfscanner.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		CFG00005 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.wineshelfscanner.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/WineShelfScanner.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/WineShelfScanner";
+			};
+			name = Debug;
+		};
+		CFG00006 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.wineshelfscanner.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/WineShelfScanner.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/WineShelfScanner";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		CFGLST00 /* Build configuration list for PBXProject "WineShelfScanner" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CFG00001 /* Debug */,
+				CFG00002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CFGLST01 /* Build configuration list for PBXNativeTarget "WineShelfScanner" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CFG00003 /* Debug */,
+				CFG00004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CFGLST02 /* Build configuration list for PBXNativeTarget "WineShelfScannerTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CFG00005 /* Debug */,
+				CFG00006 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = ROOT0001 /* Project object */;
+}

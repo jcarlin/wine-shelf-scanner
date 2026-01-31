@@ -1,0 +1,14 @@
+{
+  "image_id": "mock-empty-001",
+  "results": [],
+  "fallback_list": [
+    { "wine_name": "Caymus Cabernet Sauvignon", "rating": 4.5 },
+    { "wine_name": "Opus One", "rating": 4.8 },
+    { "wine_name": "Silver Oak Alexander Valley", "rating": 4.4 },
+    { "wine_name": "Jordan Cabernet Sauvignon", "rating": 4.3 },
+    { "wine_name": "La Crema Sonoma Coast Pinot Noir", "rating": 4.1 },
+    { "wine_name": "Meiomi Pinot Noir", "rating": 3.9 },
+    { "wine_name": "Kendall-Jackson Vintner's Reserve", "rating": 3.8 },
+    { "wine_name": "Bread & Butter Chardonnay", "rating": 3.7 }
+  ]
+}

@@ -18,7 +18,9 @@ enum Config {
         }
 
         // 3. Fallback to production URL
-        return URL(string: "https://wine-scanner-api-82762985464.us-central1.run.app")!
+        let url = URL(string: "https://wine-scanner-api-82762985464.us-central1.run.app")!
+        print("🍷 API URL: \(url)")  // DEBUG - remove later
+        return url
     }
 
     /// Whether to use mock data (for UI development)

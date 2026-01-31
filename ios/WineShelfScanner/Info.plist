@@ -9,5 +9,9 @@
 	</dict>
 	<key>API_BASE_URL</key>
 	<string>$(API_BASE_URL)</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Wine Shelf Scanner needs camera access to photograph wine shelves</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Wine Shelf Scanner needs photo library access to select wine shelf images</string>
 </dict>
 </plist>

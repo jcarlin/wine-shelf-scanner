@@ -50,6 +50,11 @@ class Config:
         """Get Anthropic API key from environment."""
         return os.getenv("ANTHROPIC_API_KEY")
 
+    @staticmethod
+    def use_sqlite() -> bool:
+        """Use SQLite database (191K wines) vs JSON (60 wines)."""
+        return os.getenv("USE_SQLITE", "true").lower() == "true"
+
     # === Security ===
     MAX_IMAGE_SIZE_MB = 10
     MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024

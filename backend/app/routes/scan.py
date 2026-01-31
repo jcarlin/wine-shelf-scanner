@@ -30,7 +30,7 @@ router = APIRouter()
 @lru_cache(maxsize=1)
 def get_wine_matcher() -> WineMatcher:
     """Get or create wine matcher instance (singleton via lru_cache)."""
-    return WineMatcher()
+    return WineMatcher(use_sqlite=Config.use_sqlite())
 
 
 def get_pipeline(use_llm: bool = True) -> RecognitionPipeline:

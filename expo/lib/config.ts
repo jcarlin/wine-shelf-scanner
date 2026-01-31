@@ -34,9 +34,20 @@ export const Config = {
   /** API base URL for the wine scanner backend */
   API_BASE_URL: getApiBaseUrl(),
 
-  /** Request timeout in milliseconds (Vision API can take 10-20s) */
-  REQUEST_TIMEOUT: 30000,
+  /** Request timeout in milliseconds (Vision API can take 10-40s) */
+  REQUEST_TIMEOUT: 45000,
 
   /** Image quality for compression (0-1) */
   IMAGE_QUALITY: 0.8,
+
+  /** Enable debug mode to receive pipeline debug data from backend */
+  DEBUG_MODE: __DEV__,
+
+  /** Use mock service instead of real API */
+  USE_MOCKS: false,
+
+  /** Mock scenario to use when USE_MOCKS is true */
+  MOCK_SCENARIO: 'full_shelf' as const,
 } as const;
+
+export type MockScenario = 'full_shelf' | 'partial_detection' | 'low_confidence' | 'empty_results';

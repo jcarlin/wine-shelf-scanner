@@ -15,22 +15,25 @@ Wine Shelf Scanner solves decision paralysis for casual wine buyers. Instead of 
 │   iOS App       │────▶│  FastAPI        │────▶│  Google Cloud    │
 │   (SwiftUI)     │◀────│  Backend        │◀────│  Vision API      │
 └─────────────────┘     └─────────────────┘     └──────────────────┘
-                               │
-                               ▼
-                        ┌─────────────────┐
-                        │  Ratings DB     │
-                        │  (JSON)         │
-                        └─────────────────┘
+        ▲                       │
+        │                       ▼
+┌─────────────────┐     ┌─────────────────┐
+│   Expo App      │     │  Ratings DB     │
+│   (React Native)│     │  (JSON)         │
+└─────────────────┘     └─────────────────┘
 ```
 
 ### Components
 
 | Component | Stack | Purpose |
 |-----------|-------|---------|
-| **iOS App** | SwiftUI, iOS 16+ | Camera capture, overlay rendering, user interaction |
+| **iOS App** | SwiftUI, iOS 16+ | Camera capture, overlay rendering (PRIMARY) |
+| **Expo App** | React Native, TypeScript | Cross-platform option (SECONDARY) |
 | **Backend** | FastAPI (Python 3.11+) | Image processing orchestration, wine matching |
 | **Vision** | Google Cloud Vision API | OCR + bottle detection |
 | **Ratings DB** | JSON (60+ wines) | Wine name → rating lookup with aliases |
+
+> **Note:** iOS (SwiftUI) is the primary frontend. Expo exists for future cross-platform expansion.
 
 ## API Contract
 
@@ -97,7 +100,7 @@ export USE_MOCKS=false
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### iOS Setup
+### iOS Setup (Primary)
 
 1. Open `ios/WineShelfScanner.xcodeproj` in Xcode
 2. Update `Config.swift` with your Mac's IP address for simulator testing:
@@ -106,6 +109,24 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
    return URL(string: "http://YOUR_MAC_IP:8000")!
    ```
 3. Build and run on simulator or device
+
+### Expo Setup (Secondary)
+
+```bash
+cd expo
+
+# Install dependencies
+npm install
+
+# Start development server
+npm start
+
+# Or run directly on iOS/Android
+npm run ios
+npm run android
+```
+
+For physical device testing, update `expo/lib/config.ts` with your Mac's IP address.
 
 ### Getting Your Mac's IP
 
@@ -172,6 +193,11 @@ wine-shelf-scanner/
 │       ├── Views/           # UI components
 │       ├── Services/        # API client, mock service
 │       └── Utils/           # OverlayMath
+├── expo/
+│   ├── app/                 # Expo Router screens
+│   ├── components/          # UI components
+│   ├── hooks/               # Custom React hooks
+│   └── lib/                 # API client, types, overlay math
 ├── PRD.md                   # Product requirements
 ├── TODO.md                  # Implementation checklist
 └── CLAUDE.md                # Development context

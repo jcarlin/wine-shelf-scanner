@@ -251,6 +251,24 @@ open ios/WineShelfScanner.xcodeproj
 xcodebuild test -scheme WineShelfScanner -destination 'platform=iOS Simulator,name=iPhone 15'
 ```
 
+### Expo
+```bash
+# Install dependencies
+cd expo && npm install
+
+# Start dev server
+npm start
+
+# Run on iOS simulator
+npm run ios
+
+# Run on Android emulator
+npm run android
+
+# Run tests
+npm test
+```
+
 ### Deployment
 ```bash
 # Deploy to Cloud Run

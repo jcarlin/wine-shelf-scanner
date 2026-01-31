@@ -22,3 +22,6 @@ httpx==0.26.0
 
 # Development
 python-dotenv==1.0.1
+
+# Ingestion
+pyyaml>=6.0

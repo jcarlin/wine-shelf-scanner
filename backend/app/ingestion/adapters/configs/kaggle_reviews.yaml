@@ -1,0 +1,30 @@
+# Kaggle Wine Reviews dataset
+# Source: https://www.kaggle.com/datasets/zynicide/wine-reviews
+# ~150K wine reviews from Wine Enthusiast
+
+source_name: kaggle_wine_reviews
+file_path: ../raw-data/winemag-data_first150k.csv
+rating_scale: [80, 100]
+encoding: utf-8
+
+# Column mapping (CSV column names → RawWineRecord fields)
+# Supports compound columns with + (e.g., "winery+designation")
+# Supports fallback with | (e.g., "winery+designation|winery+variety")
+column_mapping:
+  wine_name: winery+designation|winery+variety  # Prefer designation, fallback to variety
+  rating: points
+  winery: winery
+  region: region_1
+  country: country
+  varietal: variety
+  description: description
+
+# Transformations to apply to fields
+transformations:
+  wine_name:
+    - strip_whitespace
+    - remove_vintage_prefix  # "2018 Opus One" → "Opus One"
+  winery:
+    - strip_whitespace
+  region:
+    - strip_whitespace

@@ -5,16 +5,23 @@ Uses multi-algorithm fuzzy matching:
 - rapidfuzz for ratio, partial_ratio, token_sort_ratio
 - jellyfish for phonetic matching (handles OCR errors)
 - n-gram matching for partial text fragments
+
+Supports both JSON and SQLite backends:
+- JSON: Legacy mode (ratings.json)
+- SQLite: New mode with WineRepository
 """
 
 import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
-from rapidfuzz import fuzz
+from rapidfuzz import fuzz, process
 import jellyfish
+
+if TYPE_CHECKING:
+    from .wine_repository import WineRepository
 
 
 @dataclass
@@ -49,17 +56,36 @@ class WineMatcher:
     # Phonetic match bonus (0-0.15)
     PHONETIC_BONUS = 0.10
 
-    def __init__(self, database_path: Optional[str] = None):
+    def __init__(
+        self,
+        database_path: Optional[str] = None,
+        repository: Optional["WineRepository"] = None,
+        use_sqlite: bool = False,
+    ):
         """
         Initialize matcher with ratings database.
 
         Args:
-            database_path: Path to ratings JSON file. Defaults to bundled database.
+            database_path: Path to ratings JSON file (legacy mode).
+            repository: WineRepository instance for SQLite mode.
+            use_sqlite: If True and no repository, create one automatically.
         """
-        if database_path is None:
-            database_path = Path(__file__).parent.parent / "data" / "ratings.json"
+        self._repository = repository
 
-        self.database = self._load_database(database_path)
+        if repository is not None:
+            # Use provided repository
+            self.database = {"wines": repository.get_all_as_dict()}
+        elif use_sqlite:
+            # Create repository automatically
+            from .wine_repository import WineRepository
+            self._repository = WineRepository()
+            self.database = {"wines": self._repository.get_all_as_dict()}
+        else:
+            # Legacy JSON mode
+            if database_path is None:
+                database_path = Path(__file__).parent.parent / "data" / "ratings.json"
+            self.database = self._load_database(database_path)
+
         self._build_index()
 
     def _load_database(self, path) -> dict:
@@ -151,25 +177,45 @@ class WineMatcher:
         # Get candidate set using n-gram index (faster than checking all)
         candidates = self._get_candidates(query_lower)
 
-        # Fall back to all names if no n-gram matches
+        # If no n-gram matches, use prefix matching instead of all names
         if not candidates:
-            candidates = self.all_names
+            candidates = self._get_prefix_candidates(query_lower)
 
-        # Enhanced fuzzy match
-        best_match = None
-        best_score = 0
-
-        # Get phonetic encoding for query
-        try:
-            query_metaphone = jellyfish.metaphone(query_lower)
-        except Exception:
-            query_metaphone = None
-
-        for name in candidates:
-            score = self._enhanced_similarity(query_lower, name, query_metaphone)
-            if score > best_score and score >= self.MIN_SIMILARITY:
-                best_score = score
+        # Use rapidfuzz's optimized batch processing for large candidate sets
+        if len(candidates) > 100:
+            # Use process.extractOne for fast matching
+            result = process.extractOne(
+                query_lower,
+                candidates,
+                scorer=fuzz.WRatio,  # Weighted ratio - good balance
+                score_cutoff=self.MIN_SIMILARITY * 100
+            )
+            if result:
+                name, score, _ = result
+                best_score = score / 100
                 best_match = self.name_to_wine[name]
+            else:
+                best_match = None
+                best_score = 0
+        else:
+            # Manual matching for small candidate sets (allows phonetic bonus)
+            best_match = None
+            best_score = 0
+
+            try:
+                query_metaphone = jellyfish.metaphone(query_lower)
+            except Exception:
+                query_metaphone = None
+
+            for name in candidates:
+                score = self._enhanced_similarity(query_lower, name, query_metaphone)
+                if score > best_score and score >= self.MIN_SIMILARITY:
+                    best_score = score
+                    best_match = self.name_to_wine[name]
+
+                # Early exit if we found an excellent match
+                if best_score >= 0.95:
+                    break
 
         if best_match:
             return WineMatch(
@@ -189,6 +235,39 @@ class WineMatcher:
         for ngram in query_ngrams:
             if ngram in self.ngram_index:
                 candidates.update(self.ngram_index[ngram])
+
+        return candidates
+
+    def _get_prefix_candidates(self, query: str, max_candidates: int = 500) -> set[str]:
+        """Get candidates by prefix matching when n-gram fails."""
+        candidates = set()
+
+        # Try progressively shorter prefixes
+        for prefix_len in [4, 3, 2]:
+            if len(query) >= prefix_len:
+                prefix = query[:prefix_len]
+                for name in self.all_names:
+                    if name.startswith(prefix):
+                        candidates.add(name)
+                        if len(candidates) >= max_candidates:
+                            return candidates
+
+                # Also check phonetic prefix
+                if hasattr(self, 'phonetic_index'):
+                    try:
+                        query_metaphone = jellyfish.metaphone(query)
+                        if query_metaphone:
+                            mp_prefix = query_metaphone[:prefix_len]
+                            for mp, names in self.phonetic_index.items():
+                                if mp.startswith(mp_prefix):
+                                    candidates.update(names)
+                                    if len(candidates) >= max_candidates:
+                                        return candidates
+                    except Exception:
+                        pass
+
+            if candidates:
+                return candidates
 
         return candidates
 
@@ -243,3 +322,13 @@ class WineMatcher:
     def get_all_wines(self) -> list[dict]:
         """Return all wines in the database."""
         return self.database.get("wines", [])
+
+    def reload(self):
+        """Reload database and rebuild index (useful after ingestion)."""
+        if self._repository:
+            self.database = {"wines": self._repository.get_all_as_dict()}
+        self._build_index()
+
+    def wine_count(self) -> int:
+        """Return total number of wines in database."""
+        return len(self.database.get("wines", []))

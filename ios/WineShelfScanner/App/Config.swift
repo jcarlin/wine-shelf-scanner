@@ -16,7 +16,7 @@ enum Config {
         #else
         // Production - Cloud Run URL
         // Update this after deploying to Cloud Run
-        return URL(string: "https://wine-scanner-api-XXXXX.run.app")!
+        return URL(string: "https://wine-scanner-api-82762985464.us-central1.run.app")!
         #endif
     }
 

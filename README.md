@@ -73,7 +73,53 @@ Response:
 
 - Python 3.11+
 - Xcode 15+ (for iOS development)
-- Google Cloud account with Vision API enabled
+- Google Cloud account with billing enabled
+
+### GCP Setup
+
+1. **Install gcloud CLI** (if not already installed):
+   ```bash
+   brew install google-cloud-sdk
+   ```
+
+2. **Authenticate and create project**:
+   ```bash
+   gcloud auth login
+   gcloud projects create wine-shelf-scanner --name="Wine Shelf Scanner"
+   gcloud config set project wine-shelf-scanner
+   ```
+
+3. **Link billing** (required for Vision API and Cloud Run):
+   ```bash
+   # List your billing accounts
+   gcloud billing accounts list
+
+   # Link billing to project
+   gcloud billing projects link wine-shelf-scanner --billing-account=YOUR_BILLING_ACCOUNT_ID
+   ```
+
+4. **Enable required APIs**:
+   ```bash
+   gcloud services enable vision.googleapis.com run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com
+   ```
+
+5. **Create service account for local development** (optional):
+   ```bash
+   # Create service account
+   gcloud iam service-accounts create wine-scanner-dev --display-name="Wine Scanner Dev"
+
+   # Grant Vision API access
+   gcloud projects add-iam-policy-binding wine-shelf-scanner \
+     --member="serviceAccount:wine-scanner-dev@wine-shelf-scanner.iam.gserviceaccount.com" \
+     --role="roles/cloudvision.user"
+
+   # Download credentials
+   gcloud iam service-accounts keys create credentials.json \
+     --iam-account=wine-scanner-dev@wine-shelf-scanner.iam.gserviceaccount.com
+
+   # Move to backend directory
+   mv credentials.json backend/
+   ```
 
 ### Backend Setup
 
@@ -181,10 +227,21 @@ wine-shelf-scanner/
 
 ### Backend Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `USE_MOCKS` | `true` | Use mock data instead of Vision API |
-| `GOOGLE_APPLICATION_CREDENTIALS` | - | Path to GCP service account JSON |
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `GOOGLE_APPLICATION_CREDENTIALS` | Yes* | - | Path to GCP service account JSON |
+| `USE_MOCKS` | No | `true` | Use mock data instead of Vision API |
+| `ANTHROPIC_API_KEY` | No | - | Enables LLM-based OCR text normalization |
+| `ENVIRONMENT` | No | `development` | `development` or `production` |
+
+*Not required if `USE_MOCKS=true`
+
+Copy `.env.example` to `.env` and configure:
+```bash
+cd backend
+cp .env.example .env
+# Edit .env with your values
+```
 
 ### iOS Build Settings
 
@@ -247,17 +304,47 @@ If it doesn't help choose a bottle faster, it's out.
 
 ### Cloud Run (Backend)
 
-```bash
-cd backend
-./deploy.sh
-```
+1. **Deploy to Cloud Run**:
+   ```bash
+   cd backend
+   ./deploy.sh wine-shelf-scanner
+   ```
+
+   This will:
+   - Build the Docker image in Cloud Build
+   - Push to Artifact Registry
+   - Deploy to Cloud Run with public access
+
+2. **Verify deployment**:
+   ```bash
+   # Get the service URL
+   gcloud run services describe wine-scanner-api --region=us-central1 --format='value(status.url)'
+
+   # Test health endpoint
+   curl https://YOUR_CLOUD_RUN_URL/health
+   ```
+
+3. **View logs**:
+   ```bash
+   gcloud run logs read wine-scanner-api --region=us-central1 --limit=50
+   ```
 
 See `cloudbuild.yaml` for CI/CD configuration.
 
 ### iOS
 
-1. Update `Config.swift` production URL
-2. Archive and upload to App Store Connect
+1. Get your Cloud Run URL:
+   ```bash
+   gcloud run services describe wine-scanner-api --region=us-central1 --format='value(status.url)'
+   ```
+
+2. Update production URL in `ios/WineShelfScanner/App/Config.swift`:
+   ```swift
+   // Replace the placeholder with your actual URL
+   return URL(string: "https://wine-scanner-api-XXXXX.run.app")!
+   ```
+
+3. Archive and upload to App Store Connect
 
 ## Troubleshooting
 

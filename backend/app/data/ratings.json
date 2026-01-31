@@ -305,6 +305,60 @@
       "aliases": ["Black Box", "Black Box Wine"],
       "rating": 3.5,
       "source": "vivino"
+    },
+    {
+      "canonical_name": "Sangre de Toro",
+      "aliases": ["Torres Sangre de Toro", "Sangre Toro", "Blood of the Bull"],
+      "rating": 3.7,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Faustino V Reserva",
+      "aliases": ["Faustino V", "Faustino Reserva", "Faustino 5"],
+      "rating": 3.8,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Faustino VII",
+      "aliases": ["Faustino 7", "Faustino Siete"],
+      "rating": 3.5,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Gavi DOCG",
+      "aliases": ["Gavi", "Gavi di Gavi", "Cortese di Gavi"],
+      "rating": 3.9,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Obikwa",
+      "aliases": ["Obikwa Wine", "Obikwa South Africa"],
+      "rating": 3.3,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Viu Manent Secreto",
+      "aliases": ["Viu Manent", "Secreto", "Viu Manent Chile"],
+      "rating": 3.8,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Torres",
+      "aliases": ["Miguel Torres", "Torres Wine", "Bodegas Torres"],
+      "rating": 3.7,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Petraia",
+      "aliases": ["Petraia Wine", "Petraia Italy"],
+      "rating": 3.5,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Castellani",
+      "aliases": ["Castellani Wine", "Famiglia Castellani"],
+      "rating": 3.4,
+      "source": "vivino"
     }
   ]
 }

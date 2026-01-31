@@ -54,6 +54,7 @@
 		SRC0012 /* WineDetailSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WineDetailSheet.swift; sourceTree = "<group>"; };
 		SRC0013 /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
 		SRC0014 /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
+		INFO001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		RES0001 /* full_shelf.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = full_shelf.json; sourceTree = "<group>"; };
 		RES0002 /* partial_detection.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = partial_detection.json; sourceTree = "<group>"; };
 		RES0003 /* low_confidence.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = low_confidence.json; sourceTree = "<group>"; };
@@ -100,6 +101,7 @@
 				GRP00007 /* Services */,
 				GRP00008 /* Utils */,
 				GRP00009 /* Resources */,
+				INFO001 /* Info.plist */,
 			);
 			path = WineShelfScanner;
 			sourceTree = "<group>";
@@ -466,6 +468,7 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = WineShelfScanner/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Wine Shelf Scanner needs camera access to photograph wine shelves and show you ratings.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Wine Shelf Scanner can scan wine photos from your library.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -496,6 +499,7 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = WineShelfScanner/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Wine Shelf Scanner needs camera access to photograph wine shelves and show you ratings.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Wine Shelf Scanner can scan wine photos from your library.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

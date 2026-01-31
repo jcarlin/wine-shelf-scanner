@@ -1,0 +1,52 @@
+{
+  "expo": {
+    "name": "Wine Shelf Scanner",
+    "slug": "wine-shelf-scanner",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "wine-shelf-scanner",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1a1a2e"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.wineshelfscanner.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Wine Shelf Scanner needs camera access to scan wine bottles and display ratings.",
+        "NSPhotoLibraryUsageDescription": "Wine Shelf Scanner needs photo library access to select images of wine bottles."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1a1a2e"
+      },
+      "package": "com.wineshelfscanner.app",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Wine Shelf Scanner needs photo library access to select images of wine bottles.",
+          "cameraPermission": "Wine Shelf Scanner needs camera access to scan wine bottles and display ratings."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

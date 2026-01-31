@@ -34,7 +34,7 @@ struct ScanResponse: Codable, Equatable {
 /// A detected wine bottle with rating and position
 struct WineResult: Codable, Equatable, Identifiable {
     let wineName: String
-    let rating: Double
+    let rating: Double?
     let confidence: Double
     let bbox: BoundingBox
 
@@ -65,7 +65,7 @@ struct BoundingBox: Codable, Equatable {
 /// Wine in fallback list (no position data)
 struct FallbackWine: Codable, Equatable, Identifiable {
     let wineName: String
-    let rating: Double
+    let rating: Double?
 
     var id: String { wineName }
 
@@ -192,9 +192,9 @@ struct DebugData: Codable, Equatable {
 // MARK: - Convenience Extensions
 
 extension ScanResponse {
-    /// Returns wines sorted by rating (highest first)
+    /// Returns wines sorted by rating (highest first, nil ratings last)
     var topRatedResults: [WineResult] {
-        results.sorted { $0.rating > $1.rating }
+        results.sorted { ($0.rating ?? 0) > ($1.rating ?? 0) }
     }
 
     /// Returns the top 3 rated wines (for emphasis in UI)

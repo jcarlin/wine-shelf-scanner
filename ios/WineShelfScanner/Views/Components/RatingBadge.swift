@@ -9,7 +9,7 @@ import SwiftUI
 /// - Text: White, SF Pro Rounded Bold
 /// - Drop shadow: 2pt blur
 struct RatingBadge: View {
-    let rating: Double
+    let rating: Double?
     let confidence: Double
     let isTopThree: Bool
     let isTappable: Bool
@@ -32,7 +32,7 @@ struct RatingBadge: View {
                 .font(.system(size: isTopThree ? 12 : 10))
                 .foregroundColor(.yellow)
 
-            Text(String(format: "%.1f", rating))
+            Text(rating.map { String(format: "%.1f", $0) } ?? "—")
                 .font(.system(
                     size: isTopThree ? 14 : 12,
                     weight: .bold,

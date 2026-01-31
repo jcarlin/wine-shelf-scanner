@@ -27,7 +27,7 @@ final class ScanResponseTests: XCTestCase {
         XCTAssertEqual(response.imageId, "test-001")
         XCTAssertEqual(response.results.count, 1)
         XCTAssertEqual(response.results[0].wineName, "Opus One")
-        XCTAssertEqual(response.results[0].rating, 4.8)
+        XCTAssertEqual(response.results[0].rating, 4.8 as Double?)
         XCTAssertEqual(response.results[0].confidence, 0.91)
         XCTAssertEqual(response.results[0].bbox.x, 0.15)
         XCTAssertEqual(response.fallbackList.count, 0)
@@ -51,7 +51,35 @@ final class ScanResponseTests: XCTestCase {
         XCTAssertEqual(response.results.count, 0)
         XCTAssertEqual(response.fallbackList.count, 2)
         XCTAssertEqual(response.fallbackList[0].wineName, "Caymus")
-        XCTAssertEqual(response.fallbackList[0].rating, 4.5)
+        XCTAssertEqual(response.fallbackList[0].rating, 4.5 as Double?)
+    }
+
+    func testDecodingNullRatings() throws {
+        let json = """
+        {
+          "image_id": "test-003",
+          "results": [
+            {
+              "wine_name": "Unknown Wine",
+              "rating": null,
+              "confidence": 0.75,
+              "bbox": { "x": 0.1, "y": 0.2, "width": 0.08, "height": 0.3 }
+            }
+          ],
+          "fallback_list": [
+            { "wine_name": "Another Unknown", "rating": null }
+          ]
+        }
+        """
+        let data = json.data(using: .utf8)!
+
+        let response = try JSONDecoder().decode(ScanResponse.self, from: data)
+
+        XCTAssertEqual(response.results.count, 1)
+        XCTAssertNil(response.results[0].rating)
+        XCTAssertEqual(response.results[0].wineName, "Unknown Wine")
+        XCTAssertEqual(response.fallbackList.count, 1)
+        XCTAssertNil(response.fallbackList[0].rating)
     }
 
     // MARK: - Computed Properties Tests
@@ -64,7 +92,8 @@ final class ScanResponseTests: XCTestCase {
                 WineResult(wineName: "A", rating: 4.8, confidence: 0.9, bbox: BoundingBox(x: 0, y: 0, width: 0.1, height: 0.1)),
                 WineResult(wineName: "C", rating: 4.2, confidence: 0.9, bbox: BoundingBox(x: 0, y: 0, width: 0.1, height: 0.1)),
             ],
-            fallbackList: []
+            fallbackList: [],
+            debug: nil
         )
 
         let topRated = response.topRatedResults
@@ -83,7 +112,8 @@ final class ScanResponseTests: XCTestCase {
                 WineResult(wineName: "C", rating: 4.2, confidence: 0.9, bbox: BoundingBox(x: 0, y: 0, width: 0.1, height: 0.1)),
                 WineResult(wineName: "D", rating: 3.5, confidence: 0.9, bbox: BoundingBox(x: 0, y: 0, width: 0.1, height: 0.1)),
             ],
-            fallbackList: []
+            fallbackList: [],
+            debug: nil
         )
 
         let topThree = response.topThree
@@ -103,7 +133,8 @@ final class ScanResponseTests: XCTestCase {
                 WineResult(wineName: "Medium", rating: 4.5, confidence: 0.55, bbox: BoundingBox(x: 0, y: 0, width: 0.1, height: 0.1)),
                 WineResult(wineName: "Low", rating: 4.2, confidence: 0.40, bbox: BoundingBox(x: 0, y: 0, width: 0.1, height: 0.1)),
             ],
-            fallbackList: []
+            fallbackList: [],
+            debug: nil
         )
 
         let visible = response.visibleResults
@@ -120,7 +151,8 @@ final class ScanResponseTests: XCTestCase {
                 WineResult(wineName: "Tappable", rating: 4.8, confidence: 0.70, bbox: BoundingBox(x: 0, y: 0, width: 0.1, height: 0.1)),
                 WineResult(wineName: "NotTappable", rating: 4.5, confidence: 0.55, bbox: BoundingBox(x: 0, y: 0, width: 0.1, height: 0.1)),
             ],
-            fallbackList: []
+            fallbackList: [],
+            debug: nil
         )
 
         let tappable = response.tappableResults
@@ -133,13 +165,15 @@ final class ScanResponseTests: XCTestCase {
         let partial = ScanResponse(
             imageId: "test",
             results: [WineResult(wineName: "A", rating: 4.8, confidence: 0.9, bbox: BoundingBox(x: 0, y: 0, width: 0.1, height: 0.1))],
-            fallbackList: [FallbackWine(wineName: "B", rating: 4.5)]
+            fallbackList: [FallbackWine(wineName: "B", rating: 4.5)],
+            debug: nil
         )
 
         let full = ScanResponse(
             imageId: "test",
             results: [WineResult(wineName: "A", rating: 4.8, confidence: 0.9, bbox: BoundingBox(x: 0, y: 0, width: 0.1, height: 0.1))],
-            fallbackList: []
+            fallbackList: [],
+            debug: nil
         )
 
         XCTAssertTrue(partial.isPartialDetection)
@@ -150,13 +184,15 @@ final class ScanResponseTests: XCTestCase {
         let failure = ScanResponse(
             imageId: "test",
             results: [],
-            fallbackList: [FallbackWine(wineName: "A", rating: 4.5)]
+            fallbackList: [FallbackWine(wineName: "A", rating: 4.5)],
+            debug: nil
         )
 
         let success = ScanResponse(
             imageId: "test",
             results: [WineResult(wineName: "A", rating: 4.8, confidence: 0.9, bbox: BoundingBox(x: 0, y: 0, width: 0.1, height: 0.1))],
-            fallbackList: []
+            fallbackList: [],
+            debug: nil
         )
 
         XCTAssertTrue(failure.isFullFailure)

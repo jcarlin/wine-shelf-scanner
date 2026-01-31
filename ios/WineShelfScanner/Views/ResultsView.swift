@@ -124,7 +124,7 @@ struct FallbackListView: View {
     let wines: [FallbackWine]
 
     var sortedWines: [FallbackWine] {
-        wines.sorted { $0.rating > $1.rating }
+        wines.sorted { ($0.rating ?? 0) > ($1.rating ?? 0) }
     }
 
     var body: some View {
@@ -166,7 +166,7 @@ struct FallbackWineRow: View {
             HStack(spacing: 4) {
                 Image(systemName: "star.fill")
                     .foregroundColor(.yellow)
-                Text(String(format: "%.1f", wine.rating))
+                Text(wine.rating.map { String(format: "%.1f", $0) } ?? "—")
                     .font(.headline)
                     .foregroundColor(.white)
             }

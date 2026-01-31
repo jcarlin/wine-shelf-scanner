@@ -41,7 +41,7 @@ struct WineDetailSheet: View {
             }
 
             // Rating number
-            Text(String(format: "%.1f", wine.rating))
+            Text(wine.rating.map { String(format: "%.1f", $0) } ?? "No rating")
                 .font(.title)
                 .fontWeight(.bold)
                 .foregroundColor(.primary)
@@ -65,8 +65,9 @@ struct WineDetailSheet: View {
 
     @ViewBuilder
     private func starImage(for index: Int) -> some View {
-        let filled = Double(index) + 1 <= wine.rating
-        let halfFilled = Double(index) + 0.5 <= wine.rating && Double(index) + 1 > wine.rating
+        let ratingValue = wine.rating ?? 0
+        let filled = Double(index) + 1 <= ratingValue
+        let halfFilled = Double(index) + 0.5 <= ratingValue && Double(index) + 1 > ratingValue
 
         if filled {
             Image(systemName: "star.fill")

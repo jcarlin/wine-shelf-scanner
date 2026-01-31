@@ -19,10 +19,10 @@ If it doesn't help the user choose a bottle faster, leave it out.
 ## Directory Structure
 ```
 wine-shelf-scanner/
-├── Backend/           # FastAPI + Vision API
-├── SwiftUI/           # iOS app
-├── Product/           # Product docs (archive)
-├── UX/                # UX specs (archive)
+├── backend/           # FastAPI + Vision API
+├── ios/               # SwiftUI iOS app
+├── product/           # Product docs (archive)
+├── ux/                # UX specs (archive)
 ├── PRD.md             # Product requirements (canonical)
 ├── TODO.md            # Implementation checklist
 └── CLAUDE.md          # This file
@@ -193,11 +193,13 @@ LLM step must be swappable or removable.
 
 ### Backend
 ```bash
-cd Backend && python -m uvicorn main:app --reload
+cd backend && source venv/bin/activate && uvicorn main:app --reload
 ```
 
 ### iOS
-Open `SwiftUI/WineShelfScanner.xcodeproj` in Xcode.
+```bash
+open ios/WineShelfScanner.xcodeproj
+```
 
 ---
 

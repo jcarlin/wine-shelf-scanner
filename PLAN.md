@@ -81,7 +81,7 @@ Collect 20-30 wine shelf photos:
 
 **Directory Structure:**
 ```
-Backend/
+backend/
 ├── main.py
 ├── requirements.txt
 ├── .env.example
@@ -123,7 +123,7 @@ Backend/
 
 **Key Files:**
 ```
-SwiftUI/
+ios/
 ├── WineShelfScanner.xcodeproj
 ├── WineShelfScanner/
 │   ├── App/WineShelfScannerApp.swift
@@ -317,7 +317,7 @@ def group_text_to_bottles(ocr_results, bottle_bboxes):
 **Cloud Run Deployment:**
 ```bash
 gcloud run deploy wine-scanner-staging \
-  --source Backend/ \
+  --source backend/ \
   --region us-central1 \
   --allow-unauthenticated \
   --memory 512Mi \
@@ -471,10 +471,10 @@ enum ScanState {
 | `PRD.md` | Product requirements |
 | `TODO.md` | Implementation checklist |
 | `PLAN.md` | This development plan |
-| `SwiftUI/OverlayMath.swift` | Overlay placement logic |
-| `Backend/main.py` | FastAPI entry point |
-| `Backend/app/services/vision.py` | Vision API client |
-| `Backend/app/data/ratings.json` | Wine ratings database |
+| `ios/OverlayMath.swift` | Overlay placement logic |
+| `backend/main.py` | FastAPI entry point |
+| `backend/app/services/vision.py` | Vision API client |
+| `backend/app/data/ratings.json` | Wine ratings database |
 
 ---
 
@@ -489,13 +489,13 @@ cd Backend && uvicorn main:app --reload
 cd Backend && pytest tests/ -v
 
 # Deploy to Cloud Run
-gcloud run deploy wine-scanner-staging --source Backend/
+gcloud run deploy wine-scanner-staging --source backend/
 ```
 
 **iOS:**
 ```bash
 # Open in Xcode
-open SwiftUI/WineShelfScanner.xcodeproj
+open ios/WineShelfScanner.xcodeproj
 
 # Build for testing
 xcodebuild -scheme WineShelfScanner -destination 'platform=iOS Simulator,name=iPhone 15'

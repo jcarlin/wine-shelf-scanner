@@ -2,6 +2,7 @@
 /scan endpoint for Wine Shelf Scanner.
 
 Receives an image and returns wine detection results.
+Uses tiered recognition pipeline: fuzzy match → LLM fallback.
 """
 
 import os
@@ -14,11 +15,13 @@ from ..mocks.fixtures import get_mock_response
 from ..services.vision import VisionService, MockVisionService
 from ..services.ocr_processor import OCRProcessor, extract_wine_names
 from ..services.wine_matcher import WineMatcher
+from ..services.recognition_pipeline import RecognitionPipeline
 
 router = APIRouter()
 
 # Initialize services (singleton pattern)
 _wine_matcher: Optional[WineMatcher] = None
+_pipeline: Optional[RecognitionPipeline] = None
 
 
 def get_wine_matcher() -> WineMatcher:
@@ -29,11 +32,23 @@ def get_wine_matcher() -> WineMatcher:
     return _wine_matcher
 
 
+def get_pipeline(use_llm: bool = True) -> RecognitionPipeline:
+    """Get or create recognition pipeline."""
+    global _pipeline
+    if _pipeline is None or _pipeline.use_llm != use_llm:
+        _pipeline = RecognitionPipeline(
+            wine_matcher=get_wine_matcher(),
+            use_llm=use_llm
+        )
+    return _pipeline
+
+
 @router.post("/scan", response_model=ScanResponse)
 async def scan_shelf(
     image: UploadFile = File(..., description="Wine shelf image"),
     mock_scenario: Optional[str] = Query(None, description="Mock scenario for testing"),
     use_vision_api: bool = Query(False, description="Use real Vision API"),
+    use_llm: bool = Query(True, description="Use LLM fallback for unknown wines"),
 ) -> ScanResponse:
     """
     Scan a wine shelf image and return detected wines with ratings.
@@ -70,7 +85,7 @@ async def scan_shelf(
     # Real processing pipeline
     try:
         image_bytes = await image.read()
-        return await process_image(image_id, image_bytes, use_vision_api)
+        return await process_image(image_id, image_bytes, use_vision_api, use_llm)
     except Exception as e:
         # Log error and return fallback
         print(f"Error processing image: {e}")
@@ -83,14 +98,15 @@ async def scan_shelf(
 async def process_image(
     image_id: str,
     image_bytes: bytes,
-    use_real_api: bool = False
+    use_real_api: bool = False,
+    use_llm: bool = True
 ) -> ScanResponse:
     """
-    Full processing pipeline:
+    Tiered recognition pipeline:
     1. Vision API (object detection + OCR)
     2. OCR grouping (text → bottle assignment)
-    3. Text normalization
-    4. Wine matching (fuzzy lookup in ratings DB)
+    3. Enhanced fuzzy matching (rapidfuzz + phonetic)
+    4. LLM fallback for low-confidence/unknown wines
     5. Response construction
     """
     # Choose vision service
@@ -106,49 +122,46 @@ async def process_image(
         # No bottles detected - return fallback only
         return _fallback_response(image_id)
 
-    # Step 2 & 3: Group text to bottles and normalize
+    # Step 2: Group text to bottles and normalize
     ocr_processor = OCRProcessor()
     bottle_texts = ocr_processor.process(
         vision_result.objects,
         vision_result.text_blocks
     )
 
-    # Step 4: Match against ratings database
-    wine_matcher = get_wine_matcher()
+    # Step 3 & 4: Tiered recognition (fuzzy match → LLM fallback)
+    pipeline = get_pipeline(use_llm=use_llm)
+    recognized = await pipeline.recognize(bottle_texts)
+
+    # Build response
     results: list[WineResult] = []
     fallback: list[FallbackWine] = []
 
-    for bt in bottle_texts:
-        match = wine_matcher.match(bt.normalized_name)
-
-        if match and match.confidence >= 0.6:
-            # Good match - add to results with position
+    for wine in recognized:
+        if wine.confidence >= 0.45:
+            # Add to positioned results
             results.append(WineResult(
-                wine_name=match.canonical_name,
-                rating=match.rating,
-                confidence=min(bt.bottle.confidence, match.confidence),
+                wine_name=wine.wine_name,
+                rating=wine.rating,
+                confidence=wine.confidence,
                 bbox=BoundingBox(
-                    x=bt.bottle.bbox.x,
-                    y=bt.bottle.bbox.y,
-                    width=bt.bottle.bbox.width,
-                    height=bt.bottle.bbox.height
-                )
+                    x=wine.bottle_text.bottle.bbox.x,
+                    y=wine.bottle_text.bottle.bbox.y,
+                    width=wine.bottle_text.bottle.bbox.width,
+                    height=wine.bottle_text.bottle.bbox.height
+                ),
+                identified=wine.identified,
+                source=wine.source
             ))
-        elif match:
-            # Low confidence match - add to fallback
+        elif wine.rating is not None:
+            # Low confidence with rating → fallback
             fallback.append(FallbackWine(
-                wine_name=match.canonical_name,
-                rating=match.rating
-            ))
-        elif bt.normalized_name:
-            # No match but we have text - add unknown to fallback
-            fallback.append(FallbackWine(
-                wine_name=bt.normalized_name,
-                rating=3.0  # Default rating for unknown wines
+                wine_name=wine.wine_name,
+                rating=wine.rating
             ))
 
-    # Sort results by rating (highest first)
-    results.sort(key=lambda x: x.rating, reverse=True)
+    # Sort results by rating (wines with ratings first, then by rating value)
+    results.sort(key=lambda x: (x.rating is not None, x.rating or 0), reverse=True)
     fallback.sort(key=lambda x: x.rating, reverse=True)
 
     return ScanResponse(

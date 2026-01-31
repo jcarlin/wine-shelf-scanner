@@ -26,6 +26,8 @@ API Contract (DO NOT CHANGE):
 }
 """
 
+from typing import Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -40,9 +42,11 @@ class BoundingBox(BaseModel):
 class WineResult(BaseModel):
     """A detected wine bottle with rating and position."""
     wine_name: str = Field(..., description="Canonical wine name")
-    rating: float = Field(..., ge=1, le=5, description="Star rating (1-5)")
+    rating: Optional[float] = Field(None, ge=1, le=5, description="Star rating (1-5), None if not in DB")
     confidence: float = Field(..., ge=0, le=1, description="Detection confidence")
     bbox: BoundingBox = Field(..., description="Bounding box position")
+    identified: bool = Field(True, description="True if recognized as wine (checkmark)")
+    source: str = Field("database", description="Match source: 'database' or 'llm'")
 
 
 class FallbackWine(BaseModel):

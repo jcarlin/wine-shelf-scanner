@@ -7,6 +7,10 @@ Usage:
     uvicorn main:app --reload
 """
 
+# Load environment variables from .env file FIRST
+from dotenv import load_dotenv
+load_dotenv()
+
 import logging
 from pathlib import Path
 

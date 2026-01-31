@@ -23,9 +23,9 @@ export function Toast({ message, visible }: ToastProps) {
   }, [visible, opacity]);
 
   return (
-    <Animated.View style={[styles.container, { opacity }]} pointerEvents="none">
-      <View style={styles.toast}>
-        <Text style={styles.message}>{message}</Text>
+    <Animated.View style={[styles.container, { opacity }]} pointerEvents="none" testID="toast">
+      <View style={styles.toast} testID="toastContent">
+        <Text style={styles.message} testID="toastMessage">{message}</Text>
       </View>
     </Animated.View>
   );

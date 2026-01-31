@@ -1,5 +1,11 @@
 # Cloud Build configuration for Wine Shelf Scanner API
-# Deploy to Cloud Run
+# Triggered on push to main branch
+# Builds Docker image, pushes to Artifact Registry, deploys to Cloud Run
+
+substitutions:
+  _REGION: us-central1
+  _REPO_NAME: wine-scanner
+  _SERVICE_NAME: wine-scanner-api
 
 steps:
   # Build the container image
@@ -7,48 +13,51 @@ steps:
     args:
       - 'build'
       - '-t'
-      - 'gcr.io/$PROJECT_ID/wine-scanner-api:$COMMIT_SHA'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/${_SERVICE_NAME}:$COMMIT_SHA'
       - '-t'
-      - 'gcr.io/$PROJECT_ID/wine-scanner-api:latest'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/${_SERVICE_NAME}:latest'
       - '.'
+    dir: 'backend'
 
-  # Push the container image to Container Registry
+  # Push the container image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      - 'gcr.io/$PROJECT_ID/wine-scanner-api:$COMMIT_SHA'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/${_SERVICE_NAME}:$COMMIT_SHA'
 
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      - 'gcr.io/$PROJECT_ID/wine-scanner-api:latest'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/${_SERVICE_NAME}:latest'
 
-  # Deploy to Cloud Run
+  # Substitute the image in service.yaml and deploy
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        sed "s|IMAGE_PLACEHOLDER|${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/${_SERVICE_NAME}:$COMMIT_SHA|g" \
+          backend/deploy/service.yaml > /tmp/service.yaml
+        gcloud run services replace /tmp/service.yaml --region ${_REGION}
+
+  # Set IAM policy for public access
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
     args:
       - 'run'
-      - 'deploy'
-      - 'wine-scanner-api'
-      - '--image'
-      - 'gcr.io/$PROJECT_ID/wine-scanner-api:$COMMIT_SHA'
+      - 'services'
+      - 'add-iam-policy-binding'
+      - '${_SERVICE_NAME}'
       - '--region'
-      - 'us-central1'
-      - '--platform'
-      - 'managed'
-      - '--allow-unauthenticated'
-      - '--memory'
-      - '1Gi'
-      - '--min-instances'
-      - '1'
-      - '--max-instances'
-      - '10'
-      - '--set-env-vars'
-      - 'USE_MOCKS=false'
+      - '${_REGION}'
+      - '--member'
+      - 'allUsers'
+      - '--role'
+      - 'roles/run.invoker'
 
 images:
-  - 'gcr.io/$PROJECT_ID/wine-scanner-api:$COMMIT_SHA'
-  - 'gcr.io/$PROJECT_ID/wine-scanner-api:latest'
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/${_SERVICE_NAME}:$COMMIT_SHA'
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/${_SERVICE_NAME}:latest'
 
 options:
   logging: CLOUD_LOGGING_ONLY

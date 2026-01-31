@@ -32,28 +32,30 @@ export function WineDetailModal({ visible, wine, onClose }: WineDetailModalProps
       animationType="slide"
       presentationStyle="pageSheet"
       onRequestClose={onClose}
+      testID="wineDetailSheet"
     >
       <SafeAreaView style={styles.container}>
-        <View style={styles.content}>
+        <View style={styles.content} testID="wineDetailContent">
           <View style={styles.header}>
             <View style={styles.handleBar} />
           </View>
 
-          <Text style={styles.wineName}>{wine.wine_name}</Text>
+          <Text style={styles.wineName} testID="detailSheetWineName">{wine.wine_name}</Text>
 
           {wine.rating !== null && (
-            <View style={styles.ratingContainer}>
+            <View style={styles.ratingContainer} testID="detailSheetRating">
               <Text style={styles.star}>{'\u2605'}</Text>
               <Text style={styles.ratingText}>{wine.rating.toFixed(1)}</Text>
             </View>
           )}
 
-          <Text style={styles.confidenceLabel}>{label}</Text>
+          <Text style={styles.confidenceLabel} testID="detailSheetConfidence">{label}</Text>
 
           <TouchableOpacity
             style={styles.closeButton}
             onPress={onClose}
             activeOpacity={0.8}
+            testID="detailSheetCloseButton"
           >
             <Text style={styles.closeButtonText}>Close</Text>
           </TouchableOpacity>

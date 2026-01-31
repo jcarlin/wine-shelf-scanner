@@ -1,10 +1,13 @@
 """
 Google Cloud Vision API client for wine bottle detection and OCR.
 """
+from __future__ import annotations
 
+import json
 import os
 from dataclasses import dataclass
-from typing import Protocol
+from pathlib import Path
+from typing import Optional, Protocol
 
 
 @dataclass
@@ -238,3 +241,77 @@ class MockVisionService:
     def _empty_result(self) -> VisionResult:
         """No bottles detected."""
         return VisionResult(objects=[], text_blocks=[], raw_text="")
+
+
+class ReplayVisionService:
+    """
+    Replay captured Vision API responses for deterministic testing.
+
+    Loads a previously captured response from JSON and returns it
+    regardless of the input image, enabling repeatable tests.
+    """
+
+    def __init__(self, fixture_path: str | Path):
+        """
+        Initialize with path to captured response fixture.
+
+        Args:
+            fixture_path: Path to JSON file containing captured Vision API response
+        """
+        self._fixture_path = Path(fixture_path)
+        self._data: Optional[dict] = None
+
+    def _load_fixture(self) -> dict:
+        """Lazy load fixture data."""
+        if self._data is None:
+            with open(self._fixture_path) as f:
+                self._data = json.load(f)
+        return self._data
+
+    def analyze(self, image_bytes: bytes) -> VisionResult:
+        """
+        Return captured Vision API response.
+
+        Args:
+            image_bytes: Ignored - returns captured response regardless of input
+
+        Returns:
+            VisionResult from captured fixture
+        """
+        data = self._load_fixture()
+
+        # Parse objects from fixture
+        objects = [
+            DetectedObject(
+                name=obj["name"],
+                confidence=obj["score"],
+                bbox=BoundingBox(
+                    x=obj["bbox"]["x"],
+                    y=obj["bbox"]["y"],
+                    width=obj["bbox"]["width"],
+                    height=obj["bbox"]["height"],
+                )
+            )
+            for obj in data.get("objects", [])
+        ]
+
+        # Parse text blocks from fixture
+        text_blocks = [
+            TextBlock(
+                text=block["text"],
+                bbox=BoundingBox(
+                    x=block["bbox"]["x"],
+                    y=block["bbox"]["y"],
+                    width=block["bbox"]["width"],
+                    height=block["bbox"]["height"],
+                ) if block.get("bbox") else BoundingBox(0, 0, 0, 0),
+                confidence=block.get("confidence", 0.9),
+            )
+            for block in data.get("text_blocks", [])
+        ]
+
+        return VisionResult(
+            objects=objects,
+            text_blocks=text_blocks,
+            raw_text=data.get("raw_text", "")
+        )

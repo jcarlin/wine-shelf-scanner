@@ -10,8 +10,8 @@ const WINE_COLOR = '#722F37';
 
 export function ProcessingSpinner() {
   return (
-    <View style={styles.container}>
-      <ActivityIndicator size="large" color={WINE_COLOR} />
+    <View style={styles.container} testID="processingSpinner">
+      <ActivityIndicator size="large" color={WINE_COLOR} testID="processingIndicator" />
       <Text style={styles.text}>Analyzing wines...</Text>
     </View>
   );

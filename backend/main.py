@@ -65,6 +65,12 @@ async def root():
     }
 
 
+@app.get("/health")
+async def health():
+    """Health check endpoint for Cloud Run probes."""
+    return {"status": "healthy"}
+
+
 @app.get("/app")
 async def serve_app():
     """Serve the web UI for Playwright e2e testing."""

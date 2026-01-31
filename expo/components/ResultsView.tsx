@@ -54,11 +54,12 @@ export function ResultsView({ response, imageUri }: ResultsViewProps) {
   const canRenderOverlays = containerSize && imageSize;
 
   return (
-    <View style={styles.container} onLayout={handleLayout}>
+    <View style={styles.container} onLayout={handleLayout} testID="resultsView">
       <Image
         source={{ uri: imageUri }}
         style={styles.image}
         resizeMode="contain"
+        testID="resultsImage"
       />
 
       {canRenderOverlays && (

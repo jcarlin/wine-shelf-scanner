@@ -17,7 +17,7 @@ from ..mocks.fixtures import get_mock_response
 from ..models import BoundingBox, DebugData, FallbackWine, ScanResponse, WineResult
 from ..services.ocr_processor import OCRProcessor, extract_wine_names
 from ..services.recognition_pipeline import RecognitionPipeline
-from ..services.vision import MockVisionService, VisionService
+from ..services.vision import MockVisionService, ReplayVisionService, VisionService
 from ..services.wine_matcher import WineMatcher
 
 logger = logging.getLogger(__name__)
@@ -53,6 +53,7 @@ async def scan_shelf(
     use_vision_api: bool = Query(True, description="Use real Vision API"),
     use_llm: bool = Query(True, description="Use LLM fallback for unknown wines"),
     debug: bool = Query(False, description="Include pipeline debug info in response"),
+    use_vision_fixture: Optional[str] = Query(None, description="Path to captured Vision API response fixture for replay"),
     wine_matcher: WineMatcher = Depends(get_wine_matcher),
 ) -> ScanResponse:
     """
@@ -105,7 +106,7 @@ async def scan_shelf(
     # Process image
     try:
         return await process_image(
-            image_id, image_bytes, use_vision_api, use_llm, debug, wine_matcher
+            image_id, image_bytes, use_vision_api, use_llm, debug, wine_matcher, use_vision_fixture
         )
     except ValueError as e:
         logger.warning(f"Invalid image format: {e}")
@@ -122,6 +123,7 @@ async def process_image(
     use_llm: bool,
     debug_mode: bool,
     wine_matcher: WineMatcher,
+    vision_fixture: Optional[str] = None,
 ) -> ScanResponse:
     """
     Tiered recognition pipeline:
@@ -132,7 +134,11 @@ async def process_image(
     5. Response construction
     """
     # Choose vision service
-    if use_real_api:
+    if vision_fixture:
+        # Use captured fixture for deterministic replay
+        vision_service = ReplayVisionService(vision_fixture)
+        logger.info(f"[{image_id}] Using vision fixture: {vision_fixture}")
+    elif use_real_api:
         vision_service = VisionService()
     else:
         vision_service = MockVisionService("full_shelf")

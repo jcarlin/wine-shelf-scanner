@@ -15,15 +15,27 @@ export type ScanResult =
   | { success: true; data: ScanResponse }
   | { success: false; error: ApiError };
 
+export interface ScanOptions {
+  /** Enable debug mode to receive pipeline debug data */
+  debug?: boolean;
+}
+
 /**
  * Scan a wine shelf image
  *
  * @param imageUri - Local URI of the image to scan
+ * @param options - Optional scan options (debug mode, etc.)
  * @returns Scan result with wine data or error
  */
-export async function scanImage(imageUri: string): Promise<ScanResult> {
+export async function scanImage(
+  imageUri: string,
+  options: ScanOptions = {}
+): Promise<ScanResult> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), Config.REQUEST_TIMEOUT);
+
+  // Use debug from options, fall back to config
+  const debug = options.debug ?? Config.DEBUG_MODE;
 
   try {
     // Create form data with image
@@ -39,7 +51,13 @@ export async function scanImage(imageUri: string): Promise<ScanResult> {
       name: filename,
     } as unknown as Blob);
 
-    const response = await fetch(`${Config.API_BASE_URL}/scan`, {
+    // Build URL with optional debug query param
+    const url = new URL(`${Config.API_BASE_URL}/scan`);
+    if (debug) {
+      url.searchParams.set('debug', 'true');
+    }
+
+    const response = await fetch(url.toString(), {
       method: 'POST',
       body: formData,
       signal: controller.signal,

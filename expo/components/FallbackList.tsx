@@ -17,14 +17,14 @@ export function FallbackList({ wines }: FallbackListProps) {
   // Sort by rating descending
   const sortedWines = [...wines].sort((a, b) => b.rating - a.rating);
 
-  const renderItem = ({ item }: { item: FallbackWine }) => (
-    <View style={styles.item}>
-      <Text style={styles.wineName} numberOfLines={2}>
+  const renderItem = ({ item, index }: { item: FallbackWine; index: number }) => (
+    <View style={styles.item} testID={`fallbackItem_${index}`}>
+      <Text style={styles.wineName} numberOfLines={2} testID={`fallbackWineName_${index}`}>
         {item.wine_name}
       </Text>
       <View style={styles.ratingContainer}>
         <Text style={styles.star}>{'\u2605'}</Text>
-        <Text style={styles.ratingText}>{item.rating.toFixed(1)}</Text>
+        <Text style={styles.ratingText} testID={`fallbackRating_${index}`}>{item.rating.toFixed(1)}</Text>
       </View>
     </View>
   );
@@ -36,6 +36,7 @@ export function FallbackList({ wines }: FallbackListProps) {
       keyExtractor={(item, index) => `${item.wine_name}-${index}`}
       contentContainerStyle={styles.listContent}
       ItemSeparatorComponent={() => <View style={styles.separator} />}
+      testID="fallbackList"
     />
   );
 }

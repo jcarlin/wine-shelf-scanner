@@ -39,13 +39,14 @@ export default function ScannerScreen() {
         if (isFullFailure) {
           // Full failure: show fallback list
           return (
-            <View style={styles.resultsContainer}>
+            <View style={styles.resultsContainer} testID="fallbackContainer">
               <FallbackList wines={state.response.fallback_list} />
               <View style={styles.buttonContainer}>
                 <TouchableOpacity
                   style={styles.button}
                   onPress={reset}
                   activeOpacity={0.8}
+                  testID="scanAnotherButton"
                 >
                   <Text style={styles.buttonText}>Scan Another</Text>
                 </TouchableOpacity>
@@ -56,7 +57,7 @@ export default function ScannerScreen() {
 
         // Success (with or without partial detection)
         return (
-          <View style={styles.resultsContainer}>
+          <View style={styles.resultsContainer} testID="successContainer">
             <ResultsView
               response={state.response}
               imageUri={state.imageUri}
@@ -66,6 +67,7 @@ export default function ScannerScreen() {
                 style={styles.button}
                 onPress={reset}
                 activeOpacity={0.8}
+                testID="scanAnotherButton"
               >
                 <Text style={styles.buttonText}>Scan Another</Text>
               </TouchableOpacity>
@@ -76,13 +78,14 @@ export default function ScannerScreen() {
 
       case 'error':
         return (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorTitle}>Something went wrong</Text>
-            <Text style={styles.errorMessage}>{state.message}</Text>
+          <View style={styles.errorContainer} testID="errorView">
+            <Text style={styles.errorTitle} testID="errorTitle">Something went wrong</Text>
+            <Text style={styles.errorMessage} testID="errorMessage">{state.message}</Text>
             <TouchableOpacity
               style={styles.button}
               onPress={reset}
               activeOpacity={0.8}
+              testID="retryButton"
             >
               <Text style={styles.buttonText}>Try Again</Text>
             </TouchableOpacity>
@@ -95,7 +98,7 @@ export default function ScannerScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']} testID="scannerScreen">
       {renderContent()}
     </SafeAreaView>
   );

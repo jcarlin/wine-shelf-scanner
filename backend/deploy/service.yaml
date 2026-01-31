@@ -1,0 +1,80 @@
+# Cloud Run Service Definition for Wine Shelf Scanner API
+# This is the source of truth for service configuration
+#
+# Deploy with: gcloud run services replace service.yaml --region us-central1
+# Note: The image field is substituted during deployment
+
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: wine-scanner-api
+  labels:
+    app: wine-scanner
+  annotations:
+    run.googleapis.com/description: "Wine Shelf Scanner API - Photo-based wine recognition"
+spec:
+  template:
+    metadata:
+      annotations:
+        # Scaling configuration
+        autoscaling.knative.dev/minScale: "0"
+        autoscaling.knative.dev/maxScale: "10"
+        # Allow up to 80 concurrent requests per instance
+        autoscaling.knative.dev/maxConcurrentRequests: "80"
+    spec:
+      containerConcurrency: 80
+      timeoutSeconds: 300
+      serviceAccountName: ""  # Uses default compute service account
+      containers:
+        - image: IMAGE_PLACEHOLDER  # Substituted during deployment
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+          env:
+            # Non-secret environment variables
+            - name: USE_MOCKS
+              value: "false"
+            - name: USE_SQLITE
+              value: "true"
+            - name: LOG_LEVEL
+              value: "INFO"
+            - name: DEV_MODE
+              value: "false"
+            - name: LLM_PROVIDER
+              value: "gemini"
+            - name: GEMINI_MODEL
+              value: "gemini-2.0-flash"
+            # Secrets from Secret Manager
+            - name: GOOGLE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: google-api-key
+                  key: latest
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: anthropic-api-key
+                  key: latest
+          # Startup probe - allows longer startup time
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          # Liveness probe - restarts unhealthy containers
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            periodSeconds: 30
+            timeoutSeconds: 3
+            failureThreshold: 3
+  traffic:
+    - percent: 100
+      latestRevision: true

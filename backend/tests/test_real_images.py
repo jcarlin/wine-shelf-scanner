@@ -3,11 +3,15 @@ E2E tests using real test images with ground truth validation.
 
 These tests validate that scan results are meaningful by checking
 detected wines against known image contents.
+
+When vision response fixtures are available in tests/fixtures/vision_responses/,
+tests run in deterministic replay mode. Otherwise, they use the live Vision API.
 """
 
 import json
 import pytest
 from pathlib import Path
+from typing import Optional
 from fastapi.testclient import TestClient
 
 from main import app
@@ -18,6 +22,7 @@ client = TestClient(app)
 # Paths
 TEST_IMAGES = Path(__file__).parent.parent.parent / "test-images"
 GROUND_TRUTH = Path(__file__).parent / "fixtures" / "ground_truth"
+VISION_FIXTURES = Path(__file__).parent / "fixtures" / "vision_responses"
 
 
 def load_ground_truth(image_name: str) -> dict:
@@ -25,6 +30,22 @@ def load_ground_truth(image_name: str) -> dict:
     path = GROUND_TRUTH / f"{image_name}.json"
     with open(path) as f:
         return json.load(f)
+
+
+def get_vision_fixture(image_name: str) -> Optional[Path]:
+    """Get path to vision response fixture if it exists."""
+    fixture_path = VISION_FIXTURES / f"{image_name}.json"
+    return fixture_path if fixture_path.exists() else None
+
+
+def build_scan_url(vision_fixture: Optional[Path]) -> str:
+    """Build scan URL with appropriate parameters."""
+    if vision_fixture:
+        # Use captured fixture for deterministic replay
+        return f"/scan?use_vision_fixture={vision_fixture}"
+    else:
+        # Fall back to live Vision API
+        return "/scan?use_vision_api=true"
 
 
 class TestRealImageDetection:
@@ -44,10 +65,14 @@ class TestRealImageDetection:
         # Load ground truth
         truth = load_ground_truth(image_name)
 
-        # Scan image (with Vision API enabled)
+        # Check for vision fixture (deterministic mode)
+        vision_fixture = get_vision_fixture(image_name)
+        scan_url = build_scan_url(vision_fixture)
+
+        # Scan image
         with open(image_path, "rb") as f:
             response = client.post(
-                "/scan?use_vision_api=true",
+                scan_url,
                 files={"image": (image_file, f, "image/jpeg")}
             )
 
@@ -82,9 +107,12 @@ class TestRealImageDetection:
         if not image_path.exists():
             pytest.skip(f"Test image not found: {image_path}")
 
+        vision_fixture = get_vision_fixture("wine1_jpeg")
+        scan_url = build_scan_url(vision_fixture)
+
         with open(image_path, "rb") as f:
             response = client.post(
-                "/scan?use_vision_api=true",
+                scan_url,
                 files={"image": ("wine1.jpeg", f, "image/jpeg")}
             )
 
@@ -113,9 +141,12 @@ class TestRealImageDetection:
         if not image_path.exists():
             pytest.skip(f"Test image not found: {image_path}")
 
+        vision_fixture = get_vision_fixture("wine1_jpeg")
+        scan_url = build_scan_url(vision_fixture)
+
         with open(image_path, "rb") as f:
             response = client.post(
-                "/scan?use_vision_api=true",
+                scan_url,
                 files={"image": ("wine1.jpeg", f, "image/jpeg")}
             )
 
@@ -145,9 +176,12 @@ class TestRealImageDetection:
         if not image_path.exists():
             pytest.skip(f"Test image not found: {image_path}")
 
+        vision_fixture = get_vision_fixture("wine1_jpeg")
+        scan_url = build_scan_url(vision_fixture)
+
         with open(image_path, "rb") as f:
             response = client.post(
-                "/scan?use_vision_api=true",
+                scan_url,
                 files={"image": ("wine1.jpeg", f, "image/jpeg")}
             )
 
@@ -175,9 +209,15 @@ class TestRealImageEdgeCases:
         if not image_path.exists():
             pytest.skip(f"Test image not found: {image_path}")
 
+        vision_fixture = get_vision_fixture("wine1_jpeg")
+        if vision_fixture:
+            scan_url = f"/scan?use_vision_fixture={vision_fixture}&use_llm=false"
+        else:
+            scan_url = "/scan?use_vision_api=true&use_llm=false"
+
         with open(image_path, "rb") as f:
             response = client.post(
-                "/scan?use_vision_api=true&use_llm=false",
+                scan_url,
                 files={"image": ("wine1.jpeg", f, "image/jpeg")}
             )
 
@@ -194,9 +234,12 @@ class TestRealImageEdgeCases:
         if not image_path.exists():
             pytest.skip(f"Test image not found: {image_path}")
 
+        vision_fixture = get_vision_fixture("wine1_jpeg")
+        scan_url = build_scan_url(vision_fixture)
+
         with open(image_path, "rb") as f:
             response = client.post(
-                "/scan?use_vision_api=true",
+                scan_url,
                 files={"image": ("wine1.jpeg", f, "image/jpeg")}
             )
 

@@ -38,7 +38,7 @@ export function OverlayContainer({
 
   return (
     <>
-      <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+      <View style={StyleSheet.absoluteFill} pointerEvents="box-none" testID="overlayContainer">
         {visibleWines.map((wine, index) => {
           const isTopThree = topThreeIds.has(wine.wine_name);
           const size = badgeSize(isTopThree);
@@ -81,6 +81,7 @@ export function OverlayContainer({
                 confidence={wine.confidence}
                 isTopThree={isTopThree}
                 onPress={() => setSelectedWine(wine)}
+                wineName={wine.wine_name}
               />
             </View>
           );

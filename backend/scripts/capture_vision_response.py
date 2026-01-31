@@ -51,7 +51,7 @@ def capture_response(image_path: Path, output_dir: Path) -> Path:
         "objects": [
             {
                 "name": obj.name,
-                "score": obj.score,
+                "score": obj.confidence,
                 "bbox": {
                     "x": obj.bbox.x,
                     "y": obj.bbox.y,

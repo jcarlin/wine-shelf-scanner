@@ -5,10 +5,13 @@ Orchestrates the flow: adapter → normalizer → resolver → repository
 """
 
 import hashlib
+import logging
 from datetime import datetime
-from typing import Optional, Iterator
+from typing import Iterator, Optional
 
-from .protocols import DataSourceAdapter, RawWineRecord, IngestionStats
+from .protocols import DataSourceAdapter, IngestionStats, RawWineRecord
+
+logger = logging.getLogger(__name__)
 from .normalizers import RatingNormalizer
 from .entities import WineEntityResolver, CanonicalWine
 from ..services.wine_repository import WineRepository
@@ -87,7 +90,7 @@ class IngestionPipeline:
 
             # Progress logging
             if stats.records_read % 10000 == 0:
-                print(f"  Processed {stats.records_read} records...")
+                logger.info(f"Processed {stats.records_read} records...")
 
         # Write to database
         if not dry_run:

@@ -5,42 +5,43 @@ Receives an image and returns wine detection results.
 Uses tiered recognition pipeline: fuzzy match → LLM fallback.
 """
 
-import os
+import logging
 import uuid
+from functools import lru_cache
 from typing import Optional
-from fastapi import APIRouter, File, UploadFile, HTTPException, Query
 
-from ..models import ScanResponse, WineResult, FallbackWine, BoundingBox
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+
+from ..config import Config
 from ..mocks.fixtures import get_mock_response
-from ..services.vision import VisionService, MockVisionService
+from ..models import BoundingBox, FallbackWine, ScanResponse, WineResult
 from ..services.ocr_processor import OCRProcessor, extract_wine_names
-from ..services.wine_matcher import WineMatcher
 from ..services.recognition_pipeline import RecognitionPipeline
+from ..services.vision import MockVisionService, VisionService
+from ..services.wine_matcher import WineMatcher
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# Initialize services (singleton pattern)
-_wine_matcher: Optional[WineMatcher] = None
-_pipeline: Optional[RecognitionPipeline] = None
+
+# === Dependency Injection ===
 
 
+@lru_cache(maxsize=1)
 def get_wine_matcher() -> WineMatcher:
-    """Get or create wine matcher instance."""
-    global _wine_matcher
-    if _wine_matcher is None:
-        _wine_matcher = WineMatcher()
-    return _wine_matcher
+    """Get or create wine matcher instance (singleton via lru_cache)."""
+    return WineMatcher()
 
 
 def get_pipeline(use_llm: bool = True) -> RecognitionPipeline:
-    """Get or create recognition pipeline."""
-    global _pipeline
-    if _pipeline is None or _pipeline.use_llm != use_llm:
-        _pipeline = RecognitionPipeline(
-            wine_matcher=get_wine_matcher(),
-            use_llm=use_llm
-        )
-    return _pipeline
+    """Create recognition pipeline with specified LLM setting."""
+    return RecognitionPipeline(
+        wine_matcher=get_wine_matcher(),
+        use_llm=use_llm
+    )
+
+
+# === Endpoints ===
 
 
 @router.post("/scan", response_model=ScanResponse)
@@ -49,6 +50,7 @@ async def scan_shelf(
     mock_scenario: Optional[str] = Query(None, description="Mock scenario for testing"),
     use_vision_api: bool = Query(False, description="Use real Vision API"),
     use_llm: bool = Query(True, description="Use LLM fallback for unknown wines"),
+    wine_matcher: WineMatcher = Depends(get_wine_matcher),
 ) -> ScanResponse:
     """
     Scan a wine shelf image and return detected wines with ratings.
@@ -57,12 +59,13 @@ async def scan_shelf(
         image: The shelf image (JPEG or PNG)
         mock_scenario: Optional fixture name for testing (full_shelf, partial_detection, etc.)
         use_vision_api: Whether to use real Google Vision API (requires credentials)
+        use_llm: Whether to use LLM fallback for OCR normalization
 
     Returns:
         ScanResponse with detected wines and fallback list
     """
-    # Validate image type
-    if image.content_type not in ["image/jpeg", "image/png"]:
+    # Validate content type
+    if image.content_type not in Config.ALLOWED_CONTENT_TYPES:
         raise HTTPException(
             status_code=400,
             detail="Invalid image type. Only JPEG and PNG are supported."
@@ -72,7 +75,7 @@ async def scan_shelf(
     image_id = str(uuid.uuid4())
 
     # Check if we should use mocks
-    use_mocks = os.getenv("USE_MOCKS", "true").lower() == "true"
+    use_mocks = Config.use_mocks()
 
     if mock_scenario:
         # Explicit mock scenario requested
@@ -82,24 +85,39 @@ async def scan_shelf(
         # Default to mock response
         return get_mock_response(image_id, "full_shelf")
 
-    # Real processing pipeline
+    # Read and validate image
     try:
         image_bytes = await image.read()
-        return await process_image(image_id, image_bytes, use_vision_api, use_llm)
-    except Exception as e:
-        # Log error and return fallback
-        print(f"Error processing image: {e}")
+    except IOError as e:
+        logger.error(f"Failed to read uploaded image: {e}")
+        raise HTTPException(status_code=400, detail="Failed to read image file")
+
+    # Validate file size
+    if len(image_bytes) > Config.MAX_IMAGE_SIZE_BYTES:
         raise HTTPException(
-            status_code=500,
-            detail=f"Error processing image: {str(e)}"
+            status_code=400,
+            detail=f"Image too large. Maximum size is {Config.MAX_IMAGE_SIZE_MB}MB."
         )
+
+    # Process image
+    try:
+        return await process_image(
+            image_id, image_bytes, use_vision_api, use_llm, wine_matcher
+        )
+    except ValueError as e:
+        logger.warning(f"Invalid image format: {e}")
+        raise HTTPException(status_code=400, detail="Invalid image format")
+    except Exception as e:
+        logger.error(f"Unexpected error processing image: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 async def process_image(
     image_id: str,
     image_bytes: bytes,
-    use_real_api: bool = False,
-    use_llm: bool = True
+    use_real_api: bool,
+    use_llm: bool,
+    wine_matcher: WineMatcher,
 ) -> ScanResponse:
     """
     Tiered recognition pipeline:
@@ -120,7 +138,7 @@ async def process_image(
 
     if not vision_result.objects:
         # No bottles detected - return fallback only
-        return _fallback_response(image_id)
+        return _fallback_response(image_id, wine_matcher)
 
     # Step 2: Group text to bottles and normalize
     ocr_processor = OCRProcessor()
@@ -138,7 +156,7 @@ async def process_image(
     fallback: list[FallbackWine] = []
 
     for wine in recognized:
-        if wine.confidence >= 0.45:
+        if wine.confidence >= Config.VISIBILITY_THRESHOLD:
             # Add to positioned results
             results.append(WineResult(
                 wine_name=wine.wine_name,
@@ -171,10 +189,8 @@ async def process_image(
     )
 
 
-def _fallback_response(image_id: str) -> ScanResponse:
+def _fallback_response(image_id: str, wine_matcher: WineMatcher) -> ScanResponse:
     """Return empty results with common wines in fallback."""
-    wine_matcher = get_wine_matcher()
-
     # Add some popular wines to fallback
     popular_wines = [
         "Caymus Cabernet Sauvignon",
@@ -209,8 +225,8 @@ async def scan_debug(
     Returns raw OCR text from Vision API and extracted wine names.
     Use this to test OCR quality before full pipeline processing.
     """
-    # Validate image type
-    if image.content_type not in ["image/jpeg", "image/png"]:
+    # Validate content type
+    if image.content_type not in Config.ALLOWED_CONTENT_TYPES:
         raise HTTPException(
             status_code=400,
             detail="Invalid image type. Only JPEG and PNG are supported."
@@ -218,6 +234,18 @@ async def scan_debug(
 
     try:
         image_bytes = await image.read()
+    except IOError as e:
+        logger.error(f"Failed to read uploaded image for debug: {e}")
+        raise HTTPException(status_code=400, detail="Failed to read image file")
+
+    # Validate file size
+    if len(image_bytes) > Config.MAX_IMAGE_SIZE_BYTES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Image too large. Maximum size is {Config.MAX_IMAGE_SIZE_MB}MB."
+        )
+
+    try:
         vision_service = VisionService()
         result = vision_service.analyze(image_bytes)
 
@@ -230,11 +258,12 @@ async def scan_debug(
             "raw_ocr_text": result.raw_text,
             "bottles_detected": len(result.objects),
         }
+    except ValueError as e:
+        logger.warning(f"Invalid image in debug endpoint: {e}")
+        raise HTTPException(status_code=400, detail="Invalid image format")
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error processing image: {str(e)}"
-        )
+        logger.error(f"Debug endpoint error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/health")

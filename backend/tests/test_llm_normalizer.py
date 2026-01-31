@@ -19,6 +19,7 @@ from app.services.llm_normalizer import (
     ClaudeNormalizer,
     MockNormalizer,
     get_normalizer,
+    ANTHROPIC_AVAILABLE,
 )
 
 
@@ -295,7 +296,12 @@ class TestClaudeNormalizerErrorHandling:
         assert result.wine_name is None
         assert result.confidence == 0.0
         assert result.is_wine is False
-        assert "LLM error" in result.reasoning
+        # If anthropic isn't installed, we get "LLM not available"
+        # If it is installed, we get "LLM error: Exception"
+        if ANTHROPIC_AVAILABLE:
+            assert "LLM error" in result.reasoning
+        else:
+            assert "LLM not available" in result.reasoning
 
 
 class TestGetNormalizerFactory:

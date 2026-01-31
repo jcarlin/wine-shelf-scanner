@@ -2,22 +2,23 @@ import Foundation
 
 /// App configuration
 enum Config {
-    /// API base URL
+    /// API base URL (from xcconfig → Info.plist, or env var, or fallback)
     static var apiBaseURL: URL {
-        // Check for environment override first
+        // 1. Check for runtime environment override (useful for testing)
         if let urlString = ProcessInfo.processInfo.environment["API_BASE_URL"],
            let url = URL(string: urlString) {
             return url
         }
 
-        #if DEBUG
-        // Local development - use Mac's IP for simulator access
-        return URL(string: "http://192.168.1.112:8000")!
-        #else
-        // Production - Cloud Run URL
-        // Update this after deploying to Cloud Run
+        // 2. Read from Info.plist (set via xcconfig)
+        if let urlString = Bundle.main.object(forInfoDictionaryKey: "API_BASE_URL") as? String,
+           !urlString.isEmpty,
+           let url = URL(string: urlString) {
+            return url
+        }
+
+        // 3. Fallback to production URL
         return URL(string: "https://wine-scanner-api-82762985464.us-central1.run.app")!
-        #endif
     }
 
     /// Whether to use mock data (for UI development)

@@ -5,10 +5,22 @@ Uses Claude Haiku for cost-effective normalization of messy OCR text
 to canonical wine names. Swappable via the NormalizerProtocol.
 """
 
-import os
 import json
+import logging
+import os
 from dataclasses import dataclass
 from typing import Optional, Protocol
+
+# Try to import anthropic at module load time (for type hints and availability check)
+# but don't make any API calls without proper configuration
+try:
+    import anthropic
+    ANTHROPIC_AVAILABLE = True
+except ModuleNotFoundError:
+    anthropic = None  # type: ignore
+    ANTHROPIC_AVAILABLE = False
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -101,7 +113,8 @@ Confidence:
                 raise ValueError(
                     "ANTHROPIC_API_KEY not set. Set env var or pass api_key."
                 )
-            import anthropic
+            if not ANTHROPIC_AVAILABLE:
+                raise ModuleNotFoundError("anthropic module not installed")
             self._client = anthropic.Anthropic(api_key=self.api_key)
         return self._client
 
@@ -128,6 +141,16 @@ Confidence:
                 reasoning="Text too short"
             )
 
+        # Early return if API key not configured (don't even try to import)
+        if not self.api_key:
+            logger.debug("ANTHROPIC_API_KEY not set, skipping LLM normalization")
+            return NormalizationResult(
+                wine_name=None,
+                confidence=0.0,
+                is_wine=False,
+                reasoning="LLM not configured"
+            )
+
         # Build prompt
         user_prompt = f'OCR Text: "{ocr_text}"'
         if context:
@@ -135,6 +158,16 @@ Confidence:
         user_prompt += """
 
 Return JSON: {"wine_name": "...", "confidence": 0.0-1.0, "is_wine": true/false, "reasoning": "..."}"""
+
+        # Check if anthropic is available before making API calls
+        if not ANTHROPIC_AVAILABLE:
+            logger.warning("anthropic module not installed, skipping LLM normalization")
+            return NormalizationResult(
+                wine_name=None,
+                confidence=0.0,
+                is_wine=False,
+                reasoning="LLM not available"
+            )
 
         try:
             client = self._get_client()
@@ -150,12 +183,47 @@ Return JSON: {"wine_name": "...", "confidence": 0.0-1.0, "is_wine": true/false, 
             # Parse response
             return self._parse_response(response.content[0].text)
 
-        except Exception as e:
+        except anthropic.APIConnectionError as e:
+            logger.warning(f"Anthropic API connection failed: {e}")
             return NormalizationResult(
                 wine_name=None,
                 confidence=0.0,
                 is_wine=False,
-                reasoning=f"LLM error: {str(e)}"
+                reasoning="LLM service unavailable"
+            )
+        except anthropic.APIError as e:
+            logger.error(f"Anthropic API error: {e}")
+            return NormalizationResult(
+                wine_name=None,
+                confidence=0.0,
+                is_wine=False,
+                reasoning="LLM service error"
+            )
+        except (json.JSONDecodeError, IndexError, KeyError) as e:
+            logger.warning(f"Failed to parse LLM response: {e}")
+            return NormalizationResult(
+                wine_name=None,
+                confidence=0.0,
+                is_wine=False,
+                reasoning="Failed to parse LLM response"
+            )
+        except ValueError as e:
+            # API key not set
+            logger.warning(f"LLM configuration error: {e}")
+            return NormalizationResult(
+                wine_name=None,
+                confidence=0.0,
+                is_wine=False,
+                reasoning="LLM not configured"
+            )
+        except Exception as e:
+            # Catch-all for unexpected errors
+            logger.error(f"Unexpected LLM error: {e}", exc_info=True)
+            return NormalizationResult(
+                wine_name=None,
+                confidence=0.0,
+                is_wine=False,
+                reasoning=f"LLM error: {type(e).__name__}"
             )
 
     def _parse_response(self, response_text: str) -> NormalizationResult:

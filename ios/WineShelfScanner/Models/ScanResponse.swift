@@ -89,14 +89,14 @@ extension ScanResponse {
         topThree.contains(wine)
     }
 
-    /// Returns visible results (confidence >= 0.45)
+    /// Returns visible results (confidence >= visibility threshold)
     var visibleResults: [WineResult] {
-        results.filter { $0.confidence >= 0.45 }
+        results.filter { OverlayMath.isVisible(confidence: $0.confidence) }
     }
 
-    /// Returns tappable results (confidence >= 0.65)
+    /// Returns tappable results (confidence >= tappable threshold)
     var tappableResults: [WineResult] {
-        results.filter { $0.confidence >= 0.65 }
+        results.filter { OverlayMath.isTappable(confidence: $0.confidence) }
     }
 
     /// Whether partial detection occurred (some in fallback)
@@ -113,15 +113,11 @@ extension ScanResponse {
 extension WineResult {
     /// Whether this wine should be tappable for detail sheet
     var isTappable: Bool {
-        confidence >= 0.65
+        OverlayMath.isTappable(confidence: confidence)
     }
 
     /// Confidence label for detail sheet
     var confidenceLabel: String {
-        if confidence >= 0.85 {
-            return "Widely rated"
-        } else {
-            return "Limited data"
-        }
+        OverlayMath.confidenceLabel(confidence: confidence)
     }
 }

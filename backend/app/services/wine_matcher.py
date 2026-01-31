@@ -15,10 +15,12 @@ import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
-from rapidfuzz import fuzz, process
 import jellyfish
+from rapidfuzz import fuzz, process
+
+from ..config import Config
 
 if TYPE_CHECKING:
     from .wine_repository import WineRepository
@@ -44,17 +46,6 @@ class WineMatcher:
 
     Plus phonetic matching for OCR error tolerance.
     """
-
-    # Minimum similarity score to consider a match
-    MIN_SIMILARITY = 0.6
-
-    # Weights for combining algorithms
-    WEIGHT_RATIO = 0.30
-    WEIGHT_PARTIAL = 0.50
-    WEIGHT_TOKEN_SORT = 0.20
-
-    # Phonetic match bonus (0-0.15)
-    PHONETIC_BONUS = 0.10
 
     def __init__(
         self,
@@ -188,7 +179,7 @@ class WineMatcher:
                 query_lower,
                 candidates,
                 scorer=fuzz.WRatio,  # Weighted ratio - good balance
-                score_cutoff=self.MIN_SIMILARITY * 100
+                score_cutoff=Config.MIN_SIMILARITY * 100
             )
             if result:
                 name, score, _ = result
@@ -209,7 +200,7 @@ class WineMatcher:
 
             for name in candidates:
                 score = self._enhanced_similarity(query_lower, name, query_metaphone)
-                if score > best_score and score >= self.MIN_SIMILARITY:
+                if score > best_score and score >= Config.MIN_SIMILARITY:
                     best_score = score
                     best_match = self.name_to_wine[name]
 
@@ -294,9 +285,9 @@ class WineMatcher:
 
         # Weighted combination
         base_score = (
-            self.WEIGHT_RATIO * ratio_score +
-            self.WEIGHT_PARTIAL * partial_score +
-            self.WEIGHT_TOKEN_SORT * token_sort_score
+            Config.WEIGHT_RATIO * ratio_score +
+            Config.WEIGHT_PARTIAL * partial_score +
+            Config.WEIGHT_TOKEN_SORT * token_sort_score
         )
 
         # Phonetic bonus
@@ -305,11 +296,11 @@ class WineMatcher:
             try:
                 candidate_metaphone = jellyfish.metaphone(candidate)
                 if query_metaphone == candidate_metaphone:
-                    phonetic_bonus = self.PHONETIC_BONUS
+                    phonetic_bonus = Config.PHONETIC_BONUS
                 elif jellyfish.jaro_winkler_similarity(
                     query_metaphone, candidate_metaphone
                 ) > 0.8:
-                    phonetic_bonus = self.PHONETIC_BONUS * 0.5
+                    phonetic_bonus = Config.PHONETIC_BONUS * 0.5
             except Exception:
                 pass
 

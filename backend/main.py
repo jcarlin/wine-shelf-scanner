@@ -7,7 +7,15 @@ Usage:
     uvicorn main:app --reload
 """
 
+import logging
+
 from fastapi import FastAPI
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.routes import scan_router

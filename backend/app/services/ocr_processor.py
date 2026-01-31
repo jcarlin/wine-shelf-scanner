@@ -5,7 +5,8 @@ OCR text processing: grouping text to bottles and normalization.
 import re
 from dataclasses import dataclass
 
-from .vision import DetectedObject, TextBlock, BoundingBox
+from ..config import Config
+from .vision import BoundingBox, DetectedObject, TextBlock
 
 
 # Patterns for filtering non-wine text
@@ -138,10 +139,6 @@ class BottleText:
 class OCRProcessor:
     """Processes OCR results to extract wine names per bottle."""
 
-    # Proximity threshold for assigning text to bottles
-    # Text must be within this normalized distance of bottle center
-    PROXIMITY_THRESHOLD = 0.15
-
     # Patterns to remove during normalization
     YEAR_PATTERN = re.compile(r'\b(19|20)\d{2}\b')
     SIZE_PATTERN = re.compile(r'\b\d+\s*(ml|ML|mL|L|l|cl|CL)\b', re.IGNORECASE)
@@ -156,7 +153,11 @@ class OCRProcessor:
         'vintage', 'aged', 'barrel', 'oak', 'months', 'years'
     }
 
-    def __init__(self, image_width: int = 1000, image_height: int = 1000):
+    def __init__(
+        self,
+        image_width: int = Config.DEFAULT_IMAGE_WIDTH,
+        image_height: int = Config.DEFAULT_IMAGE_HEIGHT
+    ):
         """
         Initialize processor.
 
@@ -220,7 +221,7 @@ class OCRProcessor:
             distance = self._distance(bottle_center, text_center)
 
             # Check if text overlaps or is near bottle bbox
-            if distance < self.PROXIMITY_THRESHOLD or self._overlaps(bottle.bbox, block.bbox):
+            if distance < Config.PROXIMITY_THRESHOLD or self._overlaps(bottle.bbox, block.bbox):
                 nearby.append(block.text)
 
         return nearby

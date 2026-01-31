@@ -25,6 +25,8 @@
 		APP0016 /* empty_results.json in Resources */ = {isa = PBXBuildFile; fileRef = RES0004; };
 		APP0017 /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0013; };
 		APP0018 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0014; };
+		APP0019 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = RES0005; };
+		APP0020 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = RES0006; };
 		TEST0001 /* ScanResponseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0001; };
 		TEST0002 /* OverlayMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0002; };
 /* End PBXBuildFile section */
@@ -59,6 +61,8 @@
 		RES0002 /* partial_detection.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = partial_detection.json; sourceTree = "<group>"; };
 		RES0003 /* low_confidence.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = low_confidence.json; sourceTree = "<group>"; };
 		RES0004 /* empty_results.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = empty_results.json; sourceTree = "<group>"; };
+		RES0005 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		RES0006 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		TST0001 /* ScanResponseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanResponseTests.swift; sourceTree = "<group>"; };
 		TST0002 /* OverlayMathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayMathTests.swift; sourceTree = "<group>"; };
 		PROD0001 /* WineShelfScanner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WineShelfScanner.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -102,6 +106,7 @@
 				GRP00008 /* Utils */,
 				GRP00009 /* Resources */,
 				INFO001 /* Info.plist */,
+				RES0006 /* PrivacyInfo.xcprivacy */,
 			);
 			path = WineShelfScanner;
 			sourceTree = "<group>";
@@ -166,6 +171,7 @@
 		GRP00009 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				RES0005 /* Assets.xcassets */,
 				GRP00012 /* MockData */,
 			);
 			path = Resources;
@@ -285,6 +291,8 @@
 				APP0014 /* partial_detection.json in Resources */,
 				APP0015 /* low_confidence.json in Resources */,
 				APP0016 /* empty_results.json in Resources */,
+				APP0019 /* Assets.xcassets in Resources */,
+				APP0020 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

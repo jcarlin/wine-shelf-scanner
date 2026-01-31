@@ -45,16 +45,32 @@ struct OverlayMath {
         }
     }
 
+    // MARK: - Confidence Thresholds
+
+    /// Minimum confidence to show overlay (opacity 0.5)
+    static let visibilityThreshold = 0.45
+
+    /// Minimum confidence for tappable overlays (opacity 0.75)
+    static let tappableThreshold = 0.65
+
+    /// Minimum confidence for "Widely rated" label (opacity 1.0)
+    static let highConfidenceThreshold = 0.85
+
     // MARK: - Visibility
 
     /// Whether a wine should be visible (confidence >= 0.45)
     static func isVisible(confidence: Double) -> Bool {
-        confidence >= 0.45
+        confidence >= visibilityThreshold
     }
 
     /// Whether a wine should be tappable (confidence >= 0.65)
     static func isTappable(confidence: Double) -> Bool {
-        confidence >= 0.65
+        confidence >= tappableThreshold
+    }
+
+    /// Confidence label for detail sheet ("Widely rated" or "Limited data")
+    static func confidenceLabel(confidence: Double) -> String {
+        confidence >= highConfidenceThreshold ? "Widely rated" : "Limited data"
     }
 
     // MARK: - Collision Avoidance

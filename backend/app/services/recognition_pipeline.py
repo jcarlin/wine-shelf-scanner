@@ -11,9 +11,10 @@ Architecture:
 from dataclasses import dataclass
 from typing import Optional
 
-from .wine_matcher import WineMatcher, WineMatch
-from .llm_normalizer import NormalizerProtocol, get_normalizer, NormalizationResult
+from ..config import Config
+from .llm_normalizer import NormalizerProtocol, get_normalizer
 from .ocr_processor import BottleText
+from .wine_matcher import WineMatcher, WineMatch
 
 
 @dataclass
@@ -37,12 +38,6 @@ class RecognitionPipeline:
     3. Try fuzzy match again with normalized name
     4. If still no DB match but LLM says is_wine → return as identified (no rating)
     """
-
-    # Confidence threshold for accepting fuzzy match without LLM
-    FUZZY_CONFIDENCE_THRESHOLD = 0.7
-
-    # Minimum confidence for fallback list
-    FALLBACK_THRESHOLD = 0.45
 
     def __init__(
         self,
@@ -96,7 +91,7 @@ class RecognitionPipeline:
         # Step 1: Try enhanced fuzzy match
         match = self.wine_matcher.match(bottle_text.normalized_name)
 
-        if match and match.confidence >= self.FUZZY_CONFIDENCE_THRESHOLD:
+        if match and match.confidence >= Config.FUZZY_CONFIDENCE_THRESHOLD:
             # High-confidence DB match
             return RecognizedWine(
                 wine_name=match.canonical_name,
@@ -114,7 +109,7 @@ class RecognitionPipeline:
                 return llm_result
 
         # Step 3: Return low-confidence DB match if we have one
-        if match and match.confidence >= self.FALLBACK_THRESHOLD:
+        if match and match.confidence >= Config.VISIBILITY_THRESHOLD:
             return RecognizedWine(
                 wine_name=match.canonical_name,
                 rating=match.rating,
@@ -149,7 +144,7 @@ class RecognitionPipeline:
         if llm_result.wine_name:
             match = self.wine_matcher.match(llm_result.wine_name)
 
-            if match and match.confidence >= self.FALLBACK_THRESHOLD:
+            if match and match.confidence >= Config.VISIBILITY_THRESHOLD:
                 # LLM helped us find a DB match
                 return RecognizedWine(
                     wine_name=match.canonical_name,

@@ -50,7 +50,7 @@ class ScanAPIClient: ScanServiceProtocol {
         let url = baseURL.appendingPathComponent("scan")
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        request.timeoutInterval = 10.0
+        request.timeoutInterval = Config.requestTimeout
 
         // Create multipart form data
         let boundary = UUID().uuidString

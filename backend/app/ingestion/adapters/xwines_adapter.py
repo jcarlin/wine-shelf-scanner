@@ -7,11 +7,14 @@ Joins them together and yields RawWineRecord objects.
 
 import csv
 import hashlib
-from pathlib import Path
-from typing import Optional, Iterator
+import logging
 from collections import defaultdict
+from pathlib import Path
+from typing import Iterator, Optional
 
 from ..protocols import DataSourceAdapter, RawWineRecord
+
+logger = logging.getLogger(__name__)
 
 
 class XWinesAdapter(DataSourceAdapter):
@@ -80,7 +83,7 @@ class XWinesAdapter(DataSourceAdapter):
                     except ValueError:
                         continue
 
-        print(f"  Loaded {sum(len(r) for r in wine_ratings.values()):,} ratings for {len(wine_ratings):,} wines")
+        logger.info(f"Loaded {sum(len(r) for r in wine_ratings.values()):,} ratings for {len(wine_ratings):,} wines")
 
         # Step 2: Load wines and yield records
         row_num = 0

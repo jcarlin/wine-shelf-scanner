@@ -11,6 +11,7 @@ Tests the full recognition flow:
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 
+from app.config import Config
 from app.services.recognition_pipeline import RecognitionPipeline, RecognizedWine
 from app.services.wine_matcher import WineMatcher, WineMatch
 from app.services.llm_normalizer import (
@@ -301,7 +302,7 @@ class TestRecognitionPipelineConfidenceFiltering:
         results = await pipeline.recognize([bottle_text])
 
         assert len(results) == 1
-        assert results[0].confidence >= RecognitionPipeline.FALLBACK_THRESHOLD
+        assert results[0].confidence >= Config.VISIBILITY_THRESHOLD
 
     @pytest.mark.asyncio
     async def test_minimum_confidence_preserved(self, pipeline):

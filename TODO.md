@@ -4,13 +4,14 @@
 
 - [x] FastAPI project setup (`main.py`, `requirements.txt`)
 - [x] `/scan` endpoint (receives image, returns JSON)
-- [ ] Google Vision integration (`TEXT_DETECTION`)
-- [ ] Google Vision integration (`OBJECT_LOCALIZATION`)
-- [ ] OCR text grouping by spatial proximity to bottle bbox
-- [ ] Text normalization (remove years, sizes, marketing)
-- [ ] LLM integration interface (swappable/removable)
-- [ ] Mock ratings database
+- [x] Google Vision integration (`TEXT_DETECTION`) - ready, needs credentials
+- [x] Google Vision integration (`OBJECT_LOCALIZATION`) - ready, needs credentials
+- [x] OCR text grouping by spatial proximity to bottle bbox
+- [x] Text normalization (remove years, sizes, marketing)
+- [ ] LLM integration interface (swappable/removable) - deferred
+- [x] Mock ratings database (50+ wines)
 - [x] Response schema validation (match API contract exactly)
+- [x] Fuzzy wine matching with aliases
 
 ## iOS - Core
 
@@ -55,6 +56,8 @@
 - [ ] Test images (varied shelf layouts)
 - [ ] End-to-end flow test
 - [x] Confidence threshold edge cases
+- [x] OCR normalization tests (26 tests passing)
+- [x] Wine matcher tests
 
 ## Documentation
 
@@ -62,3 +65,10 @@
 - [x] TODO.md (this file)
 - [x] PRD.md (canonical product requirements)
 - [x] PLAN.md (development plan)
+
+## Next Steps
+
+1. Set up Google Cloud credentials to enable real Vision API
+2. Add camera capture to iOS app (Phase 4)
+3. Deploy backend to Cloud Run (Phase 4)
+4. TestFlight build (Phase 5)

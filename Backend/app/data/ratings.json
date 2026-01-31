@@ -1,0 +1,310 @@
+{
+  "wines": [
+    {
+      "canonical_name": "Opus One",
+      "aliases": ["Opus 1", "Opus One Napa Valley"],
+      "rating": 4.8,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Caymus Cabernet Sauvignon",
+      "aliases": ["Caymus", "Caymus Cab", "Caymus Napa Valley"],
+      "rating": 4.5,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Silver Oak Alexander Valley",
+      "aliases": ["Silver Oak", "Silver Oak Cabernet"],
+      "rating": 4.4,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Jordan Cabernet Sauvignon",
+      "aliases": ["Jordan", "Jordan Cab", "Jordan Alexander Valley"],
+      "rating": 4.3,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "La Crema Sonoma Coast Pinot Noir",
+      "aliases": ["La Crema", "La Crema Pinot", "La Crema Sonoma"],
+      "rating": 4.1,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Meiomi Pinot Noir",
+      "aliases": ["Meiomi", "Meiomi Pinot"],
+      "rating": 3.9,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Kendall-Jackson Vintner's Reserve Chardonnay",
+      "aliases": ["Kendall Jackson", "KJ Chardonnay", "Kendall-Jackson", "KJ Vintners Reserve"],
+      "rating": 3.8,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Bread & Butter Chardonnay",
+      "aliases": ["Bread and Butter", "Bread Butter", "B&B Chardonnay"],
+      "rating": 3.7,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Josh Cellars Cabernet Sauvignon",
+      "aliases": ["Josh Cellars", "Josh Cab", "Josh Cabernet"],
+      "rating": 3.8,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Apothic Red",
+      "aliases": ["Apothic", "Apothic Red Blend"],
+      "rating": 3.6,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "19 Crimes Red Blend",
+      "aliases": ["19 Crimes", "Nineteen Crimes"],
+      "rating": 3.5,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Barefoot Moscato",
+      "aliases": ["Barefoot", "Barefoot Sweet"],
+      "rating": 3.3,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Yellow Tail Shiraz",
+      "aliases": ["Yellow Tail", "Yellowtail", "Yellow Tail Shiraz"],
+      "rating": 3.2,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Chateau Margaux",
+      "aliases": ["Ch Margaux", "Margaux"],
+      "rating": 4.9,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Chateau Lafite Rothschild",
+      "aliases": ["Lafite", "Lafite Rothschild", "Ch Lafite"],
+      "rating": 4.9,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Penfolds Grange",
+      "aliases": ["Grange", "Penfolds"],
+      "rating": 4.7,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Cloudy Bay Sauvignon Blanc",
+      "aliases": ["Cloudy Bay", "Cloudy Bay Sauv Blanc"],
+      "rating": 4.2,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Kim Crawford Sauvignon Blanc",
+      "aliases": ["Kim Crawford", "Kim Crawford Sauv Blanc"],
+      "rating": 3.9,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Whispering Angel Rose",
+      "aliases": ["Whispering Angel", "Chateau d'Esclans"],
+      "rating": 4.0,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Veuve Clicquot Yellow Label",
+      "aliases": ["Veuve Clicquot", "Veuve", "Yellow Label"],
+      "rating": 4.3,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Dom Perignon",
+      "aliases": ["Dom P", "DP"],
+      "rating": 4.6,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Moet & Chandon Imperial",
+      "aliases": ["Moet", "Moet Chandon", "Moet Imperial"],
+      "rating": 4.1,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Duckhorn Napa Valley Merlot",
+      "aliases": ["Duckhorn", "Duckhorn Merlot"],
+      "rating": 4.3,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Stag's Leap Wine Cellars Artemis",
+      "aliases": ["Stags Leap", "Stag's Leap Artemis", "Artemis"],
+      "rating": 4.4,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Robert Mondavi Cabernet Sauvignon",
+      "aliases": ["Robert Mondavi", "Mondavi Cab", "Mondavi"],
+      "rating": 4.0,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Beringer Knights Valley Cabernet",
+      "aliases": ["Beringer", "Beringer Knights Valley"],
+      "rating": 4.1,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Sterling Vineyards Napa Valley Cabernet",
+      "aliases": ["Sterling", "Sterling Vineyards", "Sterling Cab"],
+      "rating": 3.9,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Cakebread Cellars Chardonnay",
+      "aliases": ["Cakebread", "Cakebread Chardonnay"],
+      "rating": 4.3,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Rombauer Chardonnay",
+      "aliases": ["Rombauer", "Rombauer Carneros"],
+      "rating": 4.2,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Far Niente Chardonnay",
+      "aliases": ["Far Niente", "Far Niente Napa"],
+      "rating": 4.4,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Simi Sonoma County Chardonnay",
+      "aliases": ["Simi", "Simi Chardonnay"],
+      "rating": 3.8,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Decoy Cabernet Sauvignon",
+      "aliases": ["Decoy", "Decoy Cab", "Duckhorn Decoy"],
+      "rating": 4.0,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "The Prisoner Red Blend",
+      "aliases": ["The Prisoner", "Prisoner Wine"],
+      "rating": 4.2,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Orin Swift Papillon",
+      "aliases": ["Orin Swift", "Papillon"],
+      "rating": 4.3,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Austin Hope Cabernet Sauvignon",
+      "aliases": ["Austin Hope", "Hope Cab", "Austin Hope Paso"],
+      "rating": 4.4,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "DAOU Cabernet Sauvignon",
+      "aliases": ["DAOU", "Daou Cab", "Daou Reserve"],
+      "rating": 4.3,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Justin Cabernet Sauvignon",
+      "aliases": ["Justin", "Justin Cab", "Justin Paso Robles"],
+      "rating": 4.1,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Bogle Phantom",
+      "aliases": ["Bogle", "Phantom", "Bogle Phantom Red"],
+      "rating": 3.9,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Gnarly Head Old Vine Zinfandel",
+      "aliases": ["Gnarly Head", "Gnarly Head Zin"],
+      "rating": 3.7,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Mark West Pinot Noir",
+      "aliases": ["Mark West", "Mark West Pinot"],
+      "rating": 3.5,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Woodbridge by Robert Mondavi Cabernet",
+      "aliases": ["Woodbridge", "Woodbridge Cab"],
+      "rating": 3.4,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Cupcake Vineyards Red Velvet",
+      "aliases": ["Cupcake", "Cupcake Red Velvet"],
+      "rating": 3.5,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Menage a Trois Red Blend",
+      "aliases": ["Menage a Trois", "Menage"],
+      "rating": 3.6,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Layer Cake Shiraz",
+      "aliases": ["Layer Cake", "Layer Cake Shiraz"],
+      "rating": 3.8,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Dark Horse Cabernet Sauvignon",
+      "aliases": ["Dark Horse", "Dark Horse Cab"],
+      "rating": 3.6,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "7 Deadly Zins Old Vine Zinfandel",
+      "aliases": ["7 Deadly Zins", "7 Deadly", "Seven Deadly Zins"],
+      "rating": 3.8,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Rex Goliath Pinot Noir",
+      "aliases": ["Rex Goliath", "Giant 47 Pound Rooster"],
+      "rating": 3.3,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Franzia Sunset Blush",
+      "aliases": ["Franzia", "Franzia Box Wine"],
+      "rating": 2.8,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Carlo Rossi Burgundy",
+      "aliases": ["Carlo Rossi", "Carlo Rossi Jug"],
+      "rating": 2.9,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Bota Box Cabernet Sauvignon",
+      "aliases": ["Bota Box", "Bota Box Cab"],
+      "rating": 3.4,
+      "source": "vivino"
+    },
+    {
+      "canonical_name": "Black Box Merlot",
+      "aliases": ["Black Box", "Black Box Wine"],
+      "rating": 3.5,
+      "source": "vivino"
+    }
+  ]
+}

@@ -61,7 +61,11 @@ struct ContentView: View {
                         onNewScan: {
                             viewModel.reset()
                             capturedImage = nil
-                        }
+                        },
+                        onToggleDebugMode: {
+                            viewModel.toggleDebugMode()
+                        },
+                        debugMode: viewModel.debugMode
                     )
 
                 case .error(let message):

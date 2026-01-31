@@ -42,10 +42,11 @@ struct OverlayContainerView: View {
             WineResult(wineName: "Caymus", rating: 4.5, confidence: 0.88, bbox: BoundingBox(x: 0.5, y: 0.2, width: 0.15, height: 0.4)),
             WineResult(wineName: "Budget Wine", rating: 3.2, confidence: 0.55, bbox: BoundingBox(x: 0.8, y: 0.2, width: 0.15, height: 0.4)),
         ],
-        fallbackList: []
+        fallbackList: [],
+        debug: nil
     )
 
-    return ZStack {
+    ZStack {
         Color.gray
         OverlayContainerView(
             response: testResponse,

@@ -14,7 +14,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 
 from ..config import Config
 from ..mocks.fixtures import get_mock_response
-from ..models import BoundingBox, FallbackWine, ScanResponse, WineResult
+from ..models import BoundingBox, DebugData, FallbackWine, ScanResponse, WineResult
 from ..services.ocr_processor import OCRProcessor, extract_wine_names
 from ..services.recognition_pipeline import RecognitionPipeline
 from ..services.vision import MockVisionService, VisionService
@@ -33,11 +33,13 @@ def get_wine_matcher() -> WineMatcher:
     return WineMatcher(use_sqlite=Config.use_sqlite())
 
 
-def get_pipeline(use_llm: bool = True) -> RecognitionPipeline:
+def get_pipeline(use_llm: bool = True, debug_mode: bool = False) -> RecognitionPipeline:
     """Create recognition pipeline with specified LLM setting."""
     return RecognitionPipeline(
         wine_matcher=get_wine_matcher(),
-        use_llm=use_llm
+        use_llm=use_llm,
+        llm_provider=Config.llm_provider(),
+        debug_mode=debug_mode
     )
 
 
@@ -48,8 +50,9 @@ def get_pipeline(use_llm: bool = True) -> RecognitionPipeline:
 async def scan_shelf(
     image: UploadFile = File(..., description="Wine shelf image"),
     mock_scenario: Optional[str] = Query(None, description="Mock scenario for testing"),
-    use_vision_api: bool = Query(False, description="Use real Vision API"),
+    use_vision_api: bool = Query(True, description="Use real Vision API"),
     use_llm: bool = Query(True, description="Use LLM fallback for unknown wines"),
+    debug: bool = Query(False, description="Include pipeline debug info in response"),
     wine_matcher: WineMatcher = Depends(get_wine_matcher),
 ) -> ScanResponse:
     """
@@ -102,7 +105,7 @@ async def scan_shelf(
     # Process image
     try:
         return await process_image(
-            image_id, image_bytes, use_vision_api, use_llm, wine_matcher
+            image_id, image_bytes, use_vision_api, use_llm, debug, wine_matcher
         )
     except ValueError as e:
         logger.warning(f"Invalid image format: {e}")
@@ -117,6 +120,7 @@ async def process_image(
     image_bytes: bytes,
     use_real_api: bool,
     use_llm: bool,
+    debug_mode: bool,
     wine_matcher: WineMatcher,
 ) -> ScanResponse:
     """
@@ -153,7 +157,9 @@ async def process_image(
     )
 
     # Step 3 & 4: Tiered recognition (fuzzy match → LLM fallback)
-    pipeline = get_pipeline(use_llm=use_llm)
+    # Enable debug mode if explicitly requested OR if in dev mode
+    enable_debug = debug_mode or Config.is_dev()
+    pipeline = get_pipeline(use_llm=use_llm, debug_mode=enable_debug)
     recognized = await pipeline.recognize(bottle_texts)
 
     logger.info(f"[{image_id}] Recognized {len(recognized)} wines")
@@ -194,10 +200,29 @@ async def process_image(
 
     logger.info(f"[{image_id}] Response: {len(results)} results, {len(fallback)} fallback")
 
+    # Build debug data if requested or in dev mode
+    debug_data = None
+    if debug_mode or Config.is_dev():
+        debug_data = DebugData(
+            pipeline_steps=pipeline.debug_steps,
+            total_ocr_texts=len(bottle_texts),
+            bottles_detected=len(vision_result.objects),
+            texts_matched=len([s for s in pipeline.debug_steps if s.included_in_results]),
+            llm_calls_made=pipeline.llm_call_count
+        )
+
+        # Log summary table in dev mode
+        if Config.is_dev():
+            logger.info(f"[{image_id}] Pipeline Summary:\n{debug_data.format_summary_table()}")
+
+    # Only include debug in response if explicitly requested
+    response_debug = debug_data if debug_mode else None
+
     return ScanResponse(
         image_id=image_id,
         results=results,
-        fallback_list=fallback
+        fallback_list=fallback,
+        debug=response_debug
     )
 
 

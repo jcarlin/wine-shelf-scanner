@@ -27,6 +27,7 @@
 		APP0018 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0014; };
 		APP0019 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = RES0005; };
 		APP0020 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = RES0006; };
+		APP0021 /* DebugTray.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0015; };
 		TEST0001 /* ScanResponseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0001; };
 		TEST0002 /* OverlayMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0002; };
 		UITST001 /* AccessibilityIdentifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = UISRC001; };
@@ -70,6 +71,7 @@
 		SRC0012 /* WineDetailSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WineDetailSheet.swift; sourceTree = "<group>"; };
 		SRC0013 /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
 		SRC0014 /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
+		SRC0015 /* DebugTray.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugTray.swift; sourceTree = "<group>"; };
 		INFO001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		RES0001 /* full_shelf.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = full_shelf.json; sourceTree = "<group>"; };
 		RES0002 /* partial_detection.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = partial_detection.json; sourceTree = "<group>"; };
@@ -177,6 +179,7 @@
 				SRC0010 /* OverlayContainerView.swift */,
 				SRC0011 /* RatingBadge.swift */,
 				SRC0012 /* WineDetailSheet.swift */,
+				SRC0015 /* DebugTray.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -399,6 +402,7 @@
 				APP0012 /* WineDetailSheet.swift in Sources */,
 				APP0017 /* CameraView.swift in Sources */,
 				APP0018 /* Config.swift in Sources */,
+				APP0021 /* DebugTray.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

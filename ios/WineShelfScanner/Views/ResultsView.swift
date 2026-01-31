@@ -5,6 +5,8 @@ struct ResultsView: View {
     let response: ScanResponse
     let image: UIImage
     let onNewScan: () -> Void
+    let onToggleDebugMode: () -> Void
+    let debugMode: Bool
 
     @State private var selectedWine: WineResult?
     @State private var showToast = false
@@ -16,6 +18,11 @@ struct ResultsView: View {
                 FallbackListView(wines: response.fallbackList)
             } else {
                 overlayImageView
+            }
+
+            // Debug tray (when debug data present)
+            if let debugData = response.debug {
+                DebugTray(debugData: debugData)
             }
 
             // Bottom action bar
@@ -77,6 +84,19 @@ struct ResultsView: View {
             .buttonStyle(.borderedProminent)
             .tint(.white)
             .accessibilityIdentifier("newScanButton")
+            .simultaneousGesture(
+                LongPressGesture(minimumDuration: 1.0)
+                    .onEnded { _ in
+                        onToggleDebugMode()
+                    }
+            )
+
+            // Debug mode indicator
+            if debugMode {
+                Image(systemName: "wrench.and.screwdriver.fill")
+                    .foregroundColor(.orange)
+                    .font(.caption)
+            }
         }
         .padding()
         .background(Color.black.opacity(0.9))
@@ -168,9 +188,12 @@ struct FallbackWineRow: View {
                 WineResult(wineName: "Opus One", rating: 4.8, confidence: 0.91, bbox: BoundingBox(x: 0.15, y: 0.12, width: 0.09, height: 0.38)),
                 WineResult(wineName: "Caymus", rating: 4.5, confidence: 0.94, bbox: BoundingBox(x: 0.05, y: 0.15, width: 0.08, height: 0.35)),
             ],
-            fallbackList: []
+            fallbackList: [],
+            debug: nil
         ),
         image: UIImage(systemName: "photo")!,
-        onNewScan: {}
+        onNewScan: {},
+        onToggleDebugMode: {},
+        debugMode: false
     )
 }

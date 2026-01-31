@@ -2,9 +2,9 @@
 Tests for the tiered recognition pipeline.
 
 Tests the full recognition flow:
-1. Enhanced fuzzy match (confidence >= 0.7) -> no LLM call
-2. Fuzzy match fails (confidence < 0.7) -> LLM fallback triggered
-3. LLM normalizes text -> re-match succeeds
+1. Enhanced fuzzy match (confidence >= 0.85) -> no LLM call (skip entirely)
+2. Fuzzy match fails (confidence < 0.85) -> LLM batch validation triggered
+3. LLM validates/identifies wine -> re-match against DB if rejected
 4. Confidence filtering (>= 0.45 -> results, < 0.45 -> fallback)
 """
 
@@ -17,6 +17,9 @@ from app.services.wine_matcher import WineMatcher, WineMatch
 from app.services.llm_normalizer import (
     NormalizerProtocol,
     NormalizationResult,
+    ValidationResult,
+    BatchValidationItem,
+    BatchValidationResult,
     MockNormalizer,
 )
 from app.services.ocr_processor import BottleText
@@ -55,7 +58,7 @@ class TestRecognitionPipelineThresholds:
 
     @pytest.mark.asyncio
     async def test_high_confidence_db_match_no_llm(self, pipeline):
-        """Test that high-confidence DB match (>= 0.7) doesn't trigger LLM."""
+        """Test that high-confidence DB match (>= 0.85) doesn't trigger LLM."""
         # "Opus One" is in the database and should match with high confidence
         bottle_text = create_bottle_text("Opus One")
 
@@ -132,20 +135,40 @@ class TestRecognitionPipelineLLMFallback:
 
     @pytest.mark.asyncio
     async def test_llm_fallback_triggered_for_low_confidence(self):
-        """Test that LLM fallback is triggered for low-confidence matches."""
-        # Create a custom normalizer that tracks calls
-        call_count = 0
+        """Test that LLM batch validation is triggered for low-confidence matches."""
+        # Create a custom normalizer that tracks batch validation calls
+        batch_call_count = 0
 
         class TrackingNormalizer:
             async def normalize(self, ocr_text, context=None):
-                nonlocal call_count
-                call_count += 1
                 return NormalizationResult(
                     wine_name="Opus One",
                     confidence=0.85,
                     is_wine=True,
                     reasoning="Test",
                 )
+
+            async def validate(self, ocr_text, db_candidate, db_rating):
+                return ValidationResult(
+                    is_valid_match=True,
+                    wine_name=db_candidate or "Opus One",
+                    confidence=0.85,
+                    reasoning="Test",
+                )
+
+            async def validate_batch(self, items):
+                nonlocal batch_call_count
+                batch_call_count += 1
+                results = []
+                for i, item in enumerate(items):
+                    results.append(BatchValidationResult(
+                        index=i,
+                        is_valid_match=False,
+                        wine_name="Opus One",
+                        confidence=0.85,
+                        reasoning="Test batch validation",
+                    ))
+                return results
 
         pipeline = RecognitionPipeline(
             wine_matcher=WineMatcher(),
@@ -154,33 +177,44 @@ class TestRecognitionPipelineLLMFallback:
         )
 
         # Use garbled text that won't match well in DB
-        # (very different from any wine name to avoid fuzzy match)
+        # (very different from any wine name to avoid high-confidence fuzzy match)
         bottle_text = create_bottle_text("XYZZY Winery Reserve Blend")
 
         results = await pipeline.recognize([bottle_text])
 
-        # LLM should have been called since fuzzy match won't have high confidence
-        assert call_count == 1
+        # Batch validation should have been called since fuzzy match won't have high confidence
+        assert batch_call_count == 1
         assert len(results) == 1
-        # LLM normalized to "Opus One" which matches DB
+        # LLM returned "Opus One" which matches DB
         assert results[0].wine_name == "Opus One"
         assert results[0].source == "database"
 
     @pytest.mark.asyncio
     async def test_llm_disabled_skips_fallback(self):
         """Test that LLM fallback is skipped when use_llm=False."""
-        call_count = 0
+        batch_call_count = 0
 
         class TrackingNormalizer:
             async def normalize(self, ocr_text, context=None):
-                nonlocal call_count
-                call_count += 1
                 return NormalizationResult(
                     wine_name="Opus One",
                     confidence=0.85,
                     is_wine=True,
                     reasoning="Test",
                 )
+
+            async def validate(self, ocr_text, db_candidate, db_rating):
+                return ValidationResult(
+                    is_valid_match=True,
+                    wine_name=db_candidate,
+                    confidence=0.85,
+                    reasoning="Test",
+                )
+
+            async def validate_batch(self, items):
+                nonlocal batch_call_count
+                batch_call_count += 1
+                return []
 
         pipeline = RecognitionPipeline(
             wine_matcher=WineMatcher(),
@@ -193,8 +227,8 @@ class TestRecognitionPipelineLLMFallback:
 
         results = await pipeline.recognize([bottle_text])
 
-        # LLM should NOT have been called
-        assert call_count == 0
+        # LLM batch validation should NOT have been called
+        assert batch_call_count == 0
 
     @pytest.mark.asyncio
     async def test_llm_identifies_wine_not_in_db(self):
@@ -208,6 +242,26 @@ class TestRecognitionPipelineLLMFallback:
                     is_wine=True,
                     reasoning="Identified as wine from label patterns",
                 )
+
+            async def validate(self, ocr_text, db_candidate, db_rating):
+                return ValidationResult(
+                    is_valid_match=False,
+                    wine_name="Unknown Boutique Wine",
+                    confidence=0.75,
+                    reasoning="Identified as wine from label patterns",
+                )
+
+            async def validate_batch(self, items):
+                results = []
+                for i, item in enumerate(items):
+                    results.append(BatchValidationResult(
+                        index=i,
+                        is_valid_match=False,
+                        wine_name="Unknown Boutique Wine",
+                        confidence=0.75,
+                        reasoning="Identified as wine from label patterns",
+                    ))
+                return results
 
         pipeline = RecognitionPipeline(
             wine_matcher=WineMatcher(),
@@ -238,6 +292,26 @@ class TestRecognitionPipelineLLMFallback:
                     reasoning="This appears to be a price tag",
                 )
 
+            async def validate(self, ocr_text, db_candidate, db_rating):
+                return ValidationResult(
+                    is_valid_match=False,
+                    wine_name=None,
+                    confidence=0.0,
+                    reasoning="This appears to be a price tag",
+                )
+
+            async def validate_batch(self, items):
+                results = []
+                for i, item in enumerate(items):
+                    results.append(BatchValidationResult(
+                        index=i,
+                        is_valid_match=False,
+                        wine_name=None,
+                        confidence=0.0,
+                        reasoning="This appears to be a price tag",
+                    ))
+                return results
+
         pipeline = RecognitionPipeline(
             wine_matcher=WineMatcher(),
             normalizer=RejectingNormalizer(),
@@ -252,16 +326,36 @@ class TestRecognitionPipelineLLMFallback:
 
     @pytest.mark.asyncio
     async def test_llm_low_confidence_not_used_as_source(self):
-        """Test LLM results with confidence < 0.6 don't become the source."""
+        """Test LLM results with confidence < 0.5 don't become the source."""
 
         class LowConfidenceNormalizer:
             async def normalize(self, ocr_text, context=None):
                 return NormalizationResult(
                     wine_name="LLM Identified Wine",
-                    confidence=0.4,  # Below 0.6 threshold
+                    confidence=0.4,  # Below 0.5 threshold
                     is_wine=True,
                     reasoning="Very uncertain",
                 )
+
+            async def validate(self, ocr_text, db_candidate, db_rating):
+                return ValidationResult(
+                    is_valid_match=False,
+                    wine_name="LLM Identified Wine",
+                    confidence=0.4,
+                    reasoning="Very uncertain",
+                )
+
+            async def validate_batch(self, items):
+                results = []
+                for i, item in enumerate(items):
+                    results.append(BatchValidationResult(
+                        index=i,
+                        is_valid_match=False,
+                        wine_name="LLM Identified Wine",
+                        confidence=0.4,  # Below 0.5 threshold
+                        reasoning="Very uncertain",
+                    ))
+                return results
 
         pipeline = RecognitionPipeline(
             wine_matcher=WineMatcher(),
@@ -279,7 +373,7 @@ class TestRecognitionPipelineLLMFallback:
             assert result.wine_name != "LLM Identified Wine"
             # If we got a result, it should be from database fallback
             if result.source == "llm":
-                assert result.confidence >= 0.6
+                assert result.confidence >= 0.5
 
 
 class TestRecognitionPipelineConfidenceFiltering:
@@ -415,3 +509,109 @@ class TestRecognitionPipelineIntegration:
         wine_names = {r.wine_name for r in results}
         assert "Opus One" in wine_names
         assert "Caymus Cabernet Sauvignon" in wine_names
+
+
+class TestRecognitionPipelineBatchValidation:
+    """Test batched LLM validation (new optimization)."""
+
+    @pytest.mark.asyncio
+    async def test_batch_validation_single_call_for_multiple_bottles(self):
+        """Test that multiple bottles are validated in a single batch call."""
+        batch_call_count = 0
+        items_in_batch = []
+
+        class BatchTrackingNormalizer:
+            async def normalize(self, ocr_text, context=None):
+                return NormalizationResult(
+                    wine_name=None,
+                    confidence=0.0,
+                    is_wine=False,
+                    reasoning="Not used",
+                )
+
+            async def validate(self, ocr_text, db_candidate, db_rating):
+                return ValidationResult(
+                    is_valid_match=True,
+                    wine_name=db_candidate,
+                    confidence=0.8,
+                    reasoning="Not used",
+                )
+
+            async def validate_batch(self, items):
+                nonlocal batch_call_count, items_in_batch
+                batch_call_count += 1
+                items_in_batch = list(items)
+                results = []
+                for i, item in enumerate(items):
+                    results.append(BatchValidationResult(
+                        index=i,
+                        is_valid_match=True,
+                        wine_name=item.db_candidate or item.ocr_text,
+                        confidence=0.8,
+                        reasoning="Batch validated",
+                    ))
+                return results
+
+        pipeline = RecognitionPipeline(
+            wine_matcher=WineMatcher(),
+            normalizer=BatchTrackingNormalizer(),
+            use_llm=True,
+        )
+
+        # Use wines that won't match with HIGH confidence (will need LLM)
+        bottle_texts = [
+            create_bottle_text("Some Unknown Wine A"),
+            create_bottle_text("Another Unknown Wine B"),
+            create_bottle_text("Third Unknown Wine C"),
+        ]
+
+        results = await pipeline.recognize(bottle_texts)
+
+        # Should have been a SINGLE batch call for all 3 bottles
+        assert batch_call_count == 1
+        assert len(items_in_batch) == 3
+
+    @pytest.mark.asyncio
+    async def test_high_confidence_skips_llm_entirely(self):
+        """Test that high-confidence matches (≥0.85) skip LLM entirely."""
+        batch_call_count = 0
+
+        class SkipTrackingNormalizer:
+            async def normalize(self, ocr_text, context=None):
+                return NormalizationResult(
+                    wine_name=None,
+                    confidence=0.0,
+                    is_wine=False,
+                    reasoning="Should not be called",
+                )
+
+            async def validate(self, ocr_text, db_candidate, db_rating):
+                return ValidationResult(
+                    is_valid_match=True,
+                    wine_name=db_candidate,
+                    confidence=0.9,
+                    reasoning="Should not be called",
+                )
+
+            async def validate_batch(self, items):
+                nonlocal batch_call_count
+                batch_call_count += 1
+                return []
+
+        pipeline = RecognitionPipeline(
+            wine_matcher=WineMatcher(),
+            normalizer=SkipTrackingNormalizer(),
+            use_llm=True,
+        )
+
+        # "Opus One" is an exact match → confidence = 1.0 → skips LLM
+        bottle_texts = [
+            create_bottle_text("Opus One"),
+            create_bottle_text("Caymus Cabernet Sauvignon"),
+        ]
+
+        results = await pipeline.recognize(bottle_texts)
+
+        # LLM should NOT have been called since both are exact matches
+        assert batch_call_count == 0
+        assert len(results) == 2

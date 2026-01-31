@@ -29,7 +29,7 @@ class Config:
     MIN_SIMILARITY = 0.6
 
     # === OCR Processing ===
-    PROXIMITY_THRESHOLD = 0.15  # Text must be within this distance of bottle
+    PROXIMITY_THRESHOLD = 0.20  # Text must be within this distance of bottle
     MIN_TEXT_LENGTH = 3
     MAX_TEXT_LENGTH = 50
     DEFAULT_IMAGE_WIDTH = 1000
@@ -49,6 +49,21 @@ class Config:
     def anthropic_api_key() -> Optional[str]:
         """Get Anthropic API key from environment."""
         return os.getenv("ANTHROPIC_API_KEY")
+
+    @staticmethod
+    def gemini_api_key() -> Optional[str]:
+        """Get Google Gemini API key from environment."""
+        return os.getenv("GOOGLE_API_KEY")
+
+    @staticmethod
+    def gemini_model() -> str:
+        """Get Gemini model name. Default: gemini-2.0-flash."""
+        return os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+
+    @staticmethod
+    def llm_provider() -> str:
+        """Get LLM provider (claude or gemini). Default: claude."""
+        return os.getenv("LLM_PROVIDER", "claude").lower()
 
     @staticmethod
     def use_sqlite() -> bool:

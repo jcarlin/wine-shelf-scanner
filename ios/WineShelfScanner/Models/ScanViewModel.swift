@@ -4,6 +4,12 @@ import SwiftUI
 @MainActor
 class ScanViewModel: ObservableObject {
     @Published private(set) var state: ScanState = .idle
+    @Published var debugMode: Bool = false {
+        didSet {
+            // Persist debug mode preference
+            UserDefaults.standard.set(debugMode, forKey: "debugModeEnabled")
+        }
+    }
 
     private let scanService: ScanServiceProtocol
 
@@ -15,6 +21,9 @@ class ScanViewModel: ObservableObject {
             // Use centralized Config for API URL
             self.scanService = ScanAPIClient(baseURL: Config.apiBaseURL)
         }
+
+        // Restore debug mode preference
+        self.debugMode = UserDefaults.standard.bool(forKey: "debugModeEnabled")
     }
 
     /// Perform scan with given image
@@ -23,7 +32,7 @@ class ScanViewModel: ObservableObject {
 
         Task {
             do {
-                let response = try await scanService.scan(image: image)
+                let response = try await scanService.scan(image: image, debug: debugMode)
                 state = .results(response, image)
             } catch {
                 state = .error(error.localizedDescription)
@@ -34,5 +43,10 @@ class ScanViewModel: ObservableObject {
     /// Reset to idle state
     func reset() {
         state = .idle
+    }
+
+    /// Toggle debug mode
+    func toggleDebugMode() {
+        debugMode.toggle()
     }
 }

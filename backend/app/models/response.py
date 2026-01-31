@@ -66,3 +66,12 @@ class ScanResponse(BaseModel):
         default_factory=list,
         description="Wines detected but not positioned"
     )
+    # Debug data is only included when ?debug=true
+    debug: Optional["DebugData"] = Field(
+        None,
+        description="Pipeline debug info (only when debug=true)"
+    )
+
+
+# Import at bottom to avoid circular imports
+from .debug import DebugData  # noqa: E402

@@ -32,8 +32,8 @@ export async function scanImage(imageUri: string): Promise<ScanResult> {
     // Extract filename from URI or use default
     const filename = imageUri.split('/').pop() ?? 'photo.jpg';
 
-    // Append the image file
-    formData.append('file', {
+    // Append the image file - field name must be 'image' to match backend
+    formData.append('image', {
       uri: imageUri,
       type: 'image/jpeg',
       name: filename,

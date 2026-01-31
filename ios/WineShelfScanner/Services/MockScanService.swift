@@ -19,7 +19,7 @@ class MockScanService: ScanServiceProtocol {
         case emptyResults = "empty_results"
     }
 
-    func scan(image: UIImage) async throws -> ScanResponse {
+    func scan(image: UIImage, debug: Bool = false) async throws -> ScanResponse {
         // Simulate network delay
         try await Task.sleep(nanoseconds: UInt64(simulatedDelay * 1_000_000_000))
 
@@ -28,8 +28,61 @@ class MockScanService: ScanServiceProtocol {
             throw errorToSimulate
         }
 
-        // Return mock response
-        return mockResponse(for: scenario)
+        // Return mock response (with mock debug data if requested)
+        var response = mockResponse(for: scenario)
+        if debug {
+            response = addMockDebugData(to: response)
+        }
+        return response
+    }
+
+    private func addMockDebugData(to response: ScanResponse) -> ScanResponse {
+        let mockSteps = response.results.enumerated().map { index, result in
+            DebugPipelineStep(
+                rawText: "MOCK OCR TEXT FOR \(result.wineName.uppercased())",
+                normalizedText: result.wineName.lowercased(),
+                bottleIndex: index,
+                fuzzyMatch: FuzzyMatchDebug(
+                    candidate: result.wineName,
+                    scores: FuzzyMatchScores(
+                        ratio: 0.85,
+                        partialRatio: 0.92,
+                        tokenSortRatio: 0.88,
+                        phoneticBonus: 0.05,
+                        weightedScore: result.confidence
+                    ),
+                    rating: result.rating
+                ),
+                llmValidation: result.confidence < 0.85 ? LLMValidationDebug(
+                    isValidMatch: true,
+                    wineName: result.wineName,
+                    confidence: result.confidence,
+                    reasoning: "Mock: LLM confirmed match"
+                ) : nil,
+                finalResult: DebugFinalResult(
+                    wineName: result.wineName,
+                    confidence: result.confidence,
+                    source: result.confidence >= 0.85 ? "database" : "llm"
+                ),
+                stepFailed: nil,
+                includedInResults: true
+            )
+        }
+
+        let debugData = DebugData(
+            pipelineSteps: mockSteps,
+            totalOcrTexts: response.results.count + 2,
+            bottlesDetected: response.results.count,
+            textsMatched: response.results.count,
+            llmCallsMade: mockSteps.filter { $0.llmValidation != nil }.count > 0 ? 1 : 0
+        )
+
+        return ScanResponse(
+            imageId: response.imageId,
+            results: response.results,
+            fallbackList: response.fallbackList,
+            debug: debugData
+        )
     }
 
     // MARK: - Mock Data
@@ -100,7 +153,8 @@ class MockScanService: ScanServiceProtocol {
                     bbox: BoundingBox(x: 0.76, y: 0.17, width: 0.08, height: 0.33)
                 ),
             ],
-            fallbackList: []
+            fallbackList: [],
+            debug: nil
         )
     }
 
@@ -133,7 +187,8 @@ class MockScanService: ScanServiceProtocol {
                 FallbackWine(wineName: "La Crema Sonoma Coast Pinot Noir", rating: 4.1),
                 FallbackWine(wineName: "Meiomi Pinot Noir", rating: 3.9),
                 FallbackWine(wineName: "Bread & Butter Chardonnay", rating: 3.7),
-            ]
+            ],
+            debug: nil
         )
     }
 
@@ -169,7 +224,8 @@ class MockScanService: ScanServiceProtocol {
             fallbackList: [
                 FallbackWine(wineName: "Possible Cabernet", rating: 3.8),
                 FallbackWine(wineName: "Possible Chardonnay", rating: 3.5),
-            ]
+            ],
+            debug: nil
         )
     }
 
@@ -186,7 +242,8 @@ class MockScanService: ScanServiceProtocol {
                 FallbackWine(wineName: "Meiomi Pinot Noir", rating: 3.9),
                 FallbackWine(wineName: "Kendall-Jackson Vintner's Reserve", rating: 3.8),
                 FallbackWine(wineName: "Bread & Butter Chardonnay", rating: 3.7),
-            ]
+            ],
+            debug: nil
         )
     }
 }

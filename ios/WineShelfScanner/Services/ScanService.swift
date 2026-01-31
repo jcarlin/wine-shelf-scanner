@@ -2,7 +2,7 @@ import UIKit
 
 /// Protocol for scan services (allows mock/real swapping)
 protocol ScanServiceProtocol {
-    func scan(image: UIImage) async throws -> ScanResponse
+    func scan(image: UIImage, debug: Bool) async throws -> ScanResponse
 }
 
 /// Errors from the scan service
@@ -42,12 +42,16 @@ class ScanAPIClient: ScanServiceProtocol {
         self.session = session
     }
 
-    func scan(image: UIImage) async throws -> ScanResponse {
+    func scan(image: UIImage, debug: Bool = false) async throws -> ScanResponse {
         guard let imageData = image.jpegData(compressionQuality: 0.8) else {
             throw ScanError.invalidImage
         }
 
-        let url = baseURL.appendingPathComponent("scan")
+        var urlComponents = URLComponents(url: baseURL.appendingPathComponent("scan"), resolvingAgainstBaseURL: true)!
+        if debug {
+            urlComponents.queryItems = [URLQueryItem(name: "debug", value: "true")]
+        }
+        let url = urlComponents.url!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.timeoutInterval = Config.requestTimeout

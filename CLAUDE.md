@@ -26,7 +26,8 @@ See `ROADMAP.md` for current project status and next steps.
 ```
 wine-shelf-scanner/
 ├── backend/           # FastAPI + Vision API
-├── ios/               # SwiftUI iOS app
+├── ios/               # SwiftUI iOS app (PRIMARY FRONTEND)
+├── expo/              # React Native app (secondary, for cross-platform)
 ├── docs/              # Architecture docs & specs
 ├── test-images/       # Test assets for Vision API
 ├── ROADMAP.md         # Project status (single source of truth)
@@ -34,6 +35,8 @@ wine-shelf-scanner/
 ├── README.md          # Quick start guide
 └── CLAUDE.md          # This file
 ```
+
+> **Note:** iOS (SwiftUI) is the primary frontend for the near term. Expo exists as a secondary option for future cross-platform expansion.
 
 ---
 
@@ -207,11 +210,17 @@ Tap rating badge → modal sheet.
 
 ## Tech Stack
 
-### iOS
+### iOS (Primary)
 - SwiftUI
 - iOS 16+
 - Native camera (photo capture only, no live video)
 - Declarative overlay rendering
+
+### Expo (Secondary)
+- React Native (Expo SDK)
+- TypeScript
+- expo-image-picker for camera/library
+- Same API contract as iOS
 
 ### Backend
 - FastAPI (Python)

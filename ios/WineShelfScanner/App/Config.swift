@@ -33,5 +33,6 @@ enum Config {
     }
 
     /// Request timeout in seconds
-    static let requestTimeout: TimeInterval = 15.0
+    /// Note: Vision API can take 10-20s for complex images, so we allow 45s
+    static let requestTimeout: TimeInterval = 45.0
 }

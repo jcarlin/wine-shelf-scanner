@@ -7,19 +7,42 @@ class ScanViewModel: ObservableObject {
 
     private let scanService: ScanServiceProtocol
 
-    init(scanService: ScanServiceProtocol = MockScanService()) {
-        self.scanService = scanService
+    init(scanService: ScanServiceProtocol? = nil) {
+        // Use real API client if base URL is configured, otherwise use mock
+        if let scanService = scanService {
+            self.scanService = scanService
+        } else if let baseURL = Self.apiBaseURL {
+            self.scanService = ScanAPIClient(baseURL: baseURL)
+        } else {
+            self.scanService = MockScanService()
+        }
     }
 
-    /// Start a new scan
+    /// API base URL from environment or defaults
+    private static var apiBaseURL: URL? {
+        // Check for environment override
+        if let urlString = ProcessInfo.processInfo.environment["API_BASE_URL"],
+           let url = URL(string: urlString) {
+            return url
+        }
+
+        // Default to localhost for development
+        #if DEBUG
+        return URL(string: "http://localhost:8000")
+        #else
+        // Production URL - update when deployed
+        return URL(string: "https://wine-scanner-api.run.app")
+        #endif
+    }
+
+    /// Start a new scan (legacy - opens camera via ContentView)
     func startScan() {
-        // For Phase 1, use a test image
-        // In Phase 4, this will open the camera
+        // This is now handled by ContentView's camera sheet
+        // Keeping for backward compatibility with tests
         guard let testImage = loadTestImage() else {
             state = .error("Could not load test image")
             return
         }
-
         performScan(with: testImage)
     }
 

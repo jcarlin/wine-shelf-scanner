@@ -29,10 +29,24 @@
 		APP0020 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = RES0006; };
 		TEST0001 /* ScanResponseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0001; };
 		TEST0002 /* OverlayMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0002; };
+		UITST001 /* AccessibilityIdentifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = UISRC001; };
+		UITST002 /* BaseUITestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = UISRC002; };
+		UITST003 /* HappyPathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = UISRC003; };
+		UITST004 /* ErrorHandlingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = UISRC004; };
+		UITST005 /* PartialDetectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = UISRC005; };
+		UITST006 /* FullFailureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = UISRC006; };
+		UITST007 /* LowConfidenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = UISRC007; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
 		PROXY001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = ROOT0001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = TARGET01;
+			remoteInfo = WineShelfScanner;
+		};
+		PROXY002 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = ROOT0001 /* Project object */;
 			proxyType = 1;
@@ -65,8 +79,16 @@
 		RES0006 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		TST0001 /* ScanResponseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanResponseTests.swift; sourceTree = "<group>"; };
 		TST0002 /* OverlayMathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayMathTests.swift; sourceTree = "<group>"; };
+		UISRC001 /* AccessibilityIdentifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityIdentifiers.swift; sourceTree = "<group>"; };
+		UISRC002 /* BaseUITestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseUITestCase.swift; sourceTree = "<group>"; };
+		UISRC003 /* HappyPathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HappyPathTests.swift; sourceTree = "<group>"; };
+		UISRC004 /* ErrorHandlingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorHandlingTests.swift; sourceTree = "<group>"; };
+		UISRC005 /* PartialDetectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PartialDetectionTests.swift; sourceTree = "<group>"; };
+		UISRC006 /* FullFailureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullFailureTests.swift; sourceTree = "<group>"; };
+		UISRC007 /* LowConfidenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LowConfidenceTests.swift; sourceTree = "<group>"; };
 		PROD0001 /* WineShelfScanner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WineShelfScanner.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		PROD0002 /* WineShelfScannerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WineShelfScannerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		PROD0003 /* WineShelfScannerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WineShelfScannerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -84,6 +106,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		FWK00003 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -92,6 +121,7 @@
 			children = (
 				GRP00002 /* WineShelfScanner */,
 				GRP00010 /* WineShelfScannerTests */,
+				GRP00013 /* WineShelfScannerUITests */,
 				GRP00011 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -191,8 +221,23 @@
 			children = (
 				PROD0001 /* WineShelfScanner.app */,
 				PROD0002 /* WineShelfScannerTests.xctest */,
+				PROD0003 /* WineShelfScannerUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		GRP00013 /* WineShelfScannerUITests */ = {
+			isa = PBXGroup;
+			children = (
+				UISRC001 /* AccessibilityIdentifiers.swift */,
+				UISRC002 /* BaseUITestCase.swift */,
+				UISRC003 /* HappyPathTests.swift */,
+				UISRC004 /* ErrorHandlingTests.swift */,
+				UISRC005 /* PartialDetectionTests.swift */,
+				UISRC006 /* FullFailureTests.swift */,
+				UISRC007 /* LowConfidenceTests.swift */,
+			);
+			path = WineShelfScannerUITests;
 			sourceTree = "<group>";
 		};
 		GRP00012 /* MockData */ = {
@@ -244,6 +289,24 @@
 			productReference = PROD0002 /* WineShelfScannerTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		TARGET03 /* WineShelfScannerUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CFGLST03 /* Build configuration list for PBXNativeTarget "WineShelfScannerUITests" */;
+			buildPhases = (
+				SRC00003 /* Sources */,
+				FWK00003 /* Frameworks */,
+				RES00003 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				DEP00002 /* PBXTargetDependency */,
+			);
+			name = WineShelfScannerUITests;
+			productName = WineShelfScannerUITests;
+			productReference = PROD0003 /* WineShelfScannerUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -258,6 +321,10 @@
 						CreatedOnToolsVersion = 15.0;
 					};
 					TARGET02 = {
+						CreatedOnToolsVersion = 15.0;
+						TestTargetID = TARGET01;
+					};
+					TARGET03 = {
 						CreatedOnToolsVersion = 15.0;
 						TestTargetID = TARGET01;
 					};
@@ -278,6 +345,7 @@
 			targets = (
 				TARGET01 /* WineShelfScanner */,
 				TARGET02 /* WineShelfScannerTests */,
+				TARGET03 /* WineShelfScannerUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -297,6 +365,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		RES00002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		RES00003 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -336,6 +411,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		SRC00003 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				UITST001 /* AccessibilityIdentifiers.swift in Sources */,
+				UITST002 /* BaseUITestCase.swift in Sources */,
+				UITST003 /* HappyPathTests.swift in Sources */,
+				UITST004 /* ErrorHandlingTests.swift in Sources */,
+				UITST005 /* PartialDetectionTests.swift in Sources */,
+				UITST006 /* FullFailureTests.swift in Sources */,
+				UITST007 /* LowConfidenceTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -343,6 +432,11 @@
 			isa = PBXTargetDependency;
 			target = TARGET01 /* WineShelfScanner */;
 			targetProxy = PROXY001 /* PBXContainerItemProxy */;
+		};
+		DEP00002 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = TARGET01 /* WineShelfScanner */;
+			targetProxy = PROXY002 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -568,6 +662,44 @@
 			};
 			name = Release;
 		};
+		CFG00007 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.wineshelfscanner.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = WineShelfScanner;
+			};
+			name = Debug;
+		};
+		CFG00008 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.wineshelfscanner.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = WineShelfScanner;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -594,6 +726,15 @@
 			buildConfigurations = (
 				CFG00005 /* Debug */,
 				CFG00006 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CFGLST03 /* Build configuration list for PBXNativeTarget "WineShelfScannerUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CFG00007 /* Debug */,
+				CFG00008 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

@@ -13,7 +13,8 @@ struct OverlayContainerView: View {
                     rating: wine.rating,
                     confidence: wine.confidence,
                     isTopThree: response.isTopThree(wine),
-                    isTappable: wine.isTappable
+                    isTappable: wine.isTappable,
+                    wineName: wine.wineName
                 )
                 .position(
                     OverlayMath.adjustedAnchorPoint(
@@ -29,6 +30,7 @@ struct OverlayContainerView: View {
                 }
             }
         }
+        .accessibilityIdentifier("overlayContainer")
     }
 }
 

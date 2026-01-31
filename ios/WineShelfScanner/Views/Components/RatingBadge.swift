@@ -13,9 +13,17 @@ struct RatingBadge: View {
     let confidence: Double
     let isTopThree: Bool
     let isTappable: Bool
+    let wineName: String
 
     private var badgeSize: CGSize {
         OverlayMath.badgeSize(isTopThree: isTopThree)
+    }
+
+    /// Sanitized wine name for accessibility identifier
+    private var sanitizedWineName: String {
+        wineName.lowercased()
+            .replacingOccurrences(of: " ", with: "-")
+            .replacingOccurrences(of: "'", with: "")
     }
 
     var body: some View {
@@ -49,14 +57,15 @@ struct RatingBadge: View {
         )
         .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
         .contentShape(Rectangle()) // Make entire badge tappable
+        .accessibilityIdentifier("ratingBadge_\(sanitizedWineName)")
     }
 }
 
 #Preview("Top 3") {
     VStack(spacing: 20) {
-        RatingBadge(rating: 4.8, confidence: 0.95, isTopThree: true, isTappable: true)
-        RatingBadge(rating: 4.5, confidence: 0.88, isTopThree: true, isTappable: true)
-        RatingBadge(rating: 4.3, confidence: 0.82, isTopThree: true, isTappable: true)
+        RatingBadge(rating: 4.8, confidence: 0.95, isTopThree: true, isTappable: true, wineName: "Opus One")
+        RatingBadge(rating: 4.5, confidence: 0.88, isTopThree: true, isTappable: true, wineName: "Caymus")
+        RatingBadge(rating: 4.3, confidence: 0.82, isTopThree: true, isTappable: true, wineName: "Silver Oak")
     }
     .padding()
     .background(Color.gray)
@@ -64,9 +73,9 @@ struct RatingBadge: View {
 
 #Preview("Normal") {
     VStack(spacing: 20) {
-        RatingBadge(rating: 4.1, confidence: 0.75, isTopThree: false, isTappable: true)
-        RatingBadge(rating: 3.8, confidence: 0.68, isTopThree: false, isTappable: true)
-        RatingBadge(rating: 3.5, confidence: 0.52, isTopThree: false, isTappable: false)
+        RatingBadge(rating: 4.1, confidence: 0.75, isTopThree: false, isTappable: true, wineName: "La Crema")
+        RatingBadge(rating: 3.8, confidence: 0.68, isTopThree: false, isTappable: true, wineName: "Meiomi")
+        RatingBadge(rating: 3.5, confidence: 0.52, isTopThree: false, isTappable: false, wineName: "Budget Wine")
     }
     .padding()
     .background(Color.gray)
@@ -75,19 +84,19 @@ struct RatingBadge: View {
 #Preview("All Confidence Levels") {
     VStack(spacing: 20) {
         // High confidence (1.0 opacity)
-        RatingBadge(rating: 4.5, confidence: 0.92, isTopThree: false, isTappable: true)
+        RatingBadge(rating: 4.5, confidence: 0.92, isTopThree: false, isTappable: true, wineName: "High Conf Wine")
             .opacity(OverlayMath.opacity(confidence: 0.92))
 
         // Medium confidence (0.75 opacity)
-        RatingBadge(rating: 4.0, confidence: 0.75, isTopThree: false, isTappable: true)
+        RatingBadge(rating: 4.0, confidence: 0.75, isTopThree: false, isTappable: true, wineName: "Med Conf Wine")
             .opacity(OverlayMath.opacity(confidence: 0.75))
 
         // Low confidence (0.5 opacity)
-        RatingBadge(rating: 3.5, confidence: 0.55, isTopThree: false, isTappable: false)
+        RatingBadge(rating: 3.5, confidence: 0.55, isTopThree: false, isTappable: false, wineName: "Low Conf Wine")
             .opacity(OverlayMath.opacity(confidence: 0.55))
 
         // Very low confidence (hidden)
-        RatingBadge(rating: 3.0, confidence: 0.40, isTopThree: false, isTappable: false)
+        RatingBadge(rating: 3.0, confidence: 0.40, isTopThree: false, isTappable: false, wineName: "Very Low Wine")
             .opacity(OverlayMath.opacity(confidence: 0.40))
     }
     .padding()

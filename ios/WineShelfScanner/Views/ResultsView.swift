@@ -21,6 +21,7 @@ struct ResultsView: View {
             // Bottom action bar
             bottomBar
         }
+        .accessibilityIdentifier("resultsView")
         .sheet(item: $selectedWine) { wine in
             WineDetailSheet(wine: wine)
                 .presentationDetents([.height(200)])
@@ -39,6 +40,7 @@ struct ResultsView: View {
                 ToastView(message: "Some bottles couldn't be recognized")
                     .transition(.move(edge: .top).combined(with: .opacity))
                     .animation(.easeInOut, value: showToast)
+                    .accessibilityIdentifier("partialDetectionToast")
             }
         }
     }
@@ -74,6 +76,7 @@ struct ResultsView: View {
             }
             .buttonStyle(.borderedProminent)
             .tint(.white)
+            .accessibilityIdentifier("newScanButton")
         }
         .padding()
         .background(Color.black.opacity(0.9))
@@ -110,6 +113,7 @@ struct FallbackListView: View {
                 .font(.headline)
                 .foregroundColor(.white)
                 .padding()
+                .accessibilityIdentifier("fallbackListHeader")
 
             ScrollView {
                 LazyVStack(spacing: 12) {
@@ -119,7 +123,9 @@ struct FallbackListView: View {
                 }
                 .padding()
             }
+            .accessibilityIdentifier("fallbackList")
         }
+        .accessibilityIdentifier("fallbackContainer")
     }
 }
 

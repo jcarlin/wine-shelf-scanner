@@ -29,6 +29,7 @@ struct WineDetailSheet: View {
                 .multilineTextAlignment(.center)
                 .foregroundColor(.primary)
                 .padding(.horizontal)
+                .accessibilityIdentifier("detailSheetWineName")
 
             // Star rating
             HStack(spacing: 8) {
@@ -44,6 +45,7 @@ struct WineDetailSheet: View {
                 .font(.title)
                 .fontWeight(.bold)
                 .foregroundColor(.primary)
+                .accessibilityIdentifier("detailSheetRating")
 
             // Confidence label
             Text(wine.confidenceLabel)
@@ -53,10 +55,12 @@ struct WineDetailSheet: View {
                 .padding(.vertical, 6)
                 .background(Color.gray.opacity(0.2))
                 .cornerRadius(12)
+                .accessibilityIdentifier("detailSheetConfidenceLabel")
 
             Spacer()
         }
         .padding()
+        .accessibilityIdentifier("wineDetailSheet")
     }
 
     @ViewBuilder

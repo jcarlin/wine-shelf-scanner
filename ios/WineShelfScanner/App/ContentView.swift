@@ -2,10 +2,42 @@ import SwiftUI
 
 /// Main content view that manages the scan flow
 struct ContentView: View {
-    @StateObject private var viewModel = ScanViewModel()
+    @StateObject private var viewModel: ScanViewModel
     @State private var showCamera = false
     @State private var showPhotoPicker = false
     @State private var capturedImage: UIImage?
+
+    init(viewModel: ScanViewModel? = nil) {
+        _viewModel = StateObject(wrappedValue: viewModel ?? Self.createDefaultViewModel())
+    }
+
+    /// Create the default ScanViewModel, optionally configured for UI testing
+    private static func createDefaultViewModel() -> ScanViewModel {
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["USE_MOCKS"] == "true" {
+            let mockService = MockScanService()
+
+            // Configure scenario from environment
+            if let scenario = ProcessInfo.processInfo.environment["MOCK_SCENARIO"],
+               let mockScenario = MockScanService.MockScenario(rawValue: scenario) {
+                mockService.scenario = mockScenario
+            }
+
+            // Configure error simulation
+            if ProcessInfo.processInfo.environment["SIMULATE_ERROR"] == "true" {
+                mockService.shouldSimulateError = true
+            }
+
+            // Fast delays for UI tests
+            mockService.simulatedDelay = 0.1
+
+            return ScanViewModel(scanService: mockService)
+        }
+        #endif
+
+        // Default: use real service
+        return ScanViewModel()
+    }
 
     var body: some View {
         NavigationStack {
@@ -102,6 +134,7 @@ struct IdleView: View {
                             .background(Color.white)
                             .cornerRadius(12)
                     }
+                    .accessibilityIdentifier("scanShelfButton")
                     .padding(.horizontal, 40)
                 }
 
@@ -114,6 +147,7 @@ struct IdleView: View {
                         .background(Color.white.opacity(0.2))
                         .cornerRadius(12)
                 }
+                .accessibilityIdentifier("choosePhotoButton")
                 .padding(.horizontal, 40)
             }
             .padding(.top, 16)
@@ -127,6 +161,7 @@ struct ProcessingView: View {
             ProgressView()
                 .scaleEffect(1.5)
                 .tint(.white)
+                .accessibilityIdentifier("processingSpinner")
 
             Text("Analyzing wines...")
                 .font(.headline)
@@ -151,17 +186,21 @@ struct ErrorView: View {
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
+                .accessibilityIdentifier("errorMessage")
 
             HStack(spacing: 16) {
                 Button("Try Again", action: onRetry)
                     .buttonStyle(.bordered)
                     .tint(.white)
+                    .accessibilityIdentifier("retryButton")
 
                 Button("Start Over", action: onReset)
                     .buttonStyle(.borderedProminent)
                     .tint(.white)
+                    .accessibilityIdentifier("startOverButton")
             }
         }
+        .accessibilityIdentifier("errorView")
     }
 }
 

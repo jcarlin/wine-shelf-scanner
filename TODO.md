@@ -27,7 +27,7 @@
 
 ## iOS - Overlay System
 
-- [x] OverlayMath utility (`SwiftUI/WineShelfScanner/Utils/OverlayMath.swift`)
+- [x] OverlayMath utility (`ios/WineShelfScanner/Utils/OverlayMath.swift`)
 - [x] Rating badge component
 - [x] Confidence-based opacity (thresholds: 0.85, 0.65, 0.45)
 - [x] Top-3 emphasis (glow, thicker stroke, larger badge)
@@ -81,8 +81,8 @@
 
 ## Next Steps
 
-1. Deploy backend: `cd Backend && ./deploy.sh YOUR_PROJECT_ID`
+1. Deploy backend: `cd backend && ./deploy.sh YOUR_PROJECT_ID`
 2. Update `Config.swift` with Cloud Run URL
-3. Open Xcode: `open SwiftUI/WineShelfScanner.xcodeproj`
+3. Open Xcode: `open ios/WineShelfScanner.xcodeproj`
 4. Run on device to test camera
 5. TestFlight build (Phase 5)

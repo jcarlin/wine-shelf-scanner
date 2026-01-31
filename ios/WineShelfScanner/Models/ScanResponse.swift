@@ -1,5 +1,6 @@
 import Foundation
 import CoreGraphics
+import SwiftUI
 
 /// Response from the /scan API endpoint
 ///
@@ -35,7 +36,8 @@ struct WineResult: Codable, Equatable, Identifiable {
     let confidence: Double
     let bbox: BoundingBox
 
-    var id: String { wineName }
+    /// Unique ID combining name + position (handles duplicate wines on shelf)
+    var id: String { "\(wineName)_\(bbox.x)_\(bbox.y)" }
 
     enum CodingKeys: String, CodingKey {
         case wineName = "wine_name"

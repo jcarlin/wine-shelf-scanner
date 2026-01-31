@@ -193,7 +193,7 @@ wine-shelf-scanner/
 
 ## Testing
 
-### Backend
+### Backend Unit Tests
 
 ```bash
 cd backend
@@ -209,6 +209,17 @@ pytest tests/ -v
 - `test_ocr_processor.py` - Text normalization
 - `test_performance.py` - Response time targets (<4s)
 
+### Backend E2E Tests (Playwright)
+
+```bash
+cd backend
+pip install playwright pytest-playwright
+playwright install chromium
+pytest tests/e2e/ -v
+```
+
+Tests the web UI at `/app` which mirrors iOS behavior for browser-based testing.
+
 ### Mock Scenarios
 
 The backend supports mock scenarios for testing without Vision API:
@@ -221,9 +232,22 @@ curl -X POST "http://localhost:8000/scan?mock_scenario=full_shelf" \
 # Scenarios: full_shelf, partial_detection, low_confidence, empty_results
 ```
 
-### iOS
+### iOS Unit Tests
 
-Run unit tests in Xcode: `Cmd+U`
+Run in Xcode: `Cmd+U`
+
+### iOS UI Tests (XCUITest)
+
+```bash
+cd ios
+xcodebuild test \
+  -project WineShelfScanner.xcodeproj \
+  -scheme WineShelfScanner \
+  -destination 'platform=iOS Simulator,name=iPhone 17' \
+  -only-testing:WineShelfScannerUITests
+```
+
+UI tests use mock injection via launch environment variables (`USE_MOCKS`, `MOCK_SCENARIO`).
 
 ## Performance Targets
 

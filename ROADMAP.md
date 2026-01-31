@@ -259,9 +259,11 @@ Deploy → Refactor → Ingest 150K wines → TestFlight → App Store
 | Backend - Recognition Pipeline | `tests/test_recognition_pipeline.py` | 17 |
 | Backend - Performance | `tests/test_performance.py` | 13 |
 | Backend - E2E Scan | `tests/test_scan_e2e.py` | 24 |
-| **Backend Total** | | **111** |
+| Backend - Playwright E2E | `tests/e2e/*.py` | 41 |
+| **Backend Total** | | **152** |
 | iOS - OverlayMath | `OverlayMathTests.swift` | 26 |
 | iOS - ScanResponse | `ScanResponseTests.swift` | 18 |
+| iOS - XCUITest E2E | `WineShelfScannerUITests/*.swift` | 5 suites |
 
 ---
 
@@ -277,11 +279,20 @@ cd backend && source venv/bin/activate && uvicorn main:app --reload
 # Run backend tests
 cd backend && pytest tests/ -v
 
+# Run Playwright e2e tests
+cd backend && pytest tests/e2e/ -v
+
+# Web UI (for Playwright testing)
+# Open http://localhost:8000/app after starting backend
+
 # Open iOS project
 open ios/WineShelfScanner.xcodeproj
 
-# Run iOS tests
-cd ios && xcodebuild test -scheme WineShelfScanner -destination 'platform=iOS Simulator,name=iPhone 15'
+# Run iOS unit tests
+cd ios && xcodebuild test -scheme WineShelfScanner -destination 'platform=iOS Simulator,name=iPhone 17'
+
+# Run iOS UI tests (XCUITest)
+cd ios && xcodebuild test -scheme WineShelfScanner -destination 'platform=iOS Simulator,name=iPhone 17' -only-testing:WineShelfScannerUITests
 ```
 
 ---

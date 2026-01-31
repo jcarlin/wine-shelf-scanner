@@ -1,0 +1,54 @@
+{
+  "image_id": "mock-full-shelf-001",
+  "results": [
+    {
+      "wine_name": "Caymus Cabernet Sauvignon",
+      "rating": 4.5,
+      "confidence": 0.94,
+      "bbox": { "x": 0.05, "y": 0.15, "width": 0.08, "height": 0.35 }
+    },
+    {
+      "wine_name": "Opus One",
+      "rating": 4.8,
+      "confidence": 0.91,
+      "bbox": { "x": 0.15, "y": 0.12, "width": 0.09, "height": 0.38 }
+    },
+    {
+      "wine_name": "Silver Oak Alexander Valley",
+      "rating": 4.4,
+      "confidence": 0.88,
+      "bbox": { "x": 0.26, "y": 0.14, "width": 0.08, "height": 0.36 }
+    },
+    {
+      "wine_name": "Jordan Cabernet Sauvignon",
+      "rating": 4.3,
+      "confidence": 0.85,
+      "bbox": { "x": 0.36, "y": 0.13, "width": 0.08, "height": 0.37 }
+    },
+    {
+      "wine_name": "Kendall-Jackson Vintner's Reserve",
+      "rating": 3.8,
+      "confidence": 0.79,
+      "bbox": { "x": 0.46, "y": 0.16, "width": 0.08, "height": 0.34 }
+    },
+    {
+      "wine_name": "La Crema Sonoma Coast Pinot Noir",
+      "rating": 4.1,
+      "confidence": 0.72,
+      "bbox": { "x": 0.56, "y": 0.14, "width": 0.08, "height": 0.36 }
+    },
+    {
+      "wine_name": "Meiomi Pinot Noir",
+      "rating": 3.9,
+      "confidence": 0.68,
+      "bbox": { "x": 0.66, "y": 0.15, "width": 0.08, "height": 0.35 }
+    },
+    {
+      "wine_name": "Bread & Butter Chardonnay",
+      "rating": 3.7,
+      "confidence": 0.52,
+      "bbox": { "x": 0.76, "y": 0.17, "width": 0.08, "height": 0.33 }
+    }
+  ],
+  "fallback_list": []
+}

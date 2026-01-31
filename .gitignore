@@ -36,6 +36,7 @@ DerivedData/
 # Google Cloud credentials
 credentials*.json
 service-account*.json
+gen-lang-client*.json
 
 # OS
 .DS_Store

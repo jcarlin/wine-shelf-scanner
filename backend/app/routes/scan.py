@@ -12,7 +12,7 @@ from fastapi import APIRouter, File, UploadFile, HTTPException, Query
 from ..models import ScanResponse, WineResult, FallbackWine, BoundingBox
 from ..mocks.fixtures import get_mock_response
 from ..services.vision import VisionService, MockVisionService
-from ..services.ocr_processor import OCRProcessor
+from ..services.ocr_processor import OCRProcessor, extract_wine_names
 from ..services.wine_matcher import WineMatcher
 
 router = APIRouter()
@@ -184,6 +184,44 @@ def _fallback_response(image_id: str) -> ScanResponse:
         results=[],
         fallback_list=fallback
     )
+
+
+@router.post("/scan/debug")
+async def scan_debug(
+    image: UploadFile = File(..., description="Wine shelf image"),
+) -> dict:
+    """
+    Debug endpoint: raw OCR results + wine name extraction.
+
+    Returns raw OCR text from Vision API and extracted wine names.
+    Use this to test OCR quality before full pipeline processing.
+    """
+    # Validate image type
+    if image.content_type not in ["image/jpeg", "image/png"]:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid image type. Only JPEG and PNG are supported."
+        )
+
+    try:
+        image_bytes = await image.read()
+        vision_service = VisionService()
+        result = vision_service.analyze(image_bytes)
+
+        # Extract wine names from raw OCR text
+        wine_names = extract_wine_names(result.raw_text)
+
+        return {
+            "labels_identified": len(wine_names),
+            "wine_names": wine_names,
+            "raw_ocr_text": result.raw_text,
+            "bottles_detected": len(result.objects),
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error processing image: {str(e)}"
+        )
 
 
 @router.get("/health")

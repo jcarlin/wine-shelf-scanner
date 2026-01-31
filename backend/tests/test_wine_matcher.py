@@ -62,13 +62,13 @@ class TestWineMatcher:
         assert result is None
 
     def test_match_many(self, matcher):
-        queries = ["Opus One", "Caymus", "Unknown Wine"]
+        queries = ["Opus One", "Caymus", "XYZABC123 Nonexistent"]
         results = matcher.match_many(queries)
 
         assert len(results) == 3
         assert results[0] is not None  # Opus One
         assert results[1] is not None  # Caymus
-        assert results[2] is None  # Unknown
+        assert results[2] is None  # Clearly nonexistent
 
     def test_rating_values(self, matcher):
         # Check ratings are in valid range

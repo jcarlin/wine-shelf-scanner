@@ -44,3 +44,8 @@ Thumbs.db
 # Build artifacts
 build/
 *.app
+
+
+raw-data/
+test-images/
+.DS_Store

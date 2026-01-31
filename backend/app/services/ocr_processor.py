@@ -8,6 +8,124 @@ from dataclasses import dataclass
 from .vision import DetectedObject, TextBlock, BoundingBox
 
 
+# Patterns for filtering non-wine text
+_YEAR_PATTERN = re.compile(r'\b(19|20)\d{2}\b')
+_SIZE_PATTERN = re.compile(r'\b\d+\s*(ml|ML|mL|L|l|cl|CL)\b', re.IGNORECASE)
+_PRICE_PATTERN = re.compile(r'[\$€£]\d+\.?\d*|\d+[.,]\d{2}\s*(руб|₽|р)?', re.IGNORECASE)
+_ABV_PATTERN = re.compile(r'\b\d+\.?\d*\s*%\s*(alc|abv|vol)?\b', re.IGNORECASE)
+_CYRILLIC_PATTERN = re.compile(r'[а-яА-ЯёЁ]+')
+_NUMERIC_ONLY_PATTERN = re.compile(r'^\d+$')
+_SHORT_TEXT_PATTERN = re.compile(r'^.{1,2}$')
+
+# Known wine name indicators (brands, regions, varietals)
+_WINE_INDICATORS = {
+    # Varietals
+    'cabernet', 'sauvignon', 'merlot', 'pinot', 'noir', 'grigio', 'chardonnay',
+    'riesling', 'syrah', 'shiraz', 'tempranillo', 'malbec', 'zinfandel',
+    'sangiovese', 'nebbiolo', 'grenache', 'mourvedre', 'viognier', 'verdejo',
+    'albarino', 'garnacha', 'monastrell', 'rioja', 'crianza', 'reserva',
+    # Common brand patterns
+    'chateau', 'château', 'domaine', 'bodega', 'cantina', 'tenuta', 'casa',
+    'torre', 'campo', 'monte', 'villa', 'vina', 'viña',
+}
+
+# Words that indicate this is NOT a wine name
+_NON_WINE_WORDS = {
+    'contains', 'sulfites', 'product', 'imported', 'bottled', 'produced',
+    'government', 'warning', 'surgeon', 'general', 'health', 'pregnant',
+    'women', 'alcohol', 'drinking', 'impairs', 'ability', 'drive',
+    'operate', 'machinery', 'consumption', 'cause', 'problems',
+    'distributed', 'shipped', 'ounces', 'milliliters', 'liters',
+}
+
+
+def extract_wine_names(raw_text: str) -> list[str]:
+    """
+    Extract wine names from raw OCR text.
+
+    Args:
+        raw_text: Raw OCR text from Vision API
+
+    Returns:
+        List of cleaned wine names
+    """
+    if not raw_text:
+        return []
+
+    lines = raw_text.split('\n')
+    wine_names = []
+    seen = set()  # Dedupe
+
+    for line in lines:
+        cleaned = _clean_line(line)
+        if cleaned and _looks_like_wine_name(cleaned):
+            # Normalize for deduplication
+            key = cleaned.lower()
+            if key not in seen:
+                seen.add(key)
+                wine_names.append(cleaned)
+
+    return wine_names
+
+
+def _clean_line(line: str) -> str:
+    """Clean a single line of OCR text."""
+    result = line.strip()
+
+    # Remove patterns
+    result = _YEAR_PATTERN.sub('', result)
+    result = _SIZE_PATTERN.sub('', result)
+    result = _PRICE_PATTERN.sub('', result)
+    result = _ABV_PATTERN.sub('', result)
+    result = _CYRILLIC_PATTERN.sub('', result)  # Remove Russian text
+
+    # Clean up whitespace and some punctuation
+    result = re.sub(r'\s+', ' ', result)
+    result = result.strip()
+
+    return result
+
+
+def _looks_like_wine_name(text: str) -> bool:
+    """Check if text looks like a wine name."""
+    # Too short
+    if len(text) < 3:
+        return False
+
+    # Numeric only
+    if _NUMERIC_ONLY_PATTERN.match(text):
+        return False
+
+    # Contains non-wine warning text
+    text_lower = text.lower()
+    for word in _NON_WINE_WORDS:
+        if word in text_lower:
+            return False
+
+    # Check for wine indicators (positive signal)
+    has_indicator = any(ind in text_lower for ind in _WINE_INDICATORS)
+
+    # If it has a wine indicator, accept it
+    if has_indicator:
+        return True
+
+    # Otherwise, accept if it looks like a brand name:
+    # - Starts with capital letter
+    # - Contains only letters, spaces, apostrophes, hyphens
+    # - Is reasonable length (3-50 chars)
+    if not text[0].isupper():
+        return False
+
+    if len(text) > 50:
+        return False
+
+    # Allow letters, spaces, apostrophes, hyphens, periods
+    if not re.match(r"^[A-Za-z\s'\-\.]+$", text):
+        return False
+
+    return True
+
+
 @dataclass
 class BottleText:
     """Text grouped to a specific bottle."""

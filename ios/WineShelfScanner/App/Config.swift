@@ -11,8 +11,8 @@ enum Config {
         }
 
         #if DEBUG
-        // Local development
-        return URL(string: "http://localhost:8000")!
+        // Local development - use Mac's IP for simulator access
+        return URL(string: "http://192.168.1.112:8000")!
         #else
         // Production - Cloud Run URL
         // Update this after deploying to Cloud Run

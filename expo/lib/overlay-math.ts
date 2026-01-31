@@ -6,6 +6,7 @@
  */
 
 import { BoundingBox, Point, Size } from './types';
+import { badgeSizes, layout } from './theme';
 
 // MARK: - Confidence Thresholds
 
@@ -18,13 +19,13 @@ export const TAPPABLE_THRESHOLD = 0.65;
 /** Minimum confidence for "Widely rated" label (opacity 1.0) */
 export const HIGH_CONFIDENCE_THRESHOLD = 0.85;
 
-// MARK: - Badge Sizing
+// MARK: - Badge Sizing (re-export from theme for backwards compatibility)
 
 /** Base badge size */
-export const BASE_BADGE_SIZE: Size = { width: 44, height: 24 };
+export const BASE_BADGE_SIZE: Size = badgeSizes.base;
 
 /** Top-3 badge size (larger) */
-export const TOP_THREE_BADGE_SIZE: Size = { width: 52, height: 28 };
+export const TOP_THREE_BADGE_SIZE: Size = badgeSizes.topThree;
 
 // MARK: - Anchor Point Calculation
 
@@ -115,13 +116,14 @@ export function adjustedAnchorPoint(
   let adjustedX = point.x;
   let adjustedY = point.y;
 
+  const padding = layout.collisionPadding;
+
   // If bbox height is small (partial bottle), anchor higher
   if (bbox.height < 0.15) {
-    adjustedY = bbox.y * containerSize.height + badgeSizeValue.height / 2 + 4;
+    adjustedY = bbox.y * containerSize.height + badgeSizeValue.height / 2 + padding;
   }
 
   // Clamp to image bounds with padding
-  const padding = 4;
   adjustedX = Math.max(
     badgeSizeValue.width / 2 + padding,
     Math.min(adjustedX, containerSize.width - badgeSizeValue.width / 2 - padding)

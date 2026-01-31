@@ -27,13 +27,17 @@ Wine Shelf Scanner solves decision paralysis for casual wine buyers. Instead of 
 
 | Component | Stack | Purpose |
 |-----------|-------|---------|
-| **iOS App** | SwiftUI, iOS 16+ | Camera capture, overlay rendering (PRIMARY) |
-| **Expo App** | React Native, TypeScript | Cross-platform option (SECONDARY) |
+| **iOS App** | SwiftUI, iOS 16+ | Camera capture, overlay rendering |
+| **Expo App** | React Native, TypeScript | Cross-platform mobile app |
 | **Backend** | FastAPI (Python 3.11+) | Image processing orchestration, wine matching |
 | **Vision** | Google Cloud Vision API | OCR + bottle detection |
 | **Ratings DB** | JSON (60+ wines) | Wine name → rating lookup with aliases |
 
-> **Note:** iOS (SwiftUI) is the primary frontend. Expo exists for future cross-platform expansion.
+### Frontend Strategy
+
+iOS and Expo are developed **in parallel** — neither is the source of truth. Both implement the same API contract and UX rules.
+
+**Future plan:** May switch to Expo as the single source for iOS, Android, and web builds.
 
 ## API Contract
 
@@ -100,7 +104,7 @@ export USE_MOCKS=false
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### iOS Setup (Primary)
+### iOS Setup
 
 1. Open `ios/WineShelfScanner.xcodeproj` in Xcode
 2. Update `Config.swift` with your Mac's IP address for simulator testing:
@@ -110,7 +114,7 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
    ```
 3. Build and run on simulator or device
 
-### Expo Setup (Secondary)
+### Expo Setup
 
 ```bash
 cd expo
@@ -226,6 +230,20 @@ cd backend
 source venv/bin/activate
 pytest tests/ -v
 ```
+
+### Deterministic Vision Tests
+
+Real image tests use captured Vision API responses for determinism:
+
+```bash
+# Capture new fixtures (requires GCP credentials)
+python scripts/capture_vision_response.py ../test-images/wine1.jpeg
+
+# Run deterministic tests (no API calls)
+pytest tests/test_real_images.py -v
+```
+
+Fixtures live in `tests/fixtures/vision_responses/`. Tests auto-detect and replay them.
 
 **Test coverage:**
 - `test_scan.py` / `test_scan_e2e.py` - API contract, scenarios, validation

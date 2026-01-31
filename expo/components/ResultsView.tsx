@@ -8,6 +8,7 @@ import {
 import { ScanResponse, Size } from '../lib/types';
 import { OverlayContainer } from './OverlayContainer';
 import { Toast } from './Toast';
+import { animation } from '../lib/theme';
 
 interface ResultsViewProps {
   response: ScanResponse;
@@ -26,7 +27,7 @@ export function ResultsView({ response, imageUri }: ResultsViewProps) {
   useEffect(() => {
     if (isPartialDetection) {
       setShowToast(true);
-      const timer = setTimeout(() => setShowToast(false), 3000);
+      const timer = setTimeout(() => setShowToast(false), animation.toastTimeout);
       return () => clearTimeout(timer);
     }
   }, [isPartialDetection]);
@@ -38,9 +39,8 @@ export function ResultsView({ response, imageUri }: ResultsViewProps) {
       (width, height) => {
         setImageSize({ width, height });
       },
-      (error) => {
-        console.error('Failed to get image size:', error);
-        // Fallback to a default aspect ratio
+      () => {
+        // Fallback to a default aspect ratio on error
         setImageSize({ width: 3, height: 4 });
       }
     );

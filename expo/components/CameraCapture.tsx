@@ -5,13 +5,12 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
+import { colors, spacing, borderRadius, fontSize } from '../lib/theme';
 
 interface CameraCaptureProps {
   onCapture: () => void;
   onSelectFromLibrary: () => void;
 }
-
-const WINE_COLOR = '#722F37';
 
 export function CameraCapture({ onCapture, onSelectFromLibrary }: CameraCaptureProps) {
   return (
@@ -42,20 +41,20 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 16,
-    paddingHorizontal: 32,
+    gap: spacing.md,
+    paddingHorizontal: spacing.xl,
   },
   button: {
-    backgroundColor: WINE_COLOR,
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 12,
+    backgroundColor: colors.wine,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xl,
+    borderRadius: borderRadius.md,
     width: '100%',
     alignItems: 'center',
   },
   buttonText: {
-    color: '#FFFFFF',
-    fontSize: 17,
+    color: colors.textLight,
+    fontSize: fontSize.lg,
     fontWeight: '600',
   },
 });

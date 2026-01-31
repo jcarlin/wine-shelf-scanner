@@ -6,12 +6,16 @@
 #   1. gcloud CLI installed and authenticated
 #   2. GCP project with billing enabled
 #   3. GitHub repo connected to Cloud Build (manual step - see below)
+#   4. Create .env.secrets file with your API keys (see .env.secrets.example)
 #
 # To connect GitHub to Cloud Build (required before running this script):
 #   1. Go to: https://console.cloud.google.com/cloud-build/triggers
 #   2. Click "Connect Repository"
 #   3. Select "GitHub" and authenticate
 #   4. Select the wine-shelf-scanner repository
+#
+# Usage:
+#   ./setup.sh [project-id]
 
 set -e
 
@@ -20,6 +24,26 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
+
+# Get script directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ENV_SECRETS_FILE="$SCRIPT_DIR/.env.secrets"
+
+# Load secrets from .env.secrets file if it exists
+if [ -f "$ENV_SECRETS_FILE" ]; then
+    echo -e "${YELLOW}Loading secrets from .env.secrets...${NC}"
+    set -a  # Auto-export variables
+    source "$ENV_SECRETS_FILE"
+    set +a
+else
+    echo -e "${YELLOW}No .env.secrets file found.${NC}"
+    echo "Create one from the example:"
+    echo "  cp $SCRIPT_DIR/.env.secrets.example $SCRIPT_DIR/.env.secrets"
+    echo "  # Edit .env.secrets with your API keys"
+    echo ""
+    echo "See .env.secrets.example for instructions on getting API keys."
+    exit 1
+fi
 
 # Configuration
 PROJECT_ID=${1:-$(gcloud config get-value project 2>/dev/null)}
@@ -73,55 +97,43 @@ echo ""
 
 echo -e "${YELLOW}Step 3: Setting up secrets...${NC}"
 
-# Function to create or update a secret
+# Validate required secrets are set
+if [ -z "$GOOGLE_API_KEY" ]; then
+    echo -e "${RED}Error: GOOGLE_API_KEY not set in .env.secrets${NC}"
+    exit 1
+fi
+
+if [ -z "$ANTHROPIC_API_KEY" ]; then
+    echo -e "${YELLOW}Warning: ANTHROPIC_API_KEY not set (optional, only needed for Claude LLM)${NC}"
+fi
+
+# Function to create or update a secret from env var
 setup_secret() {
     local secret_name=$1
-    local prompt_text=$2
-    local env_var=$3
+    local env_var=$2
+    local secret_value="${!env_var}"
+
+    if [ -z "$secret_value" ]; then
+        echo -e "${YELLOW}Skipping '$secret_name' (no value provided)${NC}"
+        return
+    fi
 
     if gcloud secrets describe "$secret_name" --project="$PROJECT_ID" &>/dev/null; then
-        echo "Secret '$secret_name' already exists."
-        read -p "Do you want to update it? (y/N): " update_secret
-        if [ "$update_secret" = "y" ] || [ "$update_secret" = "Y" ]; then
-            # Check if env var is set
-            if [ -n "${!env_var}" ]; then
-                echo "Using value from \$$env_var environment variable"
-                echo -n "${!env_var}" | gcloud secrets versions add "$secret_name" --data-file=- --project="$PROJECT_ID"
-            else
-                read -sp "$prompt_text: " secret_value
-                echo ""
-                echo -n "$secret_value" | gcloud secrets versions add "$secret_name" --data-file=- --project="$PROJECT_ID"
-            fi
-            echo -e "${GREEN}✓ Secret '$secret_name' updated${NC}"
-        else
-            echo "Skipping '$secret_name'"
-        fi
+        echo "Updating secret '$secret_name' from \$$env_var..."
+        echo -n "$secret_value" | gcloud secrets versions add "$secret_name" --data-file=- --project="$PROJECT_ID"
+        echo -e "${GREEN}✓ Secret '$secret_name' updated${NC}"
     else
-        echo "Creating secret '$secret_name'..."
+        echo "Creating secret '$secret_name' from \$$env_var..."
         gcloud secrets create "$secret_name" \
             --replication-policy="automatic" \
             --project="$PROJECT_ID"
-
-        # Check if env var is set
-        if [ -n "${!env_var}" ]; then
-            echo "Using value from \$$env_var environment variable"
-            echo -n "${!env_var}" | gcloud secrets versions add "$secret_name" --data-file=- --project="$PROJECT_ID"
-        else
-            read -sp "$prompt_text: " secret_value
-            echo ""
-            if [ -n "$secret_value" ]; then
-                echo -n "$secret_value" | gcloud secrets versions add "$secret_name" --data-file=- --project="$PROJECT_ID"
-            else
-                echo -e "${YELLOW}Warning: Empty secret value. You can add it later with:${NC}"
-                echo "  echo -n 'YOUR_KEY' | gcloud secrets versions add $secret_name --data-file=-"
-            fi
-        fi
+        echo -n "$secret_value" | gcloud secrets versions add "$secret_name" --data-file=- --project="$PROJECT_ID"
         echo -e "${GREEN}✓ Secret '$secret_name' created${NC}"
     fi
 }
 
-setup_secret "google-api-key" "Enter your Google API Key (for Vision API)" "GOOGLE_API_KEY"
-setup_secret "anthropic-api-key" "Enter your Anthropic API Key (for Claude)" "ANTHROPIC_API_KEY"
+setup_secret "google-api-key" "GOOGLE_API_KEY"
+setup_secret "anthropic-api-key" "ANTHROPIC_API_KEY"
 echo ""
 
 echo -e "${YELLOW}Step 4: Granting IAM permissions...${NC}"

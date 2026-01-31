@@ -139,11 +139,11 @@ class BottleText:
 class OCRProcessor:
     """Processes OCR results to extract wine names per bottle."""
 
-    # Patterns to remove during normalization
-    YEAR_PATTERN = re.compile(r'\b(19|20)\d{2}\b')
-    SIZE_PATTERN = re.compile(r'\b\d+\s*(ml|ML|mL|L|l|cl|CL)\b', re.IGNORECASE)
-    PRICE_PATTERN = re.compile(r'\$\d+\.?\d*')
-    ABV_PATTERN = re.compile(r'\b\d+\.?\d*\s*%\s*(alc|abv|vol)?\b', re.IGNORECASE)
+    # Patterns to remove during normalization (reuse module-level patterns)
+    YEAR_PATTERN = _YEAR_PATTERN
+    SIZE_PATTERN = _SIZE_PATTERN
+    PRICE_PATTERN = _PRICE_PATTERN
+    ABV_PATTERN = _ABV_PATTERN
 
     # Marketing/filler words to remove
     FILLER_WORDS = {

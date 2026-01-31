@@ -6,12 +6,11 @@ import {
   StyleSheet,
 } from 'react-native';
 import { FallbackWine } from '../lib/types';
+import { colors, spacing, fontSize } from '../lib/theme';
 
 interface FallbackListProps {
   wines: FallbackWine[];
 }
-
-const STAR_COLOR = '#FFCC00';
 
 export function FallbackList({ wines }: FallbackListProps) {
   // Sort by rating descending
@@ -43,36 +42,36 @@ export function FallbackList({ wines }: FallbackListProps) {
 
 const styles = StyleSheet.create({
   listContent: {
-    padding: 16,
+    padding: spacing.md,
   },
   item: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: spacing.sm + spacing.xs,
   },
   wineName: {
     flex: 1,
-    fontSize: 16,
-    color: '#000000',
-    marginRight: 16,
+    fontSize: fontSize.md,
+    color: colors.textDark,
+    marginRight: spacing.md,
   },
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: spacing.xs,
   },
   star: {
-    fontSize: 16,
-    color: STAR_COLOR,
+    fontSize: fontSize.md,
+    color: colors.star,
   },
   ratingText: {
-    fontSize: 16,
+    fontSize: fontSize.md,
     fontWeight: '600',
-    color: '#000000',
+    color: colors.textDark,
   },
   separator: {
     height: 1,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: colors.separator,
   },
 });

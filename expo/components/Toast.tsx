@@ -5,6 +5,7 @@ import {
   Animated,
   StyleSheet,
 } from 'react-native';
+import { colors, spacing, borderRadius, fontSize, animation, layout } from '../lib/theme';
 
 interface ToastProps {
   message: string;
@@ -17,10 +18,10 @@ export function Toast({ message, visible }: ToastProps) {
   useEffect(() => {
     Animated.timing(opacity, {
       toValue: visible ? 1 : 0,
-      duration: 300,
+      duration: animation.toastDuration,
       useNativeDriver: true,
     }).start();
-  }, [visible, opacity]);
+  }, [visible]);
 
   return (
     <Animated.View style={[styles.container, { opacity }]} pointerEvents="none" testID="toast">
@@ -34,21 +35,21 @@ export function Toast({ message, visible }: ToastProps) {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 100,
+    bottom: layout.toastBottomPosition,
     left: 0,
     right: 0,
     alignItems: 'center',
   },
   toast: {
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
+    backgroundColor: colors.toastBackground,
+    paddingVertical: spacing.sm + spacing.xs,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.sm,
     maxWidth: '80%',
   },
   message: {
-    color: '#FFFFFF',
-    fontSize: 15,
+    color: colors.textLight,
+    fontSize: fontSize.sm,
     textAlign: 'center',
   },
 });

@@ -33,6 +33,91 @@ from .ocr_processor import BottleText
 from .wine_matcher import WineMatcher, WineMatch, WineMatchWithScores
 
 
+class DebugCollector:
+    """
+    Collects debug information when enabled, no-ops when disabled.
+
+    This class extracts the debug concern from RecognitionPipeline,
+    providing a clean interface that handles the enabled/disabled
+    state internally.
+    """
+
+    def __init__(self, enabled: bool = False):
+        """
+        Initialize collector.
+
+        Args:
+            enabled: If True, collect debug info. If False, all methods are no-ops.
+        """
+        self.enabled = enabled
+        self.steps: list[DebugPipelineStep] = []
+
+    def reset(self) -> None:
+        """Reset collected debug info for a new recognition run."""
+        self.steps = []
+
+    def add_step(
+        self,
+        bottle_text: "BottleText",
+        bottle_idx: int,
+        match_with_scores: Optional["WineMatchWithScores"],
+        llm_debug: Optional[LLMValidationDebug],
+        result: Optional["RecognizedWine"],
+        step_failed: Optional[str],
+        included: bool
+    ) -> None:
+        """Add a debug step to the collection. No-op if disabled."""
+        if not self.enabled:
+            return
+
+        fuzzy_debug = None
+        if match_with_scores:
+            fuzzy_debug = FuzzyMatchDebug(
+                candidate=match_with_scores.canonical_name,
+                scores=FuzzyMatchScores(
+                    ratio=match_with_scores.scores.ratio,
+                    partial_ratio=match_with_scores.scores.partial_ratio,
+                    token_sort_ratio=match_with_scores.scores.token_sort_ratio,
+                    phonetic_bonus=match_with_scores.scores.phonetic_bonus,
+                    weighted_score=match_with_scores.scores.weighted_score
+                ),
+                rating=match_with_scores.rating
+            )
+
+        final_result = None
+        if result:
+            final_result = {
+                "wine_name": result.wine_name,
+                "confidence": result.confidence,
+                "source": result.source
+            }
+
+        self.steps.append(DebugPipelineStep(
+            raw_text=bottle_text.combined_text or "",
+            normalized_text=bottle_text.normalized_name or "",
+            bottle_index=bottle_idx,
+            fuzzy_match=fuzzy_debug,
+            llm_validation=llm_debug,
+            final_result=final_result,
+            step_failed=step_failed,
+            included_in_results=included
+        ))
+
+    def create_llm_debug(
+        self,
+        validation: "BatchValidationResult"
+    ) -> Optional[LLMValidationDebug]:
+        """Create LLM debug info from validation result. Returns None if disabled."""
+        if not self.enabled:
+            return None
+        return LLMValidationDebug(
+            is_valid_match=validation.is_valid_match,
+            wine_name=validation.wine_name,
+            confidence=validation.confidence,
+            reasoning=validation.reasoning
+        )
+
+
 @dataclass
 class RecognizedWine:
     """A recognized wine from the pipeline."""
@@ -77,9 +162,14 @@ class RecognitionPipeline:
         self.normalizer = normalizer or get_normalizer(use_mock=not use_llm, provider=llm_provider)
         self.use_llm = use_llm
         self.debug_mode = debug_mode
-        # Debug data collection
-        self.debug_steps: list[DebugPipelineStep] = []
+        # Debug data collection (encapsulated in DebugCollector)
+        self._debug = DebugCollector(enabled=debug_mode)
         self.llm_call_count: int = 0
+
+    @property
+    def debug_steps(self) -> list[DebugPipelineStep]:
+        """Access debug steps (for backwards compatibility)."""
+        return self._debug.steps
 
     async def recognize(
         self,
@@ -100,7 +190,7 @@ class RecognitionPipeline:
             List of RecognizedWine with ratings where available
         """
         # Reset debug state for new recognition run
-        self.debug_steps = []
+        self._debug.reset()
         self.llm_call_count = 0
 
         if not bottle_texts:
@@ -111,14 +201,13 @@ class RecognitionPipeline:
         matches: list[tuple[BottleText, Optional[WineMatch], Optional[WineMatchWithScores]]] = []
         for bottle_idx, bt in enumerate(bottle_texts):
             if not bt.normalized_name or len(bt.normalized_name) < 3:
-                if self.debug_mode:
-                    self._add_debug_step(
-                        bt, bottle_idx, None, None, None,
-                        step_failed="text_too_short", included=False
-                    )
+                self._debug.add_step(
+                    bt, bottle_idx, None, None, None,
+                    step_failed="text_too_short", included=False
+                )
                 continue
 
-            if self.debug_mode:
+            if self._debug.enabled:
                 match_with_scores = self.wine_matcher.match_with_scores(bt.normalized_name)
                 match = WineMatch(
                     canonical_name=match_with_scores.canonical_name,
@@ -141,11 +230,10 @@ class RecognitionPipeline:
                 # High confidence → skip LLM, return immediately
                 result = self._match_to_result(bt, match)
                 high_confidence_results.append(result)
-                if self.debug_mode:
-                    self._add_debug_step(
-                        bt, bottle_idx, match_with_scores, None, result,
-                        step_failed=None, included=True
-                    )
+                self._debug.add_step(
+                    bt, bottle_idx, match_with_scores, None, result,
+                    step_failed=None, included=True
+                )
             elif self.use_llm:
                 # Uncertain → queue for LLM validation
                 needs_llm.append((bt, match, match_with_scores, bottle_idx))
@@ -153,14 +241,13 @@ class RecognitionPipeline:
                 # LLM disabled but acceptable confidence → use match
                 result = self._match_to_result(bt, match)
                 high_confidence_results.append(result)
-                if self.debug_mode:
-                    self._add_debug_step(
-                        bt, bottle_idx, match_with_scores, None, result,
-                        step_failed=None, included=True
-                    )
-            elif self.debug_mode:
+                self._debug.add_step(
+                    bt, bottle_idx, match_with_scores, None, result,
+                    step_failed=None, included=True
+                )
+            else:
                 # No match or low confidence, LLM disabled
-                self._add_debug_step(
+                self._debug.add_step(
                     bt, bottle_idx, match_with_scores, None, None,
                     step_failed="low_confidence_no_llm", included=False
                 )
@@ -254,74 +341,21 @@ class RecognitionPipeline:
         results: list[RecognizedWine] = []
         for (bt, match, match_with_scores, bottle_idx), validation in zip(items, validations):
             result = self._process_validation(bt, match, validation)
-
-            if self.debug_mode:
-                llm_debug = LLMValidationDebug(
-                    is_valid_match=validation.is_valid_match,
-                    wine_name=validation.wine_name,
-                    confidence=validation.confidence,
-                    reasoning=validation.reasoning
-                )
-
-                if result:
-                    self._add_debug_step(
-                        bt, bottle_idx, match_with_scores, llm_debug, result,
-                        step_failed=None, included=True
-                    )
-                else:
-                    self._add_debug_step(
-                        bt, bottle_idx, match_with_scores, llm_debug, None,
-                        step_failed="llm_validation", included=False
-                    )
+            llm_debug = self._debug.create_llm_debug(validation)
 
             if result:
+                self._debug.add_step(
+                    bt, bottle_idx, match_with_scores, llm_debug, result,
+                    step_failed=None, included=True
+                )
                 results.append(result)
+            else:
+                self._debug.add_step(
+                    bt, bottle_idx, match_with_scores, llm_debug, None,
+                    step_failed="llm_validation", included=False
+                )
 
         return results
-
-    def _add_debug_step(
-        self,
-        bottle_text: BottleText,
-        bottle_idx: int,
-        match_with_scores: Optional[WineMatchWithScores],
-        llm_debug: Optional[LLMValidationDebug],
-        result: Optional[RecognizedWine],
-        step_failed: Optional[str],
-        included: bool
-    ) -> None:
-        """Add a debug step to the collection."""
-        fuzzy_debug = None
-        if match_with_scores:
-            fuzzy_debug = FuzzyMatchDebug(
-                candidate=match_with_scores.canonical_name,
-                scores=FuzzyMatchScores(
-                    ratio=match_with_scores.scores.ratio,
-                    partial_ratio=match_with_scores.scores.partial_ratio,
-                    token_sort_ratio=match_with_scores.scores.token_sort_ratio,
-                    phonetic_bonus=match_with_scores.scores.phonetic_bonus,
-                    weighted_score=match_with_scores.scores.weighted_score
-                ),
-                rating=match_with_scores.rating
-            )
-
-        final_result = None
-        if result:
-            final_result = {
-                "wine_name": result.wine_name,
-                "confidence": result.confidence,
-                "source": result.source
-            }
-
-        self.debug_steps.append(DebugPipelineStep(
-            raw_text=bottle_text.combined_text or "",
-            normalized_text=bottle_text.normalized_name or "",
-            bottle_index=bottle_idx,
-            fuzzy_match=fuzzy_debug,
-            llm_validation=llm_debug,
-            final_result=final_result,
-            step_failed=step_failed,
-            included_in_results=included
-        ))
 
     def _process_validation(
         self,

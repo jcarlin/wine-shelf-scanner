@@ -11,9 +11,7 @@ import { CameraCapture } from '../components/CameraCapture';
 import { ProcessingSpinner } from '../components/ProcessingSpinner';
 import { ResultsView } from '../components/ResultsView';
 import { FallbackList } from '../components/FallbackList';
-
-const WINE_COLOR = '#722F37';
-const BACKGROUND_COLOR = '#1a1a2e';
+import { colors, spacing, borderRadius, fontSize } from '../lib/theme';
 
 export default function ScannerScreen() {
   const { state, pickAndScan, pickFromLibrary, reset } = useScanState();
@@ -107,44 +105,44 @@ export default function ScannerScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: BACKGROUND_COLOR,
+    backgroundColor: colors.background,
   },
   resultsContainer: {
     flex: 1,
   },
   buttonContainer: {
-    padding: 16,
-    paddingBottom: 8,
+    padding: spacing.md,
+    paddingBottom: spacing.sm,
   },
   button: {
-    backgroundColor: WINE_COLOR,
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 12,
+    backgroundColor: colors.wine,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xl,
+    borderRadius: borderRadius.md,
     alignItems: 'center',
   },
   buttonText: {
-    color: '#FFFFFF',
-    fontSize: 17,
+    color: colors.textLight,
+    fontSize: fontSize.lg,
     fontWeight: '600',
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 32,
+    padding: spacing.xl,
   },
   errorTitle: {
-    fontSize: 22,
+    fontSize: fontSize.xl,
     fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 12,
+    color: colors.textLight,
+    marginBottom: spacing.sm + spacing.xs,
     textAlign: 'center',
   },
   errorMessage: {
-    fontSize: 16,
-    color: '#999999',
-    marginBottom: 32,
+    fontSize: fontSize.md,
+    color: colors.textMuted,
+    marginBottom: spacing.xl,
     textAlign: 'center',
   },
 });

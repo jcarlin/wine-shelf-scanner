@@ -4,6 +4,7 @@
 
 import { Config } from './config';
 import { ScanResponse } from './types';
+import { getMockResponse } from './mock-service';
 
 export type ApiError =
   | { type: 'NETWORK_ERROR'; message: string }
@@ -31,6 +32,22 @@ export async function scanImage(
   imageUri: string,
   options: ScanOptions = {}
 ): Promise<ScanResult> {
+  // Use mock service if configured
+  if (Config.USE_MOCKS) {
+    try {
+      const response = await getMockResponse(Config.MOCK_SCENARIO);
+      return { success: true, data: response };
+    } catch (error) {
+      return {
+        success: false,
+        error: {
+          type: 'NETWORK_ERROR',
+          message: error instanceof Error ? error.message : 'Mock service error',
+        },
+      };
+    }
+  }
+
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), Config.REQUEST_TIMEOUT);
 

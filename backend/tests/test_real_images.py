@@ -38,14 +38,16 @@ def get_vision_fixture(image_name: str) -> Optional[Path]:
     return fixture_path if fixture_path.exists() else None
 
 
-def build_scan_url(vision_fixture: Optional[Path]) -> str:
+def build_scan_url(vision_fixture: Optional[Path], use_llm: bool = True) -> str:
     """Build scan URL with appropriate parameters."""
     if vision_fixture:
         # Use captured fixture for deterministic replay
-        return f"/scan?use_vision_fixture={vision_fixture}"
+        # Disable LLM for full determinism when using fixtures
+        return f"/scan?use_vision_fixture={vision_fixture}&use_llm=false"
     else:
         # Fall back to live Vision API
-        return "/scan?use_vision_api=true"
+        llm_param = "&use_llm=true" if use_llm else "&use_llm=false"
+        return f"/scan?use_vision_api=true{llm_param}"
 
 
 class TestRealImageDetection:

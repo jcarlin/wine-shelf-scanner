@@ -9,15 +9,13 @@ import {
 } from 'react-native';
 import { WineResult } from '../lib/types';
 import { confidenceLabel } from '../lib/overlay-math';
+import { colors, spacing, borderRadius, fontSize, layout } from '../lib/theme';
 
 interface WineDetailModalProps {
   visible: boolean;
   wine: WineResult | null;
   onClose: () => void;
 }
-
-const STAR_COLOR = '#FFCC00';
-const WINE_COLOR = '#722F37';
 
 export function WineDetailModal({ visible, wine, onClose }: WineDetailModalProps) {
   if (!wine) {
@@ -68,62 +66,62 @@ export function WineDetailModal({ visible, wine, onClose }: WineDetailModalProps
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.sheetBackground,
   },
   content: {
     flex: 1,
-    padding: 24,
+    padding: spacing.lg,
     alignItems: 'center',
   },
   header: {
     width: '100%',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   handleBar: {
-    width: 36,
-    height: 5,
-    backgroundColor: '#E0E0E0',
-    borderRadius: 2.5,
+    width: layout.handleBarWidth,
+    height: layout.handleBarHeight,
+    backgroundColor: colors.handleBar,
+    borderRadius: borderRadius.xs,
   },
   wineName: {
-    fontSize: 24,
+    fontSize: fontSize.xxl,
     fontWeight: '700',
-    color: '#000000',
+    color: colors.textDark,
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 16,
+    gap: spacing.sm,
+    marginBottom: spacing.md,
   },
   star: {
-    fontSize: 48,
-    color: STAR_COLOR,
+    fontSize: fontSize.rating,
+    color: colors.star,
   },
   ratingText: {
-    fontSize: 48,
+    fontSize: fontSize.rating,
     fontWeight: 'bold',
-    color: '#000000',
+    color: colors.textDark,
   },
   confidenceLabel: {
-    fontSize: 15,
-    color: '#666666',
-    marginBottom: 32,
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+    marginBottom: spacing.xl,
   },
   closeButton: {
-    backgroundColor: WINE_COLOR,
+    backgroundColor: colors.wine,
     paddingVertical: 14,
-    paddingHorizontal: 48,
-    borderRadius: 12,
+    paddingHorizontal: spacing.xxl,
+    borderRadius: borderRadius.md,
     marginTop: 'auto',
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   closeButtonText: {
-    color: '#FFFFFF',
-    fontSize: 17,
+    color: colors.textLight,
+    fontSize: fontSize.lg,
     fontWeight: '600',
   },
 });

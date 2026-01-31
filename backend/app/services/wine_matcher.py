@@ -99,7 +99,7 @@ class WineMatcher:
 
         self._build_index()
 
-    def _load_database(self, path) -> dict:
+    def _load_database(self, path: Path) -> dict:
         """Load ratings database from JSON file."""
         try:
             with open(path, 'r') as f:
@@ -108,13 +108,13 @@ class WineMatcher:
             # Return empty database if file doesn't exist
             return {"wines": []}
 
-    def _build_index(self):
+    def _build_index(self) -> None:
         """Build lookup index for faster matching."""
-        self.name_to_wine = {}
-        self.all_names = []
-        self.phonetic_index = {}  # Metaphone → wine names
-        self.ngram_index = {}     # 3-gram → wine names
-        self.winery_to_wines = {}  # Winery name → list of wines
+        self.name_to_wine: dict[str, dict] = {}
+        self.all_names: list[str] = []
+        self.phonetic_index: dict[str, list[str]] = {}  # Metaphone → wine names
+        self.ngram_index: dict[str, set[str]] = {}     # 3-gram → wine names
+        self.winery_to_wines: dict[str, list[dict]] = {}  # Winery name → list of wines
 
         for wine in self.database.get("wines", []):
             canonical = wine["canonical_name"].lower()
@@ -137,7 +137,7 @@ class WineMatcher:
                     # Map winery to first/best wine (highest rated)
                     self._index_name(winery_lower, wine)
 
-    def _index_name(self, name: str, wine: dict):
+    def _index_name(self, name: str, wine: dict) -> None:
         """Index a single name (canonical or alias)."""
         self.name_to_wine[name] = wine
         self.all_names.append(name)
@@ -170,8 +170,9 @@ class WineMatcher:
 
         Uses multi-algorithm scoring:
         1. Exact match (confidence 1.0)
-        2. Weighted fuzzy match (ratio + partial_ratio + token_sort_ratio)
-        3. Phonetic bonus for similar-sounding matches
+        2. Exact winery match (confidence 0.9)
+        3. Weighted fuzzy match (ratio + partial_ratio + token_sort_ratio)
+        4. Phonetic bonus for similar-sounding matches
 
         Args:
             query: Normalized wine name from OCR
@@ -188,7 +189,20 @@ class WineMatcher:
         if len(query_lower) < 3:
             return None
 
-        # Try exact match first
+        # Step 1: Try exact match
+        if result := self._try_exact_match(query_lower):
+            return result
+
+        # Step 2: Try exact winery match
+        if result := self._try_winery_match(query_lower):
+            return result
+
+        # Step 3: Get candidates and fuzzy match
+        candidates = self._select_candidates(query_lower)
+        return self._fuzzy_match_candidates(query_lower, candidates)
+
+    def _try_exact_match(self, query_lower: str) -> Optional[WineMatch]:
+        """Try to find an exact match in the database."""
         if query_lower in self.name_to_wine:
             wine = self.name_to_wine[query_lower]
             return WineMatch(
@@ -197,11 +211,12 @@ class WineMatcher:
                 confidence=1.0,
                 source=wine.get("source", "unknown")
             )
+        return None
 
-        # Try exact winery match (returns highest-rated wine from that producer)
+    def _try_winery_match(self, query_lower: str) -> Optional[WineMatch]:
+        """Try to match by winery name, returning highest-rated wine from producer."""
         if query_lower in self.winery_to_wines:
             wines = self.winery_to_wines[query_lower]
-            # Get best rated wine from this winery
             best_wine = max(wines, key=lambda w: w.get("rating", 0))
             return WineMatch(
                 canonical_name=best_wine["canonical_name"],
@@ -209,72 +224,33 @@ class WineMatcher:
                 confidence=0.9,  # High confidence for exact winery match
                 source=best_wine.get("source", "unknown")
             )
+        return None
 
-        # Get candidate set using n-gram index (faster than checking all)
+    def _select_candidates(self, query_lower: str) -> set[str]:
+        """Select candidate wines for fuzzy matching using n-gram or prefix index."""
         candidates = self._get_candidates(query_lower)
-
-        # If no n-gram matches, use prefix matching instead of all names
         if not candidates:
             candidates = self._get_prefix_candidates(query_lower)
+        return candidates
 
-        # Use rapidfuzz's optimized batch processing for large candidate sets
-        if len(candidates) > 100:
-            # Use process.extract to get top candidates, then apply length penalty
-            results = process.extract(
-                query_lower,
-                candidates,
-                scorer=fuzz.WRatio,
-                score_cutoff=Config.MIN_SIMILARITY * 100,
-                limit=10  # Get top 10 to filter
-            )
+    def _fuzzy_match_candidates(
+        self,
+        query_lower: str,
+        candidates: set[str]
+    ) -> Optional[WineMatch]:
+        """
+        Fuzzy match query against candidates.
 
-            best_match = None
-            best_score = 0
+        Uses optimized batch processing for large candidate sets,
+        and manual matching with phonetic bonus for small sets.
+        """
+        if not candidates:
+            return None
 
-            for name, score, _ in results:
-                adjusted_score = score / 100
-
-                # Apply length penalty (same logic as _enhanced_similarity)
-                candidate_main = name.split()[0] if name else name
-                query_main = query_lower.split()[0] if query_lower else query_lower
-                len_ratio = len(candidate_main) / max(len(query_main), 1)
-
-                # Only apply penalties if query is NOT contained in candidate
-                query_in_candidate = query_lower in name
-
-                if not query_in_candidate:
-                    if len_ratio < 0.5:
-                        adjusted_score = max(0, adjusted_score - 0.4)
-                    elif len_ratio < 0.7:
-                        adjusted_score = max(0, adjusted_score - 0.2)
-
-                    # Also check raw ratio - reject if character similarity is too low
-                    raw_ratio = fuzz.ratio(query_lower, name) / 100
-                    if raw_ratio < 0.4:
-                        adjusted_score = adjusted_score * 0.5
-
-                if adjusted_score > best_score and adjusted_score >= Config.MIN_SIMILARITY:
-                    best_score = adjusted_score
-                    best_match = self.name_to_wine[name]
+        if len(candidates) > Config.CANDIDATE_LARGE_THRESHOLD:
+            best_match, best_score = self._fuzzy_match_large_set(query_lower, candidates)
         else:
-            # Manual matching for small candidate sets (allows phonetic bonus)
-            best_match = None
-            best_score = 0
-
-            try:
-                query_metaphone = jellyfish.metaphone(query_lower)
-            except Exception:
-                query_metaphone = None
-
-            for name in candidates:
-                score = self._enhanced_similarity(query_lower, name, query_metaphone)
-                if score > best_score and score >= Config.MIN_SIMILARITY:
-                    best_score = score
-                    best_match = self.name_to_wine[name]
-
-                # Early exit if we found an excellent match
-                if best_score >= 0.95:
-                    break
+            best_match, best_score = self._fuzzy_match_small_set(query_lower, candidates)
 
         if best_match:
             return WineMatch(
@@ -283,8 +259,87 @@ class WineMatcher:
                 confidence=best_score,
                 source=best_match.get("source", "unknown")
             )
-
         return None
+
+    def _fuzzy_match_large_set(
+        self,
+        query_lower: str,
+        candidates: set[str]
+    ) -> tuple[Optional[dict], float]:
+        """Fuzzy match using rapidfuzz batch processing for large candidate sets."""
+        results = process.extract(
+            query_lower,
+            candidates,
+            scorer=fuzz.WRatio,
+            score_cutoff=Config.MIN_SIMILARITY * 100,
+            limit=10
+        )
+
+        best_match = None
+        best_score = 0.0
+
+        for name, score, _ in results:
+            adjusted_score = self._apply_length_penalty(query_lower, name, score / 100)
+
+            if adjusted_score > best_score and adjusted_score >= Config.MIN_SIMILARITY:
+                best_score = adjusted_score
+                best_match = self.name_to_wine[name]
+
+        return best_match, best_score
+
+    def _fuzzy_match_small_set(
+        self,
+        query_lower: str,
+        candidates: set[str]
+    ) -> tuple[Optional[dict], float]:
+        """Fuzzy match with phonetic bonus for small candidate sets."""
+        best_match = None
+        best_score = 0.0
+
+        try:
+            query_metaphone = jellyfish.metaphone(query_lower)
+        except Exception:
+            query_metaphone = None
+
+        for name in candidates:
+            score = self._enhanced_similarity(query_lower, name, query_metaphone)
+            if score > best_score and score >= Config.MIN_SIMILARITY:
+                best_score = score
+                best_match = self.name_to_wine[name]
+
+            # Early exit if we found an excellent match
+            if best_score >= Config.FUZZY_EARLY_EXIT:
+                break
+
+        return best_match, best_score
+
+    def _apply_length_penalty(
+        self,
+        query_lower: str,
+        candidate: str,
+        base_score: float
+    ) -> float:
+        """Apply length penalty to prevent short candidate matches on long queries."""
+        candidate_main = candidate.split()[0] if candidate else candidate
+        query_main = query_lower.split()[0] if query_lower else query_lower
+        len_ratio = len(candidate_main) / max(len(query_main), 1)
+
+        # Only apply penalties if query is NOT contained in candidate
+        if query_lower in candidate:
+            return base_score
+
+        adjusted_score = base_score
+        if len_ratio < 0.5:
+            adjusted_score = max(0, adjusted_score - 0.4)
+        elif len_ratio < 0.7:
+            adjusted_score = max(0, adjusted_score - 0.2)
+
+        # Also penalize if raw ratio is too low
+        raw_ratio = fuzz.ratio(query_lower, candidate) / 100
+        if raw_ratio < 0.4:
+            adjusted_score = adjusted_score * 0.5
+
+        return adjusted_score
 
     def _get_candidates(self, query: str) -> set[str]:
         """Get candidate names using n-gram index."""

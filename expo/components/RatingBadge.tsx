@@ -7,6 +7,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import { isTappable, badgeSize, opacity } from '../lib/overlay-math';
+import { colors, spacing, borderRadius } from '../lib/theme';
 
 interface RatingBadgeProps {
   rating: number;
@@ -16,10 +17,6 @@ interface RatingBadgeProps {
   /** Wine name for accessibility testID */
   wineName?: string;
 }
-
-const STAR_COLOR = '#FFCC00';
-const TOP_THREE_BORDER_COLOR = 'rgba(255, 204, 0, 0.6)';
-const TOP_THREE_GLOW_COLOR = '#FFCC00';
 
 export function RatingBadge({
   rating,
@@ -39,7 +36,7 @@ export function RatingBadge({
   // Glow effect for top-3 wines
   const glowStyle: ViewStyle = isTopThree
     ? {
-        shadowColor: TOP_THREE_GLOW_COLOR,
+        shadowColor: colors.topThreeGlow,
         shadowOffset: { width: 0, height: 0 },
         shadowOpacity: 0.6,
         shadowRadius: 4,
@@ -52,7 +49,7 @@ export function RatingBadge({
     height: size.height,
     opacity: badgeOpacity,
     borderWidth: isTopThree ? 2 : 0,
-    borderColor: isTopThree ? TOP_THREE_BORDER_COLOR : 'transparent',
+    borderColor: isTopThree ? colors.topThreeBorder : 'transparent',
     ...glowStyle,
   };
 
@@ -83,11 +80,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    borderRadius: 12,
+    backgroundColor: colors.badgeBackground,
+    borderRadius: borderRadius.md,
     paddingHorizontal: 6,
     gap: 2,
-    shadowColor: '#000000',
+    shadowColor: colors.textDark,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.5,
     shadowRadius: 2,
@@ -95,7 +92,7 @@ const styles = StyleSheet.create({
   },
   star: {
     fontSize: 12,
-    color: STAR_COLOR,
+    color: colors.star,
   },
   starTopThree: {
     fontSize: 14,
@@ -103,9 +100,9 @@ const styles = StyleSheet.create({
   rating: {
     fontSize: 13,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.textLight,
   },
   ratingTopThree: {
-    fontSize: 15,
+    fontSize: fontSize.sm,
   },
 });

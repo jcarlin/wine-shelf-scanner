@@ -141,15 +141,18 @@ class NormalizerProtocol(Protocol):
     ) -> list[BatchValidationResult]: ...
 
 
-class ClaudeNormalizer:
+class LLMNormalizerBase:
     """
-    Wine name normalizer using Claude Haiku.
+    Base class with shared parsing/validation logic for LLM normalizers.
 
-    Cost: ~$0.001 per call (input ~200 tokens, output ~50 tokens)
+    Subclasses only need to implement:
+    - normalize(): API-specific LLM call for normalization
+    - validate(): API-specific LLM call for validation
+    - validate_batch(): API-specific batched validation
+    - _get_client(): Lazy load the LLM client
     """
 
-    MODEL = "claude-3-haiku-20240307"
-
+    # Subclasses should override these prompts if needed
     VALIDATION_PROMPT = """You are a wine label validator.
 
 Given OCR text from a wine bottle and a database match candidate, determine:
@@ -250,6 +253,218 @@ Confidence:
 - 0.7-0.9: Partial but identifiable
 - 0.5-0.7: Inferred from fragments
 - <0.5: Very uncertain"""
+
+    def _parse_response(self, response_text: str) -> NormalizationResult:
+        """Parse LLM JSON response for normalization."""
+        try:
+            # Handle potential markdown code blocks
+            text = response_text.strip()
+            if text.startswith("```"):
+                text = text.split("```")[1]
+                if text.startswith("json"):
+                    text = text[4:]
+                text = text.strip()
+
+            data = json.loads(text)
+
+            return NormalizationResult(
+                wine_name=data.get("wine_name"),
+                confidence=float(data.get("confidence", 0.5)),
+                is_wine=bool(data.get("is_wine", False)),
+                reasoning=data.get("reasoning", "")
+            )
+        except (json.JSONDecodeError, KeyError, ValueError) as e:
+            return NormalizationResult(
+                wine_name=None,
+                confidence=0.0,
+                is_wine=False,
+                reasoning=f"Parse error: {str(e)}"
+            )
+
+    def _parse_validation_response(
+        self,
+        response_text: str,
+        db_candidate: str
+    ) -> ValidationResult:
+        """Parse LLM validation JSON response."""
+        try:
+            text = response_text.strip()
+            if text.startswith("```"):
+                text = text.split("```")[1]
+                if text.startswith("json"):
+                    text = text[4:]
+                text = text.strip()
+
+            data = json.loads(text)
+
+            return ValidationResult(
+                is_valid_match=bool(data.get("is_valid_match", False)),
+                wine_name=data.get("wine_name") or db_candidate,
+                confidence=float(data.get("confidence", 0.5)),
+                reasoning=data.get("reasoning", "")
+            )
+        except (json.JSONDecodeError, KeyError, ValueError) as e:
+            logger.warning(f"Failed to parse validation response: {e}")
+            return ValidationResult(
+                is_valid_match=True,
+                wine_name=db_candidate,
+                confidence=0.5,
+                reasoning=f"Parse error, trusting fuzzy match: {str(e)}"
+            )
+
+    def _heuristic_validate(
+        self,
+        ocr_text: str,
+        db_candidate: Optional[str]
+    ) -> ValidationResult:
+        """Validate without LLM using simple heuristics."""
+        if not db_candidate:
+            clean_name = _extract_clean_wine_name(ocr_text)
+            return ValidationResult(
+                is_valid_match=False,
+                wine_name=clean_name,
+                confidence=0.5 if clean_name else 0.0,
+                reasoning="No DB candidate"
+            )
+
+        ocr_lower = ocr_text.lower().strip()
+        db_lower = db_candidate.lower().strip()
+
+        # Get first words (usually producer name)
+        ocr_first = ocr_lower.split()[0] if ocr_lower else ""
+        db_first = db_lower.split()[0] if db_lower else ""
+
+        # Check 1: DB candidate much shorter = likely substring abuse
+        if len(db_lower) < len(ocr_lower) * 0.4:
+            clean_name = _extract_clean_wine_name(ocr_text)
+            return ValidationResult(
+                is_valid_match=False,
+                wine_name=clean_name,
+                confidence=0.6 if clean_name else 0.0,
+                reasoning="DB candidate too short"
+            )
+
+        # Check 2: First word should match (producer name)
+        if ocr_first and db_first and len(ocr_first) >= 3:
+            # Check if first words are similar enough
+            # Use longer prefix for longer words to avoid false positives
+            min_match_len = min(4, len(ocr_first), len(db_first))
+            if ocr_first[:min_match_len] != db_first[:min_match_len]:
+                # First words don't match - check if either is contained in the other
+                if ocr_lower not in db_lower and db_lower.split()[0] not in ocr_lower:
+                    clean_name = _extract_clean_wine_name(ocr_text)
+                    return ValidationResult(
+                        is_valid_match=False,
+                        wine_name=clean_name,
+                        confidence=0.6 if clean_name else 0.0,
+                        reasoning="Producer names don't match"
+                    )
+
+        # Check 3: If first words match prefix but are very different overall, reject
+        # e.g., "precipice" vs "premices" both start with "pre" but are different
+        if ocr_first and db_first and len(ocr_first) >= 5 and len(db_first) >= 5:
+            # Check middle characters
+            if ocr_first[2:5] != db_first[2:5]:
+                clean_name = _extract_clean_wine_name(ocr_text)
+                return ValidationResult(
+                    is_valid_match=False,
+                    wine_name=clean_name,
+                    confidence=0.6 if clean_name else 0.0,
+                    reasoning="First words differ in middle characters"
+                )
+
+        # Passed heuristics - trust the match
+        return ValidationResult(
+            is_valid_match=True,
+            wine_name=db_candidate,
+            confidence=0.7,
+            reasoning="Heuristic validation passed"
+        )
+
+    def _format_batch_items(self, items: list[BatchValidationItem]) -> str:
+        """Format batch items for LLM prompt."""
+        lines = []
+        for i, item in enumerate(items):
+            rating_str = f"{item.db_rating:.1f}" if item.db_rating else "N/A"
+            db_str = f'"{item.db_candidate}" (rating: {rating_str})' if item.db_candidate else "null"
+            lines.append(f'{i}. OCR: "{item.ocr_text}" → DB: {db_str}')
+        return "\n".join(lines)
+
+    def _parse_batch_response(
+        self,
+        response_text: str,
+        items: list[BatchValidationItem]
+    ) -> list[BatchValidationResult]:
+        """Parse LLM batch validation JSON response."""
+        try:
+            text = response_text.strip()
+            if text.startswith("```"):
+                text = text.split("```")[1]
+                if text.startswith("json"):
+                    text = text[4:]
+                text = text.strip()
+
+            data = json.loads(text)
+
+            if not isinstance(data, list):
+                raise ValueError("Expected JSON array")
+
+            results = []
+            for i, item in enumerate(items):
+                result_data = next((d for d in data if d.get("index") == i), None)
+
+                if result_data:
+                    results.append(BatchValidationResult(
+                        index=i,
+                        is_valid_match=bool(result_data.get("is_valid_match", False)),
+                        wine_name=result_data.get("wine_name") or item.db_candidate,
+                        confidence=float(result_data.get("confidence", 0.5)),
+                        reasoning=result_data.get("reasoning", "")
+                    ))
+                else:
+                    heuristic = self._heuristic_validate(item.ocr_text, item.db_candidate)
+                    results.append(BatchValidationResult(
+                        index=i,
+                        is_valid_match=heuristic.is_valid_match,
+                        wine_name=heuristic.wine_name,
+                        confidence=heuristic.confidence,
+                        reasoning="Fallback: missing from LLM response"
+                    ))
+
+            return results
+
+        except (json.JSONDecodeError, KeyError, ValueError) as e:
+            logger.warning(f"Failed to parse batch response: {e}")
+            return self._heuristic_validate_batch(items)
+
+    def _heuristic_validate_batch(
+        self,
+        items: list[BatchValidationItem]
+    ) -> list[BatchValidationResult]:
+        """Validate batch without LLM using heuristics."""
+        results = []
+        for i, item in enumerate(items):
+            heuristic = self._heuristic_validate(item.ocr_text, item.db_candidate)
+            results.append(BatchValidationResult(
+                index=i,
+                is_valid_match=heuristic.is_valid_match,
+                wine_name=heuristic.wine_name,
+                confidence=heuristic.confidence,
+                reasoning=heuristic.reasoning
+            ))
+        return results
+
+
+class ClaudeNormalizer(LLMNormalizerBase):
+    """
+    Wine name normalizer using Claude Haiku.
+
+    Cost: ~$0.001 per call (input ~200 tokens, output ~50 tokens)
+
+    Inherits shared parsing/validation logic from LLMNormalizerBase.
+    """
+
+    MODEL = "claude-3-haiku-20240307"
 
     def __init__(self, api_key: Optional[str] = None):
         """
@@ -381,33 +596,6 @@ Return JSON: {"wine_name": "...", "confidence": 0.0-1.0, "is_wine": true/false, 
                 reasoning=f"LLM error: {type(e).__name__}"
             )
 
-    def _parse_response(self, response_text: str) -> NormalizationResult:
-        """Parse LLM JSON response."""
-        try:
-            # Handle potential markdown code blocks
-            text = response_text.strip()
-            if text.startswith("```"):
-                text = text.split("```")[1]
-                if text.startswith("json"):
-                    text = text[4:]
-                text = text.strip()
-
-            data = json.loads(text)
-
-            return NormalizationResult(
-                wine_name=data.get("wine_name"),
-                confidence=float(data.get("confidence", 0.5)),
-                is_wine=bool(data.get("is_wine", False)),
-                reasoning=data.get("reasoning", "")
-            )
-        except (json.JSONDecodeError, KeyError, ValueError) as e:
-            return NormalizationResult(
-                wine_name=None,
-                confidence=0.0,
-                is_wine=False,
-                reasoning=f"Parse error: {str(e)}"
-            )
-
     async def validate(
         self,
         ocr_text: str,
@@ -469,106 +657,6 @@ Return JSON: {"wine_name": "...", "confidence": 0.0-1.0, "is_wine": true/false, 
             # On error, use heuristic validation
             return self._heuristic_validate(ocr_text, db_candidate)
 
-    def _heuristic_validate(
-        self,
-        ocr_text: str,
-        db_candidate: Optional[str]
-    ) -> ValidationResult:
-        """Validate without LLM using simple heuristics."""
-        if not db_candidate:
-            clean_name = _extract_clean_wine_name(ocr_text)
-            return ValidationResult(
-                is_valid_match=False,
-                wine_name=clean_name,
-                confidence=0.5 if clean_name else 0.0,
-                reasoning="No DB candidate"
-            )
-
-        ocr_lower = ocr_text.lower().strip()
-        db_lower = db_candidate.lower().strip()
-
-        # Get first words (usually producer name)
-        ocr_first = ocr_lower.split()[0] if ocr_lower else ""
-        db_first = db_lower.split()[0] if db_lower else ""
-
-        # Check 1: DB candidate much shorter = likely substring abuse
-        if len(db_lower) < len(ocr_lower) * 0.4:
-            clean_name = _extract_clean_wine_name(ocr_text)
-            return ValidationResult(
-                is_valid_match=False,
-                wine_name=clean_name,
-                confidence=0.6 if clean_name else 0.0,
-                reasoning="DB candidate too short"
-            )
-
-        # Check 2: First word should match (producer name)
-        if ocr_first and db_first and len(ocr_first) >= 3:
-            # Check if first words are similar enough
-            # Use longer prefix for longer words to avoid false positives
-            min_match_len = min(4, len(ocr_first), len(db_first))
-            if ocr_first[:min_match_len] != db_first[:min_match_len]:
-                # First words don't match - check if either is contained in the other
-                if ocr_lower not in db_lower and db_lower.split()[0] not in ocr_lower:
-                    clean_name = _extract_clean_wine_name(ocr_text)
-                    return ValidationResult(
-                        is_valid_match=False,
-                        wine_name=clean_name,
-                        confidence=0.6 if clean_name else 0.0,
-                        reasoning="Producer names don't match"
-                    )
-
-        # Check 3: If first words match prefix but are very different overall, reject
-        # e.g., "precipice" vs "premices" both start with "pre" but are different
-        if ocr_first and db_first and len(ocr_first) >= 5 and len(db_first) >= 5:
-            # Check middle characters
-            if ocr_first[2:5] != db_first[2:5]:
-                clean_name = _extract_clean_wine_name(ocr_text)
-                return ValidationResult(
-                    is_valid_match=False,
-                    wine_name=clean_name,
-                    confidence=0.6 if clean_name else 0.0,
-                    reasoning="First words differ in middle characters"
-                )
-
-        # Passed heuristics - trust the match
-        return ValidationResult(
-            is_valid_match=True,
-            wine_name=db_candidate,
-            confidence=0.7,
-            reasoning="Heuristic validation passed"
-        )
-
-    def _parse_validation_response(
-        self,
-        response_text: str,
-        db_candidate: str
-    ) -> ValidationResult:
-        """Parse LLM validation JSON response."""
-        try:
-            text = response_text.strip()
-            if text.startswith("```"):
-                text = text.split("```")[1]
-                if text.startswith("json"):
-                    text = text[4:]
-                text = text.strip()
-
-            data = json.loads(text)
-
-            return ValidationResult(
-                is_valid_match=bool(data.get("is_valid_match", False)),
-                wine_name=data.get("wine_name") or db_candidate,
-                confidence=float(data.get("confidence", 0.5)),
-                reasoning=data.get("reasoning", "")
-            )
-        except (json.JSONDecodeError, KeyError, ValueError) as e:
-            logger.warning(f"Failed to parse validation response: {e}")
-            return ValidationResult(
-                is_valid_match=True,
-                wine_name=db_candidate,
-                confidence=0.5,
-                reasoning=f"Parse error, trusting fuzzy match: {str(e)}"
-            )
-
     async def validate_batch(
         self,
         items: list[BatchValidationItem]
@@ -613,91 +701,15 @@ Return JSON: {"wine_name": "...", "confidence": 0.0-1.0, "is_wine": true/false, 
             logger.warning(f"LLM batch validation error: {e}")
             return self._heuristic_validate_batch(items)
 
-    def _format_batch_items(self, items: list[BatchValidationItem]) -> str:
-        """Format batch items for LLM prompt."""
-        lines = []
-        for i, item in enumerate(items):
-            rating_str = f"{item.db_rating:.1f}" if item.db_rating else "N/A"
-            db_str = f'"{item.db_candidate}" (rating: {rating_str})' if item.db_candidate else "null"
-            lines.append(f'{i}. OCR: "{item.ocr_text}" → DB: {db_str}')
-        return "\n".join(lines)
 
-    def _parse_batch_response(
-        self,
-        response_text: str,
-        items: list[BatchValidationItem]
-    ) -> list[BatchValidationResult]:
-        """Parse LLM batch validation JSON response."""
-        try:
-            text = response_text.strip()
-            if text.startswith("```"):
-                text = text.split("```")[1]
-                if text.startswith("json"):
-                    text = text[4:]
-                text = text.strip()
-
-            data = json.loads(text)
-
-            if not isinstance(data, list):
-                raise ValueError("Expected JSON array")
-
-            results = []
-            for i, item in enumerate(items):
-                result_data = next((d for d in data if d.get("index") == i), None)
-
-                if result_data:
-                    results.append(BatchValidationResult(
-                        index=i,
-                        is_valid_match=bool(result_data.get("is_valid_match", False)),
-                        wine_name=result_data.get("wine_name") or item.db_candidate,
-                        confidence=float(result_data.get("confidence", 0.5)),
-                        reasoning=result_data.get("reasoning", "")
-                    ))
-                else:
-                    heuristic = self._heuristic_validate(item.ocr_text, item.db_candidate)
-                    results.append(BatchValidationResult(
-                        index=i,
-                        is_valid_match=heuristic.is_valid_match,
-                        wine_name=heuristic.wine_name,
-                        confidence=heuristic.confidence,
-                        reasoning="Fallback: missing from LLM response"
-                    ))
-
-            return results
-
-        except (json.JSONDecodeError, KeyError, ValueError) as e:
-            logger.warning(f"Failed to parse batch response: {e}")
-            return self._heuristic_validate_batch(items)
-
-    def _heuristic_validate_batch(
-        self,
-        items: list[BatchValidationItem]
-    ) -> list[BatchValidationResult]:
-        """Validate batch without LLM using heuristics."""
-        results = []
-        for i, item in enumerate(items):
-            heuristic = self._heuristic_validate(item.ocr_text, item.db_candidate)
-            results.append(BatchValidationResult(
-                index=i,
-                is_valid_match=heuristic.is_valid_match,
-                wine_name=heuristic.wine_name,
-                confidence=heuristic.confidence,
-                reasoning=heuristic.reasoning
-            ))
-        return results
-
-
-class GeminiNormalizer:
+class GeminiNormalizer(LLMNormalizerBase):
     """
     Wine name normalizer using Google Gemini.
 
     Cost: ~$0.0001 per call with gemini-2.0-flash (very cheap)
-    """
 
-    # Reuse same prompts as Claude - they work with any instruction-following LLM
-    VALIDATION_PROMPT = ClaudeNormalizer.VALIDATION_PROMPT
-    BATCH_VALIDATION_PROMPT = ClaudeNormalizer.BATCH_VALIDATION_PROMPT
-    SYSTEM_PROMPT = ClaudeNormalizer.SYSTEM_PROMPT
+    Inherits shared parsing/validation logic and prompts from LLMNormalizerBase.
+    """
 
     def __init__(self, api_key: Optional[str] = None, model: Optional[str] = None):
         """
@@ -786,7 +798,7 @@ Return JSON: {"wine_name": "...", "confidence": 0.0-1.0, "is_wine": true/false, 
                 contents=full_prompt
             )
 
-            # Parse response
+            # Parse response (using inherited method from base class)
             return self._parse_response(response.text)
 
         except Exception as e:
@@ -796,33 +808,6 @@ Return JSON: {"wine_name": "...", "confidence": 0.0-1.0, "is_wine": true/false, 
                 confidence=0.0,
                 is_wine=False,
                 reasoning=f"LLM error: {type(e).__name__}"
-            )
-
-    def _parse_response(self, response_text: str) -> NormalizationResult:
-        """Parse LLM JSON response."""
-        try:
-            # Handle potential markdown code blocks
-            text = response_text.strip()
-            if text.startswith("```"):
-                text = text.split("```")[1]
-                if text.startswith("json"):
-                    text = text[4:]
-                text = text.strip()
-
-            data = json.loads(text)
-
-            return NormalizationResult(
-                wine_name=data.get("wine_name"),
-                confidence=float(data.get("confidence", 0.5)),
-                is_wine=bool(data.get("is_wine", False)),
-                reasoning=data.get("reasoning", "")
-            )
-        except (json.JSONDecodeError, KeyError, ValueError) as e:
-            return NormalizationResult(
-                wine_name=None,
-                confidence=0.0,
-                is_wine=False,
-                reasoning=f"Parse error: {str(e)}"
             )
 
     async def validate(
@@ -884,104 +869,8 @@ Return JSON: {"wine_name": "...", "confidence": 0.0-1.0, "is_wine": true/false, 
 
         except Exception as e:
             logger.warning(f"Gemini validation error: {e}")
-            # On error, use heuristic validation
+            # On error, use heuristic validation (inherited from base class)
             return self._heuristic_validate(ocr_text, db_candidate)
-
-    def _heuristic_validate(
-        self,
-        ocr_text: str,
-        db_candidate: Optional[str]
-    ) -> ValidationResult:
-        """Validate without LLM using simple heuristics."""
-        # Reuse ClaudeNormalizer's heuristic logic
-        if not db_candidate:
-            clean_name = _extract_clean_wine_name(ocr_text)
-            return ValidationResult(
-                is_valid_match=False,
-                wine_name=clean_name,
-                confidence=0.5 if clean_name else 0.0,
-                reasoning="No DB candidate"
-            )
-
-        ocr_lower = ocr_text.lower().strip()
-        db_lower = db_candidate.lower().strip()
-
-        # Get first words (usually producer name)
-        ocr_first = ocr_lower.split()[0] if ocr_lower else ""
-        db_first = db_lower.split()[0] if db_lower else ""
-
-        # Check 1: DB candidate much shorter = likely substring abuse
-        if len(db_lower) < len(ocr_lower) * 0.4:
-            clean_name = _extract_clean_wine_name(ocr_text)
-            return ValidationResult(
-                is_valid_match=False,
-                wine_name=clean_name,
-                confidence=0.6 if clean_name else 0.0,
-                reasoning="DB candidate too short"
-            )
-
-        # Check 2: First word should match (producer name)
-        if ocr_first and db_first and len(ocr_first) >= 3:
-            min_match_len = min(4, len(ocr_first), len(db_first))
-            if ocr_first[:min_match_len] != db_first[:min_match_len]:
-                if ocr_lower not in db_lower and db_lower.split()[0] not in ocr_lower:
-                    clean_name = _extract_clean_wine_name(ocr_text)
-                    return ValidationResult(
-                        is_valid_match=False,
-                        wine_name=clean_name,
-                        confidence=0.6 if clean_name else 0.0,
-                        reasoning="Producer names don't match"
-                    )
-
-        # Check 3: If first words match prefix but are very different overall, reject
-        if ocr_first and db_first and len(ocr_first) >= 5 and len(db_first) >= 5:
-            if ocr_first[2:5] != db_first[2:5]:
-                clean_name = _extract_clean_wine_name(ocr_text)
-                return ValidationResult(
-                    is_valid_match=False,
-                    wine_name=clean_name,
-                    confidence=0.6 if clean_name else 0.0,
-                    reasoning="First words differ in middle characters"
-                )
-
-        # Passed heuristics - trust the match
-        return ValidationResult(
-            is_valid_match=True,
-            wine_name=db_candidate,
-            confidence=0.7,
-            reasoning="Heuristic validation passed"
-        )
-
-    def _parse_validation_response(
-        self,
-        response_text: str,
-        db_candidate: str
-    ) -> ValidationResult:
-        """Parse LLM validation JSON response."""
-        try:
-            text = response_text.strip()
-            if text.startswith("```"):
-                text = text.split("```")[1]
-                if text.startswith("json"):
-                    text = text[4:]
-                text = text.strip()
-
-            data = json.loads(text)
-
-            return ValidationResult(
-                is_valid_match=bool(data.get("is_valid_match", False)),
-                wine_name=data.get("wine_name") or db_candidate,
-                confidence=float(data.get("confidence", 0.5)),
-                reasoning=data.get("reasoning", "")
-            )
-        except (json.JSONDecodeError, KeyError, ValueError) as e:
-            logger.warning(f"Failed to parse validation response: {e}")
-            return ValidationResult(
-                is_valid_match=True,
-                wine_name=db_candidate,
-                confidence=0.5,
-                reasoning=f"Parse error, trusting fuzzy match: {str(e)}"
-            )
 
     async def validate_batch(
         self,
@@ -1014,84 +903,12 @@ Return JSON: {"wine_name": "...", "confidence": 0.0-1.0, "is_wine": true/false, 
                 contents=full_prompt
             )
 
+            # Parse batch response (using inherited method from base class)
             return self._parse_batch_response(response.text, items)
 
         except Exception as e:
             logger.warning(f"Gemini batch validation error: {e}")
             return self._heuristic_validate_batch(items)
-
-    def _format_batch_items(self, items: list[BatchValidationItem]) -> str:
-        """Format batch items for LLM prompt."""
-        lines = []
-        for i, item in enumerate(items):
-            rating_str = f"{item.db_rating:.1f}" if item.db_rating else "N/A"
-            db_str = f'"{item.db_candidate}" (rating: {rating_str})' if item.db_candidate else "null"
-            lines.append(f'{i}. OCR: "{item.ocr_text}" → DB: {db_str}')
-        return "\n".join(lines)
-
-    def _parse_batch_response(
-        self,
-        response_text: str,
-        items: list[BatchValidationItem]
-    ) -> list[BatchValidationResult]:
-        """Parse LLM batch validation JSON response."""
-        try:
-            text = response_text.strip()
-            if text.startswith("```"):
-                text = text.split("```")[1]
-                if text.startswith("json"):
-                    text = text[4:]
-                text = text.strip()
-
-            data = json.loads(text)
-
-            if not isinstance(data, list):
-                raise ValueError("Expected JSON array")
-
-            results = []
-            for i, item in enumerate(items):
-                result_data = next((d for d in data if d.get("index") == i), None)
-
-                if result_data:
-                    results.append(BatchValidationResult(
-                        index=i,
-                        is_valid_match=bool(result_data.get("is_valid_match", False)),
-                        wine_name=result_data.get("wine_name") or item.db_candidate,
-                        confidence=float(result_data.get("confidence", 0.5)),
-                        reasoning=result_data.get("reasoning", "")
-                    ))
-                else:
-                    heuristic = self._heuristic_validate(item.ocr_text, item.db_candidate)
-                    results.append(BatchValidationResult(
-                        index=i,
-                        is_valid_match=heuristic.is_valid_match,
-                        wine_name=heuristic.wine_name,
-                        confidence=heuristic.confidence,
-                        reasoning="Fallback: missing from LLM response"
-                    ))
-
-            return results
-
-        except (json.JSONDecodeError, KeyError, ValueError) as e:
-            logger.warning(f"Failed to parse Gemini batch response: {e}")
-            return self._heuristic_validate_batch(items)
-
-    def _heuristic_validate_batch(
-        self,
-        items: list[BatchValidationItem]
-    ) -> list[BatchValidationResult]:
-        """Validate batch without LLM using heuristics."""
-        results = []
-        for i, item in enumerate(items):
-            heuristic = self._heuristic_validate(item.ocr_text, item.db_candidate)
-            results.append(BatchValidationResult(
-                index=i,
-                is_valid_match=heuristic.is_valid_match,
-                wine_name=heuristic.wine_name,
-                confidence=heuristic.confidence,
-                reasoning=heuristic.reasoning
-            ))
-        return results
 
 
 class MockNormalizer:

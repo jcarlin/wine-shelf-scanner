@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { WineResult, Size } from '../lib/types';
 import { getImageBounds } from '../lib/image-bounds';
@@ -17,24 +17,41 @@ interface OverlayContainerProps {
   containerSize: Size;
 }
 
-export function OverlayContainer({
+export const OverlayContainer = React.memo(function OverlayContainer({
   results,
   imageSize,
   containerSize,
 }: OverlayContainerProps) {
   const [selectedWine, setSelectedWine] = useState<WineResult | null>(null);
 
-  // Filter to visible wines only (confidence >= 0.45)
-  const visibleWines = results.filter((wine) => isVisible(wine.confidence));
+  // Memoize visible wines filtering
+  const visibleWines = useMemo(
+    () => results.filter((wine) => isVisible(wine.confidence)),
+    [results]
+  );
 
-  // Determine top 3 by sorting by rating (descending) and taking first 3
-  const sortedByRating = [...visibleWines]
-    .filter((wine) => wine.rating !== null)
-    .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
-  const topThreeIds = new Set(sortedByRating.slice(0, 3).map((w) => w.wine_name));
+  // Memoize top 3 calculation to avoid recalculating on every render
+  const topThreeIds = useMemo(() => {
+    const sorted = [...visibleWines]
+      .filter((wine) => wine.rating !== null)
+      .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+    return new Set(sorted.slice(0, 3).map((w) => w.wine_name));
+  }, [visibleWines]);
 
-  // Calculate actual image bounds accounting for letterboxing
-  const imageBounds = getImageBounds(imageSize, containerSize);
+  // Memoize image bounds calculation
+  const imageBounds = useMemo(
+    () => getImageBounds(imageSize, containerSize),
+    [imageSize, containerSize]
+  );
+
+  // Memoize handlers
+  const handleWineSelect = useCallback((wine: WineResult) => {
+    setSelectedWine(wine);
+  }, []);
+
+  const handleModalClose = useCallback(() => {
+    setSelectedWine(null);
+  }, []);
 
   return (
     <>
@@ -80,7 +97,7 @@ export function OverlayContainer({
                 rating={wine.rating ?? 0}
                 confidence={wine.confidence}
                 isTopThree={isTopThree}
-                onPress={() => setSelectedWine(wine)}
+                onPress={() => handleWineSelect(wine)}
                 wineName={wine.wine_name}
               />
             </View>
@@ -91,11 +108,11 @@ export function OverlayContainer({
       <WineDetailModal
         visible={selectedWine !== null}
         wine={selectedWine}
-        onClose={() => setSelectedWine(null)}
+        onClose={handleModalClose}
       />
     </>
   );
-}
+});
 
 const styles = StyleSheet.create({
   badgeWrapper: {

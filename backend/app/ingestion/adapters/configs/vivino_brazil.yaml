@@ -1,0 +1,20 @@
+# Vivino Brazilian Wines dataset
+# Downloaded from: https://www.recogna.tech/files/datasets/vivino_br_wine_data.tar.gz
+
+source_name: vivino_brazil
+file_path: ../raw-data/brazilian_wine_data.csv
+rating_scale: [1, 5]  # Vivino uses 1-5 scale
+encoding: utf-8
+
+column_mapping:
+  wine_name: name
+  rating: statistics_ratings_average
+  winery: winery_name
+  region: region_name
+  country: region_country_name
+
+transformations:
+  wine_name:
+    - strip_whitespace
+  winery:
+    - strip_whitespace

@@ -29,7 +29,9 @@ from app.ingestion.adapters.config_adapter import ConfigDrivenCSVAdapter
 SOURCES = {
     "kaggle": "app/ingestion/adapters/configs/kaggle_reviews.yaml",
     "kaggle130k": "app/ingestion/adapters/configs/kaggle_130k.yaml",
-    "xwines": "xwines",  # Special handling
+    "xwines": "xwines",  # Special handling - slim version
+    "xwines_full": "xwines_full",  # Special handling - 100K wines + 21M ratings
+    "vivino_brazil": "app/ingestion/adapters/configs/vivino_brazil.yaml",
 }
 
 
@@ -45,6 +47,14 @@ def get_adapter(source_name: str):
             wines_path=str(backend_path / "../raw-data/archive/XWines_Slim_1K_wines.csv"),
             ratings_path=str(backend_path / "../raw-data/archive/XWines_Slim_150K_ratings.csv"),
             min_ratings=3,
+        )
+
+    if source_name == "xwines_full":
+        from app.ingestion.adapters.xwines_adapter import XWinesAdapter
+        return XWinesAdapter(
+            wines_path=str(backend_path / "../raw-data/xwines_full_drive/last/XWines_Full_100K_wines.csv"),
+            ratings_path=str(backend_path / "../raw-data/xwines_full_drive/last/XWines_Full_21M_ratings.csv"),
+            min_ratings=5,  # Higher threshold for more reliable ratings
         )
 
     config_path = backend_path / SOURCES[source_name]

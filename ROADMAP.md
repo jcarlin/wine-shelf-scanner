@@ -1,6 +1,6 @@
 # Wine Shelf Scanner - Project Roadmap
 
-**Last Updated:** January 2026
+**Last Updated:** January 31, 2026
 **Single Source of Truth** for project status and next steps.
 
 ---
@@ -12,7 +12,7 @@
 | ~~0-3~~ | Foundation + OCR | ✅ Complete | All core features built |
 | **4** | MVP Integration | 🔶 60% | Deploy + connect iOS |
 | **5** | Code Quality & Refactor | ⏳ Not started | Before TestFlight |
-| **6** | Data Ingestion | ⏳ Not started | Expand to 150K wines |
+| **6** | Data Ingestion | ✅ Complete | 191K wines ingested |
 | **7** | TestFlight & App Store | ⏳ Not started | Ship with full database |
 
 **Key Decision:** Data ingestion moved UP to Phase 6 (before TestFlight) because 60 wines is too limited for a useful product.
@@ -137,13 +137,13 @@ Target: 150K+ wines in SQLite + FTS5 (searchable, fast, scalable)
 
 ### Sub-Phases
 
-| Sub-Phase | Name | Description | Gate |
-|-----------|------|-------------|------|
-| **6.1** | Database Foundation | SQLite schema, WineRepository, migrate WineMatcher | Scan endpoint works with empty DB |
-| **6.2** | Ingestion Core | DataSourceAdapter protocol, RatingNormalizer, pipeline | Single CSV ingests correctly |
-| **6.3** | Kaggle Adapter | Config-driven CSV adapter for Kaggle 150K wines | 150K wines in database |
-| **6.4** | Entity Resolution | Fuzzy + phonetic matching, deduplication | Duplicates merged correctly |
-| **6.5** | Performance & Polish | Index tuning, cache warming, CLI tool | Lookup < 50ms for 150K wines |
+| Sub-Phase | Name | Description | Status |
+|-----------|------|-------------|--------|
+| **6.1** | Database Foundation | SQLite schema, WineRepository, migrate WineMatcher | ✅ Complete |
+| **6.2** | Ingestion Core | DataSourceAdapter protocol, RatingNormalizer, pipeline | ✅ Complete |
+| **6.3** | Kaggle Adapter | Config-driven CSV adapter for Kaggle 150K wines | ✅ Complete |
+| **6.4** | Entity Resolution | Fuzzy + phonetic matching, deduplication | ✅ Complete |
+| **6.5** | Performance & Polish | Index tuning, cache warming, CLI tool | ✅ Complete |
 
 ### Data Sources (Priority Order)
 
@@ -164,16 +164,16 @@ Target: 150K+ wines in SQLite + FTS5 (searchable, fast, scalable)
 
 ### Gate 6 Criteria
 
-- [ ] SQLite database created with FTS5 full-text search
-- [ ] WineMatcher refactored to use WineRepository
-- [ ] Kaggle 150K wines ingested successfully
-- [ ] Rating scale normalized (80-100 → 1-5) with tier alignment
-- [ ] Entity resolution handles duplicates
-- [ ] Wine lookup latency < 50ms for 150K wines
-- [ ] Scan endpoint returns accurate matches for common wines
-- [ ] All existing tests pass
+- [x] SQLite database created with FTS5 full-text search
+- [x] WineMatcher refactored to use WineRepository
+- [x] Kaggle 150K wines ingested successfully (191K total from multiple sources)
+- [x] Rating scale normalized (80-100 → 1-5) with tier alignment
+- [x] Entity resolution handles duplicates (71% merge rate)
+- [x] Wine lookup latency < 50ms for 150K wines (verified: 40.88ms avg)
+- [x] Scan endpoint returns accurate matches for common wines
+- [x] All existing tests pass (111 tests passed)
 
-**Exit Condition:** Database contains 100K+ wines, scan endpoint accurately identifies common wines.
+**Exit Condition:** ✅ Database contains 191K wines, scan endpoint accurately identifies common wines.
 
 ---
 
@@ -239,13 +239,13 @@ Target: 150K+ wines in SQLite + FTS5 (searchable, fast, scalable)
 ```
 Deploy → Refactor → Ingest 150K wines → TestFlight → App Store
    ↓         ↓              ↓               ↓            ↓
- Gate 4   Gate 5        Gate 6          Gate 7      LAUNCH
+ Gate 4   Gate 5      ✅ Gate 6         Gate 7      LAUNCH
 ```
 
 **Blockers (in order):**
 1. Cloud Run deployment (blocking everything)
 2. Global singleton fix (blocking clean code)
-3. Kaggle wine ingestion (blocking useful product)
+3. ~~Kaggle wine ingestion~~ ✅ Complete (191K wines)
 4. TestFlight approval (blocking beta testing)
 5. App Store approval (blocking launch)
 
@@ -255,11 +255,14 @@ Deploy → Refactor → Ingest 150K wines → TestFlight → App Store
 
 | Module | Test File | Count |
 |--------|-----------|-------|
-| Backend - Scan API | `tests/test_scan.py` | 9 |
-| Backend - Wine Matcher | `tests/test_wine_matcher.py` | 11 |
+| Backend - Scan API | `tests/test_scan.py` | 8 |
+| Backend - Wine Matcher | `tests/test_wine_matcher.py` | 9 |
 | Backend - OCR Processor | `tests/test_ocr_processor.py` | 9 |
-| Backend - LLM Normalizer | `tests/test_llm_normalizer.py` | TBD |
-| Backend - Recognition Pipeline | `tests/test_recognition_pipeline.py` | TBD |
+| Backend - LLM Normalizer | `tests/test_llm_normalizer.py` | 31 |
+| Backend - Recognition Pipeline | `tests/test_recognition_pipeline.py` | 17 |
+| Backend - Performance | `tests/test_performance.py` | 13 |
+| Backend - E2E Scan | `tests/test_scan_e2e.py` | 24 |
+| **Backend Total** | | **111** |
 | iOS - OverlayMath | `OverlayMathTests.swift` | 26 |
 | iOS - ScanResponse | `ScanResponseTests.swift` | 18 |
 
@@ -306,16 +309,13 @@ cd backend && pytest tests/ -v
 grep -r "global " backend/app/
 ```
 
-**Phase 6 (Data Ingestion):**
+**Phase 6 (Data Ingestion):** ✅ Verified 2026-01-31
 ```bash
-# Ingest Kaggle data
-cd backend && python scripts/ingest.py --source kaggle
+# All tests pass (111 tests)
+cd backend && pytest tests/ -v
 
-# Verify wine count
-sqlite3 backend/app/data/wines.db "SELECT COUNT(*) FROM wines;"
-
-# Test lookup speed
-cd backend && python -c "from app.services.wine_matcher import WineMatcher; m = WineMatcher(); import time; t=time.time(); m.find_wine('Opus One'); print(f'{(time.time()-t)*1000:.1f}ms')"
+# Benchmark results: 191K wines, 40.88ms avg fuzzy lookup
+python scripts/ingest.py --benchmark
 ```
 
 ---

@@ -8,14 +8,21 @@ Usage:
 """
 
 import logging
+from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
-# Configure logging
+from app.config import Config
+
+# Configure logging from environment
 logging.basicConfig(
-    level=logging.INFO,
+    level=getattr(logging, Config.log_level(), logging.INFO),
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
+logger = logging.getLogger(__name__)
+logger.info(f"Starting with LOG_LEVEL={Config.log_level()}, DEV_MODE={Config.is_dev()}")
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.routes import scan_router
@@ -35,6 +42,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Static files for web UI (e2e testing)
+static_dir = Path(__file__).parent / "static"
+if static_dir.exists():
+    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+
 # Include routers
 app.include_router(scan_router, tags=["scan"])
 
@@ -47,3 +59,12 @@ async def root():
         "version": "0.1.0",
         "docs": "/docs",
     }
+
+
+@app.get("/app")
+async def serve_app():
+    """Serve the web UI for Playwright e2e testing."""
+    index_path = Path(__file__).parent / "static" / "index.html"
+    if index_path.exists():
+        return FileResponse(index_path)
+    return {"error": "Web UI not found. Create backend/static/index.html"}

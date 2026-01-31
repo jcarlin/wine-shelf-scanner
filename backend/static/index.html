@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wine Shelf Scanner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a1a;
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        /* Upload Screen */
+        .upload-screen {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+        }
+
+        .upload-icon {
+            font-size: 80px;
+            opacity: 0.7;
+        }
+
+        .upload-text {
+            text-align: center;
+        }
+
+        .upload-text h2 {
+            font-size: 1.25rem;
+            margin-bottom: 8px;
+        }
+
+        .upload-text p {
+            opacity: 0.6;
+            font-size: 0.9rem;
+        }
+
+        .upload-area {
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .upload-area:hover {
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+
+        .upload-area.dragover {
+            border-color: #4CAF50;
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .btn {
+            background: white;
+            color: black;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        /* Loading Screen */
+        .loading-screen {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Results Screen */
+        .results-screen {
+            display: none;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .image-container {
+            position: relative;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            max-height: 60vh;
+            object-fit: contain;
+        }
+
+        .overlay-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .rating-badge {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 12px;
+            transform: translate(-50%, -50%);
+            pointer-events: auto;
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+            transition: transform 0.2s;
+        }
+
+        .rating-badge:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+
+        .rating-badge.top-three {
+            border: 2px solid rgba(255, 215, 0, 0.6);
+            font-size: 14px;
+            padding: 6px 10px;
+        }
+
+        .rating-badge.not-tappable {
+            cursor: default;
+        }
+
+        .rating-badge.not-tappable:hover {
+            transform: translate(-50%, -50%);
+        }
+
+        .rating-badge .star {
+            color: #FFD700;
+        }
+
+        /* Fallback List */
+        .fallback-container {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+        }
+
+        .fallback-header {
+            font-size: 1.1rem;
+            text-align: center;
+            padding: 16px;
+        }
+
+        .fallback-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 16px;
+        }
+
+        .fallback-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .fallback-item .wine-name {
+            flex: 1;
+        }
+
+        .fallback-item .rating {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: bold;
+        }
+
+        .fallback-item .star {
+            color: #FFD700;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 100;
+        }
+
+        .toast.visible {
+            opacity: 1;
+        }
+
+        /* Bottom Bar */
+        .bottom-bar {
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Detail Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+            z-index: 200;
+        }
+
+        .modal-content {
+            background: #2a2a2a;
+            width: 100%;
+            max-width: 500px;
+            border-radius: 16px 16px 0 0;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .modal-drag-handle {
+            width: 36px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+            margin: 0 auto 16px;
+        }
+
+        .modal-wine-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .modal-stars {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+            color: #FFD700;
+        }
+
+        .modal-rating {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 16px;
+        }
+
+        .modal-confidence {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Error Screen */
+        .error-screen {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            text-align: center;
+        }
+
+        .error-icon {
+            font-size: 60px;
+            color: #FFC107;
+        }
+
+        .error-message {
+            font-size: 1.1rem;
+        }
+
+        .error-buttons {
+            display: flex;
+            gap: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Wine Scanner</h1>
+
+        <!-- Upload Screen -->
+        <div class="upload-screen" data-testid="upload-screen">
+            <div class="upload-icon">&#x1F4F7;</div>
+            <div class="upload-text">
+                <h2>Point at a wine shelf</h2>
+                <p>Take a photo to see ratings</p>
+            </div>
+            <div class="upload-area" data-testid="upload-area">
+                <p>Drag & drop an image or click to select</p>
+                <input type="file" id="image-input" data-testid="image-input" accept="image/*">
+            </div>
+            <button class="btn" data-testid="scan-button" onclick="document.getElementById('image-input').click()">
+                Choose Photo
+            </button>
+        </div>
+
+        <!-- Loading Screen -->
+        <div class="loading-screen" data-testid="loading-screen">
+            <div class="spinner" data-testid="loading-spinner"></div>
+            <p>Analyzing wines...</p>
+        </div>
+
+        <!-- Results Screen -->
+        <div class="results-screen" data-testid="results-screen">
+            <div class="image-container">
+                <img id="result-image" data-testid="result-image" src="" alt="Scanned wine shelf">
+                <div class="overlay-container" data-testid="overlay-container"></div>
+            </div>
+            <div class="bottom-bar">
+                <button class="btn" data-testid="new-scan-button" onclick="resetApp()">New Scan</button>
+            </div>
+        </div>
+
+        <!-- Fallback List -->
+        <div class="fallback-container" data-testid="fallback-container">
+            <div class="fallback-header" data-testid="fallback-header">Wines Found</div>
+            <div class="fallback-list" data-testid="fallback-list"></div>
+            <div class="bottom-bar">
+                <button class="btn" data-testid="fallback-new-scan" onclick="resetApp()">New Scan</button>
+            </div>
+        </div>
+
+        <!-- Error Screen -->
+        <div class="error-screen" data-testid="error-screen">
+            <div class="error-icon">&#x26A0;</div>
+            <p class="error-message" data-testid="error-message">Something went wrong</p>
+            <div class="error-buttons">
+                <button class="btn btn-secondary" data-testid="retry-button" onclick="retryLastScan()">Try Again</button>
+                <button class="btn" data-testid="start-over-button" onclick="resetApp()">Start Over</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" data-testid="toast"></div>
+
+    <!-- Detail Modal -->
+    <div class="modal-overlay" data-testid="detail-modal" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-drag-handle"></div>
+            <div class="modal-wine-name" data-testid="modal-wine-name"></div>
+            <div class="modal-stars" data-testid="modal-stars"></div>
+            <div class="modal-rating" data-testid="modal-rating"></div>
+            <div class="modal-confidence" data-testid="modal-confidence"></div>
+        </div>
+    </div>
+
+    <script>
+        // Confidence thresholds (from OverlayMath.swift)
+        const THRESHOLDS = {
+            VISIBILITY: 0.45,
+            TAPPABLE: 0.65,
+            HIGH_CONFIDENCE: 0.85
+        };
+
+        // State
+        let currentImageFile = null;
+        let lastResponse = null;
+
+        // DOM Elements
+        const uploadScreen = document.querySelector('[data-testid="upload-screen"]');
+        const loadingScreen = document.querySelector('[data-testid="loading-screen"]');
+        const resultsScreen = document.querySelector('[data-testid="results-screen"]');
+        const fallbackContainer = document.querySelector('[data-testid="fallback-container"]');
+        const errorScreen = document.querySelector('[data-testid="error-screen"]');
+        const toast = document.querySelector('[data-testid="toast"]');
+        const modal = document.querySelector('[data-testid="detail-modal"]');
+        const imageInput = document.getElementById('image-input');
+        const uploadArea = document.querySelector('[data-testid="upload-area"]');
+        const resultImage = document.getElementById('result-image');
+        const overlayContainer = document.querySelector('[data-testid="overlay-container"]');
+        const fallbackList = document.querySelector('[data-testid="fallback-list"]');
+        const errorMessage = document.querySelector('[data-testid="error-message"]');
+
+        // Calculate opacity based on confidence
+        function calculateOpacity(confidence) {
+            if (confidence >= 0.85) return 1.0;
+            if (confidence >= 0.65) return 0.75;
+            if (confidence >= 0.45) return 0.5;
+            return 0;
+        }
+
+        // Check if wine is tappable
+        function isTappable(confidence) {
+            return confidence >= THRESHOLDS.TAPPABLE;
+        }
+
+        // Get confidence label
+        function getConfidenceLabel(confidence) {
+            return confidence >= THRESHOLDS.HIGH_CONFIDENCE ? 'Widely rated' : 'Limited data';
+        }
+
+        // Check if wine is visible
+        function isVisible(confidence) {
+            return confidence >= THRESHOLDS.VISIBILITY;
+        }
+
+        // Sanitize wine name for test id
+        function sanitizeWineName(name) {
+            return name.toLowerCase().replace(/\s+/g, '-').replace(/'/g, '');
+        }
+
+        // Generate star display
+        function generateStars(rating) {
+            const fullStars = Math.floor(rating);
+            const halfStar = rating % 1 >= 0.5 ? 1 : 0;
+            const emptyStars = 5 - fullStars - halfStar;
+            return '★'.repeat(fullStars) + (halfStar ? '☆' : '') + '☆'.repeat(emptyStars);
+        }
+
+        // Show screen
+        function showScreen(screen) {
+            uploadScreen.style.display = 'none';
+            loadingScreen.style.display = 'none';
+            resultsScreen.style.display = 'none';
+            fallbackContainer.style.display = 'none';
+            errorScreen.style.display = 'none';
+
+            if (screen === 'upload') uploadScreen.style.display = 'flex';
+            else if (screen === 'loading') loadingScreen.style.display = 'flex';
+            else if (screen === 'results') resultsScreen.style.display = 'flex';
+            else if (screen === 'fallback') fallbackContainer.style.display = 'flex';
+            else if (screen === 'error') errorScreen.style.display = 'flex';
+        }
+
+        // Show toast
+        function showToast(message, duration = 3000) {
+            toast.textContent = message;
+            toast.classList.add('visible');
+            setTimeout(() => toast.classList.remove('visible'), duration);
+        }
+
+        // Close modal
+        function closeModal(event) {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Open detail modal
+        function openDetailModal(wine) {
+            if (!isTappable(wine.confidence)) return;
+
+            document.querySelector('[data-testid="modal-wine-name"]').textContent = wine.wine_name;
+            document.querySelector('[data-testid="modal-stars"]').textContent = generateStars(wine.rating);
+            document.querySelector('[data-testid="modal-rating"]').textContent = wine.rating.toFixed(1);
+            document.querySelector('[data-testid="modal-confidence"]').textContent = getConfidenceLabel(wine.confidence);
+
+            modal.style.display = 'flex';
+        }
+
+        // Get top 3 wines by rating
+        function getTopThree(wines) {
+            return [...wines]
+                .filter(w => isVisible(w.confidence))
+                .sort((a, b) => b.rating - a.rating)
+                .slice(0, 3);
+        }
+
+        // Render overlays
+        function renderOverlays(response, imageElement) {
+            overlayContainer.innerHTML = '';
+
+            const visibleWines = response.results.filter(w => isVisible(w.confidence));
+            const topThree = getTopThree(response.results);
+
+            visibleWines.forEach(wine => {
+                const badge = document.createElement('div');
+                badge.className = 'rating-badge';
+                badge.setAttribute('data-testid', `rating-badge-${sanitizeWineName(wine.wine_name)}`);
+
+                // Check if top three
+                const isTopThreeWine = topThree.some(t => t.wine_name === wine.wine_name);
+                if (isTopThreeWine) {
+                    badge.classList.add('top-three');
+                }
+
+                // Check if tappable
+                if (!isTappable(wine.confidence)) {
+                    badge.classList.add('not-tappable');
+                } else {
+                    badge.onclick = () => openDetailModal(wine);
+                }
+
+                // Set opacity
+                badge.style.opacity = calculateOpacity(wine.confidence);
+
+                // Position badge
+                const anchorX = wine.bbox.x + wine.bbox.width / 2;
+                const anchorY = wine.bbox.y + wine.bbox.height * 0.25;
+                badge.style.left = `${anchorX * 100}%`;
+                badge.style.top = `${anchorY * 100}%`;
+
+                // Content
+                badge.innerHTML = `<span class="star">★</span> ${wine.rating.toFixed(1)}`;
+
+                overlayContainer.appendChild(badge);
+            });
+        }
+
+        // Render fallback list
+        function renderFallbackList(wines) {
+            fallbackList.innerHTML = '';
+
+            // Sort by rating descending
+            const sorted = [...wines].sort((a, b) => b.rating - a.rating);
+
+            sorted.forEach(wine => {
+                const item = document.createElement('div');
+                item.className = 'fallback-item';
+                item.setAttribute('data-testid', `fallback-item-${sanitizeWineName(wine.wine_name)}`);
+                item.innerHTML = `
+                    <span class="wine-name">${wine.wine_name}</span>
+                    <span class="rating"><span class="star">★</span> ${wine.rating.toFixed(1)}</span>
+                `;
+                fallbackList.appendChild(item);
+            });
+        }
+
+        // Handle scan response
+        function handleResponse(response, imageUrl) {
+            lastResponse = response;
+
+            // Check for full failure (no results, only fallback)
+            const isFullFailure = response.results.length === 0 && response.fallback_list.length > 0;
+
+            // Check for partial detection
+            const isPartialDetection = response.results.length > 0 && response.fallback_list.length > 0;
+
+            if (isFullFailure) {
+                renderFallbackList(response.fallback_list);
+                showScreen('fallback');
+            } else {
+                resultImage.src = imageUrl;
+                resultImage.onload = () => {
+                    renderOverlays(response, resultImage);
+                    showScreen('results');
+
+                    if (isPartialDetection) {
+                        showToast("Some bottles couldn't be recognized");
+                    }
+                };
+            }
+        }
+
+        // Handle error
+        function handleError(error) {
+            errorMessage.textContent = error.message || 'Something went wrong';
+            showScreen('error');
+        }
+
+        // Scan image
+        async function scanImage(file) {
+            currentImageFile = file;
+            showScreen('loading');
+
+            try {
+                const formData = new FormData();
+                formData.append('image', file);
+
+                const response = await fetch('/scan', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Scan failed. Please try again.');
+                }
+
+                const data = await response.json();
+                const imageUrl = URL.createObjectURL(file);
+                handleResponse(data, imageUrl);
+            } catch (error) {
+                handleError(error);
+            }
+        }
+
+        // Retry last scan
+        function retryLastScan() {
+            if (currentImageFile) {
+                scanImage(currentImageFile);
+            } else {
+                resetApp();
+            }
+        }
+
+        // Reset app
+        function resetApp() {
+            currentImageFile = null;
+            lastResponse = null;
+            imageInput.value = '';
+            overlayContainer.innerHTML = '';
+            fallbackList.innerHTML = '';
+            showScreen('upload');
+        }
+
+        // File input handler
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                scanImage(file);
+            }
+        });
+
+        // Drag and drop handlers
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                scanImage(file);
+            }
+        });
+
+        uploadArea.addEventListener('click', () => {
+            imageInput.click();
+        });
+
+        // Keyboard handler for modal
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.style.display === 'flex') {
+                modal.style.display = 'none';
+            }
+        });
+
+        // Initialize
+        showScreen('upload');
+    </script>
+</body>
+</html>

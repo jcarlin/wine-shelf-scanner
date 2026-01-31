@@ -20,6 +20,10 @@ pytest>=8.0.0
 pytest-asyncio>=0.24.0
 httpx==0.26.0
 
+# E2E Testing (Playwright)
+playwright>=1.40.0
+pytest-playwright>=0.4.4
+
 # Development
 python-dotenv==1.0.1
 

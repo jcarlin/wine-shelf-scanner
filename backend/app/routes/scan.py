@@ -135,9 +135,14 @@ async def process_image(
 
     # Step 1: Analyze image
     vision_result = vision_service.analyze(image_bytes)
+    logger.info(f"[{image_id}] Vision API: {len(vision_result.objects)} bottles, {len(vision_result.text_blocks)} text blocks")
+
+    if Config.is_dev():
+        logger.debug(f"[{image_id}] Raw OCR: {vision_result.raw_text[:500] if vision_result.raw_text else 'None'}...")
 
     if not vision_result.objects:
         # No bottles detected - return fallback only
+        logger.info(f"[{image_id}] No bottles detected, returning fallback")
         return _fallback_response(image_id, wine_matcher)
 
     # Step 2: Group text to bottles and normalize
@@ -150,6 +155,11 @@ async def process_image(
     # Step 3 & 4: Tiered recognition (fuzzy match → LLM fallback)
     pipeline = get_pipeline(use_llm=use_llm)
     recognized = await pipeline.recognize(bottle_texts)
+
+    logger.info(f"[{image_id}] Recognized {len(recognized)} wines")
+    if Config.is_dev():
+        for w in recognized:
+            logger.debug(f"[{image_id}]   {w.wine_name}: rating={w.rating}, conf={w.confidence:.2f}, src={w.source}")
 
     # Build response
     results: list[WineResult] = []
@@ -181,6 +191,8 @@ async def process_image(
     # Sort results by rating (wines with ratings first, then by rating value)
     results.sort(key=lambda x: (x.rating is not None, x.rating or 0), reverse=True)
     fallback.sort(key=lambda x: x.rating, reverse=True)
+
+    logger.info(f"[{image_id}] Response: {len(results)} results, {len(fallback)} fallback")
 
     return ScanResponse(
         image_id=image_id,

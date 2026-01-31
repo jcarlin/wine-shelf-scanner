@@ -23,10 +23,10 @@ gcloud run deploy wine-scanner-api \
     --region us-central1 \
     --platform managed \
     --allow-unauthenticated \
-    --memory 512Mi \
+    --memory 1Gi \
     --min-instances 0 \
     --max-instances 10 \
-    --set-env-vars "USE_MOCKS=false"
+    --set-env-vars "USE_MOCKS=false,DEV_MODE=true,LOG_LEVEL=DEBUG"
 
 echo ""
 echo "Deployment complete!"

@@ -55,6 +55,16 @@ class Config:
         """Use SQLite database (191K wines) vs JSON (60 wines)."""
         return os.getenv("USE_SQLITE", "true").lower() == "true"
 
+    @staticmethod
+    def log_level() -> str:
+        """Log level (DEBUG, INFO, WARNING, ERROR)."""
+        return os.getenv("LOG_LEVEL", "INFO").upper()
+
+    @staticmethod
+    def is_dev() -> bool:
+        """Dev mode enables verbose logging."""
+        return os.getenv("DEV_MODE", "false").lower() == "true"
+
     # === Security ===
     MAX_IMAGE_SIZE_MB = 10
     MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024

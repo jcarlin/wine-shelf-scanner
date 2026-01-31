@@ -18,6 +18,26 @@ def pytest_configure(config):
     )
 
 
+def pytest_collection_modifyitems(config, items):
+    """
+    Reorder tests so e2e tests run last.
+
+    The e2e tests start a uvicorn server which can corrupt asyncio state
+    for subsequent async tests. Running e2e tests last avoids this issue.
+    """
+    e2e_tests = []
+    other_tests = []
+
+    for item in items:
+        if "/e2e/" in str(item.fspath) or "\\e2e\\" in str(item.fspath):
+            e2e_tests.append(item)
+        else:
+            other_tests.append(item)
+
+    # Reorder: unit tests first, then e2e tests
+    items[:] = other_tests + e2e_tests
+
+
 def load_ground_truth(image_name: str) -> dict:
     """Load ground truth expectations for a test image."""
     path = FIXTURES_DIR / "ground_truth" / f"{image_name}.json"

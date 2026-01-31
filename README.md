@@ -19,7 +19,7 @@ Wine Shelf Scanner solves decision paralysis for casual wine buyers. Instead of 
         │                       ▼
 ┌─────────────────┐     ┌─────────────────┐
 │   Expo App      │     │  Ratings DB     │
-│   (React Native)│     │  (JSON)         │
+│   (React Native)│     │  (SQLite)       │
 └─────────────────┘     └─────────────────┘
 ```
 
@@ -31,11 +31,11 @@ Wine Shelf Scanner solves decision paralysis for casual wine buyers. Instead of 
 | **Expo App** | React Native, TypeScript | Cross-platform mobile app |
 | **Backend** | FastAPI (Python 3.11+) | Image processing orchestration, wine matching |
 | **Vision** | Google Cloud Vision API | OCR + bottle detection |
-| **Ratings DB** | JSON (60+ wines) | Wine name → rating lookup with aliases |
+| **Ratings DB** | SQLite (191K wines) | Wine name → rating lookup with FTS5 search |
 
 ### Frontend Strategy
 
-iOS and Expo are developed **in parallel** — neither is the source of truth. Both implement the same API contract and UX rules.
+iOS is the primary frontend. Expo (React Native) is in development on the `reactive-native` branch. Both implement the same API contract and UX rules.
 
 **Future plan:** May switch to Expo as the single source for iOS, Android, and web builds.
 
@@ -203,7 +203,6 @@ wine-shelf-scanner/
 │   ├── hooks/               # Custom React hooks
 │   └── lib/                 # API client, types, overlay math
 ├── PRD.md                   # Product requirements
-├── TODO.md                  # Implementation checklist
 └── CLAUDE.md                # Development context
 ```
 
@@ -214,7 +213,10 @@ wine-shelf-scanner/
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `USE_MOCKS` | `true` | Use mock data instead of Vision API |
+| `USE_SQLITE` | `true` | Use SQLite database (wines.db) instead of JSON |
 | `GOOGLE_APPLICATION_CREDENTIALS` | - | Path to GCP service account JSON |
+
+The SQLite database is located at `backend/app/data/wines.db` (191K wines with FTS5 full-text search).
 
 ### iOS Build Settings
 

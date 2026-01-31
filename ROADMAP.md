@@ -99,6 +99,7 @@
 | **Timeout Fix** | ScanService now uses `Config.requestTimeout` | `ScanService.swift` |
 | **Magic Numbers** | Moved to `OverlayMath` constants | `ScanResponse.swift`, `OverlayMath.swift` |
 | **Legacy Code** | Deleted unused `startScan()` method | `ScanViewModel.swift` |
+| **Debug Tray** | Added `DebugTray.swift` for development diagnostics | `ios/WineShelfScanner/Views/` |
 
 ### Gate 5 Criteria
 
@@ -289,10 +290,10 @@ cd backend && pytest tests/e2e/ -v
 open ios/WineShelfScanner.xcodeproj
 
 # Run iOS unit tests
-cd ios && xcodebuild test -scheme WineShelfScanner -destination 'platform=iOS Simulator,name=iPhone 17'
+cd ios && xcodebuild test -scheme WineShelfScanner -destination 'platform=iOS Simulator,name=iPhone 15 Pro'
 
 # Run iOS UI tests (XCUITest)
-cd ios && xcodebuild test -scheme WineShelfScanner -destination 'platform=iOS Simulator,name=iPhone 17' -only-testing:WineShelfScannerUITests
+cd ios && xcodebuild test -scheme WineShelfScanner -destination 'platform=iOS Simulator,name=iPhone 15 Pro' -only-testing:WineShelfScannerUITests
 ```
 
 ---

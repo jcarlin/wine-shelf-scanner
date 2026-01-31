@@ -68,6 +68,12 @@ def live_server():
 
     yield TEST_BASE_URL
 
+    # Clean up: signal server shutdown and reset asyncio state
+    if server_thread.server:
+        server_thread.server.should_exit = True
+    # Give the server time to shut down gracefully
+    time.sleep(0.2)
+
 
 @pytest.fixture(scope="session")
 def browser_context():

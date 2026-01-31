@@ -48,10 +48,10 @@ gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
 echo -e "${GREEN}✓ Docker configured${NC}"
 echo ""
 
-# Build the Docker image
-echo -e "${YELLOW}Step 2: Building Docker image...${NC}"
+# Build the Docker image for linux/amd64 (Cloud Run requirement)
+echo -e "${YELLOW}Step 2: Building Docker image (linux/amd64)...${NC}"
 cd "$BACKEND_DIR"
-docker build -t "$IMAGE_URI" -t "$LATEST_URI" .
+docker buildx build --platform linux/amd64 -t "$IMAGE_URI" -t "$LATEST_URI" --load .
 echo -e "${GREEN}✓ Image built${NC}"
 echo ""
 

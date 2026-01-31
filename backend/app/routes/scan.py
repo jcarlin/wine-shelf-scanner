@@ -245,7 +245,7 @@ def _fallback_response(image_id: str, wine_matcher: WineMatcher) -> ScanResponse
     fallback = []
     for name in popular_wines:
         match = wine_matcher.match(name)
-        if match:
+        if match and match.rating is not None:
             fallback.append(FallbackWine(
                 wine_name=match.canonical_name,
                 rating=match.rating

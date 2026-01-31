@@ -28,7 +28,7 @@ API Contract (DO NOT CHANGE):
 
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class BoundingBox(BaseModel):
@@ -42,11 +42,19 @@ class BoundingBox(BaseModel):
 class WineResult(BaseModel):
     """A detected wine bottle with rating and position."""
     wine_name: str = Field(..., description="Canonical wine name")
-    rating: Optional[float] = Field(None, ge=1, le=5, description="Star rating (1-5), None if not in DB")
+    rating: Optional[float] = Field(None, description="Star rating (1-5), None if not in DB")
     confidence: float = Field(..., ge=0, le=1, description="Detection confidence")
     bbox: BoundingBox = Field(..., description="Bounding box position")
     identified: bool = Field(True, description="True if recognized as wine (checkmark)")
     source: str = Field("database", description="Match source: 'database' or 'llm'")
+
+    @field_validator('rating')
+    @classmethod
+    def validate_rating_range(cls, v: Optional[float]) -> Optional[float]:
+        """Validate rating is in range 1-5 when not None."""
+        if v is not None and (v < 1 or v > 5):
+            raise ValueError('rating must be between 1 and 5')
+        return v
 
 
 class FallbackWine(BaseModel):

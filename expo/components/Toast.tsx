@@ -21,7 +21,7 @@ export function Toast({ message, visible }: ToastProps) {
       duration: animation.toastDuration,
       useNativeDriver: true,
     }).start();
-  }, [visible]);
+  }, [visible, opacity]);
 
   return (
     <Animated.View style={[styles.container, { opacity }]} pointerEvents="none" testID="toast">

@@ -45,6 +45,8 @@ class VisionResult:
     objects: list[DetectedObject]
     text_blocks: list[TextBlock]
     raw_text: str
+    image_width: int = 0   # Image width in pixels (0 if unknown)
+    image_height: int = 0  # Image height in pixels (0 if unknown)
 
 
 class VisionServiceProtocol(Protocol):
@@ -98,8 +100,14 @@ class VisionService:
         # Parse objects (filter for bottles/wine)
         objects = self._parse_objects(response.localized_object_annotations)
 
-        # Parse text blocks
-        text_blocks = self._parse_text(response.text_annotations)
+        # Extract image dimensions from the first text annotation bounding poly
+        # (represents the full image bounds in pixel coordinates)
+        image_width, image_height = self._extract_image_dimensions(
+            response.text_annotations, image_bytes
+        )
+
+        # Parse text blocks with image dimensions for normalization
+        text_blocks = self._parse_text(response.text_annotations, image_width, image_height)
 
         # Full raw text (first annotation is the complete text)
         raw_text = ""
@@ -109,8 +117,40 @@ class VisionService:
         return VisionResult(
             objects=objects,
             text_blocks=text_blocks,
-            raw_text=raw_text
+            raw_text=raw_text,
+            image_width=image_width,
+            image_height=image_height
         )
+
+    def _extract_image_dimensions(
+        self, text_annotations, image_bytes: bytes
+    ) -> tuple[int, int]:
+        """
+        Extract image dimensions from annotations or image bytes.
+
+        The first text annotation from Vision API contains the full image
+        bounds in pixel coordinates. Falls back to decoding image header.
+        """
+        # Try to get dimensions from first text annotation's bounding poly
+        if text_annotations and len(text_annotations) > 0:
+            first_ann = text_annotations[0]
+            if first_ann.bounding_poly and first_ann.bounding_poly.vertices:
+                vertices = first_ann.bounding_poly.vertices
+                if len(vertices) >= 4:
+                    x_coords = [v.x for v in vertices if v.x > 0]
+                    y_coords = [v.y for v in vertices if v.y > 0]
+                    if x_coords and y_coords:
+                        return (max(x_coords), max(y_coords))
+
+        # Fallback: decode image to get dimensions
+        try:
+            from PIL import Image
+            import io
+            img = Image.open(io.BytesIO(image_bytes))
+            return img.size
+        except Exception:
+            # Last resort: use reasonable defaults
+            return (1000, 1000)
 
     def _parse_objects(self, annotations) -> list[DetectedObject]:
         """Parse object localization results, filtering for bottles."""
@@ -141,25 +181,36 @@ class VisionService:
 
         return objects
 
-    def _parse_text(self, annotations) -> list[TextBlock]:
-        """Parse text detection results."""
+    def _parse_text(
+        self, annotations, image_width: int, image_height: int
+    ) -> list[TextBlock]:
+        """Parse text detection results with normalized coordinates."""
         text_blocks = []
+
+        # Avoid division by zero
+        if image_width <= 0:
+            image_width = 1000
+        if image_height <= 0:
+            image_height = 1000
 
         # Skip first annotation (it's the full text)
         for ann in annotations[1:] if annotations else []:
             vertices = ann.bounding_poly.vertices
             if len(vertices) >= 4:
-                # Get image dimensions from context or assume normalized
-                # Vision API returns pixel coordinates, we need to normalize later
                 x_coords = [v.x for v in vertices]
                 y_coords = [v.y for v in vertices]
 
-                # Store raw pixel coordinates for now
+                # Normalize pixel coordinates to 0-1 range
+                min_x = min(x_coords) / image_width
+                min_y = min(y_coords) / image_height
+                width = (max(x_coords) - min(x_coords)) / image_width
+                height = (max(y_coords) - min(y_coords)) / image_height
+
                 bbox = BoundingBox(
-                    x=min(x_coords),
-                    y=min(y_coords),
-                    width=max(x_coords) - min(x_coords),
-                    height=max(y_coords) - min(y_coords)
+                    x=min_x,
+                    y=min_y,
+                    width=width,
+                    height=height
                 )
 
                 text_blocks.append(TextBlock(
@@ -220,7 +271,13 @@ class MockVisionService:
             TextBlock("BUTTER", BoundingBox(0.77, 0.31, 0.06, 0.03), 0.9),
         ]
 
-        return VisionResult(objects=objects, text_blocks=text_blocks, raw_text="")
+        return VisionResult(
+            objects=objects,
+            text_blocks=text_blocks,
+            raw_text="",
+            image_width=1000,
+            image_height=1000
+        )
 
     def _partial_result(self) -> VisionResult:
         """3 bottles detected."""
@@ -236,11 +293,23 @@ class MockVisionService:
             TextBlock("SILVER OAK", BoundingBox(0.51, 0.24, 0.08, 0.04), 0.9),
         ]
 
-        return VisionResult(objects=objects, text_blocks=text_blocks, raw_text="")
+        return VisionResult(
+            objects=objects,
+            text_blocks=text_blocks,
+            raw_text="",
+            image_width=1000,
+            image_height=1000
+        )
 
     def _empty_result(self) -> VisionResult:
         """No bottles detected."""
-        return VisionResult(objects=[], text_blocks=[], raw_text="")
+        return VisionResult(
+            objects=[],
+            text_blocks=[],
+            raw_text="",
+            image_width=1000,
+            image_height=1000
+        )
 
 
 class ReplayVisionService:
@@ -313,5 +382,7 @@ class ReplayVisionService:
         return VisionResult(
             objects=objects,
             text_blocks=text_blocks,
-            raw_text=data.get("raw_text", "")
+            raw_text=data.get("raw_text", ""),
+            image_width=data.get("image_width", 1000),
+            image_height=data.get("image_height", 1000)
         )

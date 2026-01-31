@@ -19,7 +19,9 @@ enum Config {
 
         // 3. Fallback to production URL
         let url = URL(string: "https://wine-scanner-api-82762985464.us-central1.run.app")!
-        print("🍷 API URL: \(url)")  // DEBUG - remove later
+        #if DEBUG
+        print("🍷 API URL: \(url)")
+        #endif
         return url
     }
 

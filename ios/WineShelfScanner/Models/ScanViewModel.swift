@@ -4,7 +4,7 @@ import SwiftUI
 @MainActor
 class ScanViewModel: ObservableObject {
     @Published private(set) var state: ScanState = .idle
-    @Published var debugMode: Bool = false {
+    @Published var debugMode: Bool = true {
         didSet {
             // Persist debug mode preference
             UserDefaults.standard.set(debugMode, forKey: "debugModeEnabled")
@@ -22,8 +22,8 @@ class ScanViewModel: ObservableObject {
             self.scanService = ScanAPIClient(baseURL: Config.apiBaseURL)
         }
 
-        // Restore debug mode preference
-        self.debugMode = UserDefaults.standard.bool(forKey: "debugModeEnabled")
+        // Debug mode always enabled
+        self.debugMode = true
     }
 
     /// Perform scan with given image

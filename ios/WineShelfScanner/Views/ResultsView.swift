@@ -10,6 +10,7 @@ struct ResultsView: View {
 
     @State private var selectedWine: WineResult?
     @State private var showToast = false
+    @State private var toastWorkItem: DispatchWorkItem?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -36,11 +37,20 @@ struct ResultsView: View {
         .onAppear {
             if response.isPartialDetection {
                 showToast = true
+                // Cancel any pending dismissal
+                toastWorkItem?.cancel()
                 // Auto-dismiss after 3 seconds
-                DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                let workItem = DispatchWorkItem { [self] in
                     showToast = false
                 }
+                toastWorkItem = workItem
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3, execute: workItem)
             }
+        }
+        .onDisappear {
+            // Cancel pending dismissal when view disappears
+            toastWorkItem?.cancel()
+            toastWorkItem = nil
         }
         .overlay(alignment: .top) {
             if showToast {

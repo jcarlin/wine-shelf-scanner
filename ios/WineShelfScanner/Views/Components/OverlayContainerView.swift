@@ -26,8 +26,11 @@ struct OverlayContainerView: View {
                 )
                 .opacity(OverlayMath.opacity(confidence: wine.confidence))
                 .onTapGesture {
-                    onWineTapped(wine)
+                    if wine.isTappable {
+                        onWineTapped(wine)
+                    }
                 }
+                .allowsHitTesting(wine.isTappable)
             }
         }
         .accessibilityIdentifier("overlayContainer")

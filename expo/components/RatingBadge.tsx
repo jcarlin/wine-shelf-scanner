@@ -7,7 +7,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import { isTappable, badgeSize, opacity } from '../lib/overlay-math';
-import { colors, spacing, borderRadius } from '../lib/theme';
+import { colors, spacing, borderRadius, fontSize } from '../lib/theme';
 
 interface RatingBadgeProps {
   rating: number;

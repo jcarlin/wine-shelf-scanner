@@ -198,8 +198,16 @@ wine-shelf-scanner/
 ```bash
 cd backend
 source venv/bin/activate
-pytest
+pytest tests/ -v
 ```
+
+**Test coverage:**
+- `test_scan.py` / `test_scan_e2e.py` - API contract, scenarios, validation
+- `test_recognition_pipeline.py` - Tiered matching, LLM fallback, confidence thresholds
+- `test_llm_normalizer.py` - Normalizer protocol, mock behavior
+- `test_wine_matcher.py` - Fuzzy matching, aliases
+- `test_ocr_processor.py` - Text normalization
+- `test_performance.py` - Response time targets (<4s)
 
 ### Mock Scenarios
 

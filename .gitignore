@@ -50,3 +50,4 @@ build/
 raw-data/
 test-images/
 .DS_Store
+docs/

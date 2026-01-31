@@ -16,15 +16,22 @@ If it doesn't help the user choose a bottle faster, leave it out.
 
 ---
 
+## Project Status
+
+See `ROADMAP.md` for current project status and next steps.
+
+---
+
 ## Directory Structure
 ```
 wine-shelf-scanner/
 ├── backend/           # FastAPI + Vision API
 ├── ios/               # SwiftUI iOS app
-├── product/           # Product docs (archive)
-├── ux/                # UX specs (archive)
+├── docs/              # Architecture docs & specs
+├── test-images/       # Test assets for Vision API
+├── ROADMAP.md         # Project status (single source of truth)
 ├── PRD.md             # Product requirements (canonical)
-├── TODO.md            # Implementation checklist
+├── README.md          # Quick start guide
 └── CLAUDE.md          # This file
 ```
 
@@ -147,24 +154,48 @@ Tap rating badge → modal sheet.
 
 ## Backend Pipeline
 
+### Tiered Recognition Pipeline
+
 1. Receive image at `/scan`
-2. Google Vision:
+2. Google Vision API:
    - `TEXT_DETECTION` (OCR)
    - `OBJECT_LOCALIZATION` (bottles)
-3. Group OCR text fragments by spatial proximity to bottle bbox
+3. Group OCR text by spatial proximity (15% threshold)
 4. Normalize text:
    - Remove years (19xx, 20xx)
    - Remove sizes (750ml, 1L)
-   - Remove marketing text
-5. (Optional) Send grouped text to LLM for canonical name + confidence
-6. Match against local ratings DB
+   - Remove prices and marketing text
+5. **Tiered Recognition:**
+   - **Step 1:** Enhanced fuzzy match (rapidfuzz + phonetic)
+   - **Step 2:** If confidence < 0.7 → LLM normalization (Claude Haiku)
+   - **Step 3:** Re-match LLM-normalized result against database
+6. Filter by confidence:
+   - ≥ 0.45 → main results array
+   - < 0.45 → fallback list only
 7. Return response using schema above
 
-LLM step must be swappable or removable.
+### Key Implementation Details
+
+- LLM normalizer is protocol-based (`NormalizerProtocol`) — swappable or removable
+- Fuzzy matching uses multi-algorithm scoring: ratio (30%), partial_ratio (50%), token_sort (20%)
+- Phonetic matching via jellyfish metaphone for pronunciation-based matches
+- N-gram indexing for performance optimization
+
+### Debug Endpoint
+
+`GET /scan/debug` — Returns raw OCR text, extracted wine names, and bottle count for troubleshooting.
+
+### Query Parameters
+
+- `use_vision_api` — Toggle real vs mock Vision API
+- `use_llm` — Toggle LLM fallback (default: true)
+- `mock_scenario` — Select fixture (full_shelf, partial_detection, etc.)
 
 ---
 
 ## Paywall Rules
+
+> **Status:** Designed but not yet implemented (Phase 5 work).
 
 - Never block first successful scan
 - Allow 3–5 free scans
@@ -185,7 +216,9 @@ LLM step must be swappable or removable.
 ### Backend
 - FastAPI (Python)
 - Google Cloud Vision API
-- Optional: Claude/LLM for OCR normalization (behind interface)
+- Claude Haiku (LLM fallback for OCR normalization, behind protocol interface)
+- rapidfuzz (multi-algorithm fuzzy matching)
+- jellyfish (phonetic matching)
 
 ---
 
@@ -193,12 +226,26 @@ LLM step must be swappable or removable.
 
 ### Backend
 ```bash
+# Start dev server
 cd backend && source venv/bin/activate && uvicorn main:app --reload
+
+# Run tests
+cd backend && pytest tests/ -v
 ```
 
 ### iOS
 ```bash
+# Open project
 open ios/WineShelfScanner.xcodeproj
+
+# Run tests
+xcodebuild test -scheme WineShelfScanner -destination 'platform=iOS Simulator,name=iPhone 15'
+```
+
+### Deployment
+```bash
+# Deploy to Cloud Run
+./deploy.sh PROJECT_ID
 ```
 
 ---

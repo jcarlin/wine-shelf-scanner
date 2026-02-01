@@ -1,0 +1,23 @@
+# Vivino Global Wine Dataset
+# Scraped from Vivino's explore API for major wine-producing countries
+# Run scraper: python scripts/scrape_vivino.py
+
+source_name: vivino_global
+# file_path is set dynamically by the adapter (handles multiple files)
+rating_scale: [1, 5]  # Vivino uses 1-5 scale
+encoding: utf-8
+
+column_mapping:
+  wine_name: Winery+Wine
+  rating: Rating
+  winery: Winery
+  region: Region
+  country: Country
+  wine_type: Wine Type
+
+transformations:
+  wine_name:
+    - strip_whitespace
+    - remove_vintage_suffix
+  winery:
+    - strip_whitespace

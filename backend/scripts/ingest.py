@@ -32,6 +32,7 @@ SOURCES = {
     "xwines": "xwines",  # Special handling - slim version
     "xwines_full": "xwines_full",  # Special handling - 100K wines + 21M ratings
     "vivino_brazil": "app/ingestion/adapters/configs/vivino_brazil.yaml",
+    "vivino_global": "vivino_global",  # Special handling - multi-file scraped data
 }
 
 
@@ -55,6 +56,13 @@ def get_adapter(source_name: str):
             wines_path=str(backend_path / "../raw-data/xwines_full_drive/last/XWines_Full_100K_wines.csv"),
             ratings_path=str(backend_path / "../raw-data/xwines_full_drive/last/XWines_Full_21M_ratings.csv"),
             min_ratings=5,  # Higher threshold for more reliable ratings
+        )
+
+    if source_name == "vivino_global":
+        from app.ingestion.adapters.vivino_global_adapter import VivinoGlobalAdapter
+        return VivinoGlobalAdapter(
+            data_dir=str(backend_path / "../raw-data/vivino-scraped"),
+            min_reviews=10,  # Filter out wines with few reviews
         )
 
     config_path = backend_path / SOURCES[source_name]

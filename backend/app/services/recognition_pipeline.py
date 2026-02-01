@@ -122,11 +122,12 @@ class DebugCollector:
 class RecognizedWine:
     """A recognized wine from the pipeline."""
     wine_name: str
-    rating: Optional[float]  # None if not in database
+    rating: Optional[float]  # None if not in database and no LLM estimate
     confidence: float
     source: str              # 'database' or 'llm'
     identified: bool         # True = show checkmark
     bottle_text: BottleText  # Original bottle context
+    rating_source: str = "database"  # 'database' or 'llm_estimated'
 
 
 class RecognitionPipeline:
@@ -271,7 +272,8 @@ class RecognitionPipeline:
             confidence=min(bottle_text.bottle.confidence, match.confidence),
             source="database",
             identified=True,
-            bottle_text=bottle_text
+            bottle_text=bottle_text,
+            rating_source="database"
         )
 
     async def _validate_batch(
@@ -370,7 +372,7 @@ class RecognitionPipeline:
         1. If LLM confirms match → use DB wine + rating
         2. If LLM rejects → try to match LLM's wine name against DB
         3. If found in DB → use DB wine + rating
-        4. If not in DB → return LLM's name with no rating
+        4. If not in DB → return LLM's name with LLM-estimated rating
         """
         # LLM confirmed the DB match
         if validation.is_valid_match and match:
@@ -380,7 +382,8 @@ class RecognitionPipeline:
                 confidence=min(bottle_text.bottle.confidence, validation.confidence),
                 source="database",
                 identified=True,
-                bottle_text=bottle_text
+                bottle_text=bottle_text,
+                rating_source="database"
             )
 
         # LLM rejected the match - try to find the correct wine in DB
@@ -402,20 +405,32 @@ class RecognitionPipeline:
                     confidence=min(validation.confidence, new_match.confidence),
                     source="database",
                     identified=True,
-                    bottle_text=bottle_text
+                    bottle_text=bottle_text,
+                    rating_source="database"
                 )
 
-            # Wine not in DB (or only low-confidence matches) - return LLM-identified name
-            # Cap confidence at 0.65 since we have no rating to back it up
+            # Wine not in DB (or only low-confidence matches) - use LLM-identified name
+            # with LLM-estimated rating if available
             if validation.confidence >= 0.5:
-                capped_confidence = min(validation.confidence, 0.65)
+                # Use LLM-estimated rating if provided, otherwise None
+                rating = validation.estimated_rating
+                rating_source = "llm_estimated" if rating is not None else "none"
+
+                # If we have a rating, allow slightly higher confidence
+                # If no rating, cap at 0.65 for de-emphasis
+                if rating is not None:
+                    capped_confidence = min(validation.confidence, 0.75)
+                else:
+                    capped_confidence = min(validation.confidence, 0.65)
+
                 return RecognizedWine(
                     wine_name=validation.wine_name,
-                    rating=None,  # Not in database
+                    rating=rating,
                     confidence=capped_confidence,
                     source="llm",
                     identified=True,
-                    bottle_text=bottle_text
+                    bottle_text=bottle_text,
+                    rating_source=rating_source
                 )
 
         return None

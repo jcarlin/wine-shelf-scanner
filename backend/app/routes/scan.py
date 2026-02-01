@@ -191,7 +191,8 @@ async def process_image(
                     height=wine.bottle_text.bottle.bbox.height
                 ),
                 identified=wine.identified,
-                source=wine.source
+                source=wine.source,
+                rating_source=wine.rating_source
             ))
         elif wine.rating is not None:
             # Low confidence with rating → fallback

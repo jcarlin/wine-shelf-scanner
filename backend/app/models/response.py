@@ -42,11 +42,15 @@ class BoundingBox(BaseModel):
 class WineResult(BaseModel):
     """A detected wine bottle with rating and position."""
     wine_name: str = Field(..., description="Canonical wine name")
-    rating: Optional[float] = Field(None, description="Star rating (1-5), None if not in DB")
+    rating: Optional[float] = Field(None, description="Star rating (1-5), None if no rating available")
     confidence: float = Field(..., ge=0, le=1, description="Detection confidence")
     bbox: BoundingBox = Field(..., description="Bounding box position")
     identified: bool = Field(True, description="True if recognized as wine (checkmark)")
     source: str = Field("database", description="Match source: 'database' or 'llm'")
+    rating_source: str = Field(
+        "database",
+        description="Rating provenance: 'database', 'llm_estimated', or 'none'"
+    )
 
     @field_validator('rating')
     @classmethod

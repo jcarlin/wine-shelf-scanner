@@ -118,6 +118,7 @@ class BatchValidationResult:
     wine_name: Optional[str]
     confidence: float
     reasoning: str
+    estimated_rating: Optional[float] = None  # LLM-estimated rating for wines not in DB
 
 
 class NormalizerProtocol(Protocol):
@@ -199,14 +200,29 @@ NO CANDIDATE:
 - If db_candidate is null, identify the wine name from the OCR text
 - Clean up the name (remove years, sizes, marketing text)
 
+## RATING ESTIMATION
+
+For wines NOT in our database (when db_candidate is null or match is invalid):
+- Provide an estimated_rating (1.0-5.0) based on your wine knowledge
+- Consider: producer reputation, region quality, varietal typicity, price tier indicators
+- Use this scale:
+  - 4.5-5.0: Prestigious/cult wines (Opus One, Screaming Eagle, top Burgundy)
+  - 4.0-4.5: Well-regarded producers with good track record
+  - 3.5-4.0: Solid everyday wines from known regions
+  - 3.0-3.5: Budget wines or unknown producers
+  - Below 3.0: Only for wines with known quality issues
+- Default to 3.7-4.0 if uncertain (typical mid-tier wine)
+
 ## OUTPUT
 
 Return a JSON array with one result per input item (same order):
 [
   {"index": 0, "is_valid_match": true, "wine_name": "...", "confidence": 0.95, "reasoning": "..."},
-  {"index": 1, "is_valid_match": false, "wine_name": "Correct Name", "confidence": 0.85, "reasoning": "..."},
+  {"index": 1, "is_valid_match": false, "wine_name": "Correct Name", "confidence": 0.85, "reasoning": "...", "estimated_rating": 4.2},
   ...
-]"""
+]
+
+Include estimated_rating ONLY when is_valid_match is false or db_candidate was null."""
 
     SYSTEM_PROMPT = """You are a wine label text analyzer.
 
@@ -414,12 +430,20 @@ Confidence:
                 result_data = next((d for d in data if d.get("index") == i), None)
 
                 if result_data:
+                    # Extract estimated_rating if present
+                    estimated_rating = result_data.get("estimated_rating")
+                    if estimated_rating is not None:
+                        estimated_rating = float(estimated_rating)
+                        # Clamp to valid range
+                        estimated_rating = max(1.0, min(5.0, estimated_rating))
+
                     results.append(BatchValidationResult(
                         index=i,
                         is_valid_match=bool(result_data.get("is_valid_match", False)),
                         wine_name=result_data.get("wine_name") or item.db_candidate,
                         confidence=float(result_data.get("confidence", 0.5)),
-                        reasoning=result_data.get("reasoning", "")
+                        reasoning=result_data.get("reasoning", ""),
+                        estimated_rating=estimated_rating
                     ))
                 else:
                     heuristic = self._heuristic_validate(item.ocr_text, item.db_candidate)
@@ -428,7 +452,8 @@ Confidence:
                         is_valid_match=heuristic.is_valid_match,
                         wine_name=heuristic.wine_name,
                         confidence=heuristic.confidence,
-                        reasoning="Fallback: missing from LLM response"
+                        reasoning="Fallback: missing from LLM response",
+                        estimated_rating=None
                     ))
 
             return results
@@ -450,7 +475,8 @@ Confidence:
                 is_valid_match=heuristic.is_valid_match,
                 wine_name=heuristic.wine_name,
                 confidence=heuristic.confidence,
-                reasoning=heuristic.reasoning
+                reasoning=heuristic.reasoning,
+                estimated_rating=None  # Heuristics can't estimate ratings
             ))
         return results
 
@@ -1037,12 +1063,17 @@ class MockNormalizer:
                 item.db_candidate,
                 item.db_rating
             )
+            # Mock: provide default rating for unmatched wines
+            estimated_rating = None
+            if not validation.is_valid_match or item.db_candidate is None:
+                estimated_rating = 3.8  # Default mid-tier rating for mock
             results.append(BatchValidationResult(
                 index=i,
                 is_valid_match=validation.is_valid_match,
                 wine_name=validation.wine_name,
                 confidence=validation.confidence,
-                reasoning=validation.reasoning
+                reasoning=validation.reasoning,
+                estimated_rating=estimated_rating
             ))
         return results
 

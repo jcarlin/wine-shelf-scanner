@@ -79,6 +79,19 @@ CREATE TRIGGER IF NOT EXISTS wines_au AFTER UPDATE ON wines BEGIN
     VALUES (new.id, new.canonical_name, '', new.region, new.winery, new.varietal);
 END;
 
+-- LLM-estimated ratings cache for wines not in database
+-- Stores LLM-generated ratings to reduce API calls for repeated requests
+CREATE TABLE IF NOT EXISTS llm_ratings_cache (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    wine_name TEXT NOT NULL UNIQUE,       -- Normalized wine name
+    estimated_rating REAL NOT NULL,        -- LLM-estimated rating (1.0-5.0)
+    confidence REAL NOT NULL DEFAULT 0.7,  -- LLM confidence in the estimate
+    llm_provider TEXT NOT NULL,            -- 'claude' or 'gemini'
+    hit_count INTEGER NOT NULL DEFAULT 1,  -- Times this rating was requested
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_accessed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_wines_canonical_lower ON wines(LOWER(canonical_name));
 CREATE INDEX IF NOT EXISTS idx_wines_winery ON wines(winery);
@@ -88,3 +101,5 @@ CREATE INDEX IF NOT EXISTS idx_wines_varietal ON wines(varietal);
 CREATE INDEX IF NOT EXISTS idx_wine_aliases_name_lower ON wine_aliases(LOWER(alias_name));
 CREATE INDEX IF NOT EXISTS idx_wine_aliases_wine_id ON wine_aliases(wine_id);
 CREATE INDEX IF NOT EXISTS idx_wine_sources_wine_id ON wine_sources(wine_id);
+CREATE INDEX IF NOT EXISTS idx_llm_ratings_cache_wine_name ON llm_ratings_cache(LOWER(wine_name));
+CREATE INDEX IF NOT EXISTS idx_llm_ratings_cache_hit_count ON llm_ratings_cache(hit_count DESC);

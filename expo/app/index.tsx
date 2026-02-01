@@ -5,8 +5,8 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useScanState } from '../hooks/useScanState';
+import { Ionicons } from '@expo/vector-icons';
 import { CameraCapture } from '../components/CameraCapture';
 import { ProcessingSpinner } from '../components/ProcessingSpinner';
 import { ResultsView } from '../components/ResultsView';
@@ -14,7 +14,7 @@ import { FallbackList } from '../components/FallbackList';
 import { colors, spacing, borderRadius, fontSize } from '../lib/theme';
 
 export default function ScannerScreen() {
-  const { state, pickAndScan, pickFromLibrary, reset } = useScanState();
+  const { state, pickAndScan, pickFromLibrary, reset, debugMode } = useScanState();
 
   const renderContent = () => {
     switch (state.status) {
@@ -59,6 +59,7 @@ export default function ScannerScreen() {
             <ResultsView
               response={state.response}
               imageUri={state.imageUri}
+              debugMode={debugMode}
             />
             <View style={styles.buttonContainer}>
               <TouchableOpacity
@@ -77,7 +78,12 @@ export default function ScannerScreen() {
       case 'error':
         return (
           <View style={styles.errorContainer} testID="errorView">
-            <Text style={styles.errorTitle} testID="errorTitle">Something went wrong</Text>
+            <Ionicons
+              name="warning"
+              size={60}
+              color={colors.star}
+              style={styles.errorIcon}
+            />
             <Text style={styles.errorMessage} testID="errorMessage">{state.message}</Text>
             <TouchableOpacity
               style={styles.button}
@@ -96,9 +102,9 @@ export default function ScannerScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']} testID="scannerScreen">
+    <View style={styles.container} testID="scannerScreen">
       {renderContent()}
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -132,17 +138,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: spacing.xl,
   },
-  errorTitle: {
-    fontSize: fontSize.xl,
-    fontWeight: '700',
-    color: colors.textLight,
-    marginBottom: spacing.sm + spacing.xs,
-    textAlign: 'center',
+  errorIcon: {
+    marginBottom: spacing.lg,
   },
   errorMessage: {
-    fontSize: fontSize.md,
-    color: colors.textMuted,
+    fontSize: fontSize.lg,
+    fontWeight: '600',
+    color: colors.textLight,
     marginBottom: spacing.xl,
     textAlign: 'center',
+    paddingHorizontal: spacing.md,
   },
 });

@@ -13,6 +13,8 @@ export interface UseScanStateReturn {
   pickAndScan: () => Promise<void>;
   pickFromLibrary: () => Promise<void>;
   reset: () => void;
+  debugMode: boolean;
+  toggleDebugMode: () => void;
 }
 
 /**
@@ -26,6 +28,14 @@ export interface UseScanStateReturn {
  */
 export function useScanState(): UseScanStateReturn {
   const [state, setState] = useState<ScanState>({ status: 'idle' });
+  const [debugMode, setDebugMode] = useState(true);
+
+  /**
+   * Toggle debug mode on/off
+   */
+  const toggleDebugMode = useCallback((): void => {
+    setDebugMode((prev) => !prev);
+  }, []);
 
   /**
    * Process an image URI through the scan API
@@ -33,7 +43,7 @@ export function useScanState(): UseScanStateReturn {
   const processImage = useCallback(async (imageUri: string): Promise<void> => {
     setState({ status: 'processing' });
 
-    const result = await scanImage(imageUri);
+    const result = await scanImage(imageUri, { debug: debugMode });
 
     if (result.success) {
       setState({
@@ -47,7 +57,7 @@ export function useScanState(): UseScanStateReturn {
         message: result.error.message,
       });
     }
-  }, []);
+  }, [debugMode]);
 
   /**
    * Launch camera to capture and scan an image
@@ -93,5 +103,7 @@ export function useScanState(): UseScanStateReturn {
     pickAndScan,
     pickFromLibrary,
     reset,
+    debugMode,
+    toggleDebugMode,
   };
 }

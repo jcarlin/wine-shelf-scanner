@@ -38,8 +38,8 @@ struct WineResult: Codable, Equatable, Identifiable {
     let confidence: Double
     let bbox: BoundingBox
 
-    /// Unique ID combining name + position (handles duplicate wines on shelf)
-    var id: String { "\(wineName)_\(bbox.x)_\(bbox.y)" }
+    /// Unique ID combining name + full bbox (handles duplicate wines on shelf)
+    var id: String { "\(wineName)_\(bbox.x)_\(bbox.y)_\(bbox.width)_\(bbox.height)" }
 
     enum CodingKeys: String, CodingKey {
         case wineName = "wine_name"
@@ -207,9 +207,15 @@ extension ScanResponse {
         topThree.contains(wine)
     }
 
-    /// Returns visible results (confidence >= visibility threshold)
+    /// Returns visible results (confidence >= visibility threshold), deduplicated by ID
     var visibleResults: [WineResult] {
-        results.filter { OverlayMath.isVisible(confidence: $0.confidence) }
+        var seen = Set<String>()
+        return results.filter { wine in
+            guard OverlayMath.isVisible(confidence: wine.confidence) else { return false }
+            guard !seen.contains(wine.id) else { return false }
+            seen.insert(wine.id)
+            return true
+        }
     }
 
     /// Returns tappable results (confidence >= tappable threshold)

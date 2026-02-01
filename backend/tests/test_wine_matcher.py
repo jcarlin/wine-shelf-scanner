@@ -39,13 +39,13 @@ class TestWineMatcher:
         assert result is not None
         assert "Kendall-Jackson" in result.canonical_name
 
-    def test_fuzzy_match(self, matcher):
-        # Slight misspelling
-        result = matcher.match("Caymus Cabernet")
+    def test_alias_and_partial_match(self, matcher):
+        # Alias match (Caymus Cab is an alias for Caymus Cabernet Sauvignon)
+        result = matcher.match("Caymus Cab")
         assert result is not None
         assert "Caymus" in result.canonical_name
 
-        # Partial name
+        # Alias match (Silver Oak is an alias for Silver Oak Alexander Valley)
         result = matcher.match("Silver Oak")
         assert result is not None
         assert "Silver Oak" in result.canonical_name

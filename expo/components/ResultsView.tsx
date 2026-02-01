@@ -4,18 +4,21 @@ import {
   Image,
   StyleSheet,
   LayoutChangeEvent,
+  ScrollView,
 } from 'react-native';
-import { ScanResponse, Size } from '../lib/types';
+import { ScanResponse, Size, DebugData } from '../lib/types';
 import { OverlayContainer } from './OverlayContainer';
 import { Toast } from './Toast';
+import { DebugTray } from './DebugTray';
 import { animation } from '../lib/theme';
 
 interface ResultsViewProps {
   response: ScanResponse;
   imageUri: string;
+  debugMode?: boolean;
 }
 
-export function ResultsView({ response, imageUri }: ResultsViewProps) {
+export function ResultsView({ response, imageUri, debugMode = false }: ResultsViewProps) {
   const [containerSize, setContainerSize] = useState<Size | null>(null);
   const [imageSize, setImageSize] = useState<Size | null>(null);
   const [showToast, setShowToast] = useState(false);
@@ -53,35 +56,50 @@ export function ResultsView({ response, imageUri }: ResultsViewProps) {
 
   const canRenderOverlays = containerSize && imageSize;
 
+  const showDebugTray = debugMode && response.debug;
+
   return (
-    <View style={styles.container} onLayout={handleLayout} testID="resultsView">
-      <Image
-        source={{ uri: imageUri }}
-        style={styles.image}
-        resizeMode="contain"
-        testID="resultsImage"
-      />
-
-      {canRenderOverlays && (
-        <OverlayContainer
-          results={response.results}
-          imageSize={imageSize}
-          containerSize={containerSize}
+    <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.scrollContent}>
+      <View style={styles.container} onLayout={handleLayout} testID="resultsView">
+        <Image
+          source={{ uri: imageUri }}
+          style={styles.image}
+          resizeMode="contain"
+          testID="resultsImage"
         />
-      )}
 
-      <Toast
-        message="Some bottles couldn't be recognized"
-        visible={showToast}
-      />
-    </View>
+        {canRenderOverlays && (
+          <OverlayContainer
+            results={response.results}
+            imageSize={imageSize}
+            containerSize={containerSize}
+          />
+        )}
+
+        <Toast
+          message="Some bottles couldn't be recognized"
+          visible={showToast}
+        />
+      </View>
+
+      {showDebugTray && response.debug && (
+        <DebugTray debugData={response.debug} />
+      )}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  scrollContainer: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
   container: {
     flex: 1,
     position: 'relative',
+    minHeight: 400,
   },
   image: {
     flex: 1,

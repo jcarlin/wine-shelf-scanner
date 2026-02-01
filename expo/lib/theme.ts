@@ -52,6 +52,38 @@ export const colors = {
 
   /** Sheet/modal background */
   sheetBackground: '#FFFFFF',
+
+  // Debug tray colors
+  /** Debug tray background */
+  debugBackground: 'rgba(0, 0, 0, 0.95)',
+
+  /** Debug header background */
+  debugHeaderBackground: 'rgba(0, 0, 0, 0.8)',
+
+  /** Debug wrench icon color */
+  debugOrange: '#FFA500',
+
+  /** Success status (green) */
+  statusSuccess: '#22C55E',
+
+  /** Warning status (yellow) */
+  statusWarning: '#EAB308',
+
+  /** Failure status (red) */
+  statusFailure: '#EF4444',
+
+  // Button colors
+  /** Primary button background (white) */
+  buttonPrimaryBackground: '#FFFFFF',
+
+  /** Primary button text (black) */
+  buttonPrimaryText: '#000000',
+
+  /** Secondary button background (semi-transparent white) */
+  buttonSecondaryBackground: 'rgba(255, 255, 255, 0.2)',
+
+  /** Secondary button text (white) */
+  buttonSecondaryText: '#FFFFFF',
 } as const;
 
 // MARK: - Spacing

@@ -150,17 +150,23 @@ class WineRepository:
 
     def search_fts(self, query: str, limit: int = 10) -> list[WineRecord]:
         """
-        Full-text search using FTS5.
+        Full-text search using FTS5 with prefix matching.
 
         Args:
-            query: Search query (supports FTS5 syntax)
+            query: Search query
             limit: Maximum results to return
         """
         conn = self._get_connection()
         cursor = conn.cursor()
 
-        # Escape special FTS5 characters
-        safe_query = query.replace('"', '""')
+        # Build prefix query: "caymus cabernet" -> "caymus* cabernet*"
+        # This matches wines starting with these words
+        words = query.split()
+        safe_words = [w.replace('"', '""') for w in words if w]
+        fts_query = ' '.join(f'"{w}"*' for w in safe_words)
+
+        if not fts_query:
+            return []
 
         cursor.execute("""
             SELECT w.id, w.canonical_name, w.rating, w.wine_type, w.region, w.winery, w.country, w.varietal
@@ -169,50 +175,93 @@ class WineRepository:
             WHERE wine_fts MATCH ?
             ORDER BY rank
             LIMIT ?
-        """, (f'"{safe_query}"', limit))
+        """, (fts_query, limit))
 
         results = []
         for row in cursor.fetchall():
-            record = self._row_to_record(row, cursor)
+            record = self._row_to_record_simple(row)
             results.append(record)
 
         return results
 
+    def _row_to_record_simple(self, row: sqlite3.Row) -> WineRecord:
+        """Convert database row to WineRecord without fetching aliases."""
+        return WineRecord(
+            id=row['id'],
+            canonical_name=row['canonical_name'],
+            rating=row['rating'],
+            wine_type=row['wine_type'],
+            region=row['region'],
+            winery=row['winery'],
+            country=row['country'],
+            varietal=row['varietal'],
+            aliases=[],  # Skip aliases for FTS results (performance)
+        )
+
     def get_all(self) -> list[WineRecord]:
-        """Get all wines from database."""
+        """Get all wines from database with aliases in single query."""
         conn = self._get_connection()
         cursor = conn.cursor()
 
+        # Single query with GROUP_CONCAT to avoid N+1 problem
         cursor.execute("""
-            SELECT id, canonical_name, rating, wine_type, region, winery, country, varietal
-            FROM wines
-            ORDER BY canonical_name
+            SELECT w.id, w.canonical_name, w.rating, w.wine_type, w.region,
+                   w.winery, w.country, w.varietal,
+                   GROUP_CONCAT(a.alias_name, '|') as aliases
+            FROM wines w
+            LEFT JOIN wine_aliases a ON w.id = a.wine_id
+            GROUP BY w.id
+            ORDER BY w.canonical_name
         """)
 
         results = []
         for row in cursor.fetchall():
-            record = self._row_to_record(row, cursor)
-            results.append(record)
+            aliases = row['aliases'].split('|') if row['aliases'] else []
+            results.append(WineRecord(
+                id=row['id'],
+                canonical_name=row['canonical_name'],
+                rating=row['rating'],
+                wine_type=row['wine_type'],
+                region=row['region'],
+                winery=row['winery'],
+                country=row['country'],
+                varietal=row['varietal'],
+                aliases=aliases,
+            ))
 
         return results
 
     def get_all_as_dict(self) -> list[dict]:
-        """Get all wines as dicts (for backward compatibility with WineMatcher)."""
-        records = self.get_all()
-        return [
-            {
-                "canonical_name": r.canonical_name,
-                "rating": r.rating,
+        """Get all wines as dicts with aliases in single query."""
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        # Single query with GROUP_CONCAT to avoid N+1 problem
+        cursor.execute("""
+            SELECT w.id, w.canonical_name, w.rating, w.wine_type, w.region,
+                   w.winery, w.country, w.varietal,
+                   GROUP_CONCAT(a.alias_name, '|') as aliases
+            FROM wines w
+            LEFT JOIN wine_aliases a ON w.id = a.wine_id
+            GROUP BY w.id
+        """)
+
+        results = []
+        for row in cursor.fetchall():
+            aliases = row['aliases'].split('|') if row['aliases'] else []
+            results.append({
+                "canonical_name": row['canonical_name'],
+                "rating": row['rating'],
                 "source": "database",
-                "aliases": r.aliases,
-                "wine_type": r.wine_type,
-                "region": r.region,
-                "winery": r.winery,
-                "country": r.country,
-                "varietal": r.varietal,
-            }
-            for r in records
-        ]
+                "aliases": aliases,
+                "wine_type": row['wine_type'],
+                "region": row['region'],
+                "winery": row['winery'],
+                "country": row['country'],
+                "varietal": row['varietal'],
+            })
+
+        return results
 
     def add_wine(
         self,

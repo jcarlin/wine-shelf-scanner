@@ -468,11 +468,12 @@ class TestRecognitionPipelineIntegration:
         )
 
         # Simulate bottle texts from vision service
+        # Use exact canonical names or aliases from the JSON database
         bottle_texts = [
-            create_bottle_text("Caymus Cabernet Sauvignon", confidence=0.95),
-            create_bottle_text("Opus One Napa Valley", confidence=0.93),
-            create_bottle_text("Silver Oak", confidence=0.91),
-            create_bottle_text("Jordan Cabernet", confidence=0.89),
+            create_bottle_text("Caymus", confidence=0.95),  # Alias for Caymus Cabernet Sauvignon
+            create_bottle_text("Opus One", confidence=0.93),  # Alias for Opus One
+            create_bottle_text("Silver Oak", confidence=0.91),  # Alias for Silver Oak Alexander Valley
+            create_bottle_text("Jordan", confidence=0.89),  # Alias for Jordan Cabernet Sauvignon
         ]
 
         results = await pipeline.recognize(bottle_texts)

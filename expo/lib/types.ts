@@ -37,6 +37,7 @@ export interface ScanResponse {
   image_id: string;
   results: WineResult[];
   fallback_list: FallbackWine[];
+  debug?: DebugData;
 }
 
 export type ScanState =
@@ -60,4 +61,52 @@ export interface Rect {
   y: number;
   width: number;
   height: number;
+}
+
+// MARK: - Debug Types (matching iOS ScanResponse.swift)
+
+export interface FuzzyMatchScores {
+  ratio: number;
+  partial_ratio: number;
+  token_sort_ratio: number;
+  phonetic_bonus: number;
+  weighted_score: number;
+}
+
+export interface FuzzyMatchDebug {
+  candidate: string;
+  scores: FuzzyMatchScores;
+  rating: number | null;
+}
+
+export interface LLMValidationDebug {
+  is_valid_match: boolean;
+  wine_name: string | null;
+  confidence: number | null;
+  reasoning: string | null;
+}
+
+export interface DebugFinalResult {
+  wine_name: string;
+  confidence: number;
+  source: 'fuzzy' | 'llm' | 'none';
+}
+
+export interface DebugPipelineStep {
+  raw_text: string;
+  normalized_text: string;
+  bottle_index: number | null;
+  fuzzy_match: FuzzyMatchDebug | null;
+  llm_validation: LLMValidationDebug | null;
+  final_result: DebugFinalResult | null;
+  step_failed: boolean;
+  included_in_results: boolean;
+}
+
+export interface DebugData {
+  pipeline_steps: DebugPipelineStep[];
+  total_ocr_texts: number;
+  bottles_detected: number;
+  texts_matched: number;
+  llm_calls_made: number;
 }

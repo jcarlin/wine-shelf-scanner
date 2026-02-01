@@ -103,3 +103,21 @@ CREATE INDEX IF NOT EXISTS idx_wine_aliases_wine_id ON wine_aliases(wine_id);
 CREATE INDEX IF NOT EXISTS idx_wine_sources_wine_id ON wine_sources(wine_id);
 CREATE INDEX IF NOT EXISTS idx_llm_ratings_cache_wine_name ON llm_ratings_cache(LOWER(wine_name));
 CREATE INDEX IF NOT EXISTS idx_llm_ratings_cache_hit_count ON llm_ratings_cache(hit_count DESC);
+
+-- User feedback/corrections for self-improving accuracy
+-- Stores thumbs up/down feedback and optional corrections
+CREATE TABLE IF NOT EXISTS corrections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    image_id TEXT NOT NULL,               -- From scan response
+    wine_name TEXT NOT NULL,              -- Wine name shown to user
+    ocr_text TEXT,                        -- Original OCR text (if available)
+    is_correct BOOLEAN NOT NULL,          -- true = thumbs up, false = thumbs down
+    corrected_name TEXT,                  -- User-provided correct wine name (if thumbs down)
+    device_id TEXT,                       -- Anonymous device identifier
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes for corrections analysis
+CREATE INDEX IF NOT EXISTS idx_corrections_wine_name ON corrections(LOWER(wine_name));
+CREATE INDEX IF NOT EXISTS idx_corrections_is_correct ON corrections(is_correct);
+CREATE INDEX IF NOT EXISTS idx_corrections_created_at ON corrections(created_at);

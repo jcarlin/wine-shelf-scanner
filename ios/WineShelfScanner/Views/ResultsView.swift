@@ -31,8 +31,8 @@ struct ResultsView: View {
         }
         .accessibilityIdentifier("resultsView")
         .sheet(item: $selectedWine) { wine in
-            WineDetailSheet(wine: wine)
-                .presentationDetents([.height(200)])
+            WineDetailSheet(wine: wine, imageId: response.imageId)
+                .presentationDetents([.height(280)])
         }
         .onAppear {
             if response.isPartialDetection {

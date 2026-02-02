@@ -17,6 +17,7 @@ class MockScanService: ScanServiceProtocol {
         case partialDetection = "partial_detection"
         case lowConfidence = "low_confidence"
         case emptyResults = "empty_results"
+        case fullFailure = "full_failure"  // Alias for UI tests
     }
 
     func scan(image: UIImage, debug: Bool = false) async throws -> ScanResponse {
@@ -95,7 +96,7 @@ class MockScanService: ScanServiceProtocol {
             return partialDetectionResponse()
         case .lowConfidence:
             return lowConfidenceResponse()
-        case .emptyResults:
+        case .emptyResults, .fullFailure:
             return emptyResultsResponse()
         }
     }

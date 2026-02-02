@@ -43,14 +43,17 @@ struct DebugTray: View {
                     statPill(value: debugData.llmCallsMade, label: "LLM")
                 }
             }
+            .accessibilityIdentifier("debugStatSummary")
 
             Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                 .foregroundColor(.gray)
                 .font(.caption)
+                .accessibilityIdentifier("debugTrayExpand")
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
         .background(Color.black.opacity(0.8))
+        .accessibilityIdentifier("debugTrayHeader")
     }
 
     private func statPill(value: Int, total: Int? = nil, label: String) -> some View {
@@ -77,14 +80,16 @@ struct DebugTray: View {
     private var stepsList: some View {
         ScrollView {
             LazyVStack(spacing: 0) {
-                ForEach(debugData.pipelineSteps) { step in
+                ForEach(Array(debugData.pipelineSteps.enumerated()), id: \.element.id) { index, step in
                     DebugStepRow(step: step)
+                        .accessibilityIdentifier("debugStep_\(index)")
                     Divider()
                         .background(Color.gray.opacity(0.3))
                 }
             }
         }
         .frame(maxHeight: 300)
+        .accessibilityIdentifier("debugStepsList")
     }
 }
 

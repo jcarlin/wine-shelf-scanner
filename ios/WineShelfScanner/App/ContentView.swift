@@ -7,8 +7,29 @@ struct ContentView: View {
     @State private var showPhotoPicker = false
     @State private var capturedImage: UIImage?
 
+    /// Whether we're running in UI test mode (bypass photo picker)
+    private var isUITesting: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.environment["USE_MOCKS"] == "true"
+        #else
+        return false
+        #endif
+    }
+
     init(viewModel: ScanViewModel? = nil) {
         _viewModel = StateObject(wrappedValue: viewModel ?? Self.createDefaultViewModel())
+    }
+
+    /// Create a mock image for UI testing (bypasses photo picker)
+    private static func createMockImage() -> UIImage {
+        let size = CGSize(width: 400, height: 600)
+        UIGraphicsBeginImageContextWithOptions(size, false, 1.0)
+        defer { UIGraphicsEndImageContext() }
+
+        UIColor.darkGray.setFill()
+        UIRectFill(CGRect(origin: .zero, size: size))
+
+        return UIGraphicsGetImageFromCurrentImageContext() ?? UIImage()
     }
 
     /// Create the default ScanViewModel, optionally configured for UI testing
@@ -47,8 +68,26 @@ struct ContentView: View {
                 switch viewModel.state {
                 case .idle:
                     IdleView(
-                        onScanCamera: { showCamera = true },
-                        onScanLibrary: { showPhotoPicker = true }
+                        onScanCamera: {
+                            if isUITesting {
+                                // Bypass camera, directly trigger scan with mock image
+                                let mockImage = Self.createMockImage()
+                                capturedImage = mockImage
+                                viewModel.performScan(with: mockImage)
+                            } else {
+                                showCamera = true
+                            }
+                        },
+                        onScanLibrary: {
+                            if isUITesting {
+                                // Bypass photo picker, directly trigger scan with mock image
+                                let mockImage = Self.createMockImage()
+                                capturedImage = mockImage
+                                viewModel.performScan(with: mockImage)
+                            } else {
+                                showPhotoPicker = true
+                            }
+                        }
                     )
 
                 case .processing:

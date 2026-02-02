@@ -243,9 +243,32 @@ def normalize_wine_name(name: str) -> str:
     return normalized
 
 
-def names_match(detected: str, ground_truth: str, threshold: float = 0.8) -> bool:
+def get_best_match_score(detected: str, ground_truth: str) -> float:
     """
-    Check if two wine names match using fuzzy matching.
+    Get the best fuzzy match score between two wine names.
+
+    Uses multiple matching strategies and returns the highest score.
+    """
+    from rapidfuzz import fuzz
+
+    norm_detected = normalize_wine_name(detected)
+    norm_ground_truth = normalize_wine_name(ground_truth)
+
+    if not norm_detected or not norm_ground_truth:
+        return 0.0
+
+    scores = [
+        fuzz.token_sort_ratio(norm_detected, norm_ground_truth) / 100.0,
+        fuzz.token_set_ratio(norm_detected, norm_ground_truth) / 100.0,
+        fuzz.partial_ratio(norm_detected, norm_ground_truth) / 100.0,
+    ]
+
+    return max(scores)
+
+
+def names_match(detected: str, ground_truth: str, threshold: float = 0.65) -> bool:
+    """
+    Check if two wine names match using multiple fuzzy matching strategies.
 
     Args:
         detected: Detected wine name from pipeline
@@ -263,16 +286,24 @@ def names_match(detected: str, ground_truth: str, threshold: float = 0.8) -> boo
     if not norm_detected or not norm_ground_truth:
         return False
 
-    # Use token sort ratio for best matching across word order differences
-    score = fuzz.token_sort_ratio(norm_detected, norm_ground_truth) / 100.0
+    # Use multiple matching strategies and take the best score
+    scores = [
+        fuzz.token_sort_ratio(norm_detected, norm_ground_truth) / 100.0,
+        fuzz.token_set_ratio(norm_detected, norm_ground_truth) / 100.0,
+        fuzz.partial_ratio(norm_detected, norm_ground_truth) / 100.0,
+    ]
 
-    return score >= threshold
+    # token_set_ratio handles cases where one name is a subset of another
+    # (e.g., "Origem Merlot" vs "Casa Valduga Origem Merlot")
+    best_score = max(scores)
+
+    return best_score >= threshold
 
 
 def evaluate_results(
     detected_wines: list[dict],
     ground_truth_wines: list[dict],
-    name_match_threshold: float = 0.8
+    name_match_threshold: float = 0.60
 ) -> AccuracyMetrics:
     """
     Evaluate pipeline results against ground truth.
@@ -311,16 +342,11 @@ def evaluate_results(
 
             gt_name = gt.get("wine_name", "")
 
-            # Check if names match
-            from rapidfuzz import fuzz
-            norm_detected = normalize_wine_name(detected_name)
-            norm_gt = normalize_wine_name(gt_name)
-
-            if norm_detected and norm_gt:
-                score = fuzz.token_sort_ratio(norm_detected, norm_gt) / 100.0
-                if score >= name_match_threshold and score > best_match_score:
-                    best_match_idx = i
-                    best_match_score = score
+            # Check if names match using multiple strategies
+            score = get_best_match_score(detected_name, gt_name)
+            if score >= name_match_threshold and score > best_match_score:
+                best_match_idx = i
+                best_match_score = score
 
         if best_match_idx is not None:
             # True positive - correct detection

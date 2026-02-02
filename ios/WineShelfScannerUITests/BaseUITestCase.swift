@@ -173,6 +173,55 @@ class BaseUITestCase: XCTestCase {
         app.otherElements[AccessibilityIdentifiers.Results.ratingBadge(wineName: wineName)]
     }
 
+    // MARK: - Debug Tray Accessors
+
+    /// Get the debug tray container
+    var debugTray: XCUIElement {
+        app.otherElements[AccessibilityIdentifiers.DebugTray.view]
+    }
+
+    /// Get the debug tray header
+    var debugTrayHeader: XCUIElement {
+        app.otherElements[AccessibilityIdentifiers.DebugTray.header]
+    }
+
+    /// Get the debug tray expand button
+    var debugTrayExpandButton: XCUIElement {
+        app.images[AccessibilityIdentifiers.DebugTray.expandButton]
+    }
+
+    /// Get the debug steps list
+    var debugStepsList: XCUIElement {
+        app.scrollViews[AccessibilityIdentifiers.DebugTray.stepsList]
+    }
+
+    /// Get a debug step row by index
+    func debugStepRow(_ index: Int) -> XCUIElement {
+        app.otherElements[AccessibilityIdentifiers.DebugTray.stepRow(index)]
+    }
+
+    // MARK: - Feedback Accessors
+
+    /// Get the thumbs up button in detail sheet
+    var thumbsUpButton: XCUIElement {
+        app.buttons[AccessibilityIdentifiers.DetailSheet.thumbsUpButton]
+    }
+
+    /// Get the thumbs down button in detail sheet
+    var thumbsDownButton: XCUIElement {
+        app.buttons[AccessibilityIdentifiers.DetailSheet.thumbsDownButton]
+    }
+
+    /// Get the correction text field
+    var correctionTextField: XCUIElement {
+        app.textFields[AccessibilityIdentifiers.DetailSheet.correctionTextField]
+    }
+
+    /// Get the feedback confirmation message
+    var feedbackConfirmation: XCUIElement {
+        app.otherElements[AccessibilityIdentifiers.DetailSheet.feedbackConfirmation]
+    }
+
     // MARK: - Action Helpers
 
     /// Simulate selecting a photo from the library

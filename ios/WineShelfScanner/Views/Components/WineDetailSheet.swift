@@ -94,6 +94,7 @@ struct WineDetailSheet: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
+                .accessibilityIdentifier("feedbackConfirmation")
                 .transition(.opacity)
             } else if showCorrectionField {
                 // Correction input
@@ -131,6 +132,7 @@ struct WineDetailSheet: View {
                     Text("Is this the right wine?")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
+                        .accessibilityIdentifier("feedbackPrompt")
 
                     HStack(spacing: 24) {
                         // Thumbs up

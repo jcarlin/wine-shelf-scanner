@@ -150,7 +150,25 @@ class OCRProcessor:
         'reserve', 'special', 'edition', 'limited', 'select', 'premium',
         'estate', 'bottled', 'produced', 'imported', 'product', 'contains',
         'sulfites', 'wine', 'vino', 'vin', 'winery', 'vineyard', 'cellars',
-        'vintage', 'aged', 'barrel', 'oak', 'months', 'years'
+        'vintage', 'aged', 'barrel', 'oak', 'months', 'years',
+        # Region names that appear on labels but shouldn't be in wine name
+        'napa', 'sonoma', 'lodi', 'paso', 'robles', 'california', 'oregon',
+        'washington', 'mendocino', 'monterey', 'valley', 'county', 'coast',
+        'central', 'north', 'south', 'eastern', 'western', 'appellation',
+        # French regions/terms
+        'bordeaux', 'bourgogne', 'burgundy', 'loire', 'rhone', 'alsace',
+        'champagne', 'provence', 'languedoc', 'roussillon', 'grand', 'cru',
+        'premier', 'appellation', 'controlee', 'origine', 'protegee',
+        # Italian terms
+        'toscana', 'tuscany', 'piemonte', 'piedmont', 'veneto', 'sicilia',
+        'docg', 'doc', 'igt', 'classico', 'superiore', 'riserva',
+        # Spanish terms
+        'rioja', 'ribera', 'duero', 'priorat', 'rueda', 'denominacion',
+        # Australian regions
+        'barossa', 'mclaren', 'vale', 'hunter', 'clare', 'margaret', 'river',
+        # Common label words to remove
+        'vinted', 'grown', 'made', 'crafted', 'selected', 'from', 'the',
+        'and', 'for', 'with', 'our', 'this', 'that', 'by', 'of', 'in',
     }
 
     def __init__(

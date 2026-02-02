@@ -146,10 +146,36 @@ async def run_pipeline_on_image(
 
     # Process OCR
     ocr = OCRProcessor()
-    bottle_texts = ocr.process(
-        vision_result.objects,  # bottles
-        vision_result.text_blocks  # text
-    )
+
+    if vision_result.objects:
+        # Normal path: bottles detected
+        bottle_texts = ocr.process(
+            vision_result.objects,  # bottles
+            vision_result.text_blocks  # text
+        )
+    else:
+        # No bottles detected - try direct OCR match
+        # This handles close-up label shots
+        from app.services.ocr_processor import BottleText
+        from app.services.vision import DetectedObject, BoundingBox
+
+        all_text = ' '.join([tb.text for tb in vision_result.text_blocks])
+        normalized_text = ocr._normalize_text(all_text)
+
+        if all_text and len(normalized_text.strip()) >= 3:
+            synthetic_bottle = DetectedObject(
+                name="Bottle",
+                confidence=0.9,
+                bbox=BoundingBox(x=0.0, y=0.0, width=1.0, height=1.0)
+            )
+            bottle_texts = [BottleText(
+                bottle=synthetic_bottle,
+                text_fragments=[all_text],
+                combined_text=all_text,
+                normalized_name=normalized_text
+            )]
+        else:
+            bottle_texts = []
 
     # Run recognition pipeline
     pipeline = RecognitionPipeline(use_llm=use_llm)

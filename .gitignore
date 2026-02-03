@@ -47,8 +47,10 @@ Thumbs.db
 build/
 *.app
 
+# Malformed pip install artifacts
+=*
 
+# Large data directories
 raw-data/
 test-images/
-.DS_Store
 docs/

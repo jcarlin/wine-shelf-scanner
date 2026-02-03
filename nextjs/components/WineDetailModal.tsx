@@ -165,7 +165,7 @@ export function WineDetailModal({ wine, onClose }: WineDetailModalProps) {
             {wine.blurb && (
               <div className="bg-gray-50 rounded-lg p-4 my-4">
                 <p className="text-gray-600 italic text-center leading-relaxed">
-                  "{wine.blurb}"
+                  &ldquo;{wine.blurb}&rdquo;
                 </p>
               </div>
             )}
@@ -183,7 +183,7 @@ export function WineDetailModal({ wine, onClose }: WineDetailModalProps) {
                     style={{ borderLeftWidth: 3, borderLeftColor: colors.star }}
                   >
                     <p className="text-sm text-gray-500 italic leading-relaxed">
-                      "{snippet}"
+                      &ldquo;{snippet}&rdquo;
                     </p>
                   </div>
                 ))}

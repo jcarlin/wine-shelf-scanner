@@ -30,7 +30,7 @@ from .llm_normalizer import (
     get_normalizer,
 )
 from .ocr_processor import BottleText
-from .wine_matcher import WineMatcher, WineMatch, WineMatchWithScores, _is_generic_query
+from .wine_matcher import WineMatcher, WineMatch, WineMatchWithScores, _is_generic_query, _is_llm_generic_response
 
 
 class DebugCollector:
@@ -413,7 +413,7 @@ class RecognitionPipeline:
             # with LLM-estimated rating if available
             if validation.confidence >= 0.5:
                 # Skip if LLM returned a generic wine name (would cause false positives)
-                if _is_generic_query(validation.wine_name):
+                if _is_llm_generic_response(validation.wine_name):
                     return None
 
                 # Use LLM-estimated rating if provided, otherwise None

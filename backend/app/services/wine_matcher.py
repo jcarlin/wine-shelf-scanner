@@ -40,6 +40,13 @@ GENERIC_WINE_TERMS = {
     'cava', 'crianza', 'reserva', 'gran',
 }
 
+# LLM-specific patterns that indicate a generic response (more restrictive)
+# These are patterns that LLMs tend to return when they can't identify a wine
+LLM_GENERIC_PATTERNS = {
+    'grand vin', 'grand cru', 'premier cru', 'appellation', 'controlee',
+    'methode traditionnelle', 'méthode traditionnelle',
+}
+
 
 def _is_generic_query(query: str) -> bool:
     """
@@ -47,7 +54,8 @@ def _is_generic_query(query: str) -> bool:
 
     Returns True if matching this query would likely produce a false positive.
     """
-    words = set(query.lower().split())
+    query_lower = query.lower()
+    words = set(query_lower.split())
 
     # If all words are generic terms, reject
     non_generic_words = words - GENERIC_WINE_TERMS
@@ -57,6 +65,24 @@ def _is_generic_query(query: str) -> bool:
 
     # If no meaningful non-generic words remain, it's a generic query
     return len(non_generic_words) == 0
+
+
+def _is_llm_generic_response(wine_name: str) -> bool:
+    """
+    Check if an LLM-returned wine name looks like a generic fallback.
+
+    More restrictive than _is_generic_query - specifically targets
+    patterns that LLMs return when they can't identify a wine.
+    """
+    name_lower = wine_name.lower()
+
+    # Check for specific generic patterns
+    for pattern in LLM_GENERIC_PATTERNS:
+        if pattern in name_lower:
+            return True
+
+    # Also apply general generic check
+    return _is_generic_query(wine_name)
 
 
 @dataclass

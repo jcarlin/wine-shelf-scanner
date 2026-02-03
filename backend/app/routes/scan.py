@@ -34,14 +34,14 @@ def _vision_to_recognized(
     bottle_text: BottleText
 ) -> RecognizedWine:
     """Convert Claude Vision result to RecognizedWine."""
-    # Cap confidence at 0.75 for vision-identified wines
-    capped_confidence = min(vision_wine.confidence, 0.75)
+    # Cap confidence for vision-identified wines (never top-3 emphasis)
+    capped_confidence = min(vision_wine.confidence, Config.VISION_FALLBACK_CONFIDENCE_CAP)
 
     return RecognizedWine(
         wine_name=vision_wine.wine_name,
         rating=vision_wine.estimated_rating,
         confidence=capped_confidence,
-        source=WineSource.LLM,
+        source=WineSource.VISION,
         identified=True,
         bottle_text=bottle_text,
         rating_source=RatingSource.LLM_ESTIMATED if vision_wine.estimated_rating else RatingSource.NONE,
@@ -182,6 +182,7 @@ async def scan_shelf(
     mock_scenario: Optional[str] = Query(None, description="Mock scenario for testing"),
     use_vision_api: bool = Query(True, description="Use real Vision API"),
     use_llm: bool = Query(True, description="Use LLM fallback for unknown wines"),
+    use_vision_fallback: bool = Query(True, description="Use Claude Vision for unmatched bottles"),
     debug: bool = Query(False, description="Include pipeline debug info in response"),
     use_vision_fixture: Optional[str] = Query(None, description="Path to captured Vision API response fixture for replay"),
     wine_matcher: WineMatcher = Depends(get_wine_matcher),
@@ -239,7 +240,7 @@ async def scan_shelf(
     # Process image
     try:
         return await process_image(
-            image_id, image_bytes, use_vision_api, use_llm, debug, wine_matcher, use_vision_fixture
+            image_id, image_bytes, use_vision_api, use_llm, use_vision_fallback, debug, wine_matcher, use_vision_fixture
         )
     except ValueError as e:
         logger.warning(f"Invalid image format: {e}")
@@ -254,6 +255,7 @@ async def process_image(
     image_bytes: bytes,
     use_real_api: bool,
     use_llm: bool,
+    use_vision_fallback: bool,
     debug_mode: bool,
     wine_matcher: WineMatcher,
     vision_fixture: Optional[str] = None,
@@ -319,7 +321,9 @@ async def process_image(
     recognized_bottle_ids = {id(w.bottle_text) for w in recognized}
     unmatched_bottles = [bt for bt in bottle_texts if id(bt) not in recognized_bottle_ids]
 
-    if unmatched_bottles and use_llm:
+    # Use vision fallback if enabled both via parameter and config
+    enable_vision = use_vision_fallback and Config.use_vision_fallback()
+    if unmatched_bottles and enable_vision:
         logger.info(f"[{image_id}] {len(unmatched_bottles)} unmatched bottles, trying Claude Vision fallback")
         try:
             vision_service = get_claude_vision_service()

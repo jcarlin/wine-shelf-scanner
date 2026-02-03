@@ -3,6 +3,10 @@ Claude Vision API service for wine identification from images.
 
 This is the final fallback when OCR + fuzzy matching + LLM text normalization fails.
 Sends the full shelf image to Claude Vision to identify wines at specific bottle locations.
+
+Supports two modes:
+1. Full image mode: Sends entire shelf image with bottle location hints (default)
+2. Cropped mode: Sends individual cropped bottle images (more cost-effective)
 """
 
 import base64
@@ -13,6 +17,7 @@ from typing import Optional
 
 from ..config import Config
 from .ocr_processor import BottleText
+from .image_cropper import crop_multiple_bottles, NormalizedBBox
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +43,45 @@ class VisionIdentifiedWine:
     varietal: Optional[str]  # Grape variety
     blurb: Optional[str]  # 1-2 sentence description
     reasoning: str  # Why Claude identified this wine
+
+
+def _build_single_bottle_prompt(ocr_hint: Optional[str] = None) -> str:
+    """Build prompt for identifying a single cropped bottle image."""
+    ocr_context = ""
+    if ocr_hint:
+        ocr_context = f"\n\nOCR text hint (may be partial or inaccurate): \"{ocr_hint[:100]}\""
+
+    return f"""You are a wine expert. Identify the wine in this image of a single wine bottle.
+{ocr_context}
+Examine the label carefully and provide:
+1. The wine name (producer + wine name, e.g. "Caymus Cabernet Sauvignon" or "Opus One")
+2. Your confidence in the identification (0.0-1.0)
+3. If you recognize this wine, estimate its rating (0.0-5.0 scale, like Vivino ratings)
+4. Wine type (Red, White, Rose, Sparkling, Dessert, Fortified)
+5. Producer/brand name
+6. Region if identifiable
+7. Grape variety if identifiable
+8. A brief 1-sentence description if you know this wine
+
+IMPORTANT:
+- If you cannot identify the wine clearly, set wine_name to null and confidence to 0
+- Do not guess wildly - only identify wines you can actually read or recognize
+- Look for visual cues like distinctive artwork, logos, bottle shapes
+
+Respond with a single JSON object:
+{{
+  "wine_name": "Producer Wine Name" or null,
+  "confidence": 0.0-1.0,
+  "estimated_rating": 0.0-5.0 or null,
+  "wine_type": "Red|White|Rose|Sparkling|Dessert|Fortified" or null,
+  "brand": "Producer name" or null,
+  "region": "Region" or null,
+  "varietal": "Grape variety" or null,
+  "blurb": "Brief description" or null,
+  "reasoning": "Why you identified this wine"
+}}
+
+Return ONLY the JSON object, no other text."""
 
 
 def _build_vision_prompt(unmatched_bottles: list[BottleText]) -> str:
@@ -147,6 +191,38 @@ def _parse_vision_response(response_text: str, num_bottles: int) -> list[VisionI
         logger.debug(f"Response was: {response_text[:500]}")
 
     return results
+
+
+def _parse_single_bottle_response(response_text: str, bottle_index: int) -> Optional[VisionIdentifiedWine]:
+    """Parse Claude's JSON response for a single bottle."""
+    try:
+        json_text = response_text.strip()
+        if json_text.startswith("```"):
+            lines = json_text.split("\n")
+            json_text = "\n".join(lines[1:-1]) if lines[-1].startswith("```") else "\n".join(lines[1:])
+
+        item = json.loads(json_text)
+
+        if not isinstance(item, dict):
+            logger.error("Claude Vision single bottle response is not a dict")
+            return None
+
+        return VisionIdentifiedWine(
+            bottle_index=bottle_index,
+            wine_name=item.get("wine_name"),
+            confidence=float(item.get("confidence", 0.0)),
+            estimated_rating=float(item["estimated_rating"]) if item.get("estimated_rating") is not None else None,
+            wine_type=item.get("wine_type"),
+            brand=item.get("brand"),
+            region=item.get("region"),
+            varietal=item.get("varietal"),
+            blurb=item.get("blurb"),
+            reasoning=item.get("reasoning", ""),
+        )
+
+    except (json.JSONDecodeError, KeyError, ValueError, TypeError) as e:
+        logger.error(f"Failed to parse single bottle response: {e}")
+        return None
 
 
 class ClaudeVisionService:
@@ -286,6 +362,117 @@ class ClaudeVisionService:
 
         except Exception as e:
             logger.error(f"Claude Vision API error: {e}", exc_info=True)
+            return []
+
+    async def identify_wines_cropped(
+        self,
+        image_bytes: bytes,
+        unmatched_bottles: list[BottleText],
+    ) -> list[VisionIdentifiedWine]:
+        """
+        Identify wines using cropped individual bottle images.
+
+        More cost-effective than sending full shelf image when there are
+        few unmatched bottles. Each bottle is sent as a separate image.
+
+        Args:
+            image_bytes: The full shelf image as bytes
+            unmatched_bottles: List of bottles that couldn't be identified
+
+        Returns:
+            List of VisionIdentifiedWine for successfully identified bottles
+        """
+        if not unmatched_bottles:
+            return []
+
+        if not ANTHROPIC_AVAILABLE:
+            logger.warning("Claude Vision fallback unavailable: anthropic package not installed")
+            return []
+
+        api_key = Config.anthropic_api_key()
+        if not api_key:
+            logger.warning("Claude Vision fallback unavailable: ANTHROPIC_API_KEY not set")
+            return []
+
+        # Crop bottle regions
+        bboxes = [
+            NormalizedBBox(
+                x=bt.bottle.bbox.x,
+                y=bt.bottle.bbox.y,
+                width=bt.bottle.bbox.width,
+                height=bt.bottle.bbox.height,
+            )
+            for bt in unmatched_bottles
+        ]
+
+        crop_results = crop_multiple_bottles(image_bytes, bboxes)
+
+        logger.info(f"Claude Vision (cropped): Processing {len(unmatched_bottles)} bottles")
+
+        identified: list[VisionIdentifiedWine] = []
+
+        try:
+            client = self._get_client()
+            import asyncio
+
+            for idx, (bt, crop) in enumerate(zip(unmatched_bottles, crop_results)):
+                if crop is None:
+                    logger.warning(f"Skipping bottle {idx}: crop failed")
+                    continue
+
+                try:
+                    # Build prompt with OCR hint
+                    prompt = _build_single_bottle_prompt(bt.combined_text)
+
+                    # Encode cropped image
+                    image_b64 = base64.standard_b64encode(crop.image_bytes).decode("utf-8")
+
+                    # Call Claude Vision
+                    response = await asyncio.get_event_loop().run_in_executor(
+                        None,
+                        lambda b64=image_b64, p=prompt: client.messages.create(
+                            model=self.model,
+                            max_tokens=500,  # Less tokens needed for single bottle
+                            messages=[
+                                {
+                                    "role": "user",
+                                    "content": [
+                                        {
+                                            "type": "image",
+                                            "source": {
+                                                "type": "base64",
+                                                "media_type": "image/jpeg",
+                                                "data": b64,
+                                            },
+                                        },
+                                        {
+                                            "type": "text",
+                                            "text": p,
+                                        },
+                                    ],
+                                }
+                            ],
+                        )
+                    )
+
+                    response_text = response.content[0].text if response.content else ""
+                    result = _parse_single_bottle_response(response_text, idx)
+
+                    if result and result.wine_name and result.confidence > 0.3:
+                        identified.append(result)
+                        logger.debug(
+                            f"  Bottle {idx}: {result.wine_name} "
+                            f"(conf={result.confidence:.2f}, rating={result.estimated_rating})"
+                        )
+
+                except Exception as e:
+                    logger.warning(f"Failed to identify bottle {idx}: {e}")
+
+            logger.info(f"Claude Vision (cropped): Identified {len(identified)} of {len(unmatched_bottles)} bottles")
+            return identified
+
+        except Exception as e:
+            logger.error(f"Claude Vision API error (cropped mode): {e}", exc_info=True)
             return []
 
 

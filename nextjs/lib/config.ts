@@ -12,7 +12,8 @@ function getApiBaseUrl(): string {
   // Check for environment variable
   const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   if (envUrl) {
-    return envUrl;
+    // Strip trailing slashes to prevent //path URLs
+    return envUrl.replace(/\/+$/, '');
   }
 
   // Fallback based on environment

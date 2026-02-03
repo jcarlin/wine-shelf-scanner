@@ -329,9 +329,8 @@ async def process_image(
         logger.info(f"[{image_id}] {len(orphaned_texts)} orphaned text blocks not assigned to bottles")
 
     # Step 3 & 4: Tiered recognition (fuzzy match → LLM fallback)
-    # Enable debug mode if explicitly requested OR if in dev mode
-    enable_debug = debug_mode or Config.is_dev()
-    pipeline = get_pipeline(use_llm=use_llm, debug_mode=enable_debug)
+    # Always enable debug mode to collect pipeline stats
+    pipeline = get_pipeline(use_llm=use_llm, debug_mode=True)
     recognized = await pipeline.recognize(bottle_texts)
 
     # Count matches by source
@@ -446,30 +445,21 @@ async def process_image(
         final_results=stats_final_results
     )
 
-    # Build debug data if requested or in dev mode
-    debug_data = None
-    if debug_mode or Config.is_dev():
-        debug_data = DebugData(
-            pipeline_steps=pipeline.debug_steps,
-            total_ocr_texts=len(bottle_texts),
-            bottles_detected=stats_bottles_detected,
-            texts_matched=len([s for s in pipeline.debug_steps if s.included_in_results]),
-            llm_calls_made=pipeline.llm_call_count,
-            pipeline_stats=pipeline_stats
-        )
-
-        # Log summary table in dev mode
-        if Config.is_dev():
-            logger.info(f"[{image_id}] Pipeline Summary:\n{debug_data.format_summary_table()}")
-
-    # Only include debug in response if explicitly requested
-    response_debug = debug_data if debug_mode else None
+    # Always build debug data (pipeline_stats is always useful)
+    debug_data = DebugData(
+        pipeline_steps=pipeline.debug_steps,
+        total_ocr_texts=len(bottle_texts),
+        bottles_detected=stats_bottles_detected,
+        texts_matched=len([s for s in pipeline.debug_steps if s.included_in_results]),
+        llm_calls_made=pipeline.llm_call_count,
+        pipeline_stats=pipeline_stats
+    )
 
     return ScanResponse(
         image_id=image_id,
         results=results,
         fallback_list=fallback,
-        debug=response_debug
+        debug=debug_data
     )
 
 
@@ -518,9 +508,8 @@ async def _direct_ocr_response(
         normalized_name=normalized_text
     )
 
-    # Run pipeline
-    enable_debug = debug_mode or Config.is_dev()
-    pipeline = get_pipeline(use_llm=use_llm, debug_mode=enable_debug)
+    # Run pipeline (always enable debug for stats collection)
+    pipeline = get_pipeline(use_llm=use_llm, debug_mode=True)
     recognized = await pipeline.recognize([bottle_text])
 
     logger.info(f"[{image_id}] Direct OCR recognized {len(recognized)} wines")

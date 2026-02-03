@@ -25,6 +25,11 @@ class CachedRating:
     hit_count: int
     created_at: datetime
     last_accessed_at: datetime
+    # Extended metadata from LLM
+    wine_type: Optional[str] = None
+    region: Optional[str] = None
+    varietal: Optional[str] = None
+    brand: Optional[str] = None
 
 
 class LLMRatingCache:
@@ -59,7 +64,7 @@ class LLMRatingCache:
         return conn
 
     def _ensure_table(self) -> None:
-        """Ensure the cache table exists."""
+        """Ensure the cache table exists with all columns."""
         conn = self._get_connection()
         try:
             conn.execute("""
@@ -71,7 +76,11 @@ class LLMRatingCache:
                     llm_provider TEXT NOT NULL,
                     hit_count INTEGER NOT NULL DEFAULT 1,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    last_accessed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    last_accessed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    wine_type TEXT,
+                    region TEXT,
+                    varietal TEXT,
+                    brand TEXT
                 )
             """)
             conn.execute("""
@@ -82,22 +91,44 @@ class LLMRatingCache:
                 CREATE INDEX IF NOT EXISTS idx_llm_ratings_cache_hit_count
                 ON llm_ratings_cache(hit_count DESC)
             """)
+
+            # Add columns if they don't exist (for existing databases)
+            self._add_column_if_missing(conn, "wine_type", "TEXT")
+            self._add_column_if_missing(conn, "region", "TEXT")
+            self._add_column_if_missing(conn, "varietal", "TEXT")
+            self._add_column_if_missing(conn, "brand", "TEXT")
+
             conn.commit()
         finally:
             conn.close()
+
+    def _add_column_if_missing(
+        self,
+        conn: sqlite3.Connection,
+        column_name: str,
+        column_type: str
+    ) -> None:
+        """Add column to llm_ratings_cache if it doesn't exist."""
+        cursor = conn.execute("PRAGMA table_info(llm_ratings_cache)")
+        columns = [row[1] for row in cursor.fetchall()]
+        if column_name not in columns:
+            conn.execute(
+                f"ALTER TABLE llm_ratings_cache ADD COLUMN {column_name} {column_type}"
+            )
 
     def _normalize_name(self, wine_name: str) -> str:
         """Normalize wine name for consistent lookups."""
         return wine_name.strip().lower()
 
-    def get(self, wine_name: str) -> Optional[CachedRating]:
+    def get(self, wine_name: str, increment_hit: bool = True) -> Optional[CachedRating]:
         """
         Get cached rating for a wine.
 
-        Also increments hit count and updates last_accessed_at.
+        By default increments hit count and updates last_accessed_at.
 
         Args:
             wine_name: Wine name to look up
+            increment_hit: If True, increment hit count (default: True)
 
         Returns:
             CachedRating if found, None otherwise
@@ -110,7 +141,8 @@ class LLMRatingCache:
             cursor = conn.execute(
                 """
                 SELECT wine_name, estimated_rating, confidence, llm_provider,
-                       hit_count, created_at, last_accessed_at
+                       hit_count, created_at, last_accessed_at,
+                       wine_type, region, varietal, brand
                 FROM llm_ratings_cache
                 WHERE LOWER(wine_name) = ?
                 """,
@@ -121,26 +153,34 @@ class LLMRatingCache:
             if row is None:
                 return None
 
+            hit_count = row["hit_count"]
+
             # Increment hit count and update last_accessed
-            conn.execute(
-                """
-                UPDATE llm_ratings_cache
-                SET hit_count = hit_count + 1,
-                    last_accessed_at = CURRENT_TIMESTAMP
-                WHERE LOWER(wine_name) = ?
-                """,
-                (normalized,)
-            )
-            conn.commit()
+            if increment_hit:
+                conn.execute(
+                    """
+                    UPDATE llm_ratings_cache
+                    SET hit_count = hit_count + 1,
+                        last_accessed_at = CURRENT_TIMESTAMP
+                    WHERE LOWER(wine_name) = ?
+                    """,
+                    (normalized,)
+                )
+                conn.commit()
+                hit_count += 1
 
             return CachedRating(
                 wine_name=row["wine_name"],
                 estimated_rating=row["estimated_rating"],
                 confidence=row["confidence"],
                 llm_provider=row["llm_provider"],
-                hit_count=row["hit_count"] + 1,  # Return updated count
+                hit_count=hit_count,
                 created_at=datetime.fromisoformat(row["created_at"]),
-                last_accessed_at=datetime.now()
+                last_accessed_at=datetime.now(),
+                wine_type=row["wine_type"],
+                region=row["region"],
+                varietal=row["varietal"],
+                brand=row["brand"],
             )
 
         finally:
@@ -151,7 +191,11 @@ class LLMRatingCache:
         wine_name: str,
         estimated_rating: float,
         confidence: float,
-        llm_provider: str
+        llm_provider: str,
+        wine_type: Optional[str] = None,
+        region: Optional[str] = None,
+        varietal: Optional[str] = None,
+        brand: Optional[str] = None,
     ) -> None:
         """
         Cache an LLM-estimated rating.
@@ -164,6 +208,10 @@ class LLMRatingCache:
             estimated_rating: Estimated rating (1.0-5.0)
             confidence: LLM confidence in estimate (0.0-1.0)
             llm_provider: Provider name ('claude' or 'gemini')
+            wine_type: Wine type (Red, White, etc.)
+            region: Wine region
+            varietal: Grape variety
+            brand: Producer/winery name
         """
         # Validate rating
         estimated_rating = max(1.0, min(5.0, estimated_rating))
@@ -174,15 +222,21 @@ class LLMRatingCache:
             conn.execute(
                 """
                 INSERT INTO llm_ratings_cache
-                    (wine_name, estimated_rating, confidence, llm_provider)
-                VALUES (?, ?, ?, ?)
+                    (wine_name, estimated_rating, confidence, llm_provider,
+                     wine_type, region, varietal, brand)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(wine_name) DO UPDATE SET
                     estimated_rating = excluded.estimated_rating,
                     confidence = excluded.confidence,
                     llm_provider = excluded.llm_provider,
+                    wine_type = excluded.wine_type,
+                    region = excluded.region,
+                    varietal = excluded.varietal,
+                    brand = excluded.brand,
                     last_accessed_at = CURRENT_TIMESTAMP
                 """,
-                (wine_name.strip(), estimated_rating, confidence, llm_provider)
+                (wine_name.strip(), estimated_rating, confidence, llm_provider,
+                 wine_type, region, varietal, brand)
             )
             conn.commit()
             logger.debug(f"Cached LLM rating: {wine_name} = {estimated_rating:.1f}")
@@ -210,7 +264,8 @@ class LLMRatingCache:
             cursor = conn.execute(
                 """
                 SELECT wine_name, estimated_rating, confidence, llm_provider,
-                       hit_count, created_at, last_accessed_at
+                       hit_count, created_at, last_accessed_at,
+                       wine_type, region, varietal, brand
                 FROM llm_ratings_cache
                 WHERE hit_count >= ?
                 ORDER BY hit_count DESC
@@ -227,7 +282,11 @@ class LLMRatingCache:
                     llm_provider=row["llm_provider"],
                     hit_count=row["hit_count"],
                     created_at=datetime.fromisoformat(row["created_at"]),
-                    last_accessed_at=datetime.fromisoformat(row["last_accessed_at"])
+                    last_accessed_at=datetime.fromisoformat(row["last_accessed_at"]),
+                    wine_type=row["wine_type"],
+                    region=row["region"],
+                    varietal=row["varietal"],
+                    brand=row["brand"],
                 ))
 
             return results

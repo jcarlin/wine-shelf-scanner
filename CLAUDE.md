@@ -285,6 +285,10 @@ cd backend && python scripts/accuracy_report.py
 
 # Capture Vision API response (for test fixtures)
 cd backend && python scripts/capture_vision_response.py <image_path>
+
+# Wine promotion (review/promote LLM-discovered wines to DB)
+cd backend && python -m scripts.promote_wines --preview
+cd backend && python -m scripts.promote_wines --promote "Wine Name"
 ```
 
 ### iOS
@@ -359,6 +363,7 @@ Set these in the Vercel dashboard for production:
 | `GEMINI_MODEL` | `gemini-2.0-flash` | Gemini model name |
 | `LOG_LEVEL` | `INFO` | Logging level (DEBUG, INFO, WARNING, ERROR) |
 | `DEV_MODE` | `false` | Enable verbose logging |
+| `USE_LLM_CACHE` | `false` | Cache LLM-discovered wines for promotion to DB |
 
 ---
 

@@ -38,6 +38,8 @@ export function OverlayContainer({ wines, imageBounds, onWineSelect }: OverlayCo
       height: imageBounds.height,
     };
 
+    console.log('[OverlayContainer] containerSize for calculations:', containerSize);
+
     return visibleWines.map((wine) => {
       const isTopThree = topThreeIds.includes(wine.wine_name);
       const size = badgeSize(isTopThree);
@@ -47,13 +49,23 @@ export function OverlayContainer({ wines, imageBounds, onWineSelect }: OverlayCo
       const adjusted = adjustedAnchorPoint(anchor, wine.bbox, containerSize, size);
 
       // Offset by image bounds position (for letterboxing)
+      const finalPosition = {
+        x: imageBounds.x + adjusted.x,
+        y: imageBounds.y + adjusted.y,
+      };
+
+      console.log('[OverlayContainer] Position calc for', wine.wine_name, {
+        bbox: wine.bbox,
+        anchor,
+        adjusted,
+        finalPosition,
+        size
+      });
+
       return {
         wine,
         isTopThree,
-        position: {
-          x: imageBounds.x + adjusted.x,
-          y: imageBounds.y + adjusted.y,
-        },
+        position: finalPosition,
       };
     });
   }, [visibleWines, topThreeIds, imageBounds]);

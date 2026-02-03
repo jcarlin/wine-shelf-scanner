@@ -107,6 +107,12 @@ class Config:
         """Maximum vision cache size in MB before LRU eviction."""
         return int(os.getenv("VISION_CACHE_MAX_SIZE_MB", "500"))
 
+    # === LLM Rating Cache ===
+    @staticmethod
+    def use_llm_cache() -> bool:
+        """Enable LLM rating cache for discovered wines. Default: False."""
+        return os.getenv("USE_LLM_CACHE", "false").lower() == "true"
+
     # === Security ===
     MAX_IMAGE_SIZE_MB = 10
     MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024

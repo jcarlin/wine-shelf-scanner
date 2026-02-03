@@ -32,6 +32,7 @@ from .llm_normalizer import (
     BatchValidationResult,
     get_normalizer,
 )
+from .llm_rating_cache import get_llm_rating_cache, LLMRatingCache
 from .ocr_processor import BottleText
 from .wine_matcher import WineMatcher, WineMatch, WineMatchWithScores, _is_generic_query, _is_llm_generic_response
 
@@ -158,7 +159,8 @@ class RecognitionPipeline:
         normalizer: Optional[NormalizerProtocol] = None,
         use_llm: bool = True,
         llm_provider: str = "claude",
-        debug_mode: bool = False
+        debug_mode: bool = False,
+        use_llm_cache: Optional[bool] = None
     ):
         """
         Initialize pipeline.
@@ -169,6 +171,7 @@ class RecognitionPipeline:
             use_llm: Whether to use LLM fallback (disable for testing)
             llm_provider: LLM provider ("claude" or "gemini"). Default: "claude"
             debug_mode: If True, collect debug info for each step
+            use_llm_cache: If True, cache LLM-identified wines. Default: uses Config.use_llm_cache()
         """
         self.wine_matcher = wine_matcher or WineMatcher()
         self.normalizer = normalizer or get_normalizer(use_mock=not use_llm)
@@ -179,6 +182,9 @@ class RecognitionPipeline:
         self.llm_call_count: int = 0
         # Thread pool for parallel matching (reused across calls)
         self._executor = ThreadPoolExecutor(max_workers=4)
+        # LLM rating cache for discovered wines
+        cache_enabled = use_llm_cache if use_llm_cache is not None else Config.use_llm_cache()
+        self._llm_cache: Optional[LLMRatingCache] = get_llm_rating_cache() if cache_enabled else None
 
     @property
     def debug_steps(self) -> list[DebugPipelineStep]:
@@ -370,37 +376,84 @@ class RecognitionPipeline:
         Returns:
             List of RecognizedWine for successfully validated bottles
         """
-        # Build batch request
-        batch_items: list[BatchValidationItem] = []
-        for bt, match, _, _ in items:
-            ocr_text = bt.combined_text or bt.normalized_name
-            batch_items.append(BatchValidationItem(
-                ocr_text=ocr_text,
-                db_candidate=match.canonical_name if match else None,
-                db_rating=match.rating if match else None
-            ))
-
-        # Single LLM call for all items
-        validations = await self.normalizer.validate_batch(batch_items)
-        self.llm_call_count += 1
-
-        # Process results with debug info
         results: list[RecognizedWine] = []
-        for (bt, match, match_with_scores, bottle_idx), validation in zip(items, validations):
-            result = self._process_validation(bt, match, validation)
-            llm_debug = self._debug.create_llm_debug(validation)
+        items_needing_llm: list[tuple[BottleText, Optional[WineMatch], Optional[WineMatchWithScores], int]] = []
+        cache_hit_indices: set[int] = set()
 
-            if result:
-                self._debug.add_step(
-                    bt, bottle_idx, match_with_scores, llm_debug, result,
-                    step_failed=None, included=True
-                )
-                results.append(result)
-            else:
-                self._debug.add_step(
-                    bt, bottle_idx, match_with_scores, llm_debug, None,
-                    step_failed="llm_validation", included=False
-                )
+        # Phase 1: Check cache for items without a DB candidate
+        if self._llm_cache:
+            for idx, (bt, match, match_with_scores, bottle_idx) in enumerate(items):
+                # Only check cache for items without a DB match
+                if match is None:
+                    ocr_text = bt.combined_text or bt.normalized_name
+                    cached = self._llm_cache.get(ocr_text)
+                    if cached:
+                        # Create result from cached data
+                        result = RecognizedWine(
+                            wine_name=cached.wine_name,
+                            rating=cached.estimated_rating,
+                            confidence=min(bt.bottle.confidence, cached.confidence),
+                            source=WineSource.LLM,
+                            identified=True,
+                            bottle_text=bt,
+                            rating_source=RatingSource.LLM_ESTIMATED,
+                            wine_type=cached.wine_type,
+                            brand=cached.brand,
+                            region=cached.region,
+                            varietal=cached.varietal,
+                        )
+                        results.append(result)
+                        cache_hit_indices.add(idx)
+
+                        # Create debug info for cache hit
+                        cache_debug = LLMValidationDebug(
+                            is_valid_match=True,
+                            wine_name=cached.wine_name,
+                            confidence=cached.confidence,
+                            reasoning=f"Cache hit (provider: {cached.llm_provider}, hits: {cached.hit_count})"
+                        )
+                        self._debug.add_step(
+                            bt, bottle_idx, match_with_scores, cache_debug, result,
+                            step_failed=None, included=True
+                        )
+
+        # Collect items that still need LLM validation
+        for idx, item in enumerate(items):
+            if idx not in cache_hit_indices:
+                items_needing_llm.append(item)
+
+        # Phase 2: Call LLM for remaining items
+        if items_needing_llm:
+            # Build batch request
+            batch_items: list[BatchValidationItem] = []
+            for bt, match, _, _ in items_needing_llm:
+                ocr_text = bt.combined_text or bt.normalized_name
+                batch_items.append(BatchValidationItem(
+                    ocr_text=ocr_text,
+                    db_candidate=match.canonical_name if match else None,
+                    db_rating=match.rating if match else None
+                ))
+
+            # Single LLM call for remaining items
+            validations = await self.normalizer.validate_batch(batch_items)
+            self.llm_call_count += 1
+
+            # Process results with debug info
+            for (bt, match, match_with_scores, bottle_idx), validation in zip(items_needing_llm, validations):
+                result = self._process_validation(bt, match, validation)
+                llm_debug = self._debug.create_llm_debug(validation)
+
+                if result:
+                    self._debug.add_step(
+                        bt, bottle_idx, match_with_scores, llm_debug, result,
+                        step_failed=None, included=True
+                    )
+                    results.append(result)
+                else:
+                    self._debug.add_step(
+                        bt, bottle_idx, match_with_scores, llm_debug, None,
+                        step_failed="llm_validation", included=False
+                    )
 
         return results
 
@@ -487,7 +540,7 @@ class RecognitionPipeline:
                 else:
                     capped_confidence = min(validation.confidence, 0.65)
 
-                return RecognizedWine(
+                result = RecognizedWine(
                     wine_name=validation.wine_name,
                     rating=rating,
                     confidence=capped_confidence,
@@ -503,5 +556,21 @@ class RecognitionPipeline:
                     review_count=validation.review_count,
                     review_snippets=validation.review_snippets,
                 )
+
+                # Cache the LLM-identified wine for future lookups
+                if self._llm_cache and rating is not None:
+                    llm_provider = self.normalizer.models[0] if hasattr(self.normalizer, 'models') else 'unknown'
+                    self._llm_cache.set(
+                        wine_name=validation.wine_name,
+                        estimated_rating=rating,
+                        confidence=capped_confidence,
+                        llm_provider=llm_provider,
+                        wine_type=validation.wine_type,
+                        region=validation.region,
+                        varietal=validation.varietal,
+                        brand=validation.brand,
+                    )
+
+                return result
 
         return None

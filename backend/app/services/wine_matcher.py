@@ -45,6 +45,9 @@ GENERIC_WINE_TERMS = {
 LLM_GENERIC_PATTERNS = {
     'grand vin', 'grand cru', 'premier cru', 'appellation', 'controlee',
     'methode traditionnelle', 'méthode traditionnelle',
+    # Non-wine label boilerplate that LLMs sometimes return
+    'este noble vino', 'fue elaborado', 'com uvas', 'de altitude',
+    'cuvee speciale', 'cuvée spéciale', 'extra brut',
 }
 
 

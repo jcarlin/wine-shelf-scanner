@@ -128,6 +128,14 @@ class RecognizedWine:
     identified: bool         # True = show checkmark
     bottle_text: BottleText  # Original bottle context
     rating_source: str = "database"  # 'database' or 'llm_estimated'
+    # Extended metadata from DB or LLM
+    wine_type: Optional[str] = None
+    brand: Optional[str] = None  # winery
+    region: Optional[str] = None
+    varietal: Optional[str] = None
+    blurb: Optional[str] = None
+    review_count: Optional[int] = None
+    review_snippets: Optional[list[str]] = None
 
 
 class RecognitionPipeline:
@@ -273,7 +281,11 @@ class RecognitionPipeline:
             source="database",
             identified=True,
             bottle_text=bottle_text,
-            rating_source="database"
+            rating_source="database",
+            wine_type=match.wine_type,
+            brand=match.brand,
+            region=match.region,
+            varietal=match.varietal,
         )
 
     async def _validate_batch(
@@ -369,10 +381,10 @@ class RecognitionPipeline:
         Process a single validation result from the batch.
 
         Flow:
-        1. If LLM confirms match → use DB wine + rating
+        1. If LLM confirms match → use DB wine + rating + LLM metadata
         2. If LLM rejects → try to match LLM's wine name against DB
         3. If found in DB → use DB wine + rating
-        4. If not in DB → return LLM's name with LLM-estimated rating
+        4. If not in DB → return LLM's name with LLM-estimated rating + metadata
         """
         # LLM confirmed the DB match
         if validation.is_valid_match and match:
@@ -383,7 +395,15 @@ class RecognitionPipeline:
                 source="database",
                 identified=True,
                 bottle_text=bottle_text,
-                rating_source="database"
+                rating_source="database",
+                # Use DB metadata, fall back to LLM metadata
+                wine_type=match.wine_type or validation.wine_type,
+                brand=match.brand or validation.brand,
+                region=match.region,
+                varietal=match.varietal,
+                blurb=validation.blurb,  # Always from LLM
+                review_count=validation.review_count,
+                review_snippets=validation.review_snippets,
             )
 
         # LLM rejected the match - try to find the correct wine in DB
@@ -406,7 +426,14 @@ class RecognitionPipeline:
                     source="database",
                     identified=True,
                     bottle_text=bottle_text,
-                    rating_source="database"
+                    rating_source="database",
+                    wine_type=new_match.wine_type or validation.wine_type,
+                    brand=new_match.brand or validation.brand,
+                    region=new_match.region,
+                    varietal=new_match.varietal,
+                    blurb=validation.blurb,
+                    review_count=validation.review_count,
+                    review_snippets=validation.review_snippets,
                 )
 
             # Wine not in DB (or only low-confidence matches) - use LLM-identified name
@@ -434,7 +461,12 @@ class RecognitionPipeline:
                     source="llm",
                     identified=True,
                     bottle_text=bottle_text,
-                    rating_source=rating_source
+                    rating_source=rating_source,
+                    wine_type=validation.wine_type,
+                    brand=validation.brand,
+                    blurb=validation.blurb,
+                    review_count=validation.review_count,
+                    review_snippets=validation.review_snippets,
                 )
 
         return None

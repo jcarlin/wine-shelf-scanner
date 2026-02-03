@@ -26,6 +26,14 @@ export interface WineResult {
   rating: number | null;
   confidence: number;
   bbox: BoundingBox;
+  // Extended metadata (optional - populated from DB or LLM)
+  wine_type?: string;  // 'Red', 'White', 'Rosé', 'Sparkling', etc.
+  brand?: string;      // Winery or brand name
+  region?: string;     // Wine region (e.g., 'Napa Valley', 'Burgundy')
+  varietal?: string;   // Grape varietal (e.g., 'Cabernet Sauvignon')
+  blurb?: string;      // Brief description of the wine or producer
+  review_count?: number;        // Number of reviews
+  review_snippets?: string[];   // Sample review quotes
 }
 
 export interface FallbackWine {

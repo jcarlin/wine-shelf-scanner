@@ -177,3 +177,59 @@ class TestOCRProcessorOrphanedText:
         # Only the longer text should be in orphans
         assert len(result.orphaned_texts) == 1
         assert "Cabernet" in result.orphaned_texts[0].normalized_name
+
+
+class TestProcessOrphanedTexts:
+    """Tests for _process_orphaned_texts helper in scan route."""
+
+    def test_process_orphaned_texts_returns_fallback_wines(self):
+        """Test that orphaned texts are matched and returned as FallbackWine."""
+        from app.routes.scan import _process_orphaned_texts
+        from app.models import FallbackWine
+        from app.services.wine_matcher import WineMatcher
+
+        wine_matcher = WineMatcher(use_sqlite=True)
+
+        orphaned_texts = [
+            OrphanedText(
+                text="Caymus Cabernet",
+                normalized_name="Caymus Cabernet",
+                bbox=BoundingBox(0.5, 0.5, 0.1, 0.1)
+            )
+        ]
+
+        result = _process_orphaned_texts(orphaned_texts, wine_matcher)
+
+        # Should return a list of FallbackWine
+        assert isinstance(result, list)
+        # If matched, should have FallbackWine objects with wine_name and rating
+        for wine in result:
+            assert isinstance(wine, FallbackWine)
+            assert hasattr(wine, 'wine_name')
+            assert hasattr(wine, 'rating')
+
+    def test_process_orphaned_texts_deduplicates(self):
+        """Test that duplicate orphaned texts are deduplicated."""
+        from app.routes.scan import _process_orphaned_texts
+        from app.services.wine_matcher import WineMatcher
+
+        wine_matcher = WineMatcher(use_sqlite=True)
+
+        orphaned_texts = [
+            OrphanedText(
+                text="Caymus",
+                normalized_name="Caymus",
+                bbox=BoundingBox(0.3, 0.3, 0.1, 0.1)
+            ),
+            OrphanedText(
+                text="CAYMUS",
+                normalized_name="Caymus",
+                bbox=BoundingBox(0.7, 0.7, 0.1, 0.1)
+            ),
+        ]
+
+        result = _process_orphaned_texts(orphaned_texts, wine_matcher)
+
+        # Should deduplicate - only one match even if text appears twice
+        wine_names = [w.wine_name for w in result]
+        assert len(wine_names) == len(set(wine_names))

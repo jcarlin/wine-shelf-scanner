@@ -212,6 +212,10 @@ class OCRProcessor:
         """
         Group text to bottles and normalize wine names.
 
+        Uses nearest-bottle assignment: each text block is assigned to exactly
+        one bottle (the closest one) to prevent mismatches when bottles are
+        close together.
+
         Args:
             bottles: Detected bottle objects with bounding boxes
             text_blocks: OCR text blocks with positions
@@ -219,21 +223,44 @@ class OCRProcessor:
         Returns:
             List of BottleText with normalized wine names
         """
+        if not bottles:
+            return []
+
+        # Step 1: Assign each text block to its nearest bottle
+        # This prevents the same text from being assigned to multiple bottles
+        bottle_text_map: dict[int, list[str]] = {i: [] for i in range(len(bottles))}
+
+        for block in text_blocks:
+            text_center = self._get_normalized_center(block.bbox)
+
+            # Find the nearest bottle
+            nearest_bottle_idx = None
+            nearest_distance = float('inf')
+
+            for i, bottle in enumerate(bottles):
+                bottle_center = bottle.bbox.center
+                distance = self._distance(bottle_center, text_center)
+
+                # Only consider if within proximity threshold or overlapping
+                if distance < Config.PROXIMITY_THRESHOLD or self._overlaps(bottle.bbox, block.bbox):
+                    if distance < nearest_distance:
+                        nearest_distance = distance
+                        nearest_bottle_idx = i
+
+            # Assign text to nearest bottle (if any was close enough)
+            if nearest_bottle_idx is not None:
+                bottle_text_map[nearest_bottle_idx].append(block.text)
+
+        # Step 2: Build BottleText results
         results = []
-
-        for bottle in bottles:
-            # Find text blocks near this bottle
-            nearby_text = self._find_nearby_text(bottle, text_blocks)
-
-            # Combine fragments
-            combined = ' '.join(nearby_text)
-
-            # Normalize to canonical wine name
+        for i, bottle in enumerate(bottles):
+            text_fragments = bottle_text_map[i]
+            combined = ' '.join(text_fragments)
             normalized = self._normalize_text(combined)
 
             results.append(BottleText(
                 bottle=bottle,
-                text_fragments=nearby_text,
+                text_fragments=text_fragments,
                 combined_text=combined,
                 normalized_name=normalized
             ))

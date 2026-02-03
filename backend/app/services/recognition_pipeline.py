@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from ..config import Config
+from ..models.enums import RatingSource, WineSource
 from ..models.debug import (
     DebugPipelineStep,
     FuzzyMatchDebug,
@@ -126,10 +127,10 @@ class RecognizedWine:
     wine_name: str
     rating: Optional[float]  # None if not in database and no LLM estimate
     confidence: float
-    source: str              # 'database' or 'llm'
+    source: WineSource       # WineSource.DATABASE or WineSource.LLM
     identified: bool         # True = show checkmark
     bottle_text: BottleText  # Original bottle context
-    rating_source: str = "database"  # 'database' or 'llm_estimated'
+    rating_source: RatingSource = RatingSource.DATABASE
     # Extended metadata from DB or LLM
     wine_type: Optional[str] = None
     brand: Optional[str] = None  # winery
@@ -310,10 +311,10 @@ class RecognitionPipeline:
             wine_name=match.canonical_name,
             rating=match.rating,
             confidence=min(bottle_text.bottle.confidence, match.confidence),
-            source="database",
+            source=WineSource.DATABASE,
             identified=True,
             bottle_text=bottle_text,
-            rating_source="database",
+            rating_source=RatingSource.DATABASE,
             wine_type=match.wine_type,
             brand=match.brand,
             region=match.region,
@@ -424,10 +425,10 @@ class RecognitionPipeline:
                 wine_name=match.canonical_name,
                 rating=match.rating,
                 confidence=min(bottle_text.bottle.confidence, validation.confidence),
-                source="database",
+                source=WineSource.DATABASE,
                 identified=True,
                 bottle_text=bottle_text,
-                rating_source="database",
+                rating_source=RatingSource.DATABASE,
                 # Use DB metadata, fall back to LLM metadata
                 wine_type=match.wine_type or validation.wine_type,
                 brand=match.brand or validation.brand,
@@ -455,10 +456,10 @@ class RecognitionPipeline:
                     wine_name=new_match.canonical_name,
                     rating=new_match.rating,
                     confidence=min(validation.confidence, new_match.confidence),
-                    source="database",
+                    source=WineSource.DATABASE,
                     identified=True,
                     bottle_text=bottle_text,
-                    rating_source="database",
+                    rating_source=RatingSource.DATABASE,
                     wine_type=new_match.wine_type or validation.wine_type,
                     brand=new_match.brand or validation.brand,
                     region=new_match.region,
@@ -477,7 +478,7 @@ class RecognitionPipeline:
 
                 # Use LLM-estimated rating if provided, otherwise None
                 rating = validation.estimated_rating
-                rating_source = "llm_estimated" if rating is not None else "none"
+                rating_source = RatingSource.LLM_ESTIMATED if rating is not None else RatingSource.NONE
 
                 # If we have a rating, allow slightly higher confidence
                 # If no rating, cap at 0.65 for de-emphasis
@@ -490,7 +491,7 @@ class RecognitionPipeline:
                     wine_name=validation.wine_name,
                     rating=rating,
                     confidence=capped_confidence,
-                    source="llm",
+                    source=WineSource.LLM,
                     identified=True,
                     bottle_text=bottle_text,
                     rating_source=rating_source,

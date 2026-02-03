@@ -25,6 +25,7 @@ from rapidfuzz import fuzz
 import jellyfish
 
 from ..config import Config
+from ..models.enums import WineSource
 
 
 # Module-level match cache for performance (thread-safe)
@@ -116,7 +117,7 @@ class WineMatch:
     canonical_name: str
     rating: float
     confidence: float  # Match confidence (0-1)
-    source: str
+    source: WineSource = WineSource.DATABASE
     # Extended metadata from database
     wine_type: Optional[str] = None
     brand: Optional[str] = None  # winery
@@ -130,7 +131,7 @@ class WineMatchWithScores:
     canonical_name: str
     rating: float
     confidence: float
-    source: str
+    source: WineSource
     scores: FuzzyScores
     # Extended metadata from database
     wine_type: Optional[str] = None
@@ -270,7 +271,7 @@ class WineMatcher:
                 canonical_name=result.canonical_name,
                 rating=result.rating,
                 confidence=1.0,
-                source="database",
+                source=WineSource.DATABASE,
                 wine_type=result.wine_type,
                 brand=result.winery,
                 region=result.region,
@@ -294,7 +295,7 @@ class WineMatcher:
                     canonical_name=best_match.canonical_name,
                     rating=best_match.rating,
                     confidence=min(0.95, best_score),  # Cap at 0.95 for FTS match
-                    source="database",
+                    source=WineSource.DATABASE,
                     wine_type=best_match.wine_type,
                     brand=best_match.winery,
                     region=best_match.region,
@@ -399,7 +400,7 @@ class WineMatcher:
                 canonical_name=name,
                 rating=rating,
                 confidence=best_score,
-                source="database",
+                source=WineSource.DATABASE,
                 wine_type=wine_type,
                 brand=winery,
                 region=region,
@@ -416,7 +417,7 @@ class WineMatcher:
                 canonical_name=wine["canonical_name"],
                 rating=wine["rating"],
                 confidence=1.0,
-                source=wine.get("source", "unknown"),
+                source=WineSource.DATABASE,  # JSON matches are always from database
                 wine_type=wine.get("wine_type"),
                 brand=wine.get("winery"),
                 region=wine.get("region"),

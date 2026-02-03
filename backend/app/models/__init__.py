@@ -1,3 +1,7 @@
+from .enums import (
+    WineSource,
+    RatingSource,
+)
 from .response import (
     BoundingBox,
     WineResult,
@@ -13,6 +17,8 @@ from .debug import (
 )
 
 __all__ = [
+    "WineSource",
+    "RatingSource",
     "BoundingBox",
     "WineResult",
     "FallbackWine",

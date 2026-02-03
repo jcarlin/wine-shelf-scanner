@@ -30,6 +30,8 @@ from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
+from .enums import RatingSource, WineSource
+
 
 class BoundingBox(BaseModel):
     """Normalized bounding box (0-1 range)."""
@@ -46,9 +48,9 @@ class WineResult(BaseModel):
     confidence: float = Field(..., ge=0, le=1, description="Detection confidence")
     bbox: BoundingBox = Field(..., description="Bounding box position")
     identified: bool = Field(True, description="True if recognized as wine (checkmark)")
-    source: str = Field("database", description="Match source: 'database' or 'llm'")
-    rating_source: str = Field(
-        "database",
+    source: WineSource = Field(WineSource.DATABASE, description="Match source: 'database' or 'llm'")
+    rating_source: RatingSource = Field(
+        RatingSource.DATABASE,
         description="Rating provenance: 'database', 'llm_estimated', or 'none'"
     )
     # Extended metadata (optional - populated from DB or LLM)

@@ -19,12 +19,37 @@ from ..config import Config
 from ..mocks.fixtures import get_mock_response
 from ..models import BoundingBox, DebugData, FallbackWine, ScanResponse, WineResult
 from ..services.ocr_processor import OCRProcessor, extract_wine_names
-from ..services.recognition_pipeline import RecognitionPipeline
-from ..services.vision import MockVisionService, ReplayVisionService, VisionService
+from ..services.recognition_pipeline import RecognizedWine, RecognitionPipeline
+from ..services.vision import MockVisionService, ReplayVisionService, VisionResult, VisionService
 from ..services.wine_matcher import WineMatcher
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+def _to_wine_result(wine: RecognizedWine) -> WineResult:
+    """Convert RecognizedWine to WineResult for API response."""
+    return WineResult(
+        wine_name=wine.wine_name,
+        rating=wine.rating,
+        confidence=wine.confidence,
+        bbox=BoundingBox(
+            x=wine.bottle_text.bottle.bbox.x,
+            y=wine.bottle_text.bottle.bbox.y,
+            width=wine.bottle_text.bottle.bbox.width,
+            height=wine.bottle_text.bottle.bbox.height
+        ),
+        identified=wine.identified,
+        source=wine.source,
+        rating_source=wine.rating_source,
+        wine_type=wine.wine_type,
+        brand=wine.brand,
+        region=wine.region,
+        varietal=wine.varietal,
+        blurb=wine.blurb,
+        review_count=wine.review_count,
+        review_snippets=wine.review_snippets,
+    )
 
 # Register HEIF/HEIC opener with Pillow
 register_heif_opener()
@@ -219,28 +244,7 @@ async def process_image(
     for wine in recognized:
         if wine.confidence >= Config.VISIBILITY_THRESHOLD:
             # Add to positioned results
-            results.append(WineResult(
-                wine_name=wine.wine_name,
-                rating=wine.rating,
-                confidence=wine.confidence,
-                bbox=BoundingBox(
-                    x=wine.bottle_text.bottle.bbox.x,
-                    y=wine.bottle_text.bottle.bbox.y,
-                    width=wine.bottle_text.bottle.bbox.width,
-                    height=wine.bottle_text.bottle.bbox.height
-                ),
-                identified=wine.identified,
-                source=wine.source,
-                rating_source=wine.rating_source,
-                # Extended metadata
-                wine_type=wine.wine_type,
-                brand=wine.brand,
-                region=wine.region,
-                varietal=wine.varietal,
-                blurb=wine.blurb,
-                review_count=wine.review_count,
-                review_snippets=wine.review_snippets,
-            ))
+            results.append(_to_wine_result(wine))
         elif wine.rating is not None:
             # Low confidence with rating → fallback
             fallback.append(FallbackWine(
@@ -282,7 +286,7 @@ async def process_image(
 
 async def _direct_ocr_response(
     image_id: str,
-    vision_result,
+    vision_result: VisionResult,
     wine_matcher: WineMatcher,
     use_llm: bool,
     debug_mode: bool
@@ -337,28 +341,7 @@ async def _direct_ocr_response(
 
     for wine in recognized:
         if wine.confidence >= Config.VISIBILITY_THRESHOLD:
-            results.append(WineResult(
-                wine_name=wine.wine_name,
-                rating=wine.rating,
-                confidence=wine.confidence,
-                bbox=BoundingBox(
-                    x=wine.bottle_text.bottle.bbox.x,
-                    y=wine.bottle_text.bottle.bbox.y,
-                    width=wine.bottle_text.bottle.bbox.width,
-                    height=wine.bottle_text.bottle.bbox.height
-                ),
-                identified=wine.identified,
-                source=wine.source,
-                rating_source=wine.rating_source,
-                # Extended metadata
-                wine_type=wine.wine_type,
-                brand=wine.brand,
-                region=wine.region,
-                varietal=wine.varietal,
-                blurb=wine.blurb,
-                review_count=wine.review_count,
-                review_snippets=wine.review_snippets,
-            ))
+            results.append(_to_wine_result(wine))
         elif wine.rating is not None:
             fallback.append(FallbackWine(
                 wine_name=wine.wine_name,

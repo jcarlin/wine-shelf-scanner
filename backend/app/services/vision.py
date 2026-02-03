@@ -15,7 +15,13 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class BoundingBox:
-    """Normalized bounding box (0-1 range)."""
+    """
+    Normalized bounding box (0-1 range) for vision service internals.
+
+    Note: This is a dataclass with computed properties (e.g., center) used
+    internally by vision services. For API responses, use the Pydantic
+    BoundingBox from models.response.
+    """
     x: float
     y: float
     width: float

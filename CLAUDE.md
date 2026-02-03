@@ -25,16 +25,30 @@ See `ROADMAP.md` for current project status and next steps.
 ## Directory Structure
 ```
 wine-shelf-scanner/
-├── backend/           # FastAPI + Vision API
-├── ios/               # SwiftUI iOS app
-├── expo/              # React Native app (Expo SDK)
-├── nextjs/            # Next.js web app (Vercel deployment)
-├── docs/              # Architecture docs & specs
-├── test-images/       # Test assets for Vision API
-├── ROADMAP.md         # Project status (single source of truth)
-├── PRD.md             # Product requirements (canonical)
-├── README.md          # Quick start guide
-└── CLAUDE.md          # This file
+├── backend/
+│   ├── app/
+│   │   ├── config.py         # Centralized configuration
+│   │   ├── models/           # Pydantic response models
+│   │   ├── routes/           # FastAPI endpoints
+│   │   ├── services/         # Vision API, OCR, wine matching, LLM
+│   │   ├── mocks/            # Mock fixtures for testing
+│   │   ├── ingestion/        # Data pipeline (adapters, normalizers)
+│   │   └── data/
+│   │       └── wines.db      # SQLite database (191K wines)
+│   ├── scripts/              # CLI tools (ingest, benchmark, capture)
+│   └── tests/
+│       ├── e2e/              # Playwright browser tests
+│       ├── accuracy/         # Recognition accuracy tests
+│       └── fixtures/         # Captured Vision API responses
+├── ios/                      # SwiftUI iOS app
+├── expo/                     # React Native app (Expo SDK)
+├── nextjs/                   # Next.js web app (Vercel deployment)
+├── raw-data/                 # Wine data sources (Kaggle, Vivino)
+├── test-images/              # Test assets for Vision API
+├── ROADMAP.md                # Project status (single source of truth)
+├── PRD.md                    # Product requirements (canonical)
+├── README.md                 # Quick start guide
+└── CLAUDE.md                 # This file
 ```
 
 ## Frontend Development Strategy
@@ -180,7 +194,7 @@ Tap rating badge → modal sheet.
    - Remove prices and marketing text
 5. **Tiered Recognition:**
    - **Step 1:** Enhanced fuzzy match (rapidfuzz + phonetic)
-   - **Step 2:** If confidence < 0.7 → LLM normalization (Claude Haiku)
+   - **Step 2:** If confidence < 0.7 → LLM normalization (Claude Haiku or Gemini)
    - **Step 3:** Re-match LLM-normalized result against database
 6. Filter by confidence:
    - ≥ 0.45 → main results array
@@ -189,8 +203,8 @@ Tap rating badge → modal sheet.
 
 ### Key Implementation Details
 
-- LLM normalizer is protocol-based (`NormalizerProtocol`) — swappable or removable
-- Fuzzy matching uses multi-algorithm scoring: ratio (30%), partial_ratio (50%), token_sort (20%)
+- LLM normalizer is protocol-based (`NormalizerProtocol`) — swappable between Claude and Gemini
+- Fuzzy matching uses multi-algorithm scoring: ratio (45%), partial_ratio (30%), token_sort (25%)
 - Phonetic matching via jellyfish metaphone for pronunciation-based matches
 - N-gram indexing for performance optimization
 
@@ -242,11 +256,14 @@ Tap rating badge → modal sheet.
 - Shared lib utilities ported from Expo
 
 ### Backend
-- FastAPI (Python)
+- FastAPI (Python 3.9+)
 - Google Cloud Vision API
-- Claude Haiku (LLM fallback for OCR normalization, behind protocol interface)
+- LLM Normalizer (dual-provider, behind protocol interface):
+  - Claude Haiku (default, via `ANTHROPIC_API_KEY`)
+  - Google Gemini 2.0 Flash (via `GOOGLE_API_KEY` + `LLM_PROVIDER=gemini`)
 - rapidfuzz (multi-algorithm fuzzy matching)
 - jellyfish (phonetic matching)
+- SQLite with FTS5 (191K wine database)
 
 ---
 
@@ -257,8 +274,17 @@ Tap rating badge → modal sheet.
 # Start dev server
 cd backend && source venv/bin/activate && uvicorn main:app --reload
 
-# Run tests
+# Run tests (152 tests)
 cd backend && pytest tests/ -v
+
+# Data ingestion (refresh wine database)
+cd backend && python -m app.ingestion.ingest
+
+# Accuracy benchmarking
+cd backend && python scripts/accuracy_report.py
+
+# Capture Vision API response (for test fixtures)
+cd backend && python scripts/capture_vision_response.py <image_path>
 ```
 
 ### iOS
@@ -319,6 +345,20 @@ cd nextjs && vercel
 Set these in the Vercel dashboard for production:
 - `NEXT_PUBLIC_API_BASE_URL` — Backend API URL (e.g., https://wine-scanner-api-xxx.run.app)
 - `NEXT_PUBLIC_DEBUG_MODE` — Set to "false" for production
+
+### Backend Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `USE_MOCKS` | `false` | Use mock data instead of Vision API |
+| `USE_SQLITE` | `true` | Use SQLite database (wines.db) instead of JSON |
+| `GOOGLE_APPLICATION_CREDENTIALS` | - | Path to GCP service account JSON |
+| `LLM_PROVIDER` | `claude` | LLM for OCR normalization (`claude` or `gemini`) |
+| `ANTHROPIC_API_KEY` | - | API key for Claude Haiku |
+| `GOOGLE_API_KEY` | - | API key for Gemini |
+| `GEMINI_MODEL` | `gemini-2.0-flash` | Gemini model name |
+| `LOG_LEVEL` | `INFO` | Logging level (DEBUG, INFO, WARNING, ERROR) |
+| `DEV_MODE` | `false` | Enable verbose logging |
 
 ---
 

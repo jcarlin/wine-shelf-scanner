@@ -14,5 +14,5 @@ google-cloud-vision==3.5.0
 rapidfuzz>=3.0.0
 jellyfish>=1.0.0
 
-# LLM (Gemini for OCR normalization)
-google-genai>=1.0.0
+# LLM (Claude for OCR normalization)
+anthropic>=0.30.0

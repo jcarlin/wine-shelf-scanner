@@ -17,10 +17,15 @@ Wine Shelf Scanner solves decision paralysis for casual wine buyers. Instead of 
 └─────────────────┘     └─────────────────┘     └──────────────────┘
         ▲                       │
         │                       ▼
-┌─────────────────┐     ┌─────────────────┐
-│   Expo App      │     │  Ratings DB     │
-│   (React Native)│     │  (SQLite)       │
-└─────────────────┘     └─────────────────┘
+┌─────────────────┐     ┌─────────────────┐     ┌──────────────────┐
+│   Expo App      │     │  Ratings DB     │     │  LLM Normalizer  │
+│   (React Native)│     │  (SQLite 191K)  │     │  (Claude/Gemini) │
+└─────────────────┘     └─────────────────┘     └──────────────────┘
+        ▲
+┌─────────────────┐
+│   Next.js Web   │
+│   (Vercel)      │
+└─────────────────┘
 ```
 
 ### Components
@@ -29,15 +34,19 @@ Wine Shelf Scanner solves decision paralysis for casual wine buyers. Instead of 
 |-----------|-------|---------|
 | **iOS App** | SwiftUI, iOS 16+ | Camera capture, overlay rendering |
 | **Expo App** | React Native, TypeScript | Cross-platform mobile app |
-| **Backend** | FastAPI (Python 3.11+) | Image processing orchestration, wine matching |
+| **Next.js Web** | Next.js 14, TypeScript, Tailwind | Browser-based scanner (Vercel) |
+| **Backend** | FastAPI (Python 3.9+) | Image processing orchestration, wine matching |
 | **Vision** | Google Cloud Vision API | OCR + bottle detection |
+| **LLM Normalizer** | Claude Haiku / Gemini 2.0 Flash | OCR text normalization fallback |
 | **Ratings DB** | SQLite (191K wines) | Wine name → rating lookup with FTS5 search |
 
 ### Frontend Strategy
 
-iOS is the primary frontend. Expo (React Native) is in development on the `reactive-native` branch. Both implement the same API contract and UX rules.
+iOS, Expo, and Next.js are developed in parallel as production-ready frontends. All implement the same API contract and UX rules, but maintain separate codebases.
 
-**Future plan:** May switch to Expo as the single source for iOS, Android, and web builds.
+- **iOS** — Native SwiftUI app (primary)
+- **Expo** — React Native for iOS/Android
+- **Next.js** — Web app deployed to Vercel
 
 ## API Contract
 
@@ -78,8 +87,9 @@ Response:
 
 ### Prerequisites
 
-- Python 3.11+
+- Python 3.9+
 - Xcode 15+ (for iOS development)
+- Node.js 18+ (for Expo and Next.js)
 - Google Cloud account with Vision API enabled
 
 ### Backend Setup
@@ -132,6 +142,21 @@ npm run android
 
 For physical device testing, update `expo/lib/config.ts` with your Mac's IP address.
 
+### Next.js Setup
+
+```bash
+cd nextjs
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+# Visit http://localhost:3000
+```
+
+For production, deploy to Vercel and set `NEXT_PUBLIC_API_BASE_URL` to your Cloud Run backend URL.
+
 ### Getting Your Mac's IP
 
 ```bash
@@ -140,14 +165,20 @@ ipconfig getifaddr en0  # WiFi
 
 ## Backend Pipeline
 
-1. **Image Upload**: iOS app sends JPEG to `/scan`
+1. **Image Upload**: Client sends JPEG to `/scan`
 2. **Vision API**:
    - `OBJECT_LOCALIZATION` → Detect bottles
    - `TEXT_DETECTION` → OCR on labels
 3. **OCR Processing**: Group text fragments by proximity to bottle bounding boxes
 4. **Text Normalization**: Remove years (2019, 2021), sizes (750ml), marketing text
-5. **Wine Matching**: Fuzzy match normalized text against ratings database
-6. **Response**: Return positioned wines and fallback list
+5. **Tiered Wine Matching**:
+   - **Step 1**: Enhanced fuzzy match (rapidfuzz + phonetic via jellyfish)
+   - **Step 2**: If confidence < 0.7 → LLM normalization (Claude Haiku or Gemini)
+   - **Step 3**: Re-match LLM-normalized result against database
+6. **Filter by Confidence**:
+   - ≥ 0.45 → main results array
+   - < 0.45 → fallback list only
+7. **Response**: Return positioned wines and fallback list
 
 ## iOS UI System
 
@@ -181,13 +212,19 @@ The three highest-rated visible bottles get:
 wine-shelf-scanner/
 ├── backend/
 │   ├── app/
+│   │   ├── config.py        # Centralized configuration
 │   │   ├── models/          # Pydantic response models
 │   │   ├── routes/          # FastAPI endpoints
-│   │   ├── services/        # Vision API, OCR, wine matching
+│   │   ├── services/        # Vision API, OCR, wine matching, LLM
 │   │   ├── mocks/           # Mock fixtures for testing
+│   │   ├── ingestion/       # Data pipeline (adapters, normalizers)
 │   │   └── data/
-│   │       └── ratings.json # Wine ratings database
+│   │       └── wines.db     # SQLite database (191K wines)
+│   ├── scripts/             # CLI tools (ingest, benchmark, capture)
 │   ├── tests/
+│   │   ├── e2e/             # Playwright browser tests
+│   │   ├── accuracy/        # Recognition accuracy tests
+│   │   └── fixtures/        # Captured Vision API responses
 │   ├── main.py              # App entry point
 │   └── requirements.txt
 ├── ios/
@@ -202,7 +239,13 @@ wine-shelf-scanner/
 │   ├── components/          # UI components
 │   ├── hooks/               # Custom React hooks
 │   └── lib/                 # API client, types, overlay math
+├── nextjs/
+│   ├── app/                 # Next.js App Router pages
+│   ├── components/          # UI components
+│   └── lib/                 # Shared utilities (ported from Expo)
+├── raw-data/                # Wine data sources (Kaggle, Vivino)
 ├── PRD.md                   # Product requirements
+├── ROADMAP.md               # Project status tracking
 └── CLAUDE.md                # Development context
 ```
 
@@ -212,9 +255,13 @@ wine-shelf-scanner/
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `USE_MOCKS` | `true` | Use mock data instead of Vision API |
+| `USE_MOCKS` | `false` | Use mock data instead of Vision API |
 | `USE_SQLITE` | `true` | Use SQLite database (wines.db) instead of JSON |
 | `GOOGLE_APPLICATION_CREDENTIALS` | - | Path to GCP service account JSON |
+| `LLM_PROVIDER` | `claude` | LLM for OCR normalization (`claude` or `gemini`) |
+| `ANTHROPIC_API_KEY` | - | API key for Claude Haiku |
+| `GOOGLE_API_KEY` | - | API key for Gemini |
+| `GEMINI_MODEL` | `gemini-2.0-flash` | Gemini model name |
 
 The SQLite database is located at `backend/app/data/wines.db` (191K wines with FTS5 full-text search).
 
@@ -289,11 +336,21 @@ cd ios
 xcodebuild test \
   -project WineShelfScanner.xcodeproj \
   -scheme WineShelfScanner \
-  -destination 'platform=iOS Simulator,name=iPhone 17' \
+  -destination 'platform=iOS Simulator,name=iPhone 15 Pro' \
   -only-testing:WineShelfScannerUITests
 ```
 
 UI tests use mock injection via launch environment variables (`USE_MOCKS`, `MOCK_SCENARIO`).
+
+### Next.js Tests
+
+```bash
+cd nextjs
+npm test           # Run unit tests
+npm run type-check # TypeScript validation
+```
+
+Note: Next.js has minimal test coverage currently (basic component tests).
 
 ## Performance Targets
 

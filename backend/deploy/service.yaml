@@ -44,9 +44,7 @@ spec:
             - name: DEV_MODE
               value: "false"
             - name: LLM_PROVIDER
-              value: "gemini"
-            - name: GEMINI_MODEL
-              value: "gemini-2.0-flash"
+              value: "claude"
             # Secrets from Secret Manager
             - name: GOOGLE_API_KEY
               valueFrom:

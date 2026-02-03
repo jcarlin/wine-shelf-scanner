@@ -4,15 +4,17 @@ Tiered wine recognition pipeline.
 Architecture:
 1. Vision API → TEXT_DETECTION + OBJECT_LOCALIZATION
 2. Text clustering → Group OCR fragments by bottle
-3. Enhanced fuzzy matching → Try database match first
+3. Enhanced fuzzy matching → Try database match first (parallelized)
 4. LLM fallback → For low-confidence/unknown wines (batched for performance)
 
 Performance optimizations:
-- High-confidence fuzzy matches (≥0.85) skip LLM entirely
+- High-confidence fuzzy matches (≥0.80) skip LLM entirely
 - Lower-confidence matches are validated in a single batched LLM call
-- Expected latency: 6000ms → 800-1000ms for 8 bottles
+- Parallel fuzzy matching with ThreadPoolExecutor
+- Expected latency: 1.5-2.5s for 8 bottles
 """
 
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Optional
 
@@ -174,11 +176,44 @@ class RecognitionPipeline:
         # Debug data collection (encapsulated in DebugCollector)
         self._debug = DebugCollector(enabled=debug_mode)
         self.llm_call_count: int = 0
+        # Thread pool for parallel matching (reused across calls)
+        self._executor = ThreadPoolExecutor(max_workers=4)
 
     @property
     def debug_steps(self) -> list[DebugPipelineStep]:
         """Access debug steps (for backwards compatibility)."""
         return self._debug.steps
+
+    def _match_bottle(
+        self,
+        bt: BottleText,
+        bottle_idx: int
+    ) -> tuple[BottleText, Optional[WineMatch], Optional[WineMatchWithScores], int, Optional[str]]:
+        """
+        Match a single bottle (for parallel execution).
+
+        Returns:
+            Tuple of (bottle_text, match, match_with_scores, bottle_idx, error_reason)
+        """
+        if not bt.normalized_name or len(bt.normalized_name) < 3:
+            return (bt, None, None, bottle_idx, "text_too_short")
+
+        if self._debug.enabled:
+            match_with_scores = self.wine_matcher.match_with_scores(bt.normalized_name)
+            match = WineMatch(
+                canonical_name=match_with_scores.canonical_name,
+                rating=match_with_scores.rating,
+                confidence=match_with_scores.confidence,
+                source=match_with_scores.source,
+                wine_type=match_with_scores.wine_type,
+                brand=match_with_scores.brand,
+                region=match_with_scores.region,
+                varietal=match_with_scores.varietal,
+            ) if match_with_scores else None
+            return (bt, match, match_with_scores, bottle_idx, None)
+        else:
+            match = self.wine_matcher.match(bt.normalized_name)
+            return (bt, match, None, bottle_idx, None)
 
     async def recognize(
         self,
@@ -205,29 +240,26 @@ class RecognitionPipeline:
         if not bottle_texts:
             return []
 
-        # Phase 1: Batch fuzzy match (sync, fast)
+        # Phase 1: Parallel fuzzy match (optimized with ThreadPoolExecutor)
         # Use match_with_scores when in debug mode for detailed scoring info
         matches: list[tuple[BottleText, Optional[WineMatch], Optional[WineMatchWithScores]]] = []
-        for bottle_idx, bt in enumerate(bottle_texts):
-            if not bt.normalized_name or len(bt.normalized_name) < 3:
+
+        # Submit all matching tasks in parallel
+        futures = [
+            self._executor.submit(self._match_bottle, bt, idx)
+            for idx, bt in enumerate(bottle_texts)
+        ]
+
+        # Collect results in order
+        for future in futures:
+            bt, match, match_with_scores, bottle_idx, error_reason = future.result()
+            if error_reason:
                 self._debug.add_step(
                     bt, bottle_idx, None, None, None,
-                    step_failed="text_too_short", included=False
+                    step_failed=error_reason, included=False
                 )
                 continue
-
-            if self._debug.enabled:
-                match_with_scores = self.wine_matcher.match_with_scores(bt.normalized_name)
-                match = WineMatch(
-                    canonical_name=match_with_scores.canonical_name,
-                    rating=match_with_scores.rating,
-                    confidence=match_with_scores.confidence,
-                    source=match_with_scores.source
-                ) if match_with_scores else None
-                matches.append((bt, match, match_with_scores))
-            else:
-                match = self.wine_matcher.match(bt.normalized_name)
-                matches.append((bt, match, None))
+            matches.append((bt, match, match_with_scores))
 
         # Phase 2: Partition by confidence
         high_confidence_results: list[RecognizedWine] = []

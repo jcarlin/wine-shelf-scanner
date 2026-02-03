@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import { ScanState } from '@/lib/types';
 import { scanImage } from '@/lib/api-client';
+import { getDisplayableImageUrl } from '@/lib/image-converter';
 
 export function useScanState() {
   const [state, setState] = useState<ScanState>({ status: 'idle' });
@@ -11,8 +12,8 @@ export function useScanState() {
   const processImage = useCallback(async (file: File) => {
     setState({ status: 'processing' });
 
-    // Create object URL for display
-    const imageUri = URL.createObjectURL(file);
+    // Create displayable URL - converts HEIC to JPEG if needed
+    const imageUri = await getDisplayableImageUrl(file);
 
     const result = await scanImage(file, { debug: debugMode });
 

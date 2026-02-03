@@ -16,7 +16,7 @@ class Config:
     # These match the UX rules in CLAUDE.md
     VISIBILITY_THRESHOLD = 0.45       # Show in results (opacity 0.5)
     TAPPABLE_THRESHOLD = 0.65         # Enable detail tap (opacity 0.75)
-    HIGH_CONFIDENCE_THRESHOLD = 0.85  # "Widely rated" label (opacity 1.0)
+    HIGH_CONFIDENCE_THRESHOLD = 0.80  # Skip LLM for high-confidence matches (was 0.85)
     FUZZY_CONFIDENCE_THRESHOLD = 0.72 # Accept fuzzy match (higher = fewer false positives)
     FUZZY_EARLY_EXIT = 0.95           # Skip remaining candidates
 

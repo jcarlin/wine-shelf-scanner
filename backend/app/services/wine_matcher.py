@@ -9,17 +9,29 @@ Uses tiered matching for accuracy:
 Supports both JSON and SQLite backends:
 - JSON: Legacy mode (ratings.json)
 - SQLite: New mode with WineRepository (recommended)
+
+Performance optimization:
+- LRU cache for match results (repeated wines on same shelf)
 """
 
 import json
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
+from threading import Lock
 from typing import TYPE_CHECKING, Optional
 
 from rapidfuzz import fuzz
 import jellyfish
 
 from ..config import Config
+
+
+# Module-level match cache for performance (thread-safe)
+# Caches (query -> WineMatch) to avoid repeated lookups for same wine
+_match_cache: dict[str, Optional["WineMatch"]] = {}
+_cache_lock = Lock()
+_CACHE_MAX_SIZE = 500  # Limit cache size to prevent memory issues
 
 if TYPE_CHECKING:
     from .wine_repository import WineRepository
@@ -206,6 +218,8 @@ class WineMatcher:
         """
         Find wine by exact name match (case-insensitive).
 
+        Uses module-level cache for performance (repeated wines on same shelf).
+
         Args:
             query: Normalized wine name from OCR
 
@@ -225,12 +239,27 @@ class WineMatcher:
         if _is_generic_query(query_lower):
             return None
 
-        # Use SQLite repository if available
-        if self._repository is not None:
-            return self._match_sqlite(query_lower)
+        # Check cache first (thread-safe)
+        with _cache_lock:
+            if query_lower in _match_cache:
+                return _match_cache[query_lower]
 
-        # Fall back to JSON lookup
-        return self._match_json(query_lower)
+        # Perform actual match
+        if self._repository is not None:
+            result = self._match_sqlite(query_lower)
+        else:
+            result = self._match_json(query_lower)
+
+        # Cache result (thread-safe, with size limit)
+        with _cache_lock:
+            if len(_match_cache) >= _CACHE_MAX_SIZE:
+                # Simple eviction: clear half the cache when full
+                keys_to_remove = list(_match_cache.keys())[:_CACHE_MAX_SIZE // 2]
+                for key in keys_to_remove:
+                    del _match_cache[key]
+            _match_cache[query_lower] = result
+
+        return result
 
     def _match_sqlite(self, query_lower: str) -> Optional[WineMatch]:
         """Match using SQLite repository with tiered approach."""
@@ -444,6 +473,14 @@ class WineMatcher:
         if self._json_database is not None:
             self._build_json_index()
         # SQLite mode needs no reload - queries go directly to DB
+        # Clear match cache when reloading
+        self.clear_cache()
+
+    @staticmethod
+    def clear_cache():
+        """Clear the module-level match cache."""
+        with _cache_lock:
+            _match_cache.clear()
 
     def wine_count(self) -> int:
         """Return total number of wines in database."""

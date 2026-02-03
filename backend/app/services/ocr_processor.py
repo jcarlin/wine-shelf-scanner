@@ -155,14 +155,11 @@ class OCRProcessor:
         'napa', 'sonoma', 'lodi', 'paso', 'robles', 'california', 'oregon',
         'washington', 'mendocino', 'monterey', 'valley', 'county', 'coast',
         'central', 'north', 'south', 'eastern', 'western', 'appellation',
-        # French regions/terms (very common on labels)
-        'bordeaux', 'bourgogne', 'burgundy', 'loire', 'rhone', 'alsace',
-        'champagne', 'provence', 'languedoc', 'roussillon', 'grand', 'cru',
+        # French generic terms (not specific appellations - keep village names!)
+        'bourgogne', 'burgundy', 'loire', 'rhone', 'alsace',
+        'provence', 'languedoc', 'roussillon', 'grand', 'cru',
         'premier', 'appellation', 'controlee', 'contrôlée', 'origine', 'protegee',
-        'côtes', 'cotes', 'santenay', 'beaune', 'nuits', 'meursault', 'pommard',
-        'gevrey', 'chambertin', 'volnay', 'puligny', 'chassagne', 'montrachet',
-        'saint', 'st', 'julien', 'estephe', 'emilion', 'médoc', 'medoc', 'pauillac',
-        'margaux', 'haut', 'graves', 'pomerol', 'fronsac', 'pessac', 'léognan',
+        'côtes', 'cotes', 'haut',
         # Italian terms
         'toscana', 'tuscany', 'piemonte', 'piedmont', 'veneto', 'sicilia',
         'docg', 'doc', 'igt', 'classico', 'superiore', 'riserva',
@@ -174,6 +171,11 @@ class OCRProcessor:
         # Common label words to remove
         'vinted', 'grown', 'made', 'crafted', 'selected', 'from', 'the',
         'and', 'for', 'with', 'our', 'this', 'that', 'by', 'of', 'in',
+        # Label boilerplate
+        'mis', 'en', 'bouteille', 'par', 'a', 'au', 'negociant', 'négociant',
+        'eleveur', 'éleveur', 'producteur', 'recoltant', 'récoltant', 'produit',
+        'product', 'produce', 'produced', 'france', 'french', 'côte', 'cote', 'd',
+        'or', 'beaune', 'alsace', 'loire',
         # Generic wine terms that appear on many labels (not wine names)
         'grand', 'vin', 'rouge', 'blanc', 'rose', 'rosé', 'sec', 'demi-sec', 'brut',
         'extra', 'methode', 'méthode', 'traditionnelle', 'traditionnel', 'naturel',
@@ -322,6 +324,20 @@ class OCRProcessor:
         # Remove filler words (case-insensitive)
         words = result.split()
         words = [w for w in words if w.lower() not in self.FILLER_WORDS]
+
+        # Deduplicate: keep only first occurrence of each word (case-insensitive)
+        seen = set()
+        deduped = []
+        for w in words:
+            w_lower = w.lower()
+            # Skip single characters, punctuation-only, and numbers
+            if len(w) <= 1 or w_lower in ('-', '--', "'", "d'or", "d'or") or w.isdigit():
+                continue
+            if w_lower not in seen:
+                seen.add(w_lower)
+                deduped.append(w)
+        words = deduped
+
         result = ' '.join(words)
 
         # Clean up whitespace and punctuation

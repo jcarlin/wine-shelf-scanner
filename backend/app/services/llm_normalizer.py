@@ -185,6 +185,25 @@ If invalid match, wine_name should be the actual wine from the OCR text (cleaned
 For each item, you are given OCR text from a wine bottle and optionally a database match candidate.
 Determine if the match is correct, or identify the actual wine name.
 
+## CRITICAL: WHAT IS NOT A WINE NAME
+
+NEVER return these as wine names - return wine_name=null instead:
+- Marketing text: "All Our Wines Are...", "Sustainably Produced", "Family Owned"
+- Generic wine terms WITHOUT a producer: "Barolo Denominazione", "Grand Vin de Bordeaux", "Champagne Brut"
+- Label boilerplate: "Mis en Bouteille", "Product of France", "Contains Sulfites"
+- Prices, dates, barcodes, numbers without context
+- Partial OCR fragments that don't form a complete wine name
+
+A VALID wine name MUST include at least one of:
+- A specific producer/winery name (e.g., "Ruffino", "Louis Latour", "Caymus")
+- A specific vineyard or cuvée name (e.g., "Martha's Vineyard", "Cuvée Prestige")
+
+Examples:
+- "Ruffino Chianti" ✓ (has producer Ruffino)
+- "Barolo DOCG" ✗ (no producer, just region/classification)
+- "All Our Wines Are Sustainably" ✗ (marketing text)
+- "Grand Vin de Bordeaux" ✗ (generic term, no producer)
+
 ## MATCHING RULES
 
 VALID MATCH if:
@@ -198,19 +217,13 @@ INVALID MATCH if:
 
 NO CANDIDATE:
 - If db_candidate is null, identify the wine name from the OCR text
-- Clean up the name (remove years, sizes, marketing text)
+- If no valid wine name can be identified, return wine_name=null and confidence=0.0
 
 ## RATING ESTIMATION
 
 For wines NOT in our database (when db_candidate is null or match is invalid):
 - Provide an estimated_rating (1.0-5.0) based on your wine knowledge
-- Consider: producer reputation, region quality, varietal typicity, price tier indicators
-- Use this scale:
-  - 4.5-5.0: Prestigious/cult wines (Opus One, Screaming Eagle, top Burgundy)
-  - 4.0-4.5: Well-regarded producers with good track record
-  - 3.5-4.0: Solid everyday wines from known regions
-  - 3.0-3.5: Budget wines or unknown producers
-  - Below 3.0: Only for wines with known quality issues
+- Only provide estimated_rating if wine_name is not null
 - Default to 3.7-4.0 if uncertain (typical mid-tier wine)
 
 ## OUTPUT
@@ -218,11 +231,11 @@ For wines NOT in our database (when db_candidate is null or match is invalid):
 Return a JSON array with one result per input item (same order):
 [
   {"index": 0, "is_valid_match": true, "wine_name": "...", "confidence": 0.95, "reasoning": "..."},
-  {"index": 1, "is_valid_match": false, "wine_name": "Correct Name", "confidence": 0.85, "reasoning": "...", "estimated_rating": 4.2},
+  {"index": 1, "is_valid_match": false, "wine_name": null, "confidence": 0.0, "reasoning": "No valid wine name found"},
   ...
 ]
 
-Include estimated_rating ONLY when is_valid_match is false or db_candidate was null."""
+Include estimated_rating ONLY when wine_name is not null and is_valid_match is false."""
 
     SYSTEM_PROMPT = """You are a wine label text analyzer.
 

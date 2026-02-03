@@ -177,8 +177,9 @@ async def run_pipeline_on_image(
         else:
             bottle_texts = []
 
-    # Run recognition pipeline
-    pipeline = RecognitionPipeline(use_llm=use_llm)
+    # Run recognition pipeline with configured LLM provider
+    from app.config import Config
+    pipeline = RecognitionPipeline(use_llm=use_llm, llm_provider=Config.llm_provider())
     recognized = await pipeline.recognize(bottle_texts)
 
     elapsed_ms = (time.time() - start_time) * 1000

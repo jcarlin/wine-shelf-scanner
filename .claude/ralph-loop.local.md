@@ -1,6 +1,6 @@
 ---
 active: true
-iteration: 5
+iteration: 6
 max_iterations: 25
 completion_promise: "WINE SCANNER COMPLETE"
 started_at: "2026-02-02T23:18:58Z"

@@ -80,7 +80,9 @@ export async function convertHeicToJpeg(file: File): Promise<Blob> {
     return result;
   } catch (err) {
     console.error('[HEIC] All conversion methods failed:', err);
-    throw err;
+    throw new Error(
+      'Unable to process this HEIC image. Please try taking a new photo or converting to JPEG first.'
+    );
   }
 }
 

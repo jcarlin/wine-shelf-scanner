@@ -9,6 +9,24 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 
+class PipelineStats(BaseModel):
+    """
+    Pipeline breakdown showing where bottles are lost at each stage.
+
+    This helps debug why some bottles aren't being matched.
+    """
+    bottles_detected: int = Field(..., description="Bottles found by Vision API object detection")
+    bottles_with_text: int = Field(..., description="Bottles with OCR text assigned")
+    bottles_empty: int = Field(..., description="Bottles with no OCR text")
+    fuzzy_matched: int = Field(..., description="Direct high-confidence DB matches (skipped LLM)")
+    llm_validated: int = Field(..., description="Matches validated/identified by LLM")
+    unmatched_count: int = Field(..., description="Bottles sent to Claude Vision fallback")
+    vision_attempted: int = Field(..., description="Claude Vision calls made")
+    vision_identified: int = Field(..., description="Wines identified by Claude Vision")
+    vision_error: Optional[str] = Field(None, description="Error if Claude Vision failed")
+    final_results: int = Field(..., description="Total wines in response results array")
+
+
 class FuzzyMatchScores(BaseModel):
     """Individual scores from fuzzy matching algorithms."""
     ratio: float = Field(..., description="Overall character similarity (0-1)")
@@ -62,6 +80,10 @@ class DebugData(BaseModel):
     bottles_detected: int = Field(..., description="Number of bottles detected")
     texts_matched: int = Field(..., description="OCR texts that matched a wine")
     llm_calls_made: int = Field(..., description="Number of LLM API calls")
+    pipeline_stats: Optional[PipelineStats] = Field(
+        None,
+        description="Breakdown of where bottles were lost at each pipeline stage"
+    )
 
     def get_summary(self) -> list[SimplifiedStepResult]:
         """Get a simplified summary of each step for easy display."""

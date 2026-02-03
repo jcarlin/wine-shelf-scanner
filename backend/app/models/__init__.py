@@ -9,6 +9,7 @@ from .response import (
     ScanResponse,
 )
 from .debug import (
+    PipelineStats,
     FuzzyMatchScores,
     FuzzyMatchDebug,
     LLMValidationDebug,
@@ -23,6 +24,7 @@ __all__ = [
     "WineResult",
     "FallbackWine",
     "ScanResponse",
+    "PipelineStats",
     "FuzzyMatchScores",
     "FuzzyMatchDebug",
     "LLMValidationDebug",

@@ -113,6 +113,15 @@ class Config:
         """Enable LLM rating cache for discovered wines. Default: False."""
         return os.getenv("USE_LLM_CACHE", "false").lower() == "true"
 
+    # === Vision Fallback ===
+    # Max confidence for visual-only identification (never top-3 emphasis)
+    VISION_FALLBACK_CONFIDENCE_CAP = 0.70
+
+    @staticmethod
+    def use_vision_fallback() -> bool:
+        """Enable Claude Vision fallback for unmatched bottles. Default: True."""
+        return os.getenv("USE_VISION_FALLBACK", "true").lower() == "true"
+
     # === Security ===
     MAX_IMAGE_SIZE_MB = 10
     MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024

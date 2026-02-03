@@ -12,7 +12,8 @@ function getApiBaseUrl(): string {
   // Check for Expo config override
   const extraApiUrl = Constants.expoConfig?.extra?.apiBaseUrl;
   if (extraApiUrl) {
-    return extraApiUrl;
+    // Strip trailing slashes to prevent //path URLs
+    return extraApiUrl.replace(/\/+$/, '');
   }
 
   // In dev mode, use localhost for iOS simulator

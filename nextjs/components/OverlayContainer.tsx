@@ -60,9 +60,9 @@ export function OverlayContainer({ wines, imageBounds, onWineSelect }: OverlayCo
 
   return (
     <>
-      {winePositions.map(({ wine, isTopThree, position }) => (
+      {winePositions.map(({ wine, isTopThree, position }, index) => (
         <RatingBadge
-          key={wine.wine_name}
+          key={`${wine.wine_name}-${wine.bbox.x.toFixed(3)}-${wine.bbox.y.toFixed(3)}`}
           wine={wine}
           isTopThree={isTopThree}
           position={position}

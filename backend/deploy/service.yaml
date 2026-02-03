@@ -43,6 +43,13 @@ spec:
               value: "INFO"
             - name: DEV_MODE
               value: "false"
+            - name: DEBUG_MODE
+              value: "true"
+            # Caching configuration
+            - name: VISION_CACHE_ENABLED
+              value: "false"
+            - name: USE_LLM_CACHE
+              value: "true"
             # LiteLLM unified interface with automatic fallbacks
             - name: USE_LITELLM
               value: "true"

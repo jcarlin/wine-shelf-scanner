@@ -510,14 +510,16 @@ class RecognitionPipeline:
             # Try matching the LLM-identified name against DB
             new_match = self.wine_matcher.match(validation.wine_name)
 
-            # Only use DB match if it's high confidence AND different from rejected match
+            # Only use DB match if confidence is VERY high (0.95+) to avoid false positives
+            # When fuzzy matching gives 0.85-0.94, it's often a wrong match
+            # (e.g., "Crimson Ranch" -> "Brown Ranch")
             rejected_name = match.canonical_name.lower() if match else ""
             new_match_name = new_match.canonical_name.lower() if new_match else ""
 
             if (new_match and
-                new_match.confidence >= Config.FUZZY_CONFIDENCE_THRESHOLD and
+                new_match.confidence >= 0.95 and  # Very high threshold for re-matching
                 new_match_name != rejected_name):
-                # Found a different, high-confidence wine in DB
+                # Found a different, very-high-confidence wine in DB
                 return RecognizedWine(
                     wine_name=new_match.canonical_name,
                     rating=new_match.rating,

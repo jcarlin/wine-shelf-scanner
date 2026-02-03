@@ -225,7 +225,89 @@ class VisionService:
                     bbox=bbox
                 ))
 
-        return objects
+        # Deduplicate overlapping bottles - Vision API often detects the same
+        # bottle multiple times with slightly different bboxes
+        return self._deduplicate_bottles(objects)
+
+    def _deduplicate_bottles(
+        self,
+        objects: list[DetectedObject],
+        iou_threshold: float = 0.5
+    ) -> list[DetectedObject]:
+        """
+        Remove duplicate bottle detections based on bbox overlap (IoU).
+
+        When Vision API detects the same bottle multiple times, keep the
+        detection with highest confidence.
+
+        Args:
+            objects: List of detected bottle objects
+            iou_threshold: Minimum IoU to consider as duplicate (default 0.5)
+
+        Returns:
+            Deduplicated list of bottles
+        """
+        if len(objects) <= 1:
+            return objects
+
+        # Sort by confidence descending - keep highest confidence detections
+        sorted_objects = sorted(objects, key=lambda o: o.confidence, reverse=True)
+
+        keep = []
+        for obj in sorted_objects:
+            is_duplicate = False
+            for kept in keep:
+                iou = self._calculate_iou(obj.bbox, kept.bbox)
+                if iou >= iou_threshold:
+                    is_duplicate = True
+                    logger.debug(
+                        f"Removing duplicate bottle: IoU={iou:.2f} between "
+                        f"({obj.bbox.x:.2f},{obj.bbox.y:.2f}) and ({kept.bbox.x:.2f},{kept.bbox.y:.2f})"
+                    )
+                    break
+            if not is_duplicate:
+                keep.append(obj)
+
+        if len(keep) < len(objects):
+            logger.info(
+                f"Deduplicated bottles: {len(objects)} -> {len(keep)} "
+                f"(removed {len(objects) - len(keep)} overlapping detections)"
+            )
+
+        return keep
+
+    def _calculate_iou(self, bbox1: BoundingBox, bbox2: BoundingBox) -> float:
+        """
+        Calculate Intersection over Union (IoU) between two bounding boxes.
+
+        Args:
+            bbox1: First bounding box
+            bbox2: Second bounding box
+
+        Returns:
+            IoU value between 0 and 1
+        """
+        # Calculate intersection
+        x1 = max(bbox1.x, bbox2.x)
+        y1 = max(bbox1.y, bbox2.y)
+        x2 = min(bbox1.x + bbox1.width, bbox2.x + bbox2.width)
+        y2 = min(bbox1.y + bbox1.height, bbox2.y + bbox2.height)
+
+        # No intersection
+        if x2 <= x1 or y2 <= y1:
+            return 0.0
+
+        intersection = (x2 - x1) * (y2 - y1)
+
+        # Calculate union
+        area1 = bbox1.width * bbox1.height
+        area2 = bbox2.width * bbox2.height
+        union = area1 + area2 - intersection
+
+        if union <= 0:
+            return 0.0
+
+        return intersection / union
 
     def _parse_text(
         self, annotations, image_width: int, image_height: int

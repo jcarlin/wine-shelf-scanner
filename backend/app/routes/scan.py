@@ -359,38 +359,71 @@ async def process_image(
         for w in recognized:
             logger.debug(f"[{image_id}]   {w.wine_name}: rating={w.rating}, conf={w.confidence:.2f}, src={w.source}")
 
-    # Step 5: Claude Vision fallback for unmatched bottles
-    # Find bottles that weren't matched by the pipeline
-    # Use id() since BottleText is not hashable
-    recognized_bottle_ids = {id(w.bottle_text) for w in recognized}
-    unmatched_bottles = [bt for bt in bottle_texts if id(bt) not in recognized_bottle_ids]
+    # Step 5: Claude Vision fallback for unmatched OR low-confidence bottles
+    # Send to Vision if:
+    # - Bottle wasn't matched by the pipeline, OR
+    # - Bottle was matched but confidence < TAPPABLE_THRESHOLD (would be non-clickable)
+    # This ensures all displayed bottles are tappable with good identification
+
+    # Build map of bottle_id -> recognized wine for low-confidence check
+    bottle_to_wine = {id(w.bottle_text): w for w in recognized}
+
+    bottles_for_vision: list[BottleText] = []
+    low_conf_bottle_ids: set[int] = set()  # Track which were low-confidence (for replacement)
+
+    for bt in bottle_texts:
+        bt_id = id(bt)
+        if bt_id not in bottle_to_wine:
+            # Unmatched - send to Vision
+            bottles_for_vision.append(bt)
+        elif bottle_to_wine[bt_id].confidence < Config.TAPPABLE_THRESHOLD:
+            # Low confidence (non-tappable) - send to Vision for better identification
+            bottles_for_vision.append(bt)
+            low_conf_bottle_ids.add(bt_id)
+            logger.info(
+                f"[{image_id}] Low-confidence match sent to Vision: "
+                f"{bottle_to_wine[bt_id].wine_name} (conf={bottle_to_wine[bt_id].confidence:.2f})"
+            )
 
     # Use vision fallback if enabled both via parameter and config
-    stats_unmatched_count = len(unmatched_bottles)
+    stats_unmatched_count = len(bottles_for_vision)
     enable_vision = use_vision_fallback and Config.use_vision_fallback()
-    logger.info(f"[{image_id}] UNMATCHED FOR VISION: {stats_unmatched_count} bottles")
+    logger.info(f"[{image_id}] BOTTLES FOR VISION: {stats_unmatched_count} (unmatched or low-confidence)")
 
-    if unmatched_bottles and enable_vision:
-        stats_vision_attempted = len(unmatched_bottles)
+    if bottles_for_vision and enable_vision:
+        stats_vision_attempted = len(bottles_for_vision)
         try:
             vision_service = get_claude_vision_service()
             vision_results = await vision_service.identify_wines(
                 image_bytes=image_bytes,
-                unmatched_bottles=unmatched_bottles,
+                unmatched_bottles=bottles_for_vision,
                 image_media_type="image/jpeg",  # We convert to JPEG earlier
             )
 
-            # Convert vision results to RecognizedWine and add to recognized list
+            # Convert vision results to RecognizedWine
             for vision_wine in vision_results:
-                if vision_wine.wine_name and vision_wine.bottle_index < len(unmatched_bottles):
-                    bottle_text = unmatched_bottles[vision_wine.bottle_index]
+                if vision_wine.wine_name and vision_wine.bottle_index < len(bottles_for_vision):
+                    bottle_text = bottles_for_vision[vision_wine.bottle_index]
+                    bt_id = id(bottle_text)
                     recognized_wine = _vision_to_recognized(vision_wine, bottle_text)
-                    recognized.append(recognized_wine)
+
+                    if bt_id in low_conf_bottle_ids:
+                        # Replace the low-confidence match with Vision result
+                        # Remove old result and add new one
+                        recognized = [w for w in recognized if id(w.bottle_text) != bt_id]
+                        recognized.append(recognized_wine)
+                        logger.info(
+                            f"[{image_id}] Vision REPLACED low-conf match: {vision_wine.wine_name} "
+                            f"(conf={vision_wine.confidence:.2f}, rating={vision_wine.estimated_rating})"
+                        )
+                    else:
+                        # Add new result for previously unmatched bottle
+                        recognized.append(recognized_wine)
+                        logger.info(
+                            f"[{image_id}] Vision identified: {vision_wine.wine_name} "
+                            f"(conf={vision_wine.confidence:.2f}, rating={vision_wine.estimated_rating})"
+                        )
                     stats_vision_identified += 1
-                    logger.info(
-                        f"[{image_id}] Claude Vision identified: {vision_wine.wine_name} "
-                        f"(conf={vision_wine.confidence:.2f}, rating={vision_wine.estimated_rating})"
-                    )
 
             logger.info(f"[{image_id}] VISION RESULTS: {stats_vision_identified} of {stats_vision_attempted} identified")
         except Exception as e:
@@ -440,7 +473,7 @@ async def process_image(
         f"  Bottles with OCR text: {stats_bottles_with_text} ({stats_bottles_empty} empty)\n"
         f"  Fuzzy matches (high conf): {stats_fuzzy_matched}\n"
         f"  LLM validated/identified: {stats_llm_validated}\n"
-        f"  Unmatched bottles: {stats_unmatched_count}\n"
+        f"  Sent to Vision (unmatched/low-conf): {stats_unmatched_count}\n"
         f"  Claude Vision attempted: {stats_vision_attempted}\n"
         f"  Claude Vision identified: {stats_vision_identified}"
         + (f" (ERROR: {stats_vision_error})" if stats_vision_error else "") +

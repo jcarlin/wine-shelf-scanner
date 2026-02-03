@@ -20,7 +20,7 @@ from ..mocks.fixtures import get_mock_response
 from ..models import BoundingBox, DebugData, FallbackWine, ScanResponse, WineResult
 from ..models.enums import RatingSource, WineSource
 from ..services.claude_vision import get_claude_vision_service, VisionIdentifiedWine
-from ..services.ocr_processor import BottleText, OCRProcessor, extract_wine_names
+from ..services.ocr_processor import BottleText, OCRProcessor, OCRProcessingResult, OrphanedText, extract_wine_names
 from ..services.recognition_pipeline import RecognizedWine, RecognitionPipeline
 from ..services.vision import MockVisionService, ReplayVisionService, VisionResult, VisionService
 from ..services.wine_matcher import WineMatcher
@@ -76,6 +76,51 @@ def _to_wine_result(wine: RecognizedWine) -> WineResult:
         review_count=wine.review_count,
         review_snippets=wine.review_snippets,
     )
+
+
+def _process_orphaned_texts(
+    orphaned_texts: list[OrphanedText],
+    wine_matcher: WineMatcher
+) -> list[FallbackWine]:
+    """
+    Process orphaned text blocks through wine matcher.
+
+    Orphaned texts are OCR text blocks not assigned to any detected bottle.
+    They may contain wine names from bottles the Vision API failed to detect.
+
+    Args:
+        orphaned_texts: List of OrphanedText with normalized wine name candidates
+        wine_matcher: Wine matcher for fuzzy matching
+
+    Returns:
+        List of FallbackWine for wines matched from orphaned text
+    """
+    matches = []
+    seen_names = set()
+
+    for orphan in orphaned_texts:
+        if not orphan.normalized_name or len(orphan.normalized_name) < 3:
+            continue
+
+        # Skip if we've already matched this name
+        name_lower = orphan.normalized_name.lower()
+        if name_lower in seen_names:
+            continue
+
+        # Try to match against wine database
+        match = wine_matcher.match(orphan.normalized_name)
+        if match and match.rating is not None:
+            # Only add if confidence is reasonable (avoid false positives)
+            if match.confidence >= 0.60:
+                matches.append(FallbackWine(
+                    wine_name=match.wine_name,
+                    rating=match.rating
+                ))
+                seen_names.add(name_lower)
+                seen_names.add(match.wine_name.lower())
+
+    return matches
+
 
 # Register HEIF/HEIC opener with Pillow
 register_heif_opener()
@@ -245,12 +290,17 @@ async def process_image(
             image_id, vision_result, wine_matcher, use_llm, debug_mode
         )
 
-    # Step 2: Group text to bottles and normalize
+    # Step 2: Group text to bottles and normalize (also track orphaned text)
     ocr_processor = OCRProcessor()
-    bottle_texts = ocr_processor.process(
+    ocr_result = ocr_processor.process_with_orphans(
         vision_result.objects,
         vision_result.text_blocks
     )
+    bottle_texts = ocr_result.bottle_texts
+    orphaned_texts = ocr_result.orphaned_texts
+
+    if orphaned_texts:
+        logger.info(f"[{image_id}] {len(orphaned_texts)} orphaned text blocks not assigned to bottles")
 
     # Step 3 & 4: Tiered recognition (fuzzy match → LLM fallback)
     # Enable debug mode if explicitly requested OR if in dev mode
@@ -305,6 +355,20 @@ async def process_image(
                 wine_name=wine.wine_name,
                 rating=wine.rating
             ))
+
+    # Step 6: Process orphaned text blocks into fallback list
+    # These are OCR texts not near any detected bottle - may be from undetected bottles
+    if orphaned_texts:
+        orphan_matches = _process_orphaned_texts(orphaned_texts, wine_matcher)
+        if orphan_matches:
+            logger.info(f"[{image_id}] Matched {len(orphan_matches)} wines from orphaned text")
+            # Add to fallback, avoiding duplicates
+            existing_names = {f.wine_name.lower() for f in fallback}
+            existing_names.update(r.wine_name.lower() for r in results)
+            for match in orphan_matches:
+                if match.wine_name.lower() not in existing_names:
+                    fallback.append(match)
+                    existing_names.add(match.wine_name.lower())
 
     # Sort results by rating (wines with ratings first, then by rating value)
     results.sort(key=lambda x: (x.rating is not None, x.rating or 0), reverse=True)

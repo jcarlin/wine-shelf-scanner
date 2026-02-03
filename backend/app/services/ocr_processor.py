@@ -136,6 +136,21 @@ class BottleText:
     normalized_name: str
 
 
+@dataclass
+class OrphanedText:
+    """Text block not assigned to any detected bottle."""
+    text: str
+    normalized_name: str
+    bbox: BoundingBox  # Original position for potential clustering
+
+
+@dataclass
+class OCRProcessingResult:
+    """Result of OCR processing with both bottle assignments and orphaned text."""
+    bottle_texts: list[BottleText]
+    orphaned_texts: list[OrphanedText]
+
+
 class OCRProcessor:
     """Processes OCR results to extract wine names per bottle."""
 
@@ -266,6 +281,97 @@ class OCRProcessor:
             ))
 
         return results
+
+    def process_with_orphans(
+        self,
+        bottles: list[DetectedObject],
+        text_blocks: list[TextBlock]
+    ) -> OCRProcessingResult:
+        """
+        Group text to bottles and track orphaned text not assigned to any bottle.
+
+        Uses nearest-bottle assignment: each text block is assigned to exactly
+        one bottle (the closest one) to prevent mismatches when bottles are
+        close together. Text blocks not near any bottle are returned as orphans.
+
+        Args:
+            bottles: Detected bottle objects with bounding boxes
+            text_blocks: OCR text blocks with positions
+
+        Returns:
+            OCRProcessingResult with bottle_texts and orphaned_texts
+        """
+        if not bottles:
+            # All text is orphaned when no bottles detected
+            orphaned = []
+            for block in text_blocks:
+                normalized = self._normalize_text(block.text)
+                if normalized and len(normalized) >= 3:
+                    orphaned.append(OrphanedText(
+                        text=block.text,
+                        normalized_name=normalized,
+                        bbox=block.bbox
+                    ))
+            return OCRProcessingResult(bottle_texts=[], orphaned_texts=orphaned)
+
+        # Step 1: Assign each text block to its nearest bottle or mark as orphan
+        bottle_text_map: dict[int, list[str]] = {i: [] for i in range(len(bottles))}
+        orphaned_blocks: list[TextBlock] = []
+
+        for block in text_blocks:
+            text_center = self._get_normalized_center(block.bbox)
+
+            # Find the nearest bottle
+            nearest_bottle_idx = None
+            nearest_distance = float('inf')
+
+            for i, bottle in enumerate(bottles):
+                bottle_center = bottle.bbox.center
+                distance = self._distance(bottle_center, text_center)
+
+                # Only consider if within proximity threshold or overlapping
+                if distance < Config.PROXIMITY_THRESHOLD or self._overlaps(bottle.bbox, block.bbox):
+                    if distance < nearest_distance:
+                        nearest_distance = distance
+                        nearest_bottle_idx = i
+
+            # Assign text to nearest bottle or mark as orphan
+            if nearest_bottle_idx is not None:
+                bottle_text_map[nearest_bottle_idx].append(block.text)
+            else:
+                orphaned_blocks.append(block)
+
+        # Step 2: Build BottleText results
+        bottle_texts = []
+        for i, bottle in enumerate(bottles):
+            text_fragments = bottle_text_map[i]
+            combined = ' '.join(text_fragments)
+            normalized = self._normalize_text(combined)
+
+            bottle_texts.append(BottleText(
+                bottle=bottle,
+                text_fragments=text_fragments,
+                combined_text=combined,
+                normalized_name=normalized
+            ))
+
+        # Step 3: Process orphaned text blocks
+        # Filter out short/invalid text and normalize
+        orphaned_texts = []
+        for block in orphaned_blocks:
+            normalized = self._normalize_text(block.text)
+            # Only include if it looks like it could be a wine name
+            if normalized and len(normalized) >= 3 and _looks_like_wine_name(normalized):
+                orphaned_texts.append(OrphanedText(
+                    text=block.text,
+                    normalized_name=normalized,
+                    bbox=block.bbox
+                ))
+
+        return OCRProcessingResult(
+            bottle_texts=bottle_texts,
+            orphaned_texts=orphaned_texts
+        )
 
     def _find_nearby_text(
         self,

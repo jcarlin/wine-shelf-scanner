@@ -43,9 +43,12 @@ spec:
               value: "INFO"
             - name: DEV_MODE
               value: "false"
+            # LiteLLM unified interface with automatic fallbacks
+            - name: USE_LITELLM
+              value: "true"
             - name: LLM_PROVIDER
-              value: "claude"
-            # Secrets from Secret Manager
+              value: "gemini"
+            # Secrets from Secret Manager (multiple keys enable automatic fallback)
             - name: GOOGLE_API_KEY
               valueFrom:
                 secretKeyRef:
@@ -56,6 +59,13 @@ spec:
                 secretKeyRef:
                   name: anthropic-api-key
                   key: latest
+            # Optional: OpenAI API key for additional fallback
+            # Uncomment and create secret to enable:
+            # - name: OPENAI_API_KEY
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: openai-api-key
+            #       key: latest
           # Startup probe - allows longer startup time
           startupProbe:
             httpGet:

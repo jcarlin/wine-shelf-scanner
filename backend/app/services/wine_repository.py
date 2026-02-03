@@ -61,6 +61,10 @@ class WineRepository:
         self._schema_initialized = False
         self._cache_lock = threading.Lock()
 
+        # Instance-level cache (not shared across instances)
+        self._wine_cache: dict[str, WineRecord] = {}
+        self._CACHE_SIZE = 5000
+
         # Initialize schema
         self._init_schema()
 
@@ -424,6 +428,8 @@ class WineRepository:
 
         Args:
             wines: List of wine dicts with canonical_name, rating, etc.
+                   Optional keys: aliases (list), sources (dict mapping source_name to
+                   tuple of (original_rating, scale_min, scale_max))
             batch_size: Number of records per commit
 
         Returns:
@@ -451,13 +457,23 @@ class WineRepository:
                 ))
                 inserted += 1
 
-                # Add aliases if present
                 wine_id = cursor.lastrowid
+
+                # Add aliases if present
                 for alias in wine.get('aliases', []):
                     cursor.execute("""
                         INSERT OR IGNORE INTO wine_aliases (wine_id, alias_name)
                         VALUES (?, ?)
                     """, (wine_id, alias))
+
+                # Add source information if present
+                for source_name, source_data in wine.get('sources', {}).items():
+                    original_rating, scale_min, scale_max = source_data
+                    cursor.execute("""
+                        INSERT OR IGNORE INTO wine_sources
+                        (wine_id, source_name, original_rating, original_scale_min, original_scale_max)
+                        VALUES (?, ?, ?, ?, ?)
+                    """, (wine_id, source_name, original_rating, scale_min, scale_max))
 
             except sqlite3.IntegrityError:
                 skipped += 1
@@ -492,9 +508,6 @@ class WineRepository:
         )
 
     # Caching methods
-    _wine_cache: dict[str, WineRecord] = {}
-    _CACHE_SIZE = 5000
-
     def _get_cached_wine(self, key: str) -> Optional[WineRecord]:
         """Get wine from cache."""
         with self._cache_lock:

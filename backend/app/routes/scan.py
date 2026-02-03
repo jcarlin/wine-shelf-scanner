@@ -472,3 +472,21 @@ async def scan_debug(
 async def health_check():
     """Health check endpoint."""
     return {"status": "healthy"}
+
+
+@router.get("/cache/stats")
+async def cache_stats():
+    """
+    Get cache statistics for monitoring.
+
+    Returns stats for:
+    - Vision API response cache (if enabled)
+    - LLM rating cache
+    """
+    from ..services.vision_cache import get_vision_cache
+    from ..services.llm_rating_cache import get_llm_rating_cache
+
+    return {
+        "vision_cache": get_vision_cache().get_stats(),
+        "llm_rating_cache": get_llm_rating_cache().get_stats(),
+    }

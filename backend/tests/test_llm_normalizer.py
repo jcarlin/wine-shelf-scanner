@@ -16,10 +16,14 @@ from unittest.mock import MagicMock, patch, AsyncMock
 from app.services.llm_normalizer import (
     NormalizerProtocol,
     NormalizationResult,
+    BatchValidationItem,
+    BatchValidationResult,
     ClaudeNormalizer,
+    LiteLLMNormalizer,
     MockNormalizer,
     get_normalizer,
     ANTHROPIC_AVAILABLE,
+    LITELLM_AVAILABLE,
 )
 
 
@@ -313,17 +317,18 @@ class TestGetNormalizerFactory:
 
         assert isinstance(normalizer, MockNormalizer)
 
-    def test_returns_claude_when_use_mock_false(self):
-        """Test factory returns ClaudeNormalizer when use_mock=False."""
-        normalizer = get_normalizer(use_mock=False)
+    def test_returns_claude_when_use_mock_false_and_litellm_disabled(self):
+        """Test factory returns ClaudeNormalizer when use_mock=False and LiteLLM disabled."""
+        with patch("app.config.Config.use_litellm", return_value=False):
+            normalizer = get_normalizer(use_mock=False, provider="claude")
+            assert isinstance(normalizer, ClaudeNormalizer)
 
-        assert isinstance(normalizer, ClaudeNormalizer)
-
-    def test_default_returns_claude(self):
-        """Test factory default returns ClaudeNormalizer."""
-        normalizer = get_normalizer()
-
-        assert isinstance(normalizer, ClaudeNormalizer)
+    def test_default_returns_litellm_when_available(self):
+        """Test factory default returns LiteLLMNormalizer when available."""
+        with patch("app.config.Config.use_litellm", return_value=True), \
+             patch("app.services.llm_normalizer.LITELLM_AVAILABLE", True):
+            normalizer = get_normalizer()
+            assert isinstance(normalizer, LiteLLMNormalizer)
 
 
 class TestNormalizerProtocolCompliance:
@@ -399,3 +404,211 @@ class TestMockNormalizerWineKeywords:
         result = await normalizer.normalize("Summer Rose Wine")
 
         assert result.is_wine is True
+
+
+class TestLiteLLMNormalizerConfiguration:
+    """Test LiteLLMNormalizer model configuration."""
+
+    def test_builds_model_list_from_env(self):
+        """Test model list is built from environment config."""
+        with patch.object(LiteLLMNormalizer, "_get_configured_models") as mock_config:
+            mock_config.return_value = ["gemini/gemini-2.0-flash", "claude-3-haiku-20240307"]
+            normalizer = LiteLLMNormalizer()
+
+            assert len(normalizer.models) == 2
+            assert "gemini" in normalizer.models[0]
+
+    def test_accepts_custom_model_list(self):
+        """Test custom model list overrides environment."""
+        custom_models = ["gpt-4o-mini", "claude-3-haiku-20240307"]
+        normalizer = LiteLLMNormalizer(models=custom_models)
+
+        assert normalizer.models == custom_models
+
+    def test_empty_models_when_no_keys_configured(self):
+        """Test empty model list when no API keys configured."""
+        with patch("app.config.Config.gemini_api_key", return_value=None), \
+             patch("app.config.Config.anthropic_api_key", return_value=None), \
+             patch("app.config.Config.openai_api_key", return_value=None), \
+             patch("app.config.Config.llm_provider", return_value="gemini"):
+            normalizer = LiteLLMNormalizer()
+            assert normalizer.models == []
+
+
+class TestLiteLLMNormalizerEmptyInput:
+    """Test LiteLLMNormalizer handling of empty/short input."""
+
+    @pytest.mark.asyncio
+    async def test_empty_text_returns_early(self):
+        """Test empty text returns immediately without API call."""
+        normalizer = LiteLLMNormalizer(models=["test-model"])
+
+        result = await normalizer.normalize("")
+
+        assert result.wine_name is None
+        assert result.confidence == 0.0
+        assert result.is_wine is False
+        assert "too short" in result.reasoning.lower()
+
+    @pytest.mark.asyncio
+    async def test_short_text_returns_early(self):
+        """Test very short text (< 3 chars) returns immediately."""
+        normalizer = LiteLLMNormalizer(models=["test-model"])
+
+        result = await normalizer.normalize("AB")
+
+        assert result.wine_name is None
+        assert result.is_wine is False
+
+
+class TestLiteLLMNormalizerFallback:
+    """Test LiteLLMNormalizer automatic fallback between providers."""
+
+    @pytest.mark.asyncio
+    async def test_fallback_to_heuristics_when_no_models(self):
+        """When no models configured, should fall back to heuristics for validation."""
+        normalizer = LiteLLMNormalizer(models=[])
+
+        items = [
+            BatchValidationItem(ocr_text="Caymus Cabernet", db_candidate="Caymus Cabernet Sauvignon", db_rating=4.5)
+        ]
+        results = await normalizer.validate_batch(items)
+
+        assert len(results) == 1
+        # Heuristic validation should still work
+        assert isinstance(results[0], BatchValidationResult)
+
+    @pytest.mark.asyncio
+    async def test_litellm_not_available_uses_heuristics(self):
+        """When LiteLLM not installed, should fall back to heuristics."""
+        with patch("app.services.llm_normalizer.LITELLM_AVAILABLE", False):
+            normalizer = LiteLLMNormalizer(models=["gemini/gemini-2.0-flash"])
+
+            items = [
+                BatchValidationItem(ocr_text="Silver Oak", db_candidate="Silver Oak Cabernet", db_rating=4.3)
+            ]
+            results = await normalizer.validate_batch(items)
+
+            assert len(results) == 1
+            assert isinstance(results[0], BatchValidationResult)
+
+    @pytest.mark.asyncio
+    @pytest.mark.skipif(not LITELLM_AVAILABLE, reason="LiteLLM not installed")
+    async def test_api_error_falls_back_to_heuristics(self):
+        """When all LLM providers fail, should fall back to heuristics."""
+        with patch("litellm.acompletion", side_effect=Exception("All providers failed")):
+            normalizer = LiteLLMNormalizer(models=["gemini/gemini-2.0-flash"])
+
+            items = [
+                BatchValidationItem(ocr_text="Opus One", db_candidate="Opus One Napa Valley", db_rating=4.8)
+            ]
+            results = await normalizer.validate_batch(items)
+
+            assert len(results) == 1
+            # Should get heuristic result, not raise exception
+            assert isinstance(results[0], BatchValidationResult)
+
+    @pytest.mark.asyncio
+    @pytest.mark.skipif(not LITELLM_AVAILABLE, reason="LiteLLM not installed")
+    async def test_normalize_api_error_returns_graceful_result(self):
+        """When normalize fails, should return graceful error result."""
+        with patch("litellm.acompletion", side_effect=Exception("API Error")):
+            normalizer = LiteLLMNormalizer(models=["gemini/gemini-2.0-flash"])
+
+            result = await normalizer.normalize("Caymus Cabernet Sauvignon")
+
+            assert result.wine_name is None
+            assert result.confidence == 0.0
+            assert result.is_wine is False
+            assert "LLM error" in result.reasoning
+
+    @pytest.mark.asyncio
+    @pytest.mark.skipif(not LITELLM_AVAILABLE, reason="LiteLLM not installed")
+    async def test_validate_api_error_falls_back_to_heuristics(self):
+        """When validate fails, should fall back to heuristic validation."""
+        with patch("litellm.acompletion", side_effect=Exception("API Error")):
+            normalizer = LiteLLMNormalizer(models=["gemini/gemini-2.0-flash"])
+
+            result = await normalizer.validate(
+                ocr_text="Caymus Cabernet",
+                db_candidate="Caymus Cabernet Sauvignon",
+                db_rating=4.5
+            )
+
+            # Should get heuristic result, not raise exception
+            assert result.wine_name is not None
+            assert result.confidence > 0
+
+
+class TestLiteLLMNormalizerProtocolCompliance:
+    """Test that LiteLLMNormalizer complies with NormalizerProtocol."""
+
+    @pytest.mark.asyncio
+    async def test_implements_normalize(self):
+        """Test LiteLLMNormalizer implements normalize method."""
+        normalizer = LiteLLMNormalizer(models=[])
+
+        assert hasattr(normalizer, "normalize")
+
+        # Test with short input that returns early (no API call)
+        result = await normalizer.normalize("AB")
+        assert isinstance(result, NormalizationResult)
+
+    @pytest.mark.asyncio
+    async def test_implements_validate(self):
+        """Test LiteLLMNormalizer implements validate method."""
+        normalizer = LiteLLMNormalizer(models=[])
+
+        assert hasattr(normalizer, "validate")
+
+        result = await normalizer.validate("AB", None, None)
+        assert result is not None
+
+    @pytest.mark.asyncio
+    async def test_implements_validate_batch(self):
+        """Test LiteLLMNormalizer implements validate_batch method."""
+        normalizer = LiteLLMNormalizer(models=[])
+
+        assert hasattr(normalizer, "validate_batch")
+
+        results = await normalizer.validate_batch([])
+        assert results == []
+
+
+class TestGetNormalizerFactoryWithLiteLLM:
+    """Test the get_normalizer factory function with LiteLLM support."""
+
+    def test_returns_litellm_by_default_when_available(self):
+        """Test factory returns LiteLLMNormalizer by default when USE_LITELLM=true."""
+        with patch("app.config.Config.use_litellm", return_value=True), \
+             patch("app.services.llm_normalizer.LITELLM_AVAILABLE", True):
+            normalizer = get_normalizer(use_mock=False, provider="auto")
+            assert isinstance(normalizer, LiteLLMNormalizer)
+
+    def test_returns_litellm_with_explicit_provider(self):
+        """Test factory returns LiteLLMNormalizer when provider='litellm'."""
+        with patch("app.config.Config.use_litellm", return_value=True), \
+             patch("app.services.llm_normalizer.LITELLM_AVAILABLE", True):
+            normalizer = get_normalizer(use_mock=False, provider="litellm")
+            assert isinstance(normalizer, LiteLLMNormalizer)
+
+    def test_falls_back_to_claude_when_litellm_disabled(self):
+        """Test factory returns ClaudeNormalizer when USE_LITELLM=false."""
+        with patch("app.config.Config.use_litellm", return_value=False):
+            normalizer = get_normalizer(use_mock=False, provider="claude")
+            assert isinstance(normalizer, ClaudeNormalizer)
+
+    def test_falls_back_to_legacy_when_litellm_not_installed(self):
+        """Test factory falls back to legacy when LiteLLM not installed."""
+        with patch("app.config.Config.use_litellm", return_value=True), \
+             patch("app.services.llm_normalizer.LITELLM_AVAILABLE", False):
+            normalizer = get_normalizer(use_mock=False, provider="auto")
+            # Should fall back to Claude (default legacy)
+            assert isinstance(normalizer, ClaudeNormalizer)
+
+    def test_explicit_gemini_provider_uses_legacy(self):
+        """Test explicit gemini provider uses legacy GeminiNormalizer."""
+        with patch("app.config.Config.use_litellm", return_value=True):
+            from app.services.llm_normalizer import GeminiNormalizer
+            normalizer = get_normalizer(use_mock=False, provider="gemini")
+            assert isinstance(normalizer, GeminiNormalizer)

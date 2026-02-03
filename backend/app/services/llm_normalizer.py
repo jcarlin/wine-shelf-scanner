@@ -28,6 +28,14 @@ except ModuleNotFoundError:
     genai = None  # type: ignore
     GEMINI_AVAILABLE = False
 
+# Try to import litellm for unified LLM interface
+try:
+    import litellm
+    LITELLM_AVAILABLE = True
+except ModuleNotFoundError:
+    litellm = None  # type: ignore
+    LITELLM_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
 
@@ -519,6 +527,248 @@ Confidence:
         return results
 
 
+class LiteLLMNormalizer(LLMNormalizerBase):
+    """
+    Wine name normalizer using LiteLLM (unified interface with automatic fallbacks).
+
+    Benefits:
+    - Automatic fallback between providers on errors/rate limits
+    - Unified API for 100+ LLM providers
+    - Built-in retry logic with exponential backoff
+    - Cost tracking built-in
+
+    Inherits shared parsing/validation logic from LLMNormalizerBase.
+    """
+
+    # Default model fallback chain (fastest/cheapest first)
+    DEFAULT_MODELS = [
+        "gemini/gemini-2.0-flash",       # Primary: fastest, cheapest
+        "claude-3-haiku-20240307",       # Fallback 1: reliable
+        "gpt-4o-mini",                   # Fallback 2: widely available
+    ]
+
+    def __init__(
+        self,
+        models: Optional[list[str]] = None,
+        num_retries: int = 2,
+        timeout: float = 10.0,
+    ):
+        """
+        Initialize normalizer with fallback chain.
+
+        Args:
+            models: List of model names in priority order (first = primary).
+                    If not provided, builds from environment config.
+            num_retries: Retries per model before trying fallback.
+            timeout: Request timeout in seconds.
+        """
+        self.models = models or self._get_configured_models()
+        self.num_retries = num_retries
+        self.timeout = timeout
+
+        # Suppress litellm logging noise
+        if LITELLM_AVAILABLE and litellm:
+            litellm.set_verbose = False
+
+    def _get_configured_models(self) -> list[str]:
+        """Build model list from environment config."""
+        from ..config import Config
+
+        models = []
+
+        # Primary model from LLM_PROVIDER env var
+        provider = Config.llm_provider()
+        if provider == "gemini" and Config.gemini_api_key():
+            models.append(f"gemini/{Config.gemini_model()}")
+        elif provider == "claude" and Config.anthropic_api_key():
+            models.append("claude-3-haiku-20240307")
+
+        # Add fallbacks for any other configured providers
+        if Config.gemini_api_key() and not any("gemini" in m for m in models):
+            models.append(f"gemini/{Config.gemini_model()}")
+        if Config.anthropic_api_key() and not any("claude" in m for m in models):
+            models.append("claude-3-haiku-20240307")
+        if Config.openai_api_key() and not any("gpt" in m for m in models):
+            models.append("gpt-4o-mini")
+
+        return models if models else []
+
+    async def normalize(
+        self,
+        ocr_text: str,
+        context: Optional[dict] = None
+    ) -> NormalizationResult:
+        """
+        Normalize OCR text to canonical wine name using LiteLLM.
+
+        Args:
+            ocr_text: Raw OCR text from the bottle
+            context: Optional context (bottle position, confidence, etc.)
+
+        Returns:
+            NormalizationResult with wine_name, confidence, is_wine
+        """
+        if not ocr_text or len(ocr_text.strip()) < 3:
+            return NormalizationResult(
+                wine_name=None,
+                confidence=0.0,
+                is_wine=False,
+                reasoning="Text too short"
+            )
+
+        if not LITELLM_AVAILABLE:
+            logger.warning("litellm not installed, cannot normalize")
+            return NormalizationResult(
+                wine_name=None,
+                confidence=0.0,
+                is_wine=False,
+                reasoning="LiteLLM not available"
+            )
+
+        if not self.models:
+            logger.warning("No LLM models configured")
+            return NormalizationResult(
+                wine_name=None,
+                confidence=0.0,
+                is_wine=False,
+                reasoning="No LLM providers configured"
+            )
+
+        # Build prompt
+        user_prompt = f'OCR Text: "{ocr_text}"'
+        if context:
+            user_prompt += f"\nContext: {json.dumps(context)}"
+        user_prompt += """
+
+Return JSON: {"wine_name": "...", "confidence": 0.0-1.0, "is_wine": true/false, "reasoning": "..."}"""
+
+        full_prompt = f"{self.SYSTEM_PROMPT}\n\n{user_prompt}"
+
+        try:
+            response = await litellm.acompletion(
+                model=self.models[0],
+                messages=[{"role": "user", "content": full_prompt}],
+                fallbacks=self.models[1:] if len(self.models) > 1 else None,
+                num_retries=self.num_retries,
+                timeout=self.timeout,
+                max_tokens=150,
+            )
+
+            return self._parse_response(response.choices[0].message.content)
+
+        except Exception as e:
+            logger.warning(f"LiteLLM normalization error (all fallbacks failed): {e}")
+            return NormalizationResult(
+                wine_name=None,
+                confidence=0.0,
+                is_wine=False,
+                reasoning=f"LLM error: {type(e).__name__}"
+            )
+
+    async def validate(
+        self,
+        ocr_text: str,
+        db_candidate: Optional[str],
+        db_rating: Optional[float]
+    ) -> ValidationResult:
+        """
+        Validate if a DB candidate matches the OCR text using LiteLLM.
+
+        Args:
+            ocr_text: Raw OCR text from the bottle
+            db_candidate: Candidate wine name from database fuzzy match
+            db_rating: Rating of the DB candidate (for context)
+
+        Returns:
+            ValidationResult indicating if match is valid and correct wine name
+        """
+        if not ocr_text or len(ocr_text.strip()) < 3:
+            return ValidationResult(
+                is_valid_match=False,
+                wine_name=None,
+                confidence=0.0,
+                reasoning="OCR text too short"
+            )
+
+        if not db_candidate:
+            clean_name = _extract_clean_wine_name(ocr_text)
+            return ValidationResult(
+                is_valid_match=False,
+                wine_name=clean_name,
+                confidence=0.5 if clean_name else 0.0,
+                reasoning="No DB candidate to validate"
+            )
+
+        if not LITELLM_AVAILABLE or not self.models:
+            logger.debug("LiteLLM not available, using heuristic validation")
+            return self._heuristic_validate(ocr_text, db_candidate)
+
+        rating_str = f"{db_rating:.1f}" if db_rating else "unknown"
+        user_prompt = f'OCR Text: "{ocr_text}"\nDB Candidate: "{db_candidate}" (rating: {rating_str})'
+        full_prompt = f"{self.VALIDATION_PROMPT}\n\n{user_prompt}"
+
+        try:
+            response = await litellm.acompletion(
+                model=self.models[0],
+                messages=[{"role": "user", "content": full_prompt}],
+                fallbacks=self.models[1:] if len(self.models) > 1 else None,
+                num_retries=self.num_retries,
+                timeout=self.timeout,
+                max_tokens=150,
+            )
+
+            return self._parse_validation_response(
+                response.choices[0].message.content,
+                db_candidate
+            )
+
+        except Exception as e:
+            logger.warning(f"LiteLLM validation error (all fallbacks failed): {e}")
+            return self._heuristic_validate(ocr_text, db_candidate)
+
+    async def validate_batch(
+        self,
+        items: list[BatchValidationItem]
+    ) -> list[BatchValidationResult]:
+        """
+        Validate multiple OCR→DB matches in a single LLM call with automatic fallbacks.
+
+        Args:
+            items: List of BatchValidationItem with OCR text and DB candidates
+
+        Returns:
+            List of BatchValidationResult in the same order as input
+        """
+        if not items:
+            return []
+
+        if not LITELLM_AVAILABLE or not self.models:
+            logger.debug("LiteLLM not available, using heuristic batch validation")
+            return self._heuristic_validate_batch(items)
+
+        items_text = self._format_batch_items(items)
+        full_prompt = f"{self.BATCH_VALIDATION_PROMPT}\n\nItems to validate:\n{items_text}"
+
+        try:
+            response = await litellm.acompletion(
+                model=self.models[0],
+                messages=[{"role": "user", "content": full_prompt}],
+                fallbacks=self.models[1:] if len(self.models) > 1 else None,
+                num_retries=self.num_retries,
+                timeout=self.timeout,
+                max_tokens=150 * len(items),
+            )
+
+            return self._parse_batch_response(
+                response.choices[0].message.content,
+                items
+            )
+
+        except Exception as e:
+            logger.warning(f"LiteLLM batch validation error (all fallbacks failed): {e}")
+            return self._heuristic_validate_batch(items)
+
+
 class ClaudeNormalizer(LLMNormalizerBase):
     """
     Wine name normalizer using Claude Haiku.
@@ -526,6 +776,8 @@ class ClaudeNormalizer(LLMNormalizerBase):
     Cost: ~$0.001 per call (input ~200 tokens, output ~50 tokens)
 
     Inherits shared parsing/validation logic from LLMNormalizerBase.
+
+    Note: Consider using LiteLLMNormalizer instead for automatic fallbacks.
     """
 
     MODEL = "claude-3-haiku-20240307"
@@ -1116,21 +1368,41 @@ class MockNormalizer:
         return results
 
 
-def get_normalizer(use_mock: bool = False, provider: str = "claude") -> NormalizerProtocol:
+def get_normalizer(use_mock: bool = False, provider: str = "auto") -> NormalizerProtocol:
     """
     Factory function for normalizers.
 
     Args:
         use_mock: If True, return mock normalizer for testing.
-        provider: LLM provider to use ("claude" or "gemini"). Default: "claude".
+        provider: LLM provider to use. Options:
+            - "auto" (default): Use LiteLLM with automatic fallbacks
+            - "litellm": Explicit LiteLLM usage
+            - "claude": Legacy ClaudeNormalizer (no fallbacks)
+            - "gemini": Legacy GeminiNormalizer (no fallbacks)
 
     Returns:
         A normalizer implementing NormalizerProtocol.
     """
+    from ..config import Config
+
     if use_mock:
         return MockNormalizer()
-    if provider.lower() == "gemini":
-        logger.info("Using Gemini for LLM normalization")
+
+    # Check if LiteLLM should be used (default behavior)
+    use_litellm = Config.use_litellm()
+    provider_lower = provider.lower()
+
+    if use_litellm and provider_lower in ("auto", "litellm"):
+        if LITELLM_AVAILABLE:
+            logger.info("Using LiteLLM for LLM normalization (automatic fallbacks enabled)")
+            return LiteLLMNormalizer()
+        else:
+            logger.warning("LiteLLM requested but not installed, falling back to legacy provider")
+
+    # Legacy provider selection (no automatic fallbacks)
+    if provider_lower == "gemini":
+        logger.info("Using Gemini for LLM normalization (legacy, no fallbacks)")
         return GeminiNormalizer()
-    logger.info("Using Claude for LLM normalization")
+
+    logger.info("Using Claude for LLM normalization (legacy, no fallbacks)")
     return ClaudeNormalizer()

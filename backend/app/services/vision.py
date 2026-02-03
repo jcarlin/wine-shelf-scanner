@@ -4,10 +4,13 @@ Google Cloud Vision API client for wine bottle detection and OCR.
 from __future__ import annotations
 
 import json
+import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Protocol
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -55,10 +58,17 @@ class VisionServiceProtocol(Protocol):
 
 
 class VisionService:
-    """Google Cloud Vision API client."""
+    """Google Cloud Vision API client with optional caching."""
 
-    def __init__(self):
+    def __init__(self, use_cache: bool = True):
+        """
+        Initialize Vision service.
+
+        Args:
+            use_cache: Whether to use response caching (respects config setting)
+        """
         self._client = None
+        self._use_cache = use_cache
 
     def _get_client(self):
         """Lazy load Vision client."""
@@ -67,9 +77,14 @@ class VisionService:
             self._client = vision.ImageAnnotatorClient()
         return self._client
 
+    def _get_cache(self):
+        """Get the vision cache instance (lazy import to avoid circular deps)."""
+        from .vision_cache import get_vision_cache
+        return get_vision_cache()
+
     def analyze(self, image_bytes: bytes) -> VisionResult:
         """
-        Analyze image using Vision API.
+        Analyze image using Vision API with optional caching.
 
         Performs:
         - OBJECT_LOCALIZATION: Detect bottles
@@ -81,6 +96,25 @@ class VisionService:
         Returns:
             VisionResult with detected objects and text
         """
+        # Check cache first
+        if self._use_cache:
+            cache = self._get_cache()
+            cached_result = cache.get_by_bytes(image_bytes)
+            if cached_result is not None:
+                return cached_result
+
+        # Call Vision API
+        result = self._call_vision_api(image_bytes)
+
+        # Store in cache
+        if self._use_cache:
+            cache = self._get_cache()
+            cache.set_by_bytes(image_bytes, result)
+
+        return result
+
+    def _call_vision_api(self, image_bytes: bytes) -> VisionResult:
+        """Make the actual Vision API call."""
         from google.cloud import vision
 
         client = self._get_client()

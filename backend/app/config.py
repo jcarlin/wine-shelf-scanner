@@ -63,8 +63,18 @@ class Config:
 
     @staticmethod
     def llm_provider() -> str:
-        """Get LLM provider (claude or gemini). Default: claude."""
-        return os.getenv("LLM_PROVIDER", "claude").lower()
+        """Get LLM provider (claude or gemini). Default: gemini."""
+        return os.getenv("LLM_PROVIDER", "gemini").lower()
+
+    @staticmethod
+    def openai_api_key() -> Optional[str]:
+        """Get OpenAI API key from environment (optional fallback)."""
+        return os.getenv("OPENAI_API_KEY")
+
+    @staticmethod
+    def use_litellm() -> bool:
+        """Use LiteLLM unified interface (with automatic fallbacks). Default: True."""
+        return os.getenv("USE_LITELLM", "true").lower() == "true"
 
     @staticmethod
     def use_sqlite() -> bool:
@@ -80,6 +90,22 @@ class Config:
     def is_dev() -> bool:
         """Dev mode enables verbose logging."""
         return os.getenv("DEV_MODE", "false").lower() == "true"
+
+    # === Vision Cache ===
+    @staticmethod
+    def vision_cache_enabled() -> bool:
+        """Enable Vision API response caching."""
+        return os.getenv("VISION_CACHE_ENABLED", "false").lower() == "true"
+
+    @staticmethod
+    def vision_cache_ttl_days() -> int:
+        """Vision cache TTL in days (0 = no expiry)."""
+        return int(os.getenv("VISION_CACHE_TTL_DAYS", "7"))
+
+    @staticmethod
+    def vision_cache_max_size_mb() -> int:
+        """Maximum vision cache size in MB before LRU eviction."""
+        return int(os.getenv("VISION_CACHE_MAX_SIZE_MB", "500"))
 
     # === Security ===
     MAX_IMAGE_SIZE_MB = 10

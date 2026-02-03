@@ -92,10 +92,16 @@ class IngestionPipeline:
             if stats.records_read % 10000 == 0:
                 logger.info(f"Processed {stats.records_read} records...")
 
-        # Write to database
+        # Write to database with transaction safety
         if not dry_run:
-            self._write_to_database(stats)
-            self._log_ingestion(source_name, file_hash, stats)
+            # Log ingestion as 'in_progress' before write to prevent orphaned data
+            self._log_ingestion_start(source_name, file_hash)
+            try:
+                self._write_to_database(stats)
+                self._log_ingestion_complete(source_name, file_hash, stats)
+            except Exception:
+                self._log_ingestion_failed(source_name, file_hash)
+                raise
 
         return stats
 
@@ -142,6 +148,7 @@ class IngestionPipeline:
                 "country": entity.country,
                 "varietal": entity.varietal,
                 "aliases": list(entity.aliases),
+                "sources": entity.original_ratings,  # Preserve source provenance
             })
 
         inserted, skipped = self.repository.bulk_insert(wines, self.batch_size)
@@ -151,32 +158,60 @@ class IngestionPipeline:
         stats.records_skipped += skipped
 
     def _already_ingested(self, source_name: str, file_hash: str) -> bool:
-        """Check if this source/hash was already ingested."""
+        """Check if this source/hash was already successfully ingested."""
         conn = self.repository._get_connection()
         cursor = conn.cursor()
         cursor.execute("""
             SELECT 1 FROM ingestion_log
-            WHERE source_name = ? AND file_hash = ?
+            WHERE source_name = ? AND file_hash = ? AND status = 'complete'
             LIMIT 1
         """, (source_name, file_hash))
         return cursor.fetchone() is not None
 
-    def _log_ingestion(self, source_name: str, file_hash: Optional[str], stats: IngestionStats):
-        """Log ingestion to database."""
+    def _log_ingestion_start(self, source_name: str, file_hash: Optional[str]):
+        """Log ingestion start with 'in_progress' status."""
+        conn = self.repository._get_connection()
+        cursor = conn.cursor()
+        # Delete any previous in_progress or failed entries for this source/hash
+        cursor.execute("""
+            DELETE FROM ingestion_log
+            WHERE source_name = ? AND file_hash = ? AND status IN ('in_progress', 'failed')
+        """, (source_name, file_hash or ""))
+        cursor.execute("""
+            INSERT INTO ingestion_log
+            (source_name, file_hash, records_processed, records_added, records_updated, records_skipped, status)
+            VALUES (?, ?, 0, 0, 0, 0, 'in_progress')
+        """, (source_name, file_hash or ""))
+        conn.commit()
+
+    def _log_ingestion_complete(self, source_name: str, file_hash: Optional[str], stats: IngestionStats):
+        """Update ingestion log to 'complete' with final stats."""
         conn = self.repository._get_connection()
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO ingestion_log
-            (source_name, file_hash, records_processed, records_added, records_updated, records_skipped)
-            VALUES (?, ?, ?, ?, ?, ?)
+            UPDATE ingestion_log
+            SET records_processed = ?, records_added = ?, records_updated = ?,
+                records_skipped = ?, status = 'complete'
+            WHERE source_name = ? AND file_hash = ? AND status = 'in_progress'
         """, (
-            source_name,
-            file_hash or "",
             stats.records_processed,
             stats.records_added,
             stats.records_updated,
             stats.records_skipped,
+            source_name,
+            file_hash or "",
         ))
+        conn.commit()
+
+    def _log_ingestion_failed(self, source_name: str, file_hash: Optional[str]):
+        """Mark ingestion as failed."""
+        conn = self.repository._get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE ingestion_log
+            SET status = 'failed'
+            WHERE source_name = ? AND file_hash = ? AND status = 'in_progress'
+        """, (source_name, file_hash or ""))
         conn.commit()
 
     def preview(

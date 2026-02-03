@@ -36,11 +36,57 @@ SOURCES = {
 }
 
 
+def validate_source_files(source_name: str) -> list[str]:
+    """
+    Validate that required files exist for a data source.
+
+    Returns list of missing file paths (empty if all exist).
+    """
+    missing = []
+
+    if source_name == "xwines":
+        wines_path = backend_path / "../raw-data/archive/XWines_Slim_1K_wines.csv"
+        ratings_path = backend_path / "../raw-data/archive/XWines_Slim_150K_ratings.csv"
+        if not wines_path.exists():
+            missing.append(str(wines_path))
+        if not ratings_path.exists():
+            missing.append(str(ratings_path))
+
+    elif source_name == "xwines_full":
+        wines_path = backend_path / "../raw-data/xwines_full_drive/last/XWines_Full_100K_wines.csv"
+        ratings_path = backend_path / "../raw-data/xwines_full_drive/last/XWines_Full_21M_ratings.csv"
+        if not wines_path.exists():
+            missing.append(str(wines_path))
+        if not ratings_path.exists():
+            missing.append(str(ratings_path))
+
+    elif source_name == "vivino_global":
+        data_dir = backend_path / "../raw-data/vivino-scraped"
+        if not data_dir.exists():
+            missing.append(str(data_dir))
+
+    elif source_name in SOURCES:
+        config_path = backend_path / SOURCES[source_name]
+        if not config_path.exists():
+            missing.append(str(config_path))
+
+    return missing
+
+
 def get_adapter(source_name: str):
     """Get adapter for a data source."""
     if source_name not in SOURCES:
         available = ", ".join(SOURCES.keys())
         raise ValueError(f"Unknown source: {source_name}. Available: {available}")
+
+    # Validate files exist before creating adapter
+    missing = validate_source_files(source_name)
+    if missing:
+        print(f"\nError: Required files not found for '{source_name}':")
+        for path in missing:
+            print(f"  - {path}")
+        print("\nSee raw-data/README.md for instructions on downloading datasets.")
+        raise FileNotFoundError(f"Missing data files for {source_name}")
 
     if source_name == "xwines":
         from app.ingestion.adapters.xwines_adapter import XWinesAdapter

@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS ingestion_log (
     records_added INTEGER NOT NULL,
     records_updated INTEGER NOT NULL,
     records_skipped INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'complete',  -- 'in_progress', 'complete', 'failed'
     run_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(source_name, file_hash)
 );
@@ -77,6 +78,39 @@ CREATE TRIGGER IF NOT EXISTS wines_au AFTER UPDATE ON wines BEGIN
     VALUES ('delete', old.id, old.canonical_name, '', old.region, old.winery, old.varietal);
     INSERT INTO wine_fts(rowid, canonical_name, aliases, region, winery, varietal)
     VALUES (new.id, new.canonical_name, '', new.region, new.winery, new.varietal);
+END;
+
+-- Triggers to sync wine_aliases with FTS5 index
+-- When an alias is added, rebuild the FTS entry for that wine with all aliases
+CREATE TRIGGER IF NOT EXISTS wine_aliases_ai AFTER INSERT ON wine_aliases BEGIN
+    -- Delete existing FTS entry
+    INSERT INTO wine_fts(wine_fts, rowid, canonical_name, aliases, region, winery, varietal)
+    SELECT 'delete', w.id, w.canonical_name,
+           COALESCE((SELECT GROUP_CONCAT(alias_name, ' ') FROM wine_aliases WHERE wine_id = w.id AND id != new.id), ''),
+           w.region, w.winery, w.varietal
+    FROM wines w WHERE w.id = new.wine_id;
+    -- Insert updated FTS entry with all aliases
+    INSERT INTO wine_fts(rowid, canonical_name, aliases, region, winery, varietal)
+    SELECT w.id, w.canonical_name,
+           COALESCE((SELECT GROUP_CONCAT(alias_name, ' ') FROM wine_aliases WHERE wine_id = w.id), ''),
+           w.region, w.winery, w.varietal
+    FROM wines w WHERE w.id = new.wine_id;
+END;
+
+-- When an alias is deleted, rebuild the FTS entry without that alias
+CREATE TRIGGER IF NOT EXISTS wine_aliases_ad AFTER DELETE ON wine_aliases BEGIN
+    -- Delete existing FTS entry
+    INSERT INTO wine_fts(wine_fts, rowid, canonical_name, aliases, region, winery, varietal)
+    SELECT 'delete', w.id, w.canonical_name,
+           COALESCE((SELECT GROUP_CONCAT(alias_name, ' ') FROM wine_aliases WHERE wine_id = w.id), ''),
+           w.region, w.winery, w.varietal
+    FROM wines w WHERE w.id = old.wine_id;
+    -- Insert updated FTS entry
+    INSERT INTO wine_fts(rowid, canonical_name, aliases, region, winery, varietal)
+    SELECT w.id, w.canonical_name,
+           COALESCE((SELECT GROUP_CONCAT(alias_name, ' ') FROM wine_aliases WHERE wine_id = w.id), ''),
+           w.region, w.winery, w.varietal
+    FROM wines w WHERE w.id = old.wine_id;
 END;
 
 -- LLM-estimated ratings cache for wines not in database

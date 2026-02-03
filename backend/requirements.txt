@@ -14,6 +14,8 @@ google-cloud-vision==3.5.0
 rapidfuzz>=3.0.0
 jellyfish>=1.0.0
 
-# LLM (Claude for OCR normalization in prod, Gemini as fallback)
+# LLM (unified interface with automatic fallbacks)
+litellm>=1.40.0
+# Keep direct SDKs as optional dependencies (for compatibility/testing)
 anthropic>=0.30.0
 google-genai>=1.0.0

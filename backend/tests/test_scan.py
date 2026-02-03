@@ -152,6 +152,29 @@ class TestScanEndpoint:
         assert response.status_code == 400
         assert "Invalid image type" in response.json()["detail"]
 
+    def test_scan_accepts_heic_content_type(self):
+        """Test that HEIC content type is accepted (content type validation)."""
+        # Use a valid JPEG as the payload - we're testing content type acceptance,
+        # not actual HEIC conversion (which requires a real HEIC file)
+        image = create_test_image()
+        response = client.post(
+            "/scan?mock_scenario=full_shelf",
+            files={"image": ("test.heic", image, "image/heic")}
+        )
+
+        # Should accept the content type (mock scenario bypasses actual processing)
+        assert response.status_code == 200
+
+    def test_scan_accepts_heif_content_type(self):
+        """Test that HEIF content type is accepted (content type validation)."""
+        image = create_test_image()
+        response = client.post(
+            "/scan?mock_scenario=full_shelf",
+            files={"image": ("test.heif", image, "image/heif")}
+        )
+
+        assert response.status_code == 200
+
 
 class TestHealthEndpoint:
     """Tests for GET /health endpoint."""

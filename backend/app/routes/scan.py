@@ -5,12 +5,15 @@ Receives an image and returns wine detection results.
 Uses tiered recognition pipeline: fuzzy match → LLM fallback.
 """
 
+import io
 import logging
 import uuid
 from functools import lru_cache
 from typing import Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from PIL import Image
+from pillow_heif import register_heif_opener
 
 from ..config import Config
 from ..mocks.fixtures import get_mock_response
@@ -22,6 +25,37 @@ from ..services.wine_matcher import WineMatcher
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+# Register HEIF/HEIC opener with Pillow
+register_heif_opener()
+
+
+# === Image Conversion ===
+
+
+def convert_heic_to_jpeg(image_bytes: bytes, content_type: str) -> bytes:
+    """
+    Convert HEIC/HEIF images to JPEG. Pass through other formats unchanged.
+
+    Args:
+        image_bytes: Raw image bytes
+        content_type: MIME type of the image
+
+    Returns:
+        JPEG bytes if HEIC/HEIF, otherwise original bytes
+    """
+    if content_type not in ("image/heic", "image/heif"):
+        return image_bytes
+
+    img = Image.open(io.BytesIO(image_bytes))
+
+    # Convert to RGB (HEIC may have alpha channel)
+    if img.mode in ("RGBA", "P"):
+        img = img.convert("RGB")
+
+    output = io.BytesIO()
+    img.save(output, format="JPEG", quality=90)
+    return output.getvalue()
 
 
 # === Dependency Injection ===
@@ -95,6 +129,9 @@ async def scan_shelf(
     except IOError as e:
         logger.error(f"Failed to read uploaded image: {e}")
         raise HTTPException(status_code=400, detail="Failed to read image file")
+
+    # Convert HEIC/HEIF to JPEG
+    image_bytes = convert_heic_to_jpeg(image_bytes, image.content_type)
 
     # Validate file size
     if len(image_bytes) > Config.MAX_IMAGE_SIZE_BYTES:
@@ -383,6 +420,9 @@ async def scan_debug(
     except IOError as e:
         logger.error(f"Failed to read uploaded image for debug: {e}")
         raise HTTPException(status_code=400, detail="Failed to read image file")
+
+    # Convert HEIC/HEIF to JPEG
+    image_bytes = convert_heic_to_jpeg(image_bytes, image.content_type)
 
     # Validate file size
     if len(image_bytes) > Config.MAX_IMAGE_SIZE_BYTES:

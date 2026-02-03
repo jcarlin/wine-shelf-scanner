@@ -84,4 +84,9 @@ class Config:
     # === Security ===
     MAX_IMAGE_SIZE_MB = 10
     MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024
-    ALLOWED_CONTENT_TYPES: List[str] = ["image/jpeg", "image/png"]
+    ALLOWED_CONTENT_TYPES: List[str] = [
+        "image/jpeg",
+        "image/png",
+        "image/heic",
+        "image/heif",
+    ]

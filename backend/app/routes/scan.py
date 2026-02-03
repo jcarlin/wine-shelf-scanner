@@ -113,11 +113,11 @@ def _process_orphaned_texts(
             # Only add if confidence is reasonable (avoid false positives)
             if match.confidence >= 0.60:
                 matches.append(FallbackWine(
-                    wine_name=match.wine_name,
+                    wine_name=match.canonical_name,
                     rating=match.rating
                 ))
                 seen_names.add(name_lower)
-                seen_names.add(match.wine_name.lower())
+                seen_names.add(match.canonical_name.lower())
 
     return matches
 

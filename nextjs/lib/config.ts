@@ -34,7 +34,7 @@ function isDebugMode(): boolean {
 /**
  * Check if mocks are enabled
  */
-function useMocks(): boolean {
+function getMocksEnabled(): boolean {
   return process.env.NEXT_PUBLIC_USE_MOCKS === 'true';
 }
 
@@ -55,7 +55,7 @@ export const Config = {
   DEBUG_MODE: isDebugMode(),
 
   /** Use mock service instead of real API */
-  USE_MOCKS: useMocks(),
+  USE_MOCKS: getMocksEnabled(),
 
   /** Mock scenario to use when USE_MOCKS is true */
   MOCK_SCENARIO: 'full_shelf' as const,

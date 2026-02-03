@@ -3,7 +3,7 @@ Tests for OCR processor.
 """
 
 import pytest
-from app.services.ocr_processor import OCRProcessor
+from app.services.ocr_processor import OCRProcessor, OCRProcessingResult, OrphanedText
 from app.services.vision import DetectedObject, TextBlock, BoundingBox
 
 
@@ -100,3 +100,80 @@ class TestOCRProcessor:
 
         assert len(result) == 1
         assert result[0].normalized_name == ""
+
+
+class TestOCRProcessorOrphanedText:
+    """Tests for orphaned text handling."""
+
+    def test_process_with_orphans_returns_both(self):
+        """Test that process_with_orphans returns bottle texts and orphaned texts."""
+        processor = OCRProcessor()
+
+        bottles = [
+            DetectedObject("Bottle", 0.95, BoundingBox(0.1, 0.2, 0.1, 0.3)),
+        ]
+
+        text_blocks = [
+            # Near the bottle
+            TextBlock("CAYMUS", BoundingBox(0.12, 0.25, 0.06, 0.04), 0.9),
+            # Far from any bottle (orphaned)
+            TextBlock("Merlot", BoundingBox(0.8, 0.8, 0.06, 0.04), 0.9),
+        ]
+
+        result = processor.process_with_orphans(bottles, text_blocks)
+
+        assert isinstance(result, OCRProcessingResult)
+        assert len(result.bottle_texts) == 1
+        assert "Caymus" in result.bottle_texts[0].normalized_name
+        # Orphaned text should be captured
+        assert len(result.orphaned_texts) >= 1
+        orphan_names = [o.normalized_name for o in result.orphaned_texts]
+        assert any("Merlot" in name for name in orphan_names)
+
+    def test_process_with_orphans_no_bottles(self):
+        """When no bottles detected, all text becomes orphaned."""
+        processor = OCRProcessor()
+
+        text_blocks = [
+            TextBlock("Cabernet", BoundingBox(0.1, 0.2, 0.06, 0.04), 0.9),
+            TextBlock("Merlot", BoundingBox(0.5, 0.5, 0.06, 0.04), 0.9),
+        ]
+
+        result = processor.process_with_orphans([], text_blocks)
+
+        assert len(result.bottle_texts) == 0
+        assert len(result.orphaned_texts) == 2
+
+    def test_process_with_orphans_all_text_assigned(self):
+        """When all text is near bottles, no orphans."""
+        processor = OCRProcessor()
+
+        bottles = [
+            DetectedObject("Bottle", 0.95, BoundingBox(0.1, 0.2, 0.15, 0.35)),
+            DetectedObject("Bottle", 0.90, BoundingBox(0.4, 0.2, 0.15, 0.35)),
+        ]
+
+        text_blocks = [
+            TextBlock("CAYMUS", BoundingBox(0.12, 0.25, 0.06, 0.04), 0.9),
+            TextBlock("OPUS ONE", BoundingBox(0.42, 0.25, 0.08, 0.04), 0.9),
+        ]
+
+        result = processor.process_with_orphans(bottles, text_blocks)
+
+        assert len(result.bottle_texts) == 2
+        assert len(result.orphaned_texts) == 0
+
+    def test_orphaned_text_filters_short_text(self):
+        """Orphaned text blocks with short normalized names are filtered out."""
+        processor = OCRProcessor()
+
+        text_blocks = [
+            TextBlock("AB", BoundingBox(0.5, 0.5, 0.02, 0.02), 0.9),  # Too short
+            TextBlock("Cabernet Sauvignon", BoundingBox(0.8, 0.8, 0.1, 0.04), 0.9),
+        ]
+
+        result = processor.process_with_orphans([], text_blocks)
+
+        # Only the longer text should be in orphans
+        assert len(result.orphaned_texts) == 1
+        assert "Cabernet" in result.orphaned_texts[0].normalized_name

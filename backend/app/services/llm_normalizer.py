@@ -244,9 +244,6 @@ For ALL wines where wine_name is not null, provide:
 - brand: The producer/winery name (e.g., "Caymus", "Château Margaux")
 - region: The wine region (e.g., "Napa Valley", "Burgundy", "Marlborough")
 - varietal: The grape variety (e.g., "Cabernet Sauvignon", "Pinot Noir", "Chardonnay")
-- blurb: 2-3 sentences about the wine or winery - include tasting notes, history, or what makes it special
-- review_count: Estimated number of reviews (based on wine popularity, 50-50000 range)
-- review_snippets: Array of 2-3 short review quotes (be creative but realistic)
 
 For wines NOT in our database (when db_candidate is null or match is invalid):
 - Also provide estimated_rating (1.0-5.0) based on your wine knowledge
@@ -254,12 +251,11 @@ For wines NOT in our database (when db_candidate is null or match is invalid):
 
 ## OUTPUT
 
-Return a JSON array with one result per input item (same order):
+Return a JSON array with one result per input item (same order). Keep responses concise:
 [
-  {"index": 0, "is_valid_match": true, "wine_name": "Caymus Cabernet Sauvignon", "confidence": 0.95, "reasoning": "...", "wine_type": "Red", "brand": "Caymus Vineyards", "region": "Napa Valley", "varietal": "Cabernet Sauvignon", "blurb": "Caymus is one of Napa Valley's most celebrated wineries, founded in 1972 by the Wagner family. Their Cabernet Sauvignon is known for its rich, velvety texture with layers of dark fruit, cocoa, and vanilla from French oak aging.", "review_count": 12500, "review_snippets": ["Silky smooth with notes of blackberry", "A Napa classic that never disappoints"]},
-  {"index": 1, "is_valid_match": false, "wine_name": "Wente Morning Fog Chardonnay", "confidence": 0.85, "reasoning": "Valid wine but not in database", "estimated_rating": 3.9, "wine_type": "White", "brand": "Wente Vineyards", "region": "Livermore Valley", "varietal": "Chardonnay", "blurb": "Wente Vineyards is America's oldest continuously operated family winery, established in 1883 in Livermore Valley. Their Morning Fog Chardonnay offers bright citrus and green apple notes with a touch of vanilla from subtle oak influence.", "review_count": 3200, "review_snippets": ["Crisp and refreshing", "Great value Chardonnay"]},
-  {"index": 2, "is_valid_match": false, "wine_name": null, "confidence": 0.0, "reasoning": "No valid wine name found"},
-  ...
+  {"index": 0, "is_valid_match": true, "wine_name": "Caymus Cabernet Sauvignon", "confidence": 0.95, "reasoning": "Match confirmed", "wine_type": "Red", "brand": "Caymus Vineyards", "region": "Napa Valley", "varietal": "Cabernet Sauvignon"},
+  {"index": 1, "is_valid_match": false, "wine_name": "Wente Morning Fog Chardonnay", "confidence": 0.85, "reasoning": "Valid wine but not in database", "estimated_rating": 3.9, "wine_type": "White", "brand": "Wente Vineyards", "region": "Livermore Valley", "varietal": "Chardonnay"},
+  {"index": 2, "is_valid_match": false, "wine_name": null, "confidence": 0.0, "reasoning": "No valid wine name found"}
 ]"""
 
     SYSTEM_PROMPT = """You are a wine label text analyzer.
@@ -771,7 +767,7 @@ Return JSON: {"wine_name": "...", "confidence": 0.0-1.0, "is_wine": true/false, 
                 fallbacks=self.models[1:] if len(self.models) > 1 else None,
                 num_retries=self.num_retries,
                 timeout=self.timeout,
-                max_tokens=450 * len(items),  # Increased for expanded metadata + longer blurbs
+                max_tokens=150 * len(items),  # Reduced: core metadata only, no blurbs
             )
 
             return self._parse_batch_response(

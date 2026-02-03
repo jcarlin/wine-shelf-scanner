@@ -295,8 +295,9 @@ class ClaudeVisionService:
     Used as a final fallback when OCR + database matching fails.
     """
 
-    # Model to use for vision (claude-3-5-sonnet is best for vision tasks)
-    DEFAULT_MODEL = "claude-sonnet-4-20250514"
+    # Model to use for vision - using Haiku for speed (3-5x faster than Sonnet)
+    # Haiku is sufficient for reading wine labels and basic identification
+    DEFAULT_MODEL = "claude-3-haiku-20240307"
 
     def __init__(
         self,

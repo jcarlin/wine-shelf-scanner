@@ -17,16 +17,17 @@ class Config:
     VISIBILITY_THRESHOLD = 0.45       # Show in results (opacity 0.5)
     TAPPABLE_THRESHOLD = 0.65         # Enable detail tap (opacity 0.75)
     HIGH_CONFIDENCE_THRESHOLD = 0.85  # "Widely rated" label (opacity 1.0)
-    FUZZY_CONFIDENCE_THRESHOLD = 0.7  # Trigger LLM fallback
+    FUZZY_CONFIDENCE_THRESHOLD = 0.75 # Accept fuzzy match (higher = fewer false positives)
     FUZZY_EARLY_EXIT = 0.95           # Skip remaining candidates
 
     # === Fuzzy Matching Weights ===
     # Multi-algorithm scoring: ratio + partial_ratio + token_sort_ratio
-    WEIGHT_RATIO = 0.30
-    WEIGHT_PARTIAL = 0.50
-    WEIGHT_TOKEN_SORT = 0.20
-    PHONETIC_BONUS = 0.10
-    MIN_SIMILARITY = 0.6
+    # Higher ratio weight favors exact string matches over partial matches
+    WEIGHT_RATIO = 0.45
+    WEIGHT_PARTIAL = 0.30
+    WEIGHT_TOKEN_SORT = 0.25
+    PHONETIC_BONUS = 0.05
+    MIN_SIMILARITY = 0.65
 
     # === OCR Processing ===
     PROXIMITY_THRESHOLD = 0.20  # Text must be within this distance of bottle

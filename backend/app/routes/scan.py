@@ -151,9 +151,11 @@ async def process_image(
         logger.debug(f"[{image_id}] Raw OCR: {vision_result.raw_text[:500] if vision_result.raw_text else 'None'}...")
 
     if not vision_result.objects:
-        # No bottles detected - return fallback only
-        logger.info(f"[{image_id}] No bottles detected, returning fallback")
-        return _fallback_response(image_id, wine_matcher)
+        # No bottles detected - try matching raw OCR text directly
+        logger.info(f"[{image_id}] No bottles detected, trying direct OCR match")
+        return await _direct_ocr_response(
+            image_id, vision_result, wine_matcher, use_llm, debug_mode
+        )
 
     # Step 2: Group text to bottles and normalize
     ocr_processor = OCRProcessor()
@@ -230,6 +232,106 @@ async def process_image(
         results=results,
         fallback_list=fallback,
         debug=response_debug
+    )
+
+
+async def _direct_ocr_response(
+    image_id: str,
+    vision_result,
+    wine_matcher: WineMatcher,
+    use_llm: bool,
+    debug_mode: bool
+) -> ScanResponse:
+    """
+    Handle case where no bottles detected but OCR text exists.
+
+    Creates a synthetic bottle from all the text and tries to match it.
+    This handles close-up label shots where bottle shape isn't visible.
+    """
+    from ..services.ocr_processor import BottleText
+    from ..services.vision import DetectedObject, BoundingBox as VisionBBox
+
+    # Combine all text blocks
+    all_text = ' '.join([tb.text for tb in vision_result.text_blocks])
+    logger.info(f"[{image_id}] Direct OCR text: {all_text[:100]}...")
+
+    if not all_text or len(all_text.strip()) < 3:
+        return _fallback_response(image_id, wine_matcher)
+
+    # Create a synthetic bottle covering the whole image
+    synthetic_bottle = DetectedObject(
+        name="Bottle",
+        confidence=0.9,  # Slightly lower since we didn't detect it
+        bbox=VisionBBox(x=0.0, y=0.0, width=1.0, height=1.0)
+    )
+
+    # Process OCR
+    ocr_processor = OCRProcessor()
+    normalized_text = ocr_processor._normalize_text(all_text)
+
+    if not normalized_text or len(normalized_text.strip()) < 3:
+        return _fallback_response(image_id, wine_matcher)
+
+    # Create bottle text
+    bottle_text = BottleText(
+        bottle=synthetic_bottle,
+        text_fragments=[all_text],
+        combined_text=all_text,
+        normalized_name=normalized_text
+    )
+
+    # Run pipeline
+    enable_debug = debug_mode or Config.is_dev()
+    pipeline = get_pipeline(use_llm=use_llm, debug_mode=enable_debug)
+    recognized = await pipeline.recognize([bottle_text])
+
+    logger.info(f"[{image_id}] Direct OCR recognized {len(recognized)} wines")
+
+    results: list[WineResult] = []
+    fallback: list[FallbackWine] = []
+
+    for wine in recognized:
+        if wine.confidence >= Config.VISIBILITY_THRESHOLD:
+            results.append(WineResult(
+                wine_name=wine.wine_name,
+                rating=wine.rating,
+                confidence=wine.confidence,
+                bbox=BoundingBox(
+                    x=wine.bottle_text.bottle.bbox.x,
+                    y=wine.bottle_text.bottle.bbox.y,
+                    width=wine.bottle_text.bottle.bbox.width,
+                    height=wine.bottle_text.bottle.bbox.height
+                ),
+                identified=wine.identified,
+                source=wine.source,
+                rating_source=wine.rating_source
+            ))
+        elif wine.rating is not None:
+            fallback.append(FallbackWine(
+                wine_name=wine.wine_name,
+                rating=wine.rating
+            ))
+
+    # If no results, add to fallback
+    if not results and not fallback:
+        return _fallback_response(image_id, wine_matcher)
+
+    # Build debug data if requested
+    debug_data = None
+    if debug_mode:
+        debug_data = DebugData(
+            pipeline_steps=pipeline.debug_steps,
+            total_ocr_texts=1,
+            bottles_detected=0,
+            texts_matched=len([s for s in pipeline.debug_steps if s.included_in_results]),
+            llm_calls_made=pipeline.llm_call_count
+        )
+
+    return ScanResponse(
+        image_id=image_id,
+        results=results,
+        fallback_list=fallback,
+        debug=debug_data if debug_mode else None
     )
 
 

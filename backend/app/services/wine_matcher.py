@@ -1,10 +1,10 @@
 """
 Wine name matching against ratings database.
 
-Uses exact-match-only architecture for optimal performance:
-- SQLite indexed lookups: ~0.3ms per query
-- No in-memory indexes needed
-- Instant startup
+Uses tiered matching for accuracy:
+1. Exact canonical name/alias match (confidence 1.0)
+2. FTS5 prefix match (confidence 0.9)
+3. Fuzzy match with rapidfuzz (confidence based on score)
 
 Supports both JSON and SQLite backends:
 - JSON: Legacy mode (ratings.json)
@@ -16,8 +16,47 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
+from rapidfuzz import fuzz
+import jellyfish
+
+from ..config import Config
+
 if TYPE_CHECKING:
     from .wine_repository import WineRepository
+
+
+# Generic wine terms that should not match by themselves
+# These are categories/styles, not actual wine names
+GENERIC_WINE_TERMS = {
+    # French generic terms
+    'bordeaux', 'bourgogne', 'burgundy', 'champagne', 'alsace', 'rhone',
+    'côtes', 'cotes', 'grand', 'vin', 'rouge', 'blanc', 'rosé', 'rose',
+    'brut', 'sec', 'methode', 'méthode', 'traditionnelle', 'cremant', 'crémant',
+    'appellation', 'controlee', 'contrôlée', 'origine', 'protegee', 'superieur',
+    'supérieur', 'cuvee', 'cuvée', 'reserve', 'réserve',
+    # Italian generic terms
+    'prosecco', 'spumante', 'classico', 'riserva', 'superiore',
+    # Spanish generic terms
+    'cava', 'crianza', 'reserva', 'gran',
+}
+
+
+def _is_generic_query(query: str) -> bool:
+    """
+    Check if a query consists only of generic wine terms.
+
+    Returns True if matching this query would likely produce a false positive.
+    """
+    words = set(query.lower().split())
+
+    # If all words are generic terms, reject
+    non_generic_words = words - GENERIC_WINE_TERMS
+
+    # Also filter out very short words and numbers
+    non_generic_words = {w for w in non_generic_words if len(w) >= 3 and not w.isdigit()}
+
+    # If no meaningful non-generic words remain, it's a generic query
+    return len(non_generic_words) == 0
 
 
 @dataclass
@@ -51,18 +90,19 @@ class WineMatchWithScores:
 
 class WineMatcher:
     """
-    Exact-match wine matcher for wine names.
+    Tiered wine matcher for wine names.
 
-    Uses direct SQLite indexed lookups for optimal performance:
-    - Exact name match (confidence 1.0)
-    - FTS5 prefix match for OCR fragments (confidence 0.85)
+    Uses multiple strategies for optimal accuracy:
+    1. Exact name match (confidence 1.0)
+    2. FTS5 prefix match (confidence 0.9)
+    3. Fuzzy match with rapidfuzz (confidence based on score)
     """
 
     def __init__(
         self,
         database_path: Optional[str] = None,
         repository: Optional["WineRepository"] = None,
-        use_sqlite: bool = False,
+        use_sqlite: Optional[bool] = None,
     ):
         """
         Initialize matcher with ratings database.
@@ -71,7 +111,11 @@ class WineMatcher:
             database_path: Path to ratings JSON file (legacy mode).
             repository: WineRepository instance for SQLite mode.
             use_sqlite: If True and no repository, create one automatically.
+                       Defaults to Config.use_sqlite() if not specified.
         """
+        # Default to config setting if not specified
+        if use_sqlite is None:
+            use_sqlite = Config.use_sqlite()
         self._repository = repository
         self._json_database: Optional[dict] = None
         self._name_to_wine: dict[str, dict] = {}
@@ -138,6 +182,10 @@ class WineMatcher:
         if len(query_lower) < 3:
             return None
 
+        # Skip queries that are only generic wine terms (avoid false positives)
+        if _is_generic_query(query_lower):
+            return None
+
         # Use SQLite repository if available
         if self._repository is not None:
             return self._match_sqlite(query_lower)
@@ -146,7 +194,7 @@ class WineMatcher:
         return self._match_json(query_lower)
 
     def _match_sqlite(self, query_lower: str) -> Optional[WineMatch]:
-        """Match using SQLite repository."""
+        """Match using SQLite repository with tiered approach."""
         # Step 1: Exact canonical name or alias match
         result = self._repository.find_by_name(query_lower)
         if result:
@@ -158,12 +206,120 @@ class WineMatcher:
             )
 
         # Step 2: Try FTS5 for prefix matches (handles OCR fragments)
-        results = self._repository.search_fts(query_lower, limit=1)
-        if results:
+        fts_results = self._repository.search_fts(query_lower, limit=5)
+        if fts_results:
+            # Score FTS results with fuzzy matching to pick best
+            best_match = None
+            best_score = 0.0
+            for fts_result in fts_results:
+                score = self._compute_fuzzy_score(query_lower, fts_result.canonical_name.lower())
+                if score > best_score:
+                    best_score = score
+                    best_match = fts_result
+
+            if best_match and best_score >= Config.MIN_SIMILARITY:
+                return WineMatch(
+                    canonical_name=best_match.canonical_name,
+                    rating=best_match.rating,
+                    confidence=min(0.95, best_score),  # Cap at 0.95 for FTS match
+                    source="database"
+                )
+
+        # Step 3: Fuzzy match against database candidates
+        return self._fuzzy_match_sqlite(query_lower)
+
+    def _compute_fuzzy_score(self, query: str, candidate: str) -> float:
+        """
+        Compute weighted fuzzy score using multiple algorithms.
+
+        Uses rapidfuzz for accuracy with configurable weights.
+        """
+        # Multi-algorithm scoring
+        ratio = fuzz.ratio(query, candidate) / 100.0
+        partial_ratio = fuzz.partial_ratio(query, candidate) / 100.0
+        token_sort = fuzz.token_sort_ratio(query, candidate) / 100.0
+
+        # Weighted combination
+        weighted = (
+            Config.WEIGHT_RATIO * ratio +
+            Config.WEIGHT_PARTIAL * partial_ratio +
+            Config.WEIGHT_TOKEN_SORT * token_sort
+        )
+
+        # Phonetic bonus if sounds similar
+        try:
+            query_metaphone = jellyfish.metaphone(query[:20])  # Limit for performance
+            candidate_metaphone = jellyfish.metaphone(candidate[:20])
+            if query_metaphone and candidate_metaphone:
+                if query_metaphone == candidate_metaphone:
+                    weighted += Config.PHONETIC_BONUS
+                elif query_metaphone[:3] == candidate_metaphone[:3]:
+                    weighted += Config.PHONETIC_BONUS / 2
+        except Exception:
+            pass  # Skip phonetic bonus on error
+
+        return min(1.0, weighted)
+
+    def _fuzzy_match_sqlite(self, query_lower: str) -> Optional[WineMatch]:
+        """
+        Fuzzy match against database using rapidfuzz.
+
+        Performance-optimized approach:
+        1. Use FTS5 OR query to find broader set of candidates
+        2. Score only those candidates with fuzzy matching
+        3. Skip full database scan (too slow for 192K wines)
+        """
+        # Try broader FTS5 search first (any word match, not all)
+        conn = self._repository._get_connection()
+        cursor = conn.cursor()
+
+        # Build OR query: "big smooth zin" -> "big" OR "smooth" OR "zin"
+        words = [w for w in query_lower.split() if len(w) >= 3]
+        if not words:
+            return None
+
+        # Use FTS5 OR query for broader matching
+        fts_query = ' OR '.join(f'"{w}"*' for w in words[:5])  # Limit words
+        try:
+            cursor.execute("""
+                SELECT w.id, w.canonical_name, w.rating
+                FROM wines w
+                JOIN wine_fts ON w.id = wine_fts.rowid
+                WHERE wine_fts MATCH ?
+                ORDER BY rank
+                LIMIT 50
+            """, (fts_query,))
+
+            candidates = [(row[1], row[0], row[2]) for row in cursor.fetchall()]
+        except Exception:
+            # FTS query failed, return None
+            return None
+
+        if not candidates:
+            return None
+
+        # Score candidates with full fuzzy algorithm
+        best_match = None
+        best_score = 0.0
+
+        for name, wine_id, rating in candidates:
+            score = self._compute_fuzzy_score(query_lower, name.lower())
+            if score > best_score:
+                best_score = score
+                best_match = (name, wine_id, rating)
+
+        if best_match and best_score >= Config.FUZZY_CONFIDENCE_THRESHOLD:
+            name, wine_id, rating = best_match
+
+            # Avoid matching to wines that are mostly generic terms
+            # (e.g., matching "Bordeaux Rouge" to a wine named "Bordeaux Rouge Michel Lynch")
+            if _is_generic_query(name):
+                return None
+
             return WineMatch(
-                canonical_name=results[0].canonical_name,
-                rating=results[0].rating,
-                confidence=0.85,  # Slightly lower for FTS match
+                canonical_name=name,
+                rating=rating,
+                confidence=best_score,
                 source="database"
             )
 

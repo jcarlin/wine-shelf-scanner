@@ -150,7 +150,41 @@ class OCRProcessor:
         'reserve', 'special', 'edition', 'limited', 'select', 'premium',
         'estate', 'bottled', 'produced', 'imported', 'product', 'contains',
         'sulfites', 'wine', 'vino', 'vin', 'winery', 'vineyard', 'cellars',
-        'vintage', 'aged', 'barrel', 'oak', 'months', 'years'
+        'vintage', 'aged', 'barrel', 'oak', 'months', 'years',
+        # Region names that appear on labels but shouldn't be in wine name
+        'napa', 'sonoma', 'lodi', 'paso', 'robles', 'california', 'oregon',
+        'washington', 'mendocino', 'monterey', 'valley', 'county', 'coast',
+        'central', 'north', 'south', 'eastern', 'western', 'appellation',
+        # French regions/terms (very common on labels)
+        'bordeaux', 'bourgogne', 'burgundy', 'loire', 'rhone', 'alsace',
+        'champagne', 'provence', 'languedoc', 'roussillon', 'grand', 'cru',
+        'premier', 'appellation', 'controlee', 'contrôlée', 'origine', 'protegee',
+        'côtes', 'cotes', 'santenay', 'beaune', 'nuits', 'meursault', 'pommard',
+        'gevrey', 'chambertin', 'volnay', 'puligny', 'chassagne', 'montrachet',
+        'saint', 'st', 'julien', 'estephe', 'emilion', 'médoc', 'medoc', 'pauillac',
+        'margaux', 'haut', 'graves', 'pomerol', 'fronsac', 'pessac', 'léognan',
+        # Italian terms
+        'toscana', 'tuscany', 'piemonte', 'piedmont', 'veneto', 'sicilia',
+        'docg', 'doc', 'igt', 'classico', 'superiore', 'riserva',
+        # Spanish terms
+        'rioja', 'ribera', 'duero', 'priorat', 'rueda', 'denominacion',
+        'crianza', 'reserva', 'gran',
+        # Australian regions
+        'barossa', 'mclaren', 'vale', 'hunter', 'clare', 'margaret', 'river',
+        # Common label words to remove
+        'vinted', 'grown', 'made', 'crafted', 'selected', 'from', 'the',
+        'and', 'for', 'with', 'our', 'this', 'that', 'by', 'of', 'in',
+        # Generic wine terms that appear on many labels (not wine names)
+        'grand', 'vin', 'rouge', 'blanc', 'rose', 'rosé', 'sec', 'demi-sec', 'brut',
+        'extra', 'methode', 'méthode', 'traditionnelle', 'traditionnel', 'naturel',
+        'millesime', 'millésime', 'millesimé', 'mis', 'bouteille', 'au', 'domaine',
+        'mousseux', 'petillant', 'pétillant', 'cremant', 'crémant', 'cava',
+        'spumante', 'prosecco', 'franciacorta', 'sparkling',
+        # French connectors
+        'de', 'du', 'des', 'le', 'la', 'les', 'et', 'en', 'sur',
+        # Additional generic terms
+        'qualité', 'qualite', 'quality', 'superieur', 'supérieur', 'cuvee', 'cuvée',
+        'chateau', 'château', 'vieilles', 'vignes', 'terroir', 'aoc', 'aop',
     }
 
     def __init__(

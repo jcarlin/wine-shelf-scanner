@@ -11,7 +11,7 @@ import uuid
 from functools import lru_cache
 from typing import Optional
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile
 from PIL import Image
 from pillow_heif import register_heif_opener
 
@@ -455,6 +455,59 @@ async def scan_debug(
 async def health_check():
     """Health check endpoint."""
     return {"status": "healthy"}
+
+
+@router.post("/preview")
+async def preview_image(
+    image: UploadFile = File(..., description="Image to convert for preview"),
+) -> Response:
+    """
+    Convert an image to JPEG for preview display.
+
+    Useful for HEIC files that browsers can't display natively.
+    Returns the image as JPEG bytes with appropriate content type.
+    """
+    # Validate content type
+    if image.content_type not in Config.ALLOWED_CONTENT_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid image type."
+        )
+
+    try:
+        image_bytes = await image.read()
+    except IOError as e:
+        logger.error(f"Failed to read uploaded image for preview: {e}")
+        raise HTTPException(status_code=400, detail="Failed to read image file")
+
+    # Validate file size
+    if len(image_bytes) > Config.MAX_IMAGE_SIZE_BYTES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Image too large. Maximum size is {Config.MAX_IMAGE_SIZE_MB}MB."
+        )
+
+    try:
+        # Convert to JPEG (handles HEIC/HEIF, passes through JPEG/PNG)
+        img = Image.open(io.BytesIO(image_bytes))
+
+        # Convert to RGB if needed
+        if img.mode in ("RGBA", "P"):
+            img = img.convert("RGB")
+
+        # Save as JPEG
+        output = io.BytesIO()
+        img.save(output, format="JPEG", quality=85)
+        jpeg_bytes = output.getvalue()
+
+        return Response(
+            content=jpeg_bytes,
+            media_type="image/jpeg",
+            headers={"Cache-Control": "no-cache"}
+        )
+    except Exception as e:
+        logger.error(f"Failed to convert image for preview: {e}", exc_info=True)
+        raise HTTPException(status_code=400, detail="Failed to process image")
 
 
 @router.get("/cache/stats")

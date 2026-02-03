@@ -113,6 +113,8 @@ class BatchValidationResult:
     # Extended metadata from LLM
     wine_type: Optional[str] = None  # Red, White, Rosé, Sparkling, etc.
     brand: Optional[str] = None  # Winery/producer name
+    region: Optional[str] = None  # Wine region (Napa Valley, Burgundy, etc.)
+    varietal: Optional[str] = None  # Grape variety (Cabernet Sauvignon, Pinot Noir, etc.)
     blurb: Optional[str] = None  # 1-2 sentence description
     review_count: Optional[int] = None  # Estimated review count
     review_snippets: Optional[list[str]] = None  # Sample review quotes
@@ -216,7 +218,9 @@ NO CANDIDATE:
 For ALL wines where wine_name is not null, provide:
 - wine_type: "Red", "White", "Rosé", "Sparkling", "Dessert", or "Fortified"
 - brand: The producer/winery name (e.g., "Caymus", "Château Margaux")
-- blurb: A brief 1-2 sentence description of the wine or producer
+- region: The wine region (e.g., "Napa Valley", "Burgundy", "Marlborough")
+- varietal: The grape variety (e.g., "Cabernet Sauvignon", "Pinot Noir", "Chardonnay")
+- blurb: 2-3 sentences about the wine or winery - include tasting notes, history, or what makes it special
 - review_count: Estimated number of reviews (based on wine popularity, 50-50000 range)
 - review_snippets: Array of 2-3 short review quotes (be creative but realistic)
 
@@ -228,8 +232,9 @@ For wines NOT in our database (when db_candidate is null or match is invalid):
 
 Return a JSON array with one result per input item (same order):
 [
-  {"index": 0, "is_valid_match": true, "wine_name": "Caymus Cabernet Sauvignon", "confidence": 0.95, "reasoning": "...", "wine_type": "Red", "brand": "Caymus Vineyards", "blurb": "Iconic Napa Valley Cabernet known for rich, velvety texture and dark fruit flavors.", "review_count": 12500, "review_snippets": ["Silky smooth with notes of blackberry", "A Napa classic that never disappoints"]},
-  {"index": 1, "is_valid_match": false, "wine_name": null, "confidence": 0.0, "reasoning": "No valid wine name found"},
+  {"index": 0, "is_valid_match": true, "wine_name": "Caymus Cabernet Sauvignon", "confidence": 0.95, "reasoning": "...", "wine_type": "Red", "brand": "Caymus Vineyards", "region": "Napa Valley", "varietal": "Cabernet Sauvignon", "blurb": "Caymus is one of Napa Valley's most celebrated wineries, founded in 1972 by the Wagner family. Their Cabernet Sauvignon is known for its rich, velvety texture with layers of dark fruit, cocoa, and vanilla from French oak aging.", "review_count": 12500, "review_snippets": ["Silky smooth with notes of blackberry", "A Napa classic that never disappoints"]},
+  {"index": 1, "is_valid_match": false, "wine_name": "Wente Morning Fog Chardonnay", "confidence": 0.85, "reasoning": "Valid wine but not in database", "estimated_rating": 3.9, "wine_type": "White", "brand": "Wente Vineyards", "region": "Livermore Valley", "varietal": "Chardonnay", "blurb": "Wente Vineyards is America's oldest continuously operated family winery, established in 1883 in Livermore Valley. Their Morning Fog Chardonnay offers bright citrus and green apple notes with a touch of vanilla from subtle oak influence.", "review_count": 3200, "review_snippets": ["Crisp and refreshing", "Great value Chardonnay"]},
+  {"index": 2, "is_valid_match": false, "wine_name": null, "confidence": 0.0, "reasoning": "No valid wine name found"},
   ...
 ]"""
 
@@ -465,6 +470,8 @@ Confidence:
                         estimated_rating=estimated_rating,
                         wine_type=result_data.get("wine_type"),
                         brand=result_data.get("brand"),
+                        region=result_data.get("region"),
+                        varietal=result_data.get("varietal"),
                         blurb=result_data.get("blurb"),
                         review_count=review_count,
                         review_snippets=review_snippets,
@@ -734,7 +741,7 @@ Return JSON: {"wine_name": "...", "confidence": 0.0-1.0, "is_wine": true/false, 
                 fallbacks=self.models[1:] if len(self.models) > 1 else None,
                 num_retries=self.num_retries,
                 timeout=self.timeout,
-                max_tokens=150 * len(items),
+                max_tokens=450 * len(items),  # Increased for expanded metadata + longer blurbs
             )
 
             return self._parse_batch_response(

@@ -171,7 +171,7 @@ class RecognitionPipeline:
             debug_mode: If True, collect debug info for each step
         """
         self.wine_matcher = wine_matcher or WineMatcher()
-        self.normalizer = normalizer or get_normalizer(use_mock=not use_llm, provider=llm_provider)
+        self.normalizer = normalizer or get_normalizer(use_mock=not use_llm)
         self.use_llm = use_llm
         self.debug_mode = debug_mode
         # Debug data collection (encapsulated in DebugCollector)
@@ -497,6 +497,8 @@ class RecognitionPipeline:
                     rating_source=rating_source,
                     wine_type=validation.wine_type,
                     brand=validation.brand,
+                    region=validation.region,
+                    varietal=validation.varietal,
                     blurb=validation.blurb,
                     review_count=validation.review_count,
                     review_snippets=validation.review_snippets,

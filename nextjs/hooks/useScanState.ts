@@ -10,24 +10,33 @@ export function useScanState() {
   const [debugMode, setDebugMode] = useState(false);
 
   const processImage = useCallback(async (file: File) => {
-    // Create displayable URL first - converts HEIC to JPEG if needed
-    const imageUri = await getDisplayableImageUrl(file);
+    let imageUri: string | null = null;
 
-    // Set processing state WITH the image URI so we can show it
+    // Create displayable URL - converts HEIC to JPEG if needed
+    // If conversion fails (unsupported HEIC variant), we continue without preview
+    try {
+      imageUri = await getDisplayableImageUrl(file);
+    } catch (err) {
+      console.warn('Could not create preview (HEIC conversion failed), continuing with scan:', err);
+    }
+
+    // Set processing state - imageUri may be null if HEIC conversion failed
     setState({ status: 'processing', imageUri });
 
     const result = await scanImage(file, { debug: debugMode });
 
     if (result.success) {
-      setState({ status: 'results', response: result.data, imageUri });
+      setState({ status: 'results', response: result.data, imageUri: imageUri || '' });
     } else {
-      URL.revokeObjectURL(imageUri);
+      if (imageUri) URL.revokeObjectURL(imageUri);
       setState({ status: 'error', message: result.error.message });
     }
   }, [debugMode]);
 
   const reset = useCallback(() => {
-    if (state.status === 'results' || state.status === 'processing') {
+    if (state.status === 'results' && state.imageUri) {
+      URL.revokeObjectURL(state.imageUri);
+    } else if (state.status === 'processing' && state.imageUri) {
       URL.revokeObjectURL(state.imageUri);
     }
     setState({ status: 'idle' });

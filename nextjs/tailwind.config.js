@@ -24,6 +24,7 @@ module.exports = {
         'fade-in': 'fadeIn 0.3s ease-in-out',
         'fade-out': 'fadeOut 0.3s ease-in-out',
         'slide-up': 'slideUp 0.3s ease-out',
+        'scan-line': 'scanLine 2s ease-in-out infinite',
       },
       keyframes: {
         fadeIn: {
@@ -37,6 +38,10 @@ module.exports = {
         slideUp: {
           '0%': { transform: 'translateY(100%)', opacity: '0' },
           '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        scanLine: {
+          '0%, 100%': { top: '0%' },
+          '50%': { top: '100%' },
         },
       },
     },

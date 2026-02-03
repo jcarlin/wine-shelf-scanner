@@ -10,10 +10,11 @@ export function useScanState() {
   const [debugMode, setDebugMode] = useState(false);
 
   const processImage = useCallback(async (file: File) => {
-    setState({ status: 'processing' });
-
-    // Create displayable URL - converts HEIC to JPEG if needed
+    // Create displayable URL first - converts HEIC to JPEG if needed
     const imageUri = await getDisplayableImageUrl(file);
+
+    // Set processing state WITH the image URI so we can show it
+    setState({ status: 'processing', imageUri });
 
     const result = await scanImage(file, { debug: debugMode });
 
@@ -26,7 +27,7 @@ export function useScanState() {
   }, [debugMode]);
 
   const reset = useCallback(() => {
-    if (state.status === 'results') {
+    if (state.status === 'results' || state.status === 'processing') {
       URL.revokeObjectURL(state.imageUri);
     }
     setState({ status: 'idle' });

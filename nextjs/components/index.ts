@@ -1,5 +1,6 @@
 export { CameraCapture } from './CameraCapture';
 export { ProcessingSpinner } from './ProcessingSpinner';
+export { ScanningOverlay } from './ScanningOverlay';
 export { RatingBadge } from './RatingBadge';
 export { WineDetailModal } from './WineDetailModal';
 export { FallbackList } from './FallbackList';

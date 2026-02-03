@@ -1,6 +1,6 @@
 'use client';
 
-import { CameraCapture, ProcessingSpinner, ResultsView } from '@/components';
+import { CameraCapture, ProcessingSpinner, ScanningOverlay, ResultsView } from '@/components';
 import { useScanState } from '@/hooks/useScanState';
 
 export default function Home() {
@@ -13,7 +13,11 @@ export default function Home() {
       )}
 
       {state.status === 'processing' && (
-        <ProcessingSpinner />
+        state.imageUri ? (
+          <ScanningOverlay imageUri={state.imageUri} />
+        ) : (
+          <ProcessingSpinner />
+        )
       )}
 
       {state.status === 'results' && (

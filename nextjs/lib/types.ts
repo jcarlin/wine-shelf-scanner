@@ -42,7 +42,7 @@ export interface ScanResponse {
 
 export type ScanState =
   | { status: 'idle' }
-  | { status: 'processing' }
+  | { status: 'processing'; imageUri: string }
   | { status: 'results'; response: ScanResponse; imageUri: string }
   | { status: 'error'; message: string };
 

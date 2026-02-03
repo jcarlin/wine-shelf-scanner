@@ -25,6 +25,40 @@ if TYPE_CHECKING:
     from .wine_repository import WineRepository
 
 
+# Generic wine terms that should not match by themselves
+# These are categories/styles, not actual wine names
+GENERIC_WINE_TERMS = {
+    # French generic terms
+    'bordeaux', 'bourgogne', 'burgundy', 'champagne', 'alsace', 'rhone',
+    'côtes', 'cotes', 'grand', 'vin', 'rouge', 'blanc', 'rosé', 'rose',
+    'brut', 'sec', 'methode', 'méthode', 'traditionnelle', 'cremant', 'crémant',
+    'appellation', 'controlee', 'contrôlée', 'origine', 'protegee', 'superieur',
+    'supérieur', 'cuvee', 'cuvée', 'reserve', 'réserve',
+    # Italian generic terms
+    'prosecco', 'spumante', 'classico', 'riserva', 'superiore',
+    # Spanish generic terms
+    'cava', 'crianza', 'reserva', 'gran',
+}
+
+
+def _is_generic_query(query: str) -> bool:
+    """
+    Check if a query consists only of generic wine terms.
+
+    Returns True if matching this query would likely produce a false positive.
+    """
+    words = set(query.lower().split())
+
+    # If all words are generic terms, reject
+    non_generic_words = words - GENERIC_WINE_TERMS
+
+    # Also filter out very short words and numbers
+    non_generic_words = {w for w in non_generic_words if len(w) >= 3 and not w.isdigit()}
+
+    # If no meaningful non-generic words remain, it's a generic query
+    return len(non_generic_words) == 0
+
+
 @dataclass
 class FuzzyScores:
     """Individual scores from matching (simplified for exact-match mode)."""
@@ -146,6 +180,10 @@ class WineMatcher:
 
         # Skip very short queries
         if len(query_lower) < 3:
+            return None
+
+        # Skip queries that are only generic wine terms (avoid false positives)
+        if _is_generic_query(query_lower):
             return None
 
         # Use SQLite repository if available
@@ -272,6 +310,12 @@ class WineMatcher:
 
         if best_match and best_score >= Config.FUZZY_CONFIDENCE_THRESHOLD:
             name, wine_id, rating = best_match
+
+            # Avoid matching to wines that are mostly generic terms
+            # (e.g., matching "Bordeaux Rouge" to a wine named "Bordeaux Rouge Michel Lynch")
+            if _is_generic_query(name):
+                return None
+
             return WineMatch(
                 canonical_name=name,
                 rating=rating,

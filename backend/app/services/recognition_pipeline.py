@@ -30,7 +30,7 @@ from .llm_normalizer import (
     get_normalizer,
 )
 from .ocr_processor import BottleText
-from .wine_matcher import WineMatcher, WineMatch, WineMatchWithScores
+from .wine_matcher import WineMatcher, WineMatch, WineMatchWithScores, _is_generic_query
 
 
 class DebugCollector:
@@ -412,6 +412,10 @@ class RecognitionPipeline:
             # Wine not in DB (or only low-confidence matches) - use LLM-identified name
             # with LLM-estimated rating if available
             if validation.confidence >= 0.5:
+                # Skip if LLM returned a generic wine name (would cause false positives)
+                if _is_generic_query(validation.wine_name):
+                    return None
+
                 # Use LLM-estimated rating if provided, otherwise None
                 rating = validation.estimated_rating
                 rating_source = "llm_estimated" if rating is not None else "none"

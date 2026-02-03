@@ -11,13 +11,37 @@ import os
 from dataclasses import dataclass
 from typing import Optional, Protocol
 
-# Try to import litellm for unified LLM interface
-try:
-    import litellm
-    LITELLM_AVAILABLE = True
-except ModuleNotFoundError:
-    litellm = None  # type: ignore
-    LITELLM_AVAILABLE = False
+# Lazy import for litellm to avoid slow network requests during module load
+# litellm fetches model info from GitHub during import, causing startup delays
+_litellm = None
+_litellm_checked = False
+
+
+def _get_litellm():
+    """Lazy-load litellm to avoid startup delays from network requests."""
+    global _litellm, _litellm_checked
+    if not _litellm_checked:
+        _litellm_checked = True
+        try:
+            import litellm
+            litellm.set_verbose = False  # Suppress logging noise
+            _litellm = litellm
+        except ModuleNotFoundError:
+            _litellm = None
+    return _litellm
+
+
+def _litellm_available() -> bool:
+    """Check if litellm is available without triggering import."""
+    if _litellm_checked:
+        return _litellm is not None
+    # Check if module exists without importing
+    import importlib.util
+    return importlib.util.find_spec("litellm") is not None
+
+
+# For backwards compatibility
+LITELLM_AVAILABLE = _litellm_available()
 
 logger = logging.getLogger(__name__)
 
@@ -550,10 +574,7 @@ class LiteLLMNormalizer(LLMNormalizerBase):
         self.models = models or self._get_configured_models()
         self.num_retries = num_retries
         self.timeout = timeout
-
-        # Suppress litellm logging noise
-        if LITELLM_AVAILABLE and litellm:
-            litellm.set_verbose = False
+        # Note: litellm.set_verbose is set in _get_litellm() when first loaded
 
     def _get_configured_models(self) -> list[str]:
         """Build model list from environment config."""
@@ -630,6 +651,9 @@ Return JSON: {"wine_name": "...", "confidence": 0.0-1.0, "is_wine": true/false, 
         full_prompt = f"{self.SYSTEM_PROMPT}\n\n{user_prompt}"
 
         try:
+            litellm = _get_litellm()
+            if not litellm:
+                raise RuntimeError("LiteLLM not available")
             response = await litellm.acompletion(
                 model=self.models[0],
                 messages=[{"role": "user", "content": full_prompt}],
@@ -693,6 +717,9 @@ Return JSON: {"wine_name": "...", "confidence": 0.0-1.0, "is_wine": true/false, 
         full_prompt = f"{self.VALIDATION_PROMPT}\n\n{user_prompt}"
 
         try:
+            litellm = _get_litellm()
+            if not litellm:
+                return self._heuristic_validate(ocr_text, db_candidate)
             response = await litellm.acompletion(
                 model=self.models[0],
                 messages=[{"role": "user", "content": full_prompt}],
@@ -735,6 +762,9 @@ Return JSON: {"wine_name": "...", "confidence": 0.0-1.0, "is_wine": true/false, 
         full_prompt = f"{self.BATCH_VALIDATION_PROMPT}\n\nItems to validate:\n{items_text}"
 
         try:
+            litellm = _get_litellm()
+            if not litellm:
+                return self._heuristic_validate_batch(items)
             response = await litellm.acompletion(
                 model=self.models[0],
                 messages=[{"role": "user", "content": full_prompt}],

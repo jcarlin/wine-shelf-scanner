@@ -64,6 +64,11 @@ struct ResultsView: View {
 
     private var overlayImageView: some View {
         GeometryReader { geo in
+            let imageBounds = OverlayMath.getImageBounds(
+                imageSize: image.size,
+                containerSize: geo.size
+            )
+
             ZStack {
                 // Wine shelf image
                 Image(uiImage: image)
@@ -71,10 +76,10 @@ struct ResultsView: View {
                     .aspectRatio(contentMode: .fit)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-                // Rating overlays
+                // Rating overlays (positioned relative to actual image bounds)
                 OverlayContainerView(
                     response: response,
-                    containerSize: geo.size,
+                    imageBounds: imageBounds,
                     onWineTapped: { wine in
                         if wine.isTappable {
                             selectedWine = wine

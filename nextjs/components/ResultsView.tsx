@@ -59,17 +59,30 @@ export function ResultsView({ response, imageUri, onReset }: ResultsViewProps) {
     }
   };
 
-  // Recalculate bounds when image size changes
+  // Use ResizeObserver for reliable container size tracking (handles iOS Safari viewport changes)
   useEffect(() => {
-    calculateBounds();
+    if (!containerRef.current) return;
+
+    const observer = new ResizeObserver(() => {
+      // Use requestAnimationFrame to ensure layout is complete
+      requestAnimationFrame(() => {
+        calculateBounds();
+      });
+    });
+
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
   }, [calculateBounds]);
 
-  // Handle window resize
+  // Also recalculate when image size becomes available
   useEffect(() => {
-    const handleResize = () => calculateBounds();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [calculateBounds]);
+    if (imageSize) {
+      // Wait for next frame to ensure container has final dimensions
+      requestAnimationFrame(() => {
+        calculateBounds();
+      });
+    }
+  }, [imageSize, calculateBounds]);
 
   // If no visible results, show fallback list
   if (visibleCount === 0) {

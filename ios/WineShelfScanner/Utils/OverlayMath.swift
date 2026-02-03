@@ -4,6 +4,34 @@ import SwiftUI
 /// All calculations for positioning rating badges on wine bottles
 struct OverlayMath {
 
+    // MARK: - Image Bounds Calculation
+
+    /// Calculate actual image bounds within container when using .fit content mode
+    ///
+    /// When using aspectRatio(contentMode: .fit), the image scales to fit while
+    /// maintaining aspect ratio, potentially creating letterbox areas.
+    ///
+    /// - Parameters:
+    ///   - imageSize: Original image dimensions
+    ///   - containerSize: Container dimensions
+    /// - Returns: Rectangle describing where the image renders within the container
+    static func getImageBounds(imageSize: CGSize, containerSize: CGSize) -> CGRect {
+        let imageAspect = imageSize.width / imageSize.height
+        let containerAspect = containerSize.width / containerSize.height
+
+        if imageAspect > containerAspect {
+            // Image is wider than container - letterbox top/bottom
+            let scaledHeight = containerSize.width / imageAspect
+            let y = (containerSize.height - scaledHeight) / 2
+            return CGRect(x: 0, y: y, width: containerSize.width, height: scaledHeight)
+        } else {
+            // Image is taller than container - letterbox left/right
+            let scaledWidth = containerSize.height * imageAspect
+            let x = (containerSize.width - scaledWidth) / 2
+            return CGRect(x: x, y: 0, width: scaledWidth, height: containerSize.height)
+        }
+    }
+
     // MARK: - Anchor Point Calculation
 
     /// Calculate the anchor point for a rating badge

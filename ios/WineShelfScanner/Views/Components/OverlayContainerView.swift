@@ -3,27 +3,36 @@ import SwiftUI
 /// Container view that positions rating badges over the image
 struct OverlayContainerView: View {
     let response: ScanResponse
-    let containerSize: CGSize
+    let imageBounds: CGRect
     let onWineTapped: (WineResult) -> Void
 
     var body: some View {
         ZStack {
             ForEach(response.visibleResults) { wine in
+                let isTopThree = response.isTopThree(wine)
+                let badgeSize = OverlayMath.badgeSize(isTopThree: isTopThree)
+
+                // Calculate anchor relative to image bounds, then offset by imageBounds origin
+                let anchor = OverlayMath.anchorPoint(bbox: wine.bbox, geo: imageBounds.size)
+                let adjusted = OverlayMath.adjustedAnchorPoint(
+                    anchor,
+                    bbox: wine.bbox.cgRect,
+                    geo: imageBounds.size,
+                    badgeSize: badgeSize
+                )
+                let finalPosition = CGPoint(
+                    x: imageBounds.origin.x + adjusted.x,
+                    y: imageBounds.origin.y + adjusted.y
+                )
+
                 RatingBadge(
                     rating: wine.rating,
                     confidence: wine.confidence,
-                    isTopThree: response.isTopThree(wine),
+                    isTopThree: isTopThree,
                     isTappable: wine.isTappable,
                     wineName: wine.wineName
                 )
-                .position(
-                    OverlayMath.adjustedAnchorPoint(
-                        OverlayMath.anchorPoint(bbox: wine.bbox, geo: containerSize),
-                        bbox: wine.bbox.cgRect,
-                        geo: containerSize,
-                        badgeSize: OverlayMath.badgeSize(isTopThree: response.isTopThree(wine))
-                    )
-                )
+                .position(finalPosition)
                 .opacity(OverlayMath.opacity(confidence: wine.confidence))
                 .onTapGesture {
                     if wine.isTappable {
@@ -53,7 +62,7 @@ struct OverlayContainerView: View {
         Color.gray
         OverlayContainerView(
             response: testResponse,
-            containerSize: CGSize(width: 400, height: 600),
+            imageBounds: CGRect(x: 0, y: 0, width: 400, height: 600),
             onWineTapped: { _ in }
         )
     }

@@ -28,6 +28,7 @@ wine-shelf-scanner/
 ├── backend/           # FastAPI + Vision API
 ├── ios/               # SwiftUI iOS app
 ├── expo/              # React Native app (Expo SDK)
+├── nextjs/            # Next.js web app (Vercel deployment)
 ├── docs/              # Architecture docs & specs
 ├── test-images/       # Test assets for Vision API
 ├── ROADMAP.md         # Project status (single source of truth)
@@ -38,11 +39,14 @@ wine-shelf-scanner/
 
 ## Frontend Development Strategy
 
-**Current:** iOS and Expo are developed in parallel. Neither is the source of truth.
+**Current:** iOS, Expo, and Next.js are developed in parallel. Neither is the source of truth.
 
-**Future:** May switch to Expo as the single source of truth for iOS, Android, and web builds.
+**Frontends:**
+- **iOS** — Native SwiftUI app
+- **Expo** — React Native for iOS/Android
+- **Next.js** — Web app deployed to Vercel
 
-Both frontends implement the same API contract and UX rules, but maintain separate codebases for now.
+All frontends implement the same API contract and UX rules, but maintain separate codebases. The Next.js web app shares lib utilities (types, theme, overlay-math) ported from Expo.
 
 ---
 
@@ -229,6 +233,14 @@ Tap rating badge → modal sheet.
 - Same API contract as iOS
 - Centralized theming in `expo/lib/theme.ts`
 
+### Next.js (Web)
+- Next.js 14 (App Router)
+- TypeScript
+- Tailwind CSS
+- Deployed to Vercel
+- File upload + camera capture (mobile browsers)
+- Shared lib utilities ported from Expo
+
 ### Backend
 - FastAPI (Python)
 - Google Cloud Vision API
@@ -276,11 +288,37 @@ npm run android
 npm test
 ```
 
+### Next.js (Web)
+```bash
+# Install dependencies
+cd nextjs && npm install
+
+# Start dev server
+npm run dev
+
+# Build for production
+npm run build
+
+# Run tests
+npm test
+
+# Type check
+npm run type-check
+```
+
 ### Deployment
 ```bash
-# Deploy to Cloud Run
+# Deploy backend to Cloud Run
 ./deploy.sh PROJECT_ID
+
+# Deploy web to Vercel (auto-deploys on push, or manual)
+cd nextjs && vercel
 ```
+
+### Vercel Environment Variables
+Set these in the Vercel dashboard for production:
+- `NEXT_PUBLIC_API_BASE_URL` — Backend API URL (e.g., https://wine-scanner-api-xxx.run.app)
+- `NEXT_PUBLIC_DEBUG_MODE` — Set to "false" for production
 
 ---
 

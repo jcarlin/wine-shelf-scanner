@@ -10,16 +10,79 @@ Supports two modes:
 """
 
 import base64
+import io
 import json
 import logging
 from dataclasses import dataclass
 from typing import Optional
+
+from PIL import Image
 
 from ..config import Config
 from .ocr_processor import BottleText
 from .image_cropper import crop_multiple_bottles, NormalizedBBox
 
 logger = logging.getLogger(__name__)
+
+# Claude Vision API has a ~20MB limit, but we compress to 5MB for performance
+CLAUDE_VISION_MAX_SIZE = 5 * 1024 * 1024  # 5MB
+
+
+def _compress_image_for_vision(image_bytes: bytes, max_size: int = CLAUDE_VISION_MAX_SIZE) -> bytes:
+    """
+    Compress image to fit within Claude Vision size limit.
+
+    Strategy:
+    1. If already under limit, return as-is
+    2. Try reducing JPEG quality (85 → 20)
+    3. If still too large, resize progressively (80% → 30%)
+
+    Args:
+        image_bytes: Original image bytes
+        max_size: Maximum size in bytes (default 5MB)
+
+    Returns:
+        Compressed image bytes (JPEG format)
+    """
+    if len(image_bytes) <= max_size:
+        return image_bytes
+
+    original_size = len(image_bytes)
+    logger.info(f"Compressing image for Claude Vision: {original_size / 1024 / 1024:.1f}MB → target {max_size / 1024 / 1024:.1f}MB")
+
+    img = Image.open(io.BytesIO(image_bytes))
+
+    # Convert to RGB if needed (JPEG doesn't support alpha)
+    if img.mode in ("RGBA", "P"):
+        img = img.convert("RGB")
+
+    # Try reducing quality first
+    quality = 85
+    while quality >= 20:
+        output = io.BytesIO()
+        img.save(output, format="JPEG", quality=quality)
+        compressed_size = output.tell()
+        if compressed_size <= max_size:
+            logger.info(f"Compressed with quality={quality}: {compressed_size / 1024 / 1024:.1f}MB")
+            return output.getvalue()
+        quality -= 15
+
+    # If quality reduction wasn't enough, resize the image
+    scale = 0.8
+    while scale >= 0.3:
+        new_size = (int(img.width * scale), int(img.height * scale))
+        resized = img.resize(new_size, Image.Resampling.LANCZOS)
+        output = io.BytesIO()
+        resized.save(output, format="JPEG", quality=70)
+        compressed_size = output.tell()
+        if compressed_size <= max_size:
+            logger.info(f"Resized to {new_size[0]}x{new_size[1]} (scale={scale:.1f}): {compressed_size / 1024 / 1024:.1f}MB")
+            return output.getvalue()
+        scale -= 0.1
+
+    # Last resort: return whatever we have
+    logger.warning(f"Could not compress image below {max_size / 1024 / 1024:.1f}MB, using {compressed_size / 1024 / 1024:.1f}MB")
+    return output.getvalue()
 
 # Try to import anthropic
 try:
@@ -304,8 +367,11 @@ class ClaudeVisionService:
         try:
             client = self._get_client()
 
+            # Compress image if needed to stay under API limits
+            compressed_bytes = _compress_image_for_vision(image_bytes)
+
             # Encode image to base64
-            image_b64 = base64.standard_b64encode(image_bytes).decode("utf-8")
+            image_b64 = base64.standard_b64encode(compressed_bytes).decode("utf-8")
 
             # Build prompt
             prompt = _build_vision_prompt(unmatched_bottles)

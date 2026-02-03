@@ -18,6 +18,7 @@ from pillow_heif import register_heif_opener
 from ..config import Config
 from ..mocks.fixtures import get_mock_response
 from ..models import BoundingBox, DebugData, FallbackWine, ScanResponse, WineResult
+from ..models.debug import PipelineStats
 from ..models.enums import RatingSource, WineSource
 from ..services.claude_vision import get_claude_vision_service, VisionIdentifiedWine
 from ..services.ocr_processor import BottleText, OCRProcessor, OCRProcessingResult, OrphanedText, extract_wine_names
@@ -278,9 +279,27 @@ async def process_image(
     else:
         vision_service = MockVisionService("full_shelf")
 
+    # === Pipeline Stats Collection ===
+    # Track where bottles are lost at each stage
+    stats_bottles_detected = 0
+    stats_bottles_with_text = 0
+    stats_bottles_empty = 0
+    stats_fuzzy_matched = 0
+    stats_llm_validated = 0
+    stats_unmatched_count = 0
+    stats_vision_attempted = 0
+    stats_vision_identified = 0
+    stats_vision_error: Optional[str] = None
+
     # Step 1: Analyze image
     vision_result = vision_service.analyze(image_bytes)
-    logger.info(f"[{image_id}] Vision API: {len(vision_result.objects)} bottles, {len(vision_result.text_blocks)} text blocks")
+    stats_bottles_detected = len(vision_result.objects)
+    logger.info(f"[{image_id}] BOTTLES DETECTED: {stats_bottles_detected}")
+
+    # Log individual bottle bboxes in debug mode
+    if Config.is_dev():
+        for i, obj in enumerate(vision_result.objects):
+            logger.debug(f"[{image_id}]   Bottle {i}: bbox=({obj.bbox.x:.2f},{obj.bbox.y:.2f},{obj.bbox.width:.2f}x{obj.bbox.height:.2f}) conf={obj.confidence:.2f}")
 
     if Config.is_dev():
         logger.debug(f"[{image_id}] Raw OCR: {vision_result.raw_text[:500] if vision_result.raw_text else 'None'}...")
@@ -301,6 +320,11 @@ async def process_image(
     bottle_texts = ocr_result.bottle_texts
     orphaned_texts = ocr_result.orphaned_texts
 
+    # Track bottles with/without text
+    stats_bottles_with_text = sum(1 for bt in bottle_texts if bt.combined_text)
+    stats_bottles_empty = len(bottle_texts) - stats_bottles_with_text
+    logger.info(f"[{image_id}] TEXT ASSIGNMENT: {stats_bottles_with_text} with text, {stats_bottles_empty} empty")
+
     if orphaned_texts:
         logger.info(f"[{image_id}] {len(orphaned_texts)} orphaned text blocks not assigned to bottles")
 
@@ -310,7 +334,12 @@ async def process_image(
     pipeline = get_pipeline(use_llm=use_llm, debug_mode=enable_debug)
     recognized = await pipeline.recognize(bottle_texts)
 
-    logger.info(f"[{image_id}] Recognized {len(recognized)} wines")
+    # Count matches by source
+    from ..models.enums import WineSource
+    stats_fuzzy_matched = sum(1 for w in recognized if w.source == WineSource.DATABASE)
+    stats_llm_validated = sum(1 for w in recognized if w.source == WineSource.LLM)
+
+    logger.info(f"[{image_id}] MATCHED: {len(recognized)} of {len(bottle_texts)} bottles (fuzzy={stats_fuzzy_matched}, llm={stats_llm_validated})")
     if Config.is_dev():
         for w in recognized:
             logger.debug(f"[{image_id}]   {w.wine_name}: rating={w.rating}, conf={w.confidence:.2f}, src={w.source}")
@@ -322,9 +351,12 @@ async def process_image(
     unmatched_bottles = [bt for bt in bottle_texts if id(bt) not in recognized_bottle_ids]
 
     # Use vision fallback if enabled both via parameter and config
+    stats_unmatched_count = len(unmatched_bottles)
     enable_vision = use_vision_fallback and Config.use_vision_fallback()
+    logger.info(f"[{image_id}] UNMATCHED FOR VISION: {stats_unmatched_count} bottles")
+
     if unmatched_bottles and enable_vision:
-        logger.info(f"[{image_id}] {len(unmatched_bottles)} unmatched bottles, trying Claude Vision fallback")
+        stats_vision_attempted = len(unmatched_bottles)
         try:
             vision_service = get_claude_vision_service()
             vision_results = await vision_service.identify_wines(
@@ -339,11 +371,15 @@ async def process_image(
                     bottle_text = unmatched_bottles[vision_wine.bottle_index]
                     recognized_wine = _vision_to_recognized(vision_wine, bottle_text)
                     recognized.append(recognized_wine)
+                    stats_vision_identified += 1
                     logger.info(
                         f"[{image_id}] Claude Vision identified: {vision_wine.wine_name} "
                         f"(conf={vision_wine.confidence:.2f}, rating={vision_wine.estimated_rating})"
                     )
+
+            logger.info(f"[{image_id}] VISION RESULTS: {stats_vision_identified} of {stats_vision_attempted} identified")
         except Exception as e:
+            stats_vision_error = str(e)
             logger.warning(f"[{image_id}] Claude Vision fallback failed: {e}")
 
     # Build response
@@ -379,7 +415,36 @@ async def process_image(
     results.sort(key=lambda x: (x.rating is not None, x.rating or 0), reverse=True)
     fallback.sort(key=lambda x: x.rating, reverse=True)
 
-    logger.info(f"[{image_id}] Response: {len(results)} results, {len(fallback)} fallback")
+    stats_final_results = len(results)
+    logger.info(f"[{image_id}] Response: {stats_final_results} results, {len(fallback)} fallback")
+
+    # Log pipeline summary
+    logger.info(
+        f"[{image_id}] === PIPELINE SUMMARY ===\n"
+        f"  Bottles detected by Vision API: {stats_bottles_detected}\n"
+        f"  Bottles with OCR text: {stats_bottles_with_text} ({stats_bottles_empty} empty)\n"
+        f"  Fuzzy matches (high conf): {stats_fuzzy_matched}\n"
+        f"  LLM validated/identified: {stats_llm_validated}\n"
+        f"  Unmatched bottles: {stats_unmatched_count}\n"
+        f"  Claude Vision attempted: {stats_vision_attempted}\n"
+        f"  Claude Vision identified: {stats_vision_identified}"
+        + (f" (ERROR: {stats_vision_error})" if stats_vision_error else "") +
+        f"\n  Final results: {stats_final_results}"
+    )
+
+    # Build pipeline stats
+    pipeline_stats = PipelineStats(
+        bottles_detected=stats_bottles_detected,
+        bottles_with_text=stats_bottles_with_text,
+        bottles_empty=stats_bottles_empty,
+        fuzzy_matched=stats_fuzzy_matched,
+        llm_validated=stats_llm_validated,
+        unmatched_count=stats_unmatched_count,
+        vision_attempted=stats_vision_attempted,
+        vision_identified=stats_vision_identified,
+        vision_error=stats_vision_error,
+        final_results=stats_final_results
+    )
 
     # Build debug data if requested or in dev mode
     debug_data = None
@@ -387,9 +452,10 @@ async def process_image(
         debug_data = DebugData(
             pipeline_steps=pipeline.debug_steps,
             total_ocr_texts=len(bottle_texts),
-            bottles_detected=len(vision_result.objects),
+            bottles_detected=stats_bottles_detected,
             texts_matched=len([s for s in pipeline.debug_steps if s.included_in_results]),
-            llm_calls_made=pipeline.llm_call_count
+            llm_calls_made=pipeline.llm_call_count,
+            pipeline_stats=pipeline_stats
         )
 
         # Log summary table in dev mode

@@ -37,6 +37,14 @@ struct WineResult: Codable, Equatable, Identifiable {
     let rating: Double?
     let confidence: Double
     let bbox: BoundingBox
+    // Extended metadata (optional - populated from DB or LLM)
+    var wineType: String? = nil       // 'Red', 'White', 'Rosé', 'Sparkling', etc.
+    var brand: String? = nil          // Winery or brand name
+    var region: String? = nil         // Wine region (e.g., 'Napa Valley', 'Burgundy')
+    var varietal: String? = nil       // Grape varietal (e.g., 'Cabernet Sauvignon')
+    var blurb: String? = nil          // Brief description of the wine or producer
+    var reviewCount: Int? = nil       // Number of reviews
+    var reviewSnippets: [String]? = nil  // Sample review quotes
 
     /// Unique ID combining name + full bbox (handles duplicate wines on shelf)
     var id: String { "\(wineName)_\(bbox.x)_\(bbox.y)_\(bbox.width)_\(bbox.height)" }
@@ -46,6 +54,13 @@ struct WineResult: Codable, Equatable, Identifiable {
         case rating
         case confidence
         case bbox
+        case wineType = "wine_type"
+        case brand
+        case region
+        case varietal
+        case blurb
+        case reviewCount = "review_count"
+        case reviewSnippets = "review_snippets"
     }
 }
 

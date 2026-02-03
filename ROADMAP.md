@@ -1,6 +1,6 @@
 # Wine Shelf Scanner - Project Roadmap
 
-**Last Updated:** January 31, 2026
+**Last Updated:** February 3, 2026
 **Single Source of Truth** for project status and next steps.
 
 ---
@@ -43,6 +43,43 @@
 - Phonetic matching (jellyfish)
 - LLM fallback (Claude Haiku for confidence < 0.7)
 - WineDetailSheet with tap gestures
+
+### Claude Vision Integration ✅ (February 2026)
+
+**Goal:** Simplify the OCR pipeline by replacing Google Cloud Vision + LLM normalization with Claude Vision.
+
+**Benefits:**
+- Single API call instead of Vision API + LLM (reduced latency)
+- Better OCR accuracy for wine labels (Claude understands context)
+- Direct wine name extraction (no separate normalization step)
+- Simplified codebase with fewer external dependencies
+
+**Changes:**
+| Component | Before | After |
+|-----------|--------|-------|
+| OCR | Google Vision TEXT_DETECTION | Claude Vision |
+| Bottle Detection | Google Vision OBJECT_LOCALIZATION | Claude Vision (estimated positions) |
+| Text Normalization | Separate LLM call (Claude Haiku) | Integrated in Claude Vision |
+| API Calls | 2 (Vision + LLM) | 1 (Claude Vision) |
+
+**Configuration:**
+```bash
+# Use Claude Vision (recommended)
+VISION_PROVIDER=claude
+
+# Use Google Vision (legacy)
+VISION_PROVIDER=google
+
+# Claude model selection
+CLAUDE_VISION_MODEL=claude-sonnet-4-20250514  # Best accuracy (default)
+CLAUDE_VISION_MODEL=claude-3-5-haiku-20241022  # Lower cost option
+```
+
+**Files:**
+- `backend/app/services/claude_vision.py` - New ClaudeVisionService
+- `backend/app/config.py` - Vision provider configuration
+- `backend/app/routes/scan.py` - Updated to support both providers
+- `backend/tests/test_claude_vision.py` - 36 tests
 
 ---
 
@@ -258,10 +295,11 @@ Deploy → Refactor → Ingest 150K wines → TestFlight → App Store
 | Backend - OCR Processor | `tests/test_ocr_processor.py` | 9 |
 | Backend - LLM Normalizer | `tests/test_llm_normalizer.py` | 31 |
 | Backend - Recognition Pipeline | `tests/test_recognition_pipeline.py` | 17 |
+| Backend - Claude Vision | `tests/test_claude_vision.py` | 36 |
 | Backend - Performance | `tests/test_performance.py` | 13 |
 | Backend - E2E Scan | `tests/test_scan_e2e.py` | 24 |
 | Backend - Playwright E2E | `tests/e2e/*.py` | 41 |
-| **Backend Total** | | **152** |
+| **Backend Total** | | **188** |
 | iOS - OverlayMath | `OverlayMathTests.swift` | 26 |
 | iOS - ScanResponse | `ScanResponseTests.swift` | 18 |
 | iOS - XCUITest E2E | `WineShelfScannerUITests/*.swift` | 5 suites |

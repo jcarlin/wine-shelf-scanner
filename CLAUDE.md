@@ -163,7 +163,31 @@ Tap rating badge → modal sheet.
 
 ## Backend Pipeline
 
-### Tiered Recognition Pipeline
+### Vision Provider Selection
+
+Two vision providers are available. Configure via `VISION_PROVIDER` environment variable:
+
+| Provider | Value | API Calls | Best For |
+|----------|-------|-----------|----------|
+| **Google Vision** | `google` (default) | 2-3 | Precise bounding boxes |
+| **Claude Vision** | `claude` | 1 | Simplified pipeline, better context |
+
+**Claude Vision (Recommended):**
+- Single API call does OCR + bottle detection + wine name extraction
+- Better understanding of wine label context
+- Already-normalized wine names (no separate LLM step needed)
+- Set: `VISION_PROVIDER=claude`
+- Model options: `CLAUDE_VISION_MODEL=claude-sonnet-4-20250514` (best) or `claude-3-5-haiku-20241022` (cheaper)
+
+**Google Vision (Legacy):**
+- Separate TEXT_DETECTION and OBJECT_LOCALIZATION calls
+- More precise pixel-level bounding boxes
+- Requires separate LLM call for normalization
+- Set: `VISION_PROVIDER=google`
+
+### Tiered Recognition Pipeline (Google Vision)
+
+When using Google Vision (`VISION_PROVIDER=google`):
 
 1. Receive image at `/scan`
 2. Google Vision API:
@@ -183,6 +207,25 @@ Tap rating badge → modal sheet.
    - < 0.45 → fallback list only
 7. Return response using schema above
 
+### Claude Vision Pipeline
+
+When using Claude Vision (`VISION_PROVIDER=claude`):
+
+1. Receive image at `/scan`
+2. Claude Vision API (single call):
+   - OCR text extraction
+   - Bottle detection with estimated positions
+   - Wine name extraction and normalization
+   - Confidence scoring
+3. **Simplified Recognition:**
+   - Text blocks already contain normalized wine names
+   - Direct fuzzy match against database
+   - LLM normalization often not needed (already done by Claude)
+4. Filter by confidence:
+   - ≥ 0.45 → main results array
+   - < 0.45 → fallback list only
+5. Return response using schema above
+
 ### Key Implementation Details
 
 - LLM normalizer is protocol-based (`NormalizerProtocol`) — swappable or removable
@@ -198,6 +241,7 @@ Tap rating badge → modal sheet.
 
 - `use_vision_api` — Toggle real vs mock Vision API
 - `use_llm` — Toggle LLM fallback (default: true)
+- `vision_provider` — Select vision provider: "google" or "claude" (default: from config)
 - `mock_scenario` — Select fixture (full_shelf, partial_detection, etc.)
 
 ---
@@ -231,8 +275,10 @@ Tap rating badge → modal sheet.
 
 ### Backend
 - FastAPI (Python)
-- Google Cloud Vision API
-- Claude Haiku (LLM fallback for OCR normalization, behind protocol interface)
+- **Vision Providers (configurable):**
+  - Claude Vision API (recommended - unified OCR + wine identification)
+  - Google Cloud Vision API (legacy - TEXT_DETECTION + OBJECT_LOCALIZATION)
+- Claude Haiku (LLM fallback for OCR normalization when using Google Vision)
 - rapidfuzz (multi-algorithm fuzzy matching)
 - jellyfish (phonetic matching)
 

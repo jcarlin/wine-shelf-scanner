@@ -18,6 +18,7 @@ from ..models import BoundingBox, DebugData, FallbackWine, ScanResponse, WineRes
 from ..services.ocr_processor import OCRProcessor, extract_wine_names
 from ..services.recognition_pipeline import RecognitionPipeline
 from ..services.vision import MockVisionService, ReplayVisionService, VisionService
+from ..services.claude_vision import ClaudeVisionService, MockClaudeVisionService
 from ..services.wine_matcher import WineMatcher
 
 logger = logging.getLogger(__name__)
@@ -54,6 +55,7 @@ async def scan_shelf(
     use_llm: bool = Query(True, description="Use LLM fallback for unknown wines"),
     debug: bool = Query(False, description="Include pipeline debug info in response"),
     use_vision_fixture: Optional[str] = Query(None, description="Path to captured Vision API response fixture for replay"),
+    vision_provider: Optional[str] = Query(None, description="Vision provider: 'google' or 'claude' (default: from config)"),
     wine_matcher: WineMatcher = Depends(get_wine_matcher),
 ) -> ScanResponse:
     """
@@ -106,7 +108,8 @@ async def scan_shelf(
     # Process image
     try:
         return await process_image(
-            image_id, image_bytes, use_vision_api, use_llm, debug, wine_matcher, use_vision_fixture
+            image_id, image_bytes, use_vision_api, use_llm, debug, wine_matcher,
+            use_vision_fixture, vision_provider
         )
     except ValueError as e:
         logger.warning(f"Invalid image format: {e}")
@@ -124,6 +127,7 @@ async def process_image(
     debug_mode: bool,
     wine_matcher: WineMatcher,
     vision_fixture: Optional[str] = None,
+    vision_provider: Optional[str] = None,
 ) -> ScanResponse:
     """
     Tiered recognition pipeline:
@@ -132,20 +136,38 @@ async def process_image(
     3. Enhanced fuzzy matching (rapidfuzz + phonetic)
     4. LLM fallback for low-confidence/unknown wines
     5. Response construction
+
+    When using Claude Vision:
+    - OCR and wine identification happen in one call
+    - Text blocks contain already-normalized wine names
+    - LLM fallback may be skipped for high-confidence Claude detections
     """
+    # Determine vision provider
+    provider = vision_provider or Config.vision_provider()
+    using_claude_vision = provider.lower() == "claude"
+
     # Choose vision service
     if vision_fixture:
         # Use captured fixture for deterministic replay
         vision_service = ReplayVisionService(vision_fixture)
         logger.info(f"[{image_id}] Using vision fixture: {vision_fixture}")
     elif use_real_api:
-        vision_service = VisionService()
+        if using_claude_vision:
+            vision_service = ClaudeVisionService()
+            logger.info(f"[{image_id}] Using Claude Vision API")
+        else:
+            vision_service = VisionService()
+            logger.info(f"[{image_id}] Using Google Vision API")
     else:
-        vision_service = MockVisionService("full_shelf")
+        if using_claude_vision:
+            vision_service = MockClaudeVisionService("full_shelf")
+        else:
+            vision_service = MockVisionService("full_shelf")
 
     # Step 1: Analyze image
     vision_result = vision_service.analyze(image_bytes)
-    logger.info(f"[{image_id}] Vision API: {len(vision_result.objects)} bottles, {len(vision_result.text_blocks)} text blocks")
+    provider_name = "Claude Vision" if using_claude_vision else "Google Vision"
+    logger.info(f"[{image_id}] {provider_name}: {len(vision_result.objects)} bottles, {len(vision_result.text_blocks)} text blocks")
 
     if Config.is_dev():
         logger.debug(f"[{image_id}] Raw OCR: {vision_result.raw_text[:500] if vision_result.raw_text else 'None'}...")

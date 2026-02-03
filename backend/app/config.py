@@ -67,6 +67,30 @@ class Config:
         return os.getenv("LLM_PROVIDER", "claude").lower()
 
     @staticmethod
+    def vision_provider() -> str:
+        """
+        Get vision provider (google or claude). Default: google.
+
+        - google: Google Cloud Vision API (TEXT_DETECTION + OBJECT_LOCALIZATION)
+        - claude: Claude Vision API (unified OCR + wine identification)
+
+        Claude Vision simplifies the pipeline by doing OCR + normalization in one call,
+        but may have less precise bounding boxes than Google Vision.
+        """
+        return os.getenv("VISION_PROVIDER", "google").lower()
+
+    @staticmethod
+    def claude_vision_model() -> str:
+        """
+        Get Claude model for vision. Default: claude-sonnet-4-20250514.
+
+        Options:
+        - claude-sonnet-4-20250514: Best accuracy (recommended)
+        - claude-3-5-haiku-20241022: Lower cost, slightly less accurate
+        """
+        return os.getenv("CLAUDE_VISION_MODEL", "claude-sonnet-4-20250514")
+
+    @staticmethod
     def use_sqlite() -> bool:
         """Use SQLite database (191K wines) vs JSON (60 wines)."""
         return os.getenv("USE_SQLITE", "true").lower() == "true"

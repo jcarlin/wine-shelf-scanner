@@ -119,6 +119,12 @@ class BatchValidationResult:
     confidence: float
     reasoning: str
     estimated_rating: Optional[float] = None  # LLM-estimated rating for wines not in DB
+    # Extended metadata from LLM
+    wine_type: Optional[str] = None  # Red, White, Rosé, Sparkling, etc.
+    brand: Optional[str] = None  # Winery/producer name
+    blurb: Optional[str] = None  # 1-2 sentence description
+    review_count: Optional[int] = None  # Estimated review count
+    review_snippets: Optional[list[str]] = None  # Sample review quotes
 
 
 class NormalizerProtocol(Protocol):
@@ -219,23 +225,27 @@ NO CANDIDATE:
 - If db_candidate is null, identify the wine name from the OCR text
 - If no valid wine name can be identified, return wine_name=null and confidence=0.0
 
-## RATING ESTIMATION
+## RATING AND METADATA
+
+For ALL wines where wine_name is not null, provide:
+- wine_type: "Red", "White", "Rosé", "Sparkling", "Dessert", or "Fortified"
+- brand: The producer/winery name (e.g., "Caymus", "Château Margaux")
+- blurb: A brief 1-2 sentence description of the wine or producer
+- review_count: Estimated number of reviews (based on wine popularity, 50-50000 range)
+- review_snippets: Array of 2-3 short review quotes (be creative but realistic)
 
 For wines NOT in our database (when db_candidate is null or match is invalid):
-- Provide an estimated_rating (1.0-5.0) based on your wine knowledge
-- Only provide estimated_rating if wine_name is not null
+- Also provide estimated_rating (1.0-5.0) based on your wine knowledge
 - Default to 3.7-4.0 if uncertain (typical mid-tier wine)
 
 ## OUTPUT
 
 Return a JSON array with one result per input item (same order):
 [
-  {"index": 0, "is_valid_match": true, "wine_name": "...", "confidence": 0.95, "reasoning": "..."},
+  {"index": 0, "is_valid_match": true, "wine_name": "Caymus Cabernet Sauvignon", "confidence": 0.95, "reasoning": "...", "wine_type": "Red", "brand": "Caymus Vineyards", "blurb": "Iconic Napa Valley Cabernet known for rich, velvety texture and dark fruit flavors.", "review_count": 12500, "review_snippets": ["Silky smooth with notes of blackberry", "A Napa classic that never disappoints"]},
   {"index": 1, "is_valid_match": false, "wine_name": null, "confidence": 0.0, "reasoning": "No valid wine name found"},
   ...
-]
-
-Include estimated_rating ONLY when wine_name is not null and is_valid_match is false."""
+]"""
 
     SYSTEM_PROMPT = """You are a wine label text analyzer.
 
@@ -450,13 +460,28 @@ Confidence:
                         # Clamp to valid range
                         estimated_rating = max(1.0, min(5.0, estimated_rating))
 
+                    # Extract review_count if present
+                    review_count = result_data.get("review_count")
+                    if review_count is not None:
+                        review_count = int(review_count)
+
+                    # Extract review_snippets
+                    review_snippets = result_data.get("review_snippets")
+                    if review_snippets and not isinstance(review_snippets, list):
+                        review_snippets = None
+
                     results.append(BatchValidationResult(
                         index=i,
                         is_valid_match=bool(result_data.get("is_valid_match", False)),
                         wine_name=result_data.get("wine_name") or item.db_candidate,
                         confidence=float(result_data.get("confidence", 0.5)),
                         reasoning=result_data.get("reasoning", ""),
-                        estimated_rating=estimated_rating
+                        estimated_rating=estimated_rating,
+                        wine_type=result_data.get("wine_type"),
+                        brand=result_data.get("brand"),
+                        blurb=result_data.get("blurb"),
+                        review_count=review_count,
+                        review_snippets=review_snippets,
                     ))
                 else:
                     heuristic = self._heuristic_validate(item.ocr_text, item.db_candidate)

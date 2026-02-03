@@ -105,6 +105,11 @@ class WineMatch:
     rating: float
     confidence: float  # Match confidence (0-1)
     source: str
+    # Extended metadata from database
+    wine_type: Optional[str] = None
+    brand: Optional[str] = None  # winery
+    region: Optional[str] = None
+    varietal: Optional[str] = None
 
 
 @dataclass
@@ -115,6 +120,11 @@ class WineMatchWithScores:
     confidence: float
     source: str
     scores: FuzzyScores
+    # Extended metadata from database
+    wine_type: Optional[str] = None
+    brand: Optional[str] = None
+    region: Optional[str] = None
+    varietal: Optional[str] = None
 
 
 class WineMatcher:
@@ -231,7 +241,11 @@ class WineMatcher:
                 canonical_name=result.canonical_name,
                 rating=result.rating,
                 confidence=1.0,
-                source="database"
+                source="database",
+                wine_type=result.wine_type,
+                brand=result.winery,
+                region=result.region,
+                varietal=result.varietal,
             )
 
         # Step 2: Try FTS5 for prefix matches (handles OCR fragments)
@@ -251,7 +265,11 @@ class WineMatcher:
                     canonical_name=best_match.canonical_name,
                     rating=best_match.rating,
                     confidence=min(0.95, best_score),  # Cap at 0.95 for FTS match
-                    source="database"
+                    source="database",
+                    wine_type=best_match.wine_type,
+                    brand=best_match.winery,
+                    region=best_match.region,
+                    varietal=best_match.varietal,
                 )
 
         # Step 3: Fuzzy match against database candidates
@@ -311,7 +329,7 @@ class WineMatcher:
         fts_query = ' OR '.join(f'"{w}"*' for w in words[:5])  # Limit words
         try:
             cursor.execute("""
-                SELECT w.id, w.canonical_name, w.rating
+                SELECT w.id, w.canonical_name, w.rating, w.wine_type, w.winery, w.region, w.varietal
                 FROM wines w
                 JOIN wine_fts ON w.id = wine_fts.rowid
                 WHERE wine_fts MATCH ?
@@ -319,7 +337,10 @@ class WineMatcher:
                 LIMIT 50
             """, (fts_query,))
 
-            candidates = [(row[1], row[0], row[2]) for row in cursor.fetchall()]
+            candidates = [
+                (row[1], row[0], row[2], row[3], row[4], row[5], row[6])
+                for row in cursor.fetchall()
+            ]
         except Exception:
             # FTS query failed, return None
             return None
@@ -331,14 +352,14 @@ class WineMatcher:
         best_match = None
         best_score = 0.0
 
-        for name, wine_id, rating in candidates:
+        for name, wine_id, rating, wine_type, winery, region, varietal in candidates:
             score = self._compute_fuzzy_score(query_lower, name.lower())
             if score > best_score:
                 best_score = score
-                best_match = (name, wine_id, rating)
+                best_match = (name, wine_id, rating, wine_type, winery, region, varietal)
 
         if best_match and best_score >= Config.FUZZY_CONFIDENCE_THRESHOLD:
-            name, wine_id, rating = best_match
+            name, wine_id, rating, wine_type, winery, region, varietal = best_match
 
             # Avoid matching to wines that are mostly generic terms
             # (e.g., matching "Bordeaux Rouge" to a wine named "Bordeaux Rouge Michel Lynch")
@@ -349,7 +370,11 @@ class WineMatcher:
                 canonical_name=name,
                 rating=rating,
                 confidence=best_score,
-                source="database"
+                source="database",
+                wine_type=wine_type,
+                brand=winery,
+                region=region,
+                varietal=varietal,
             )
 
         return None
@@ -362,7 +387,11 @@ class WineMatcher:
                 canonical_name=wine["canonical_name"],
                 rating=wine["rating"],
                 confidence=1.0,
-                source=wine.get("source", "unknown")
+                source=wine.get("source", "unknown"),
+                wine_type=wine.get("wine_type"),
+                brand=wine.get("winery"),
+                region=wine.get("region"),
+                varietal=wine.get("varietal"),
             )
         return None
 
@@ -391,7 +420,11 @@ class WineMatcher:
                 token_sort_ratio=score,
                 phonetic_bonus=0.0,
                 weighted_score=score
-            )
+            ),
+            wine_type=match.wine_type,
+            brand=match.brand,
+            region=match.region,
+            varietal=match.varietal,
         )
 
     def match_many(self, queries: list[str]) -> list[Optional[WineMatch]]:

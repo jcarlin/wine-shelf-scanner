@@ -194,7 +194,15 @@ async def process_image(
                 ),
                 identified=wine.identified,
                 source=wine.source,
-                rating_source=wine.rating_source
+                rating_source=wine.rating_source,
+                # Extended metadata
+                wine_type=wine.wine_type,
+                brand=wine.brand,
+                region=wine.region,
+                varietal=wine.varietal,
+                blurb=wine.blurb,
+                review_count=wine.review_count,
+                review_snippets=wine.review_snippets,
             ))
         elif wine.rating is not None:
             # Low confidence with rating → fallback
@@ -304,7 +312,15 @@ async def _direct_ocr_response(
                 ),
                 identified=wine.identified,
                 source=wine.source,
-                rating_source=wine.rating_source
+                rating_source=wine.rating_source,
+                # Extended metadata
+                wine_type=wine.wine_type,
+                brand=wine.brand,
+                region=wine.region,
+                varietal=wine.varietal,
+                blurb=wine.blurb,
+                review_count=wine.review_count,
+                review_snippets=wine.review_snippets,
             ))
         elif wine.rating is not None:
             fallback.append(FallbackWine(

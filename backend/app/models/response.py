@@ -51,6 +51,14 @@ class WineResult(BaseModel):
         "database",
         description="Rating provenance: 'database', 'llm_estimated', or 'none'"
     )
+    # Extended metadata (optional - populated from DB or LLM)
+    wine_type: Optional[str] = Field(None, description="Wine type: 'Red', 'White', 'Rosé', 'Sparkling', etc.")
+    brand: Optional[str] = Field(None, description="Winery or brand name")
+    region: Optional[str] = Field(None, description="Wine region (e.g., 'Napa Valley', 'Burgundy')")
+    varietal: Optional[str] = Field(None, description="Grape varietal (e.g., 'Cabernet Sauvignon')")
+    blurb: Optional[str] = Field(None, description="Brief description of the wine or producer")
+    review_count: Optional[int] = Field(None, description="Number of reviews")
+    review_snippets: Optional[list[str]] = Field(None, description="Sample review quotes")
 
     @field_validator('rating')
     @classmethod

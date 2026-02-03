@@ -536,7 +536,7 @@ class LiteLLMNormalizer(LLMNormalizerBase):
         self,
         models: Optional[list[str]] = None,
         num_retries: int = 2,
-        timeout: float = 10.0,
+        timeout: float = 30.0,
     ):
         """
         Initialize normalizer with fallback chain.

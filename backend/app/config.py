@@ -91,6 +91,11 @@ class Config:
         """Dev mode enables verbose logging."""
         return os.getenv("DEV_MODE", "false").lower() == "true"
 
+    @staticmethod
+    def debug_mode() -> bool:
+        """Always include debug info in scan responses. Default: False."""
+        return os.getenv("DEBUG_MODE", "false").lower() == "true"
+
     # === Vision Cache ===
     @staticmethod
     def vision_cache_enabled() -> bool:
@@ -116,6 +121,10 @@ class Config:
     # === Vision Fallback ===
     # Max confidence for visual-only identification (never top-3 emphasis)
     VISION_FALLBACK_CONFIDENCE_CAP = 0.70
+    # Minimum confidence floor for vision results (ensures tappability)
+    VISION_CONFIDENCE_FLOOR = 0.65
+    # Default rating when Claude Vision can't estimate (neutral rating)
+    VISION_DEFAULT_RATING = 3.5
 
     @staticmethod
     def use_vision_fallback() -> bool:

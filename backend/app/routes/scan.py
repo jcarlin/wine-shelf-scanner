@@ -34,18 +34,31 @@ def _vision_to_recognized(
     vision_wine: VisionIdentifiedWine,
     bottle_text: BottleText
 ) -> RecognizedWine:
-    """Convert Claude Vision result to RecognizedWine."""
-    # Cap confidence for vision-identified wines (never top-3 emphasis)
-    capped_confidence = min(vision_wine.confidence, Config.VISION_FALLBACK_CONFIDENCE_CAP)
+    """Convert Claude Vision result to RecognizedWine.
+
+    Vision results get special handling:
+    - Confidence floor at VISION_CONFIDENCE_FLOOR (0.65) to ensure tappability
+    - Confidence cap at VISION_FALLBACK_CONFIDENCE_CAP (0.70) to avoid top-3 emphasis
+    - Default rating of VISION_DEFAULT_RATING (3.5) when Claude can't estimate
+    """
+    # Floor at tappable threshold, cap to avoid top-3 emphasis
+    capped_confidence = max(
+        Config.VISION_CONFIDENCE_FLOOR,
+        min(vision_wine.confidence, Config.VISION_FALLBACK_CONFIDENCE_CAP)
+    )
+
+    # Use estimated rating or default to neutral rating if Claude couldn't estimate
+    rating = vision_wine.estimated_rating if vision_wine.estimated_rating is not None else Config.VISION_DEFAULT_RATING
+    has_estimated_rating = vision_wine.estimated_rating is not None
 
     return RecognizedWine(
         wine_name=vision_wine.wine_name,
-        rating=vision_wine.estimated_rating,
+        rating=rating,
         confidence=capped_confidence,
         source=WineSource.VISION,
         identified=True,
         bottle_text=bottle_text,
-        rating_source=RatingSource.LLM_ESTIMATED if vision_wine.estimated_rating else RatingSource.NONE,
+        rating_source=RatingSource.LLM_ESTIMATED if has_estimated_rating else RatingSource.DEFAULT,
         wine_type=vision_wine.wine_type,
         brand=vision_wine.brand,
         region=vision_wine.region,
@@ -184,7 +197,7 @@ async def scan_shelf(
     use_vision_api: bool = Query(True, description="Use real Vision API"),
     use_llm: bool = Query(True, description="Use LLM fallback for unknown wines"),
     use_vision_fallback: bool = Query(True, description="Use Claude Vision for unmatched bottles"),
-    debug: bool = Query(False, description="Include pipeline debug info in response"),
+    debug: bool = Query(default=None, description="Include pipeline debug info in response"),
     use_vision_fixture: Optional[str] = Query(None, description="Path to captured Vision API response fixture for replay"),
     wine_matcher: WineMatcher = Depends(get_wine_matcher),
 ) -> ScanResponse:
@@ -238,10 +251,13 @@ async def scan_shelf(
             detail=f"Image too large. Maximum size is {Config.MAX_IMAGE_SIZE_MB}MB."
         )
 
+    # Resolve debug mode: query param overrides env var
+    debug_mode = debug if debug is not None else Config.debug_mode()
+
     # Process image
     try:
         return await process_image(
-            image_id, image_bytes, use_vision_api, use_llm, use_vision_fallback, debug, wine_matcher, use_vision_fixture
+            image_id, image_bytes, use_vision_api, use_llm, use_vision_fallback, debug_mode, wine_matcher, use_vision_fixture
         )
     except ValueError as e:
         logger.warning(f"Invalid image format: {e}")

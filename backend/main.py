@@ -37,10 +37,14 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# CORS middleware for iOS app
+# CORS middleware for web and mobile apps
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, restrict to your app's bundle ID
+    allow_origins=[
+        "https://wine-shelf-scanner.vercel.app",
+        "http://localhost:3000",  # Local Next.js dev
+        "http://localhost:8081",  # Local Expo dev
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -16,4 +16,5 @@ class RatingSource(str, Enum):
     """Source of wine rating."""
     DATABASE = "database"
     LLM_ESTIMATED = "llm_estimated"
+    DEFAULT = "default"  # Fallback rating when LLM couldn't estimate
     NONE = "none"

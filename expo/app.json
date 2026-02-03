@@ -17,7 +17,8 @@
       "bundleIdentifier": "com.wineshelfscanner.app",
       "infoPlist": {
         "NSCameraUsageDescription": "Wine Shelf Scanner needs camera access to scan wine bottles and display ratings.",
-        "NSPhotoLibraryUsageDescription": "Wine Shelf Scanner needs photo library access to select images of wine bottles."
+        "NSPhotoLibraryUsageDescription": "Wine Shelf Scanner needs photo library access to select images of wine bottles.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -28,7 +29,8 @@
       "package": "com.wineshelfscanner.app",
       "permissions": [
         "android.permission.CAMERA",
-        "android.permission.READ_EXTERNAL_STORAGE"
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -47,6 +49,14 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "apiBaseUrl": "https://wine-scanner-api-82762985464.us-central1.run.app",
+      "router": {},
+      "eas": {
+        "projectId": "42bad5c0-244a-468a-8801-fb80ce183494"
+      }
+    },
+    "owner": "jcarlins-organization"
   }
 }

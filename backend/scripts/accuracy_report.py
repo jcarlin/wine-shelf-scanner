@@ -21,6 +21,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+# Load environment variables from .env before any other imports
+from dotenv import load_dotenv
+load_dotenv()
+
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 

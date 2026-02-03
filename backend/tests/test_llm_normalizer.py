@@ -6,7 +6,7 @@ Tests:
 - NormalizerProtocol interface compliance
 - Normalization output format
 - Error handling
-- ClaudeNormalizer response parsing
+- LiteLLMNormalizer response parsing and fallback behavior
 """
 
 import pytest
@@ -18,11 +18,10 @@ from app.services.llm_normalizer import (
     NormalizationResult,
     BatchValidationItem,
     BatchValidationResult,
-    ClaudeNormalizer,
     LiteLLMNormalizer,
+    LLMNormalizerBase,
     MockNormalizer,
     get_normalizer,
-    ANTHROPIC_AVAILABLE,
     LITELLM_AVAILABLE,
 )
 
@@ -154,13 +153,12 @@ class TestMockNormalizer:
         assert result.wine_name == "Opus One Cabernet"
 
 
-class TestClaudeNormalizerResponseParsing:
-    """Test ClaudeNormalizer response parsing logic."""
+class TestLLMNormalizerBaseResponseParsing:
+    """Test LLMNormalizerBase response parsing logic."""
 
     def test_parse_valid_json(self):
         """Test parsing valid JSON response."""
-        normalizer = ClaudeNormalizer.__new__(ClaudeNormalizer)
-        normalizer.api_key = "test"
+        normalizer = LiteLLMNormalizer(models=[])
 
         response = '{"wine_name": "Opus One", "confidence": 0.9, "is_wine": true, "reasoning": "Clear label"}'
         result = normalizer._parse_response(response)
@@ -172,8 +170,7 @@ class TestClaudeNormalizerResponseParsing:
 
     def test_parse_json_with_markdown_code_block(self):
         """Test parsing JSON wrapped in markdown code block."""
-        normalizer = ClaudeNormalizer.__new__(ClaudeNormalizer)
-        normalizer.api_key = "test"
+        normalizer = LiteLLMNormalizer(models=[])
 
         response = """```json
 {"wine_name": "Caymus", "confidence": 0.85, "is_wine": true, "reasoning": "Recognized brand"}
@@ -185,8 +182,7 @@ class TestClaudeNormalizerResponseParsing:
 
     def test_parse_json_with_plain_code_block(self):
         """Test parsing JSON wrapped in plain code block."""
-        normalizer = ClaudeNormalizer.__new__(ClaudeNormalizer)
-        normalizer.api_key = "test"
+        normalizer = LiteLLMNormalizer(models=[])
 
         response = """```
 {"wine_name": "Silver Oak", "confidence": 0.8, "is_wine": true, "reasoning": "Test"}
@@ -197,8 +193,7 @@ class TestClaudeNormalizerResponseParsing:
 
     def test_parse_invalid_json(self):
         """Test parsing invalid JSON returns error result."""
-        normalizer = ClaudeNormalizer.__new__(ClaudeNormalizer)
-        normalizer.api_key = "test"
+        normalizer = LiteLLMNormalizer(models=[])
 
         response = "This is not valid JSON"
         result = normalizer._parse_response(response)
@@ -210,8 +205,7 @@ class TestClaudeNormalizerResponseParsing:
 
     def test_parse_missing_fields_uses_defaults(self):
         """Test parsing JSON with missing fields uses defaults."""
-        normalizer = ClaudeNormalizer.__new__(ClaudeNormalizer)
-        normalizer.api_key = "test"
+        normalizer = LiteLLMNormalizer(models=[])
 
         response = '{"wine_name": "Test Wine"}'
         result = normalizer._parse_response(response)
@@ -223,8 +217,7 @@ class TestClaudeNormalizerResponseParsing:
 
     def test_parse_null_wine_name(self):
         """Test parsing JSON with null wine_name."""
-        normalizer = ClaudeNormalizer.__new__(ClaudeNormalizer)
-        normalizer.api_key = "test"
+        normalizer = LiteLLMNormalizer(models=[])
 
         response = '{"wine_name": null, "confidence": 0.0, "is_wine": false, "reasoning": "Not a wine"}'
         result = normalizer._parse_response(response)
@@ -233,13 +226,13 @@ class TestClaudeNormalizerResponseParsing:
         assert result.is_wine is False
 
 
-class TestClaudeNormalizerEmptyInput:
-    """Test ClaudeNormalizer handling of empty/short input."""
+class TestLiteLLMNormalizerEmptyInput:
+    """Test LiteLLMNormalizer handling of empty/short input."""
 
     @pytest.mark.asyncio
     async def test_empty_text_returns_early(self):
         """Test empty text returns immediately without API call."""
-        normalizer = ClaudeNormalizer(api_key="test")
+        normalizer = LiteLLMNormalizer(models=["test-model"])
 
         result = await normalizer.normalize("")
 
@@ -249,63 +242,14 @@ class TestClaudeNormalizerEmptyInput:
         assert "too short" in result.reasoning.lower()
 
     @pytest.mark.asyncio
-    async def test_whitespace_only_returns_early(self):
-        """Test whitespace-only text returns immediately."""
-        normalizer = ClaudeNormalizer(api_key="test")
-
-        result = await normalizer.normalize("   \n\t  ")
-
-        assert result.wine_name is None
-        assert result.is_wine is False
-
-    @pytest.mark.asyncio
     async def test_short_text_returns_early(self):
         """Test very short text (< 3 chars) returns immediately."""
-        normalizer = ClaudeNormalizer(api_key="test")
+        normalizer = LiteLLMNormalizer(models=["test-model"])
 
         result = await normalizer.normalize("AB")
 
         assert result.wine_name is None
         assert result.is_wine is False
-
-
-class TestClaudeNormalizerErrorHandling:
-    """Test ClaudeNormalizer error handling."""
-
-    @pytest.mark.asyncio
-    async def test_missing_api_key_raises_error(self):
-        """Test missing API key raises ValueError on client access."""
-        normalizer = ClaudeNormalizer(api_key=None)
-        # Clear any env var
-        with patch.dict("os.environ", {}, clear=True):
-            normalizer.api_key = None
-
-            with pytest.raises(ValueError) as exc_info:
-                normalizer._get_client()
-
-            assert "ANTHROPIC_API_KEY" in str(exc_info.value)
-
-    @pytest.mark.asyncio
-    async def test_api_error_returns_graceful_result(self):
-        """Test API error returns graceful error result."""
-        normalizer = ClaudeNormalizer(api_key="test")
-
-        # Mock the client to raise an exception
-        mock_client = MagicMock()
-        mock_client.messages.create.side_effect = Exception("API Error")
-        normalizer._client = mock_client
-
-        result = await normalizer.normalize("Opus One Cabernet")
-
-        assert result.wine_name is None
-        assert result.confidence == 0.0
-        assert result.is_wine is False
-        # If anthropic isn't installed, we get "LLM not available"
-        # If it is installed, we get "LLM error: Exception"
-        if ANTHROPIC_AVAILABLE:
-            assert "LLM error" in result.reasoning
-        else:
-            assert "LLM not available" in result.reasoning
 
 
 class TestGetNormalizerFactory:
@@ -317,18 +261,17 @@ class TestGetNormalizerFactory:
 
         assert isinstance(normalizer, MockNormalizer)
 
-    def test_returns_claude_when_use_mock_false_and_litellm_disabled(self):
-        """Test factory returns ClaudeNormalizer when use_mock=False and LiteLLM disabled."""
-        with patch("app.config.Config.use_litellm", return_value=False):
-            normalizer = get_normalizer(use_mock=False, provider="claude")
-            assert isinstance(normalizer, ClaudeNormalizer)
-
-    def test_default_returns_litellm_when_available(self):
-        """Test factory default returns LiteLLMNormalizer when available."""
-        with patch("app.config.Config.use_litellm", return_value=True), \
-             patch("app.services.llm_normalizer.LITELLM_AVAILABLE", True):
-            normalizer = get_normalizer()
+    def test_returns_litellm_when_available(self):
+        """Test factory returns LiteLLMNormalizer when LiteLLM is available."""
+        with patch("app.services.llm_normalizer.LITELLM_AVAILABLE", True):
+            normalizer = get_normalizer(use_mock=False)
             assert isinstance(normalizer, LiteLLMNormalizer)
+
+    def test_returns_mock_when_litellm_not_available(self):
+        """Test factory returns MockNormalizer when LiteLLM not installed."""
+        with patch("app.services.llm_normalizer.LITELLM_AVAILABLE", False):
+            normalizer = get_normalizer(use_mock=False)
+            assert isinstance(normalizer, MockNormalizer)
 
 
 class TestNormalizerProtocolCompliance:
@@ -347,9 +290,9 @@ class TestNormalizerProtocolCompliance:
         assert isinstance(result, NormalizationResult)
 
     @pytest.mark.asyncio
-    async def test_claude_normalizer_implements_protocol(self):
-        """Test ClaudeNormalizer implements NormalizerProtocol."""
-        normalizer = ClaudeNormalizer(api_key="test")
+    async def test_litellm_normalizer_implements_protocol(self):
+        """Test LiteLLMNormalizer implements NormalizerProtocol."""
+        normalizer = LiteLLMNormalizer(models=[])
 
         # Should have normalize method
         assert hasattr(normalizer, "normalize")
@@ -433,32 +376,6 @@ class TestLiteLLMNormalizerConfiguration:
              patch("app.config.Config.llm_provider", return_value="gemini"):
             normalizer = LiteLLMNormalizer()
             assert normalizer.models == []
-
-
-class TestLiteLLMNormalizerEmptyInput:
-    """Test LiteLLMNormalizer handling of empty/short input."""
-
-    @pytest.mark.asyncio
-    async def test_empty_text_returns_early(self):
-        """Test empty text returns immediately without API call."""
-        normalizer = LiteLLMNormalizer(models=["test-model"])
-
-        result = await normalizer.normalize("")
-
-        assert result.wine_name is None
-        assert result.confidence == 0.0
-        assert result.is_wine is False
-        assert "too short" in result.reasoning.lower()
-
-    @pytest.mark.asyncio
-    async def test_short_text_returns_early(self):
-        """Test very short text (< 3 chars) returns immediately."""
-        normalizer = LiteLLMNormalizer(models=["test-model"])
-
-        result = await normalizer.normalize("AB")
-
-        assert result.wine_name is None
-        assert result.is_wine is False
 
 
 class TestLiteLLMNormalizerFallback:
@@ -573,42 +490,3 @@ class TestLiteLLMNormalizerProtocolCompliance:
 
         results = await normalizer.validate_batch([])
         assert results == []
-
-
-class TestGetNormalizerFactoryWithLiteLLM:
-    """Test the get_normalizer factory function with LiteLLM support."""
-
-    def test_returns_litellm_by_default_when_available(self):
-        """Test factory returns LiteLLMNormalizer by default when USE_LITELLM=true."""
-        with patch("app.config.Config.use_litellm", return_value=True), \
-             patch("app.services.llm_normalizer.LITELLM_AVAILABLE", True):
-            normalizer = get_normalizer(use_mock=False, provider="auto")
-            assert isinstance(normalizer, LiteLLMNormalizer)
-
-    def test_returns_litellm_with_explicit_provider(self):
-        """Test factory returns LiteLLMNormalizer when provider='litellm'."""
-        with patch("app.config.Config.use_litellm", return_value=True), \
-             patch("app.services.llm_normalizer.LITELLM_AVAILABLE", True):
-            normalizer = get_normalizer(use_mock=False, provider="litellm")
-            assert isinstance(normalizer, LiteLLMNormalizer)
-
-    def test_falls_back_to_claude_when_litellm_disabled(self):
-        """Test factory returns ClaudeNormalizer when USE_LITELLM=false."""
-        with patch("app.config.Config.use_litellm", return_value=False):
-            normalizer = get_normalizer(use_mock=False, provider="claude")
-            assert isinstance(normalizer, ClaudeNormalizer)
-
-    def test_falls_back_to_legacy_when_litellm_not_installed(self):
-        """Test factory falls back to legacy when LiteLLM not installed."""
-        with patch("app.config.Config.use_litellm", return_value=True), \
-             patch("app.services.llm_normalizer.LITELLM_AVAILABLE", False):
-            normalizer = get_normalizer(use_mock=False, provider="auto")
-            # Should fall back to Claude (default legacy)
-            assert isinstance(normalizer, ClaudeNormalizer)
-
-    def test_explicit_gemini_provider_uses_legacy(self):
-        """Test explicit gemini provider uses legacy GeminiNormalizer."""
-        with patch("app.config.Config.use_litellm", return_value=True):
-            from app.services.llm_normalizer import GeminiNormalizer
-            normalizer = get_normalizer(use_mock=False, provider="gemini")
-            assert isinstance(normalizer, GeminiNormalizer)

@@ -315,8 +315,9 @@ async def process_image(
 
     # Step 5: Claude Vision fallback for unmatched bottles
     # Find bottles that weren't matched by the pipeline
-    recognized_bottle_texts = {w.bottle_text for w in recognized}
-    unmatched_bottles = [bt for bt in bottle_texts if bt not in recognized_bottle_texts]
+    # Use id() since BottleText is not hashable
+    recognized_bottle_ids = {id(w.bottle_text) for w in recognized}
+    unmatched_bottles = [bt for bt in bottle_texts if id(bt) not in recognized_bottle_ids]
 
     if unmatched_bottles and use_llm:
         logger.info(f"[{image_id}] {len(unmatched_bottles)} unmatched bottles, trying Claude Vision fallback")

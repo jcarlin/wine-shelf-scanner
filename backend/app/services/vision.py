@@ -201,23 +201,29 @@ class VisionService:
             name_lower = obj.name.lower()
             if any(kw in name_lower for kw in bottle_keywords):
                 # Convert vertices to normalized bbox
-                vertices = obj.bounding_poly.normalized_vertices
-                if len(vertices) >= 4:
-                    x_coords = [v.x for v in vertices]
-                    y_coords = [v.y for v in vertices]
+                # Handle missing or None bounding_poly gracefully
+                if not hasattr(obj, 'bounding_poly') or obj.bounding_poly is None:
+                    logger.warning(f"Object '{obj.name}' missing bounding_poly, skipping")
+                    continue
+                vertices = getattr(obj.bounding_poly, 'normalized_vertices', None)
+                if vertices is None or len(vertices) < 4:
+                    logger.warning(f"Object '{obj.name}' has invalid vertices, skipping")
+                    continue
+                x_coords = [v.x for v in vertices]
+                y_coords = [v.y for v in vertices]
 
-                    bbox = BoundingBox(
-                        x=min(x_coords),
-                        y=min(y_coords),
-                        width=max(x_coords) - min(x_coords),
-                        height=max(y_coords) - min(y_coords)
-                    )
+                bbox = BoundingBox(
+                    x=min(x_coords),
+                    y=min(y_coords),
+                    width=max(x_coords) - min(x_coords),
+                    height=max(y_coords) - min(y_coords)
+                )
 
-                    objects.append(DetectedObject(
-                        name=obj.name,
-                        confidence=obj.score,
-                        bbox=bbox
-                    ))
+                objects.append(DetectedObject(
+                    name=obj.name,
+                    confidence=obj.score,
+                    bbox=bbox
+                ))
 
         return objects
 
@@ -235,29 +241,33 @@ class VisionService:
 
         # Skip first annotation (it's the full text)
         for ann in annotations[1:] if annotations else []:
-            vertices = ann.bounding_poly.vertices
-            if len(vertices) >= 4:
-                x_coords = [v.x for v in vertices]
-                y_coords = [v.y for v in vertices]
+            # Handle missing or None bounding_poly gracefully
+            if not hasattr(ann, 'bounding_poly') or ann.bounding_poly is None:
+                continue
+            vertices = getattr(ann.bounding_poly, 'vertices', None)
+            if vertices is None or len(vertices) < 4:
+                continue
+            x_coords = [v.x for v in vertices]
+            y_coords = [v.y for v in vertices]
 
-                # Normalize pixel coordinates to 0-1 range
-                min_x = min(x_coords) / image_width
-                min_y = min(y_coords) / image_height
-                width = (max(x_coords) - min(x_coords)) / image_width
-                height = (max(y_coords) - min(y_coords)) / image_height
+            # Normalize pixel coordinates to 0-1 range
+            min_x = min(x_coords) / image_width
+            min_y = min(y_coords) / image_height
+            width = (max(x_coords) - min(x_coords)) / image_width
+            height = (max(y_coords) - min(y_coords)) / image_height
 
-                bbox = BoundingBox(
-                    x=min_x,
-                    y=min_y,
-                    width=width,
-                    height=height
-                )
+            bbox = BoundingBox(
+                x=min_x,
+                y=min_y,
+                width=width,
+                height=height
+            )
 
-                text_blocks.append(TextBlock(
-                    text=ann.description,
-                    bbox=bbox,
-                    confidence=0.9  # Vision API doesn't provide per-word confidence
-                ))
+            text_blocks.append(TextBlock(
+                text=ann.description,
+                bbox=bbox,
+                confidence=0.9  # Vision API doesn't provide per-word confidence
+            ))
 
         return text_blocks
 

@@ -17,18 +17,8 @@ export function RatingBadge({ wine, isTopThree, position, onClick }: RatingBadge
   const canTap = isTappable(wine.confidence);
   const size = isTopThree ? badgeSizes.topThree : badgeSizes.base;
 
-  console.log('[RatingBadge] Rendering', wine.wine_name, {
-    position,
-    opacity: badgeOpacity,
-    confidence: wine.confidence,
-    size
-  });
-
   // Don't render if opacity is 0
-  if (badgeOpacity === 0) {
-    console.log('[RatingBadge] Skipping', wine.wine_name, '- opacity is 0');
-    return null;
-  }
+  if (badgeOpacity === 0) return null;
 
   const handleClick = () => {
     if (canTap && onClick) {

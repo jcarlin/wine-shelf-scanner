@@ -46,11 +46,6 @@ export function ResultsView({ response, imageUri, onReset }: ResultsViewProps) {
     };
 
     const bounds = getImageBounds(imageSize, containerSize);
-    console.log('[ResultsView] calculateBounds:', {
-      imageSize,
-      containerSize,
-      bounds
-    });
     setImageBounds(bounds);
   }, [imageSize]);
 

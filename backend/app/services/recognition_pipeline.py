@@ -14,9 +14,12 @@ Performance optimizations:
 - Expected latency: 1.5-2.5s for 8 bottles
 """
 
+import logging
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 from ..config import Config
 from ..models.enums import RatingSource, WineSource
@@ -258,15 +261,25 @@ class RecognitionPipeline:
         ]
 
         # Collect results in order
-        for future in futures:
-            bt, match, match_with_scores, bottle_idx, error_reason = future.result()
-            if error_reason:
+        for idx, future in enumerate(futures):
+            try:
+                bt, match, match_with_scores, bottle_idx, error_reason = future.result()
+                if error_reason:
+                    self._debug.add_step(
+                        bt, bottle_idx, None, None, None,
+                        step_failed=error_reason, included=False
+                    )
+                    continue
+                matches.append((bt, match, match_with_scores))
+            except Exception as e:
+                # Log the exception but continue processing other bottles
+                logger.error(f"Error matching bottle {idx}: {e}", exc_info=True)
+                # Get the bottle text for this failed future
+                bt = bottle_texts[idx]
                 self._debug.add_step(
-                    bt, bottle_idx, None, None, None,
-                    step_failed=error_reason, included=False
+                    bt, idx, None, None, None,
+                    step_failed=f"matching_exception: {type(e).__name__}", included=False
                 )
-                continue
-            matches.append((bt, match, match_with_scores))
 
         # Phase 2: Partition by confidence
         high_confidence_results: list[RecognizedWine] = []

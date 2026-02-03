@@ -1,0 +1,301 @@
+"""
+Claude Vision API service for wine identification from images.
+
+This is the final fallback when OCR + fuzzy matching + LLM text normalization fails.
+Sends the full shelf image to Claude Vision to identify wines at specific bottle locations.
+"""
+
+import base64
+import json
+import logging
+from dataclasses import dataclass
+from typing import Optional
+
+from ..config import Config
+from .ocr_processor import BottleText
+
+logger = logging.getLogger(__name__)
+
+# Try to import anthropic
+try:
+    import anthropic
+    ANTHROPIC_AVAILABLE = True
+except ModuleNotFoundError:
+    anthropic = None  # type: ignore
+    ANTHROPIC_AVAILABLE = False
+
+
+@dataclass
+class VisionIdentifiedWine:
+    """A wine identified by Claude Vision."""
+    bottle_index: int  # Index of the bottle in the input list
+    wine_name: Optional[str]
+    confidence: float  # 0.0-1.0
+    estimated_rating: Optional[float]  # 0.0-5.0 if Claude can estimate
+    wine_type: Optional[str]  # Red, White, Rosé, Sparkling
+    brand: Optional[str]  # Winery/producer
+    region: Optional[str]  # Wine region
+    varietal: Optional[str]  # Grape variety
+    blurb: Optional[str]  # 1-2 sentence description
+    reasoning: str  # Why Claude identified this wine
+
+
+def _build_vision_prompt(unmatched_bottles: list[BottleText]) -> str:
+    """Build the prompt for Claude Vision."""
+    # Describe the bottle locations
+    bottle_descriptions = []
+    for i, bt in enumerate(unmatched_bottles):
+        bbox = bt.bottle.bbox
+        # Convert normalized coords to percentage for readability
+        x_pct = round(bbox.x * 100)
+        y_pct = round(bbox.y * 100)
+        w_pct = round(bbox.width * 100)
+        h_pct = round(bbox.height * 100)
+
+        ocr_hint = bt.combined_text[:100] if bt.combined_text else "no OCR text"
+        bottle_descriptions.append(
+            f"  Bottle {i}: Located at x={x_pct}%, y={y_pct}%, size {w_pct}%x{h_pct}%. "
+            f"OCR hint: \"{ocr_hint}\""
+        )
+
+    bottles_text = "\n".join(bottle_descriptions)
+
+    return f"""You are a wine expert analyzing a photo of a wine shelf. I need you to identify the wines at specific bottle locations.
+
+The following bottles could not be identified through OCR and database matching. Please look at the image and identify each wine:
+
+{bottles_text}
+
+For each bottle, examine the label carefully and provide:
+1. The wine name (producer + wine name, e.g. "Caymus Cabernet Sauvignon" or "Opus One")
+2. Your confidence in the identification (0.0-1.0)
+3. If you recognize this wine, estimate its rating (0.0-5.0 scale, like Vivino ratings)
+4. Wine type (Red, White, Rosé, Sparkling, Dessert, Fortified)
+5. Producer/brand name
+6. Region if identifiable
+7. Grape variety if identifiable
+8. A brief 1-sentence description if you know this wine
+
+Respond with a JSON array, one object per bottle in the same order as listed above.
+
+IMPORTANT:
+- If you cannot identify a bottle clearly, set wine_name to null and confidence to 0
+- Do not guess wildly - only identify wines you can actually read or recognize
+- The bottle indices must match exactly (0, 1, 2, etc.)
+
+JSON Schema:
+[
+  {{
+    "bottle_index": 0,
+    "wine_name": "Producer Wine Name" or null,
+    "confidence": 0.0-1.0,
+    "estimated_rating": 0.0-5.0 or null,
+    "wine_type": "Red|White|Rosé|Sparkling|Dessert|Fortified" or null,
+    "brand": "Producer name" or null,
+    "region": "Region" or null,
+    "varietal": "Grape variety" or null,
+    "blurb": "Brief description" or null,
+    "reasoning": "Why you identified this wine"
+  }}
+]
+
+Return ONLY the JSON array, no other text."""
+
+
+def _parse_vision_response(response_text: str, num_bottles: int) -> list[VisionIdentifiedWine]:
+    """Parse Claude's JSON response into VisionIdentifiedWine objects."""
+    results = []
+
+    try:
+        # Extract JSON from response (handle markdown code blocks)
+        json_text = response_text.strip()
+        if json_text.startswith("```"):
+            # Remove markdown code block
+            lines = json_text.split("\n")
+            json_text = "\n".join(lines[1:-1]) if lines[-1].startswith("```") else "\n".join(lines[1:])
+
+        data = json.loads(json_text)
+
+        if not isinstance(data, list):
+            logger.error("Claude Vision response is not a list")
+            return results
+
+        for item in data:
+            try:
+                bottle_idx = item.get("bottle_index", -1)
+                if bottle_idx < 0 or bottle_idx >= num_bottles:
+                    continue
+
+                results.append(VisionIdentifiedWine(
+                    bottle_index=bottle_idx,
+                    wine_name=item.get("wine_name"),
+                    confidence=float(item.get("confidence", 0.0)),
+                    estimated_rating=float(item["estimated_rating"]) if item.get("estimated_rating") is not None else None,
+                    wine_type=item.get("wine_type"),
+                    brand=item.get("brand"),
+                    region=item.get("region"),
+                    varietal=item.get("varietal"),
+                    blurb=item.get("blurb"),
+                    reasoning=item.get("reasoning", ""),
+                ))
+            except (KeyError, ValueError, TypeError) as e:
+                logger.warning(f"Failed to parse bottle result: {e}")
+                continue
+
+    except json.JSONDecodeError as e:
+        logger.error(f"Failed to parse Claude Vision JSON response: {e}")
+        logger.debug(f"Response was: {response_text[:500]}")
+
+    return results
+
+
+class ClaudeVisionService:
+    """
+    Service for identifying wines using Claude Vision API.
+
+    Used as a final fallback when OCR + database matching fails.
+    """
+
+    # Model to use for vision (claude-3-5-sonnet is best for vision tasks)
+    DEFAULT_MODEL = "claude-sonnet-4-20250514"
+
+    def __init__(
+        self,
+        model: Optional[str] = None,
+        max_tokens: int = 2000,
+        timeout: float = 30.0,
+    ):
+        """
+        Initialize the Claude Vision service.
+
+        Args:
+            model: Claude model to use (default: claude-3-5-sonnet)
+            max_tokens: Maximum tokens in response
+            timeout: Request timeout in seconds
+        """
+        self.model = model or self.DEFAULT_MODEL
+        self.max_tokens = max_tokens
+        self.timeout = timeout
+        self._client: Optional["anthropic.Anthropic"] = None
+
+    def _get_client(self) -> "anthropic.Anthropic":
+        """Get or create Anthropic client."""
+        if self._client is None:
+            if not ANTHROPIC_AVAILABLE:
+                raise RuntimeError("anthropic package not installed")
+
+            api_key = Config.anthropic_api_key()
+            if not api_key:
+                raise RuntimeError("ANTHROPIC_API_KEY not configured")
+
+            self._client = anthropic.Anthropic(
+                api_key=api_key,
+                timeout=self.timeout,
+            )
+        return self._client
+
+    async def identify_wines(
+        self,
+        image_bytes: bytes,
+        unmatched_bottles: list[BottleText],
+        image_media_type: str = "image/jpeg",
+    ) -> list[VisionIdentifiedWine]:
+        """
+        Identify wines at specific bottle locations using Claude Vision.
+
+        Args:
+            image_bytes: The full shelf image as bytes
+            unmatched_bottles: List of bottles that couldn't be identified
+            image_media_type: MIME type of the image
+
+        Returns:
+            List of VisionIdentifiedWine for successfully identified bottles
+        """
+        if not unmatched_bottles:
+            return []
+
+        if not ANTHROPIC_AVAILABLE:
+            logger.warning("Claude Vision fallback unavailable: anthropic package not installed")
+            return []
+
+        api_key = Config.anthropic_api_key()
+        if not api_key:
+            logger.warning("Claude Vision fallback unavailable: ANTHROPIC_API_KEY not set")
+            return []
+
+        logger.info(f"Claude Vision: Attempting to identify {len(unmatched_bottles)} unmatched bottles")
+
+        try:
+            client = self._get_client()
+
+            # Encode image to base64
+            image_b64 = base64.standard_b64encode(image_bytes).decode("utf-8")
+
+            # Build prompt
+            prompt = _build_vision_prompt(unmatched_bottles)
+
+            # Call Claude Vision API (sync call, wrapped for async compatibility)
+            # Note: Using sync client for simplicity; could use async client if needed
+            import asyncio
+            response = await asyncio.get_event_loop().run_in_executor(
+                None,
+                lambda: client.messages.create(
+                    model=self.model,
+                    max_tokens=self.max_tokens,
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": [
+                                {
+                                    "type": "image",
+                                    "source": {
+                                        "type": "base64",
+                                        "media_type": image_media_type,
+                                        "data": image_b64,
+                                    },
+                                },
+                                {
+                                    "type": "text",
+                                    "text": prompt,
+                                },
+                            ],
+                        }
+                    ],
+                )
+            )
+
+            # Extract response text
+            response_text = response.content[0].text if response.content else ""
+
+            logger.debug(f"Claude Vision raw response: {response_text[:500]}...")
+
+            # Parse response
+            results = _parse_vision_response(response_text, len(unmatched_bottles))
+
+            # Filter to wines that were actually identified
+            identified = [r for r in results if r.wine_name and r.confidence > 0.3]
+
+            logger.info(f"Claude Vision: Identified {len(identified)} of {len(unmatched_bottles)} bottles")
+            for wine in identified:
+                logger.debug(
+                    f"  Bottle {wine.bottle_index}: {wine.wine_name} "
+                    f"(conf={wine.confidence:.2f}, rating={wine.estimated_rating})"
+                )
+
+            return identified
+
+        except Exception as e:
+            logger.error(f"Claude Vision API error: {e}", exc_info=True)
+            return []
+
+
+# Singleton instance
+_claude_vision_service: Optional[ClaudeVisionService] = None
+
+
+def get_claude_vision_service() -> ClaudeVisionService:
+    """Get singleton ClaudeVisionService instance."""
+    global _claude_vision_service
+    if _claude_vision_service is None:
+        _claude_vision_service = ClaudeVisionService()
+    return _claude_vision_service

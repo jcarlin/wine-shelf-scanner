@@ -18,13 +18,39 @@ from pillow_heif import register_heif_opener
 from ..config import Config
 from ..mocks.fixtures import get_mock_response
 from ..models import BoundingBox, DebugData, FallbackWine, ScanResponse, WineResult
-from ..services.ocr_processor import OCRProcessor, extract_wine_names
+from ..models.enums import RatingSource, WineSource
+from ..services.claude_vision import get_claude_vision_service, VisionIdentifiedWine
+from ..services.ocr_processor import BottleText, OCRProcessor, extract_wine_names
 from ..services.recognition_pipeline import RecognizedWine, RecognitionPipeline
 from ..services.vision import MockVisionService, ReplayVisionService, VisionResult, VisionService
 from ..services.wine_matcher import WineMatcher
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+def _vision_to_recognized(
+    vision_wine: VisionIdentifiedWine,
+    bottle_text: BottleText
+) -> RecognizedWine:
+    """Convert Claude Vision result to RecognizedWine."""
+    # Cap confidence at 0.75 for vision-identified wines
+    capped_confidence = min(vision_wine.confidence, 0.75)
+
+    return RecognizedWine(
+        wine_name=vision_wine.wine_name,
+        rating=vision_wine.estimated_rating,
+        confidence=capped_confidence,
+        source=WineSource.LLM,
+        identified=True,
+        bottle_text=bottle_text,
+        rating_source=RatingSource.LLM_ESTIMATED if vision_wine.estimated_rating else RatingSource.NONE,
+        wine_type=vision_wine.wine_type,
+        brand=vision_wine.brand,
+        region=vision_wine.region,
+        varietal=vision_wine.varietal,
+        blurb=vision_wine.blurb,
+    )
 
 
 def _to_wine_result(wine: RecognizedWine) -> WineResult:
@@ -236,6 +262,34 @@ async def process_image(
     if Config.is_dev():
         for w in recognized:
             logger.debug(f"[{image_id}]   {w.wine_name}: rating={w.rating}, conf={w.confidence:.2f}, src={w.source}")
+
+    # Step 5: Claude Vision fallback for unmatched bottles
+    # Find bottles that weren't matched by the pipeline
+    recognized_bottle_texts = {w.bottle_text for w in recognized}
+    unmatched_bottles = [bt for bt in bottle_texts if bt not in recognized_bottle_texts]
+
+    if unmatched_bottles and use_llm:
+        logger.info(f"[{image_id}] {len(unmatched_bottles)} unmatched bottles, trying Claude Vision fallback")
+        try:
+            vision_service = get_claude_vision_service()
+            vision_results = await vision_service.identify_wines(
+                image_bytes=image_bytes,
+                unmatched_bottles=unmatched_bottles,
+                image_media_type="image/jpeg",  # We convert to JPEG earlier
+            )
+
+            # Convert vision results to RecognizedWine and add to recognized list
+            for vision_wine in vision_results:
+                if vision_wine.wine_name and vision_wine.bottle_index < len(unmatched_bottles):
+                    bottle_text = unmatched_bottles[vision_wine.bottle_index]
+                    recognized_wine = _vision_to_recognized(vision_wine, bottle_text)
+                    recognized.append(recognized_wine)
+                    logger.info(
+                        f"[{image_id}] Claude Vision identified: {vision_wine.wine_name} "
+                        f"(conf={vision_wine.confidence:.2f}, rating={vision_wine.estimated_rating})"
+                    )
+        except Exception as e:
+            logger.warning(f"[{image_id}] Claude Vision fallback failed: {e}")
 
     # Build response
     results: list[WineResult] = []

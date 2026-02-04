@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Camera, Upload, Wine } from 'lucide-react';
 import { colors } from '@/lib/theme';
 
@@ -10,6 +11,7 @@ interface CameraCaptureProps {
 }
 
 export function CameraCapture({ onImageSelected, isLoading }: CameraCaptureProps) {
+  const t = useTranslations('camera');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -58,10 +60,10 @@ export function CameraCapture({ onImageSelected, isLoading }: CameraCaptureProps
           <Wine className="w-12 h-12 text-white" />
         </div>
         <h1 className="text-3xl font-bold text-white mb-3">
-          Wine Shelf Scanner
+          {t('heroTitle')}
         </h1>
         <p className="text-gray-400 text-lg max-w-md">
-          Take a photo of any wine shelf and instantly see ratings overlaid on each bottle
+          {t('heroSubtitle')}
         </p>
       </div>
 
@@ -84,10 +86,10 @@ export function CameraCapture({ onImageSelected, isLoading }: CameraCaptureProps
         <div className="text-center">
           <Upload className={`w-10 h-10 mx-auto mb-3 ${isDragOver ? 'text-star' : 'text-gray-400'}`} />
           <p className="text-gray-300 mb-1">
-            Drag and drop an image here
+            {t('dragDrop')}
           </p>
           <p className="text-gray-500 text-sm">
-            or click to browse
+            {t('orBrowse')}
           </p>
         </div>
       </div>
@@ -107,7 +109,7 @@ export function CameraCapture({ onImageSelected, isLoading }: CameraCaptureProps
           "
         >
           <Camera className="w-5 h-5" />
-          Take Photo
+          {t('takePhoto')}
         </button>
 
         {/* Upload Button */}
@@ -123,7 +125,7 @@ export function CameraCapture({ onImageSelected, isLoading }: CameraCaptureProps
           "
         >
           <Upload className="w-5 h-5" />
-          Upload Image
+          {t('uploadImage')}
         </button>
       </div>
 

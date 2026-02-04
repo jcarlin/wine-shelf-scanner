@@ -1,10 +1,13 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 interface ScanningOverlayProps {
   imageUri: string;
 }
 
 export function ScanningOverlay({ imageUri }: ScanningOverlayProps) {
+  const t = useTranslations('scanning');
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-4">
       <div className="relative w-full max-w-lg overflow-hidden rounded-xl">
@@ -26,7 +29,7 @@ export function ScanningOverlay({ imageUri }: ScanningOverlayProps) {
         {/* Status text overlay at bottom */}
         <div className="absolute bottom-4 left-0 right-0 text-center">
           <div className="inline-block bg-black/60 backdrop-blur-sm px-4 py-2 rounded-lg">
-            <span className="text-white font-medium">Analyzing wines...</span>
+            <span className="text-white font-medium">{t('analyzing')}</span>
           </div>
         </div>
       </div>

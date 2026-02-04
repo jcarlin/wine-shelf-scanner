@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Star, AlertTriangle } from 'lucide-react';
 import { FallbackWine } from '@/lib/types';
 import { colors } from '@/lib/theme';
@@ -10,6 +11,7 @@ interface FallbackListProps {
 }
 
 export function FallbackList({ wines, onReset }: FallbackListProps) {
+  const t = useTranslations('fallback');
   // Sort by rating descending
   const sortedWines = [...wines].sort((a, b) => b.rating - a.rating);
 
@@ -20,11 +22,11 @@ export function FallbackList({ wines, onReset }: FallbackListProps) {
         <div className="flex items-center justify-center gap-2 mb-2">
           <AlertTriangle className="w-5 h-5 text-yellow-400" />
           <h2 className="text-lg font-semibold text-white">
-            Could not identify bottles
+            {t('couldNotIdentify')}
           </h2>
         </div>
         <p className="text-gray-400 text-sm">
-          Here are some popular wines you might be looking for
+          {t('popularWines')}
         </p>
       </div>
 
@@ -60,7 +62,7 @@ export function FallbackList({ wines, onReset }: FallbackListProps) {
           hover:bg-gray-100 active:scale-[0.98]
         "
       >
-        Try Another Photo
+        {t('tryAnother')}
       </button>
     </div>
   );

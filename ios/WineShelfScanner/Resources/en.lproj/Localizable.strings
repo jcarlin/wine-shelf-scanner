@@ -1,0 +1,52 @@
+/* App */
+"app.title" = "Wine Scanner";
+
+/* Idle / Camera */
+"idle.pointAtShelf" = "Point at a wine shelf";
+"idle.takePhotoToSee" = "Take a photo to see ratings";
+"idle.scanShelf" = "Scan Shelf";
+"idle.choosePhoto" = "Choose Photo";
+"idle.selectPhoto" = "Select Photo";
+
+/* Processing */
+"processing.analyzing" = "Analyzing wines...";
+
+/* Error */
+"error.tryAgain" = "Try Again";
+"error.startOver" = "Start Over";
+
+/* Results */
+"results.newScan" = "New Scan";
+"results.winesFound" = "Wines Found";
+"results.partialDetection" = "Some bottles couldn't be recognized";
+"results.scannedWith" = "Scanned with Wine Shelf Scanner";
+"results.topPicks" = "Top picks from the shelf:";
+"results.stars" = "stars";
+
+/* Detail Sheet */
+"detail.by" = "by %@";
+"detail.noRating" = "No rating";
+"detail.reviewsK" = "%@K reviews";
+"detail.reviews" = "%lld reviews";
+"detail.widelyRated" = "Widely rated";
+"detail.limitedData" = "Limited data";
+"detail.crowdFavorite" = "Crowd favorite";
+"detail.bestOnShelf" = "Best on this shelf";
+"detail.rankedOnShelf" = "Ranked #%lld of %lld on this shelf";
+"detail.region" = "REGION";
+"detail.varietal" = "VARIETAL";
+"detail.goesWith" = "Goes with";
+"detail.whatPeopleSay" = "What people say";
+"detail.shareThisPick" = "Share this pick";
+"detail.foundWith" = "Found with Wine Shelf Scanner";
+"detail.youLiked" = "You liked this wine";
+"detail.youDisliked" = "You didn't like this wine";
+"detail.undo" = "Undo";
+"detail.thanksFeedback" = "Thanks for your feedback!";
+"detail.isThisRight" = "Is this the right wine?";
+"detail.whatsCorrect" = "What's the correct wine?";
+"detail.wineName" = "Wine name";
+"detail.cancel" = "Cancel";
+"detail.submit" = "Submit";
+"detail.yes" = "Yes";
+"detail.no" = "No";

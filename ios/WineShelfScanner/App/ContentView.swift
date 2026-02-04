@@ -124,7 +124,7 @@ struct ContentView: View {
                     )
                 }
             }
-            .navigationTitle("Wine Scanner")
+            .navigationTitle(NSLocalizedString("app.title", comment: "Navigation title"))
             .navigationBarTitleDisplayMode(.inline)
             .preferredColorScheme(.dark)
             .sheet(isPresented: $showCamera) {
@@ -158,18 +158,18 @@ struct IdleView: View {
                 .font(.system(size: 80))
                 .foregroundColor(.white.opacity(0.7))
 
-            Text("Point at a wine shelf")
+            Text(NSLocalizedString("idle.pointAtShelf", comment: "Idle screen title"))
                 .font(.title2)
                 .foregroundColor(.white)
 
-            Text("Take a photo to see ratings")
+            Text(NSLocalizedString("idle.takePhotoToSee", comment: "Idle screen subtitle"))
                 .font(.subheadline)
                 .foregroundColor(.white.opacity(0.6))
 
             VStack(spacing: 12) {
                 if cameraAvailable {
                     Button(action: onScanCamera) {
-                        Label("Scan Shelf", systemImage: "camera.fill")
+                        Label(NSLocalizedString("idle.scanShelf", comment: "Scan shelf button"), systemImage: "camera.fill")
                             .font(.headline)
                             .foregroundColor(.black)
                             .frame(maxWidth: .infinity)
@@ -182,7 +182,7 @@ struct IdleView: View {
                 }
 
                 Button(action: onScanLibrary) {
-                    Label(cameraAvailable ? "Choose Photo" : "Select Photo", systemImage: "photo.on.rectangle")
+                    Label(cameraAvailable ? NSLocalizedString("idle.choosePhoto", comment: "Choose photo button") : NSLocalizedString("idle.selectPhoto", comment: "Select photo button"), systemImage: "photo.on.rectangle")
                         .font(.headline)
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
@@ -206,7 +206,7 @@ struct ProcessingView: View {
                 .tint(.white)
                 .accessibilityIdentifier("processingSpinner")
 
-            Text("Analyzing wines...")
+            Text(NSLocalizedString("processing.analyzing", comment: "Processing status"))
                 .font(.headline)
                 .foregroundColor(.white)
         }
@@ -232,12 +232,12 @@ struct ErrorView: View {
                 .accessibilityIdentifier("errorMessage")
 
             HStack(spacing: 16) {
-                Button("Try Again", action: onRetry)
+                Button(NSLocalizedString("error.tryAgain", comment: "Retry button"), action: onRetry)
                     .buttonStyle(.bordered)
                     .tint(.white)
                     .accessibilityIdentifier("retryButton")
 
-                Button("Start Over", action: onReset)
+                Button(NSLocalizedString("error.startOver", comment: "Start over button"), action: onReset)
                     .buttonStyle(.borderedProminent)
                     .tint(.white)
                     .accessibilityIdentifier("startOverButton")

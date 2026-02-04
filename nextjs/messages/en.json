@@ -1,0 +1,62 @@
+{
+  "app": {
+    "title": "Wine Shelf Scanner",
+    "description": "Take a photo of any wine shelf and instantly see ratings overlaid on each bottle"
+  },
+  "camera": {
+    "heroTitle": "Wine Shelf Scanner",
+    "heroSubtitle": "Take a photo of any wine shelf and instantly see ratings overlaid on each bottle",
+    "dragDrop": "Drag and drop an image here",
+    "orBrowse": "or click to browse",
+    "takePhoto": "Take Photo",
+    "uploadImage": "Upload Image"
+  },
+  "processing": {
+    "analyzing": "Analyzing wines...",
+    "aiIdentifying": "Our AI is identifying bottles and fetching ratings. This may take a few seconds."
+  },
+  "results": {
+    "newScan": "New Scan",
+    "bottlesFound": "{count, plural, one {# bottle found} other {# bottles found}}",
+    "partialDetection": "Some bottles couldn't be recognized",
+    "scannedWith": "Scanned with Wine Shelf Scanner",
+    "topPicks": "Top picks from the shelf:",
+    "stars": "stars"
+  },
+  "fallback": {
+    "couldNotIdentify": "Could not identify bottles",
+    "popularWines": "Here are some popular wines you might be looking for",
+    "tryAnother": "Try Another Photo",
+    "winesFound": "Wines Found"
+  },
+  "error": {
+    "tryAgain": "Try Again"
+  },
+  "detail": {
+    "by": "by {brand}",
+    "reviews": "{count, plural, one {# review} other {# reviews}}",
+    "reviewsK": "{count}K reviews",
+    "widelyRated": "Widely rated",
+    "limitedData": "Limited data",
+    "crowdFavorite": "Crowd favorite",
+    "bestOnShelf": "Best on this shelf",
+    "rankedOnShelf": "Ranked #{rank} of {total} on this shelf",
+    "region": "Region",
+    "varietal": "Varietal",
+    "goesWith": "Goes with",
+    "whatPeopleSay": "What people say",
+    "shareThisPick": "Share this pick",
+    "foundWith": "Found with Wine Shelf Scanner",
+    "youLiked": "You liked this wine",
+    "youDisliked": "You didn't like this wine",
+    "undo": "Undo",
+    "thanksFeedback": "Thanks for your feedback!",
+    "isThisRight": "Is this the right wine?",
+    "yes": "Yes",
+    "no": "No",
+    "noRating": "No rating"
+  },
+  "scanning": {
+    "analyzing": "Analyzing wines..."
+  }
+}

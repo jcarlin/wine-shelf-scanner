@@ -1,0 +1,62 @@
+{
+  "app": {
+    "title": "Escáner de Vinos",
+    "description": "Toma una foto de cualquier estante de vinos y ve las calificaciones sobre cada botella al instante"
+  },
+  "camera": {
+    "heroTitle": "Escáner de Vinos",
+    "heroSubtitle": "Toma una foto de cualquier estante de vinos y ve las calificaciones sobre cada botella al instante",
+    "dragDrop": "Arrastra y suelta una imagen aquí",
+    "orBrowse": "o haz clic para buscar",
+    "takePhoto": "Tomar Foto",
+    "uploadImage": "Subir Imagen"
+  },
+  "processing": {
+    "analyzing": "Analizando vinos...",
+    "aiIdentifying": "Nuestra IA está identificando botellas y buscando calificaciones. Esto puede tardar unos segundos."
+  },
+  "results": {
+    "newScan": "Nuevo Escaneo",
+    "bottlesFound": "{count, plural, one {# botella encontrada} other {# botellas encontradas}}",
+    "partialDetection": "Algunas botellas no pudieron ser reconocidas",
+    "scannedWith": "Escaneado con Escáner de Vinos",
+    "topPicks": "Mejores opciones del estante:",
+    "stars": "estrellas"
+  },
+  "fallback": {
+    "couldNotIdentify": "No se pudieron identificar las botellas",
+    "popularWines": "Aquí hay algunos vinos populares que podrías estar buscando",
+    "tryAnother": "Intentar con Otra Foto",
+    "winesFound": "Vinos Encontrados"
+  },
+  "error": {
+    "tryAgain": "Intentar de Nuevo"
+  },
+  "detail": {
+    "by": "de {brand}",
+    "reviews": "{count, plural, one {# reseña} other {# reseñas}}",
+    "reviewsK": "{count}K reseñas",
+    "widelyRated": "Ampliamente calificado",
+    "limitedData": "Datos limitados",
+    "crowdFavorite": "Favorito del público",
+    "bestOnShelf": "Mejor en este estante",
+    "rankedOnShelf": "Puesto #{rank} de {total} en este estante",
+    "region": "Región",
+    "varietal": "Varietal",
+    "goesWith": "Va bien con",
+    "whatPeopleSay": "Lo que dice la gente",
+    "shareThisPick": "Compartir esta elección",
+    "foundWith": "Encontrado con Escáner de Vinos",
+    "youLiked": "Te gustó este vino",
+    "youDisliked": "No te gustó este vino",
+    "undo": "Deshacer",
+    "thanksFeedback": "¡Gracias por tu opinión!",
+    "isThisRight": "¿Es este el vino correcto?",
+    "yes": "Sí",
+    "no": "No",
+    "noRating": "Sin calificación"
+  },
+  "scanning": {
+    "analyzing": "Analizando vinos..."
+  }
+}

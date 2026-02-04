@@ -1,10 +1,12 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { CameraCapture, ProcessingSpinner, ScanningOverlay, ResultsView } from '@/components';
 import { useScanState } from '@/hooks/useScanState';
 
 export default function Home() {
   const { state, processImage, reset } = useScanState();
+  const t = useTranslations('error');
 
   return (
     <main className="min-h-screen flex flex-col">
@@ -35,7 +37,7 @@ export default function Home() {
             onClick={reset}
             className="bg-white text-black font-semibold py-3 px-8 rounded-xl hover:bg-gray-100"
           >
-            Try Again
+            {t('tryAgain')}
           </button>
         </div>
       )}

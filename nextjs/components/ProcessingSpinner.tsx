@@ -1,9 +1,11 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Wine } from 'lucide-react';
 import { colors } from '@/lib/theme';
 
 export function ProcessingSpinner() {
+  const t = useTranslations('processing');
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] px-6">
       {/* Animated Wine Icon */}
@@ -20,10 +22,10 @@ export function ProcessingSpinner() {
 
       {/* Status Text */}
       <h2 className="text-xl font-semibold text-white mb-2">
-        Analyzing wines...
+        {t('analyzing')}
       </h2>
       <p className="text-gray-400 text-center max-w-sm">
-        Our AI is identifying bottles and fetching ratings. This may take a few seconds.
+        {t('aiIdentifying')}
       </p>
 
       {/* Progress indicator dots */}

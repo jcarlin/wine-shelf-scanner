@@ -52,10 +52,10 @@
     },
     "extra": {
       "apiBaseUrl": "https://wine-scanner-api-82762985464.us-central1.run.app",
-      "featureWineMemory": false,
-      "featureShelfRanking": false,
-      "featureSafePick": false,
-      "featurePairings": false,
+      "featureWineMemory": true,
+      "featureShelfRanking": true,
+      "featureSafePick": true,
+      "featurePairings": true,
       "router": {},
       "eas": {
         "projectId": "42bad5c0-244a-468a-8801-fb80ce183494"

@@ -14,10 +14,10 @@ struct FeatureFlags {
     private let defaults = UserDefaults.standard
 
     private let compiledDefaults: [String: Bool] = [
-        "feature_wine_memory": false,
-        "feature_shelf_ranking": false,
-        "feature_safe_pick": false,
-        "feature_pairings": false,
+        "feature_wine_memory": true,
+        "feature_shelf_ranking": true,
+        "feature_safe_pick": true,
+        "feature_pairings": true,
     ]
 
     var wineMemory: Bool {

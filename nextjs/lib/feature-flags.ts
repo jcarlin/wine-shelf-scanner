@@ -5,8 +5,10 @@ export interface FeatureFlagValues {
   pairings: boolean;
 }
 
-function envBool(key: string): boolean {
-  return process.env[key]?.toLowerCase() === 'true';
+function envBool(key: string, defaultValue = true): boolean {
+  const val = process.env[key];
+  if (val === undefined) return defaultValue;
+  return val.toLowerCase() === 'true';
 }
 
 export const featureFlags: FeatureFlagValues = {

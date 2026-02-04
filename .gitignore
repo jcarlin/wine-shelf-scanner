@@ -55,3 +55,7 @@ raw-data/
 test-images/
 docs/*
 !docs/FEATURE_PLAN.md
+
+
+backend/app/data/wines.db
+backend/app/data/wines.db-*

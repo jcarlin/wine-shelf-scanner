@@ -130,6 +130,18 @@ struct ResultsView: View {
                     }
             )
 
+            // Share shelf results
+            if FeatureFlags.shared.share {
+                Button {
+                    shareShelfResults()
+                } label: {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                }
+                .accessibilityIdentifier("shareShelfButton")
+            }
+
             // Debug mode indicator
             if debugMode {
                 Image(systemName: "wrench.and.screwdriver.fill")
@@ -139,6 +151,27 @@ struct ResultsView: View {
         }
         .padding()
         .background(Color.black.opacity(0.9))
+    }
+
+    private func shareShelfResults() {
+        let topWines = response.topRatedResults.prefix(3)
+        var text = "Top picks from the shelf:\n"
+        for (index, wine) in topWines.enumerated() {
+            let ratingStr = wine.rating.map { String(format: "%.1f", $0) } ?? "?"
+            text += "\(index + 1). \(wine.wineName) - \(ratingStr) stars\n"
+        }
+        text += "\nScanned with Wine Shelf Scanner"
+
+        let activityVC = UIActivityViewController(activityItems: [text], applicationActivities: nil)
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let root = windowScene.windows.first?.rootViewController {
+            if let popover = activityVC.popoverPresentationController {
+                popover.sourceView = root.view
+                popover.sourceRect = CGRect(x: root.view.bounds.midX, y: root.view.bounds.midY, width: 0, height: 0)
+                popover.permittedArrowDirections = []
+            }
+            root.present(activityVC, animated: true)
+        }
     }
 }
 

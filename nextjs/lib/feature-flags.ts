@@ -3,6 +3,10 @@ export interface FeatureFlagValues {
   shelfRanking: boolean;
   safePick: boolean;
   pairings: boolean;
+  trustSignals: boolean;
+  visualEmphasis: boolean;
+  offlineCache: boolean;
+  share: boolean;
 }
 
 function envBool(key: string, defaultValue = true): boolean {
@@ -16,6 +20,10 @@ export const featureFlags: FeatureFlagValues = {
   shelfRanking: envBool('NEXT_PUBLIC_FEATURE_SHELF_RANKING'),
   safePick: envBool('NEXT_PUBLIC_FEATURE_SAFE_PICK'),
   pairings: envBool('NEXT_PUBLIC_FEATURE_PAIRINGS'),
+  trustSignals: envBool('NEXT_PUBLIC_FEATURE_TRUST_SIGNALS'),
+  visualEmphasis: envBool('NEXT_PUBLIC_FEATURE_VISUAL_EMPHASIS'),
+  offlineCache: envBool('NEXT_PUBLIC_FEATURE_OFFLINE_CACHE'),
+  share: envBool('NEXT_PUBLIC_FEATURE_SHARE'),
 };
 
 export function useFeatureFlags(): FeatureFlagValues {

@@ -21,6 +21,13 @@ export interface BoundingBox {
   height: number;
 }
 
+export interface RatingSourceDetail {
+  source_name: string;
+  display_name: string;
+  original_rating: number;
+  scale_label: string;
+}
+
 export interface WineResult {
   wine_name: string;
   rating: number | null;
@@ -37,6 +44,7 @@ export interface WineResult {
   // Feature-flagged fields (null when feature is off)
   is_safe_pick?: boolean;       // Crowd favorite badge
   pairing?: string;             // Food pairing suggestion
+  rating_sources?: RatingSourceDetail[];  // Rating provenance details
 }
 
 export interface FallbackWine {

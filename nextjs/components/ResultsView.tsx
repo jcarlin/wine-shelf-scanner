@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Share2 } from 'lucide-react';
 import { ScanResponse, WineResult, Rect, Size } from '@/lib/types';
 import { OverlayContainer } from './OverlayContainer';
 import { WineDetailModal } from './WineDetailModal';
@@ -24,7 +24,7 @@ export function ResultsView({ response, imageUri, onReset }: ResultsViewProps) {
   const [imageBounds, setImageBounds] = useState<Rect | null>(null);
   const [imageSize, setImageSize] = useState<Size | null>(null);
   const [showPartialToast, setShowPartialToast] = useState(false);
-  const { shelfRanking } = useFeatureFlags();
+  const { shelfRanking, share: shareEnabled } = useFeatureFlags();
 
   // Check if we should show partial detection toast
   const visibleCount = response.results.filter((w) => isVisible(w.confidence)).length;
@@ -126,7 +126,32 @@ export function ResultsView({ response, imageUri, onReset }: ResultsViewProps) {
             {visibleCount} bottle{visibleCount !== 1 ? 's' : ''} found
           </span>
         </div>
-        <div className="w-20" /> {/* Spacer for centering */}
+        <div className="w-20 flex justify-end">
+          {shareEnabled && (
+            <button
+              onClick={() => {
+                const topWines = [...response.results]
+                  .filter((w) => isVisible(w.confidence) && w.rating !== null)
+                  .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
+                  .slice(0, 3);
+                const text = [
+                  'Top picks from the shelf:',
+                  ...topWines.map((w, i) => `${i + 1}. ${w.wine_name} - ${w.rating?.toFixed(1)} stars`),
+                  '',
+                  'Scanned with Wine Shelf Scanner',
+                ].join('\n');
+                if (navigator.share) {
+                  navigator.share({ text }).catch(() => {});
+                } else {
+                  navigator.clipboard.writeText(text).catch(() => {});
+                }
+              }}
+              className="text-white hover:text-gray-300 transition-colors p-1"
+            >
+              <Share2 className="w-5 h-5" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Image Container */}

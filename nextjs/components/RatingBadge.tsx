@@ -4,6 +4,7 @@ import { Star, ShieldCheck, XCircle, Heart } from 'lucide-react';
 import { WineResult } from '@/lib/types';
 import { colors, badgeSizes } from '@/lib/theme';
 import { opacity as getOpacity, isTappable } from '@/lib/overlay-math';
+import { useFeatureFlags } from '@/lib/feature-flags';
 
 export type WineSentiment = 'liked' | 'disliked';
 
@@ -18,12 +19,24 @@ interface RatingBadgeProps {
 }
 
 export function RatingBadge({ wine, isTopThree, position, onClick, shelfRank, isSafePick, userSentiment }: RatingBadgeProps) {
-  const badgeOpacity = getOpacity(wine.confidence);
+  const { visualEmphasis } = useFeatureFlags();
+  const baseOpacity = getOpacity(wine.confidence);
   const canTap = isTappable(wine.confidence);
   const size = isTopThree ? badgeSizes.topThree : badgeSizes.base;
+  const isBestPick = visualEmphasis && shelfRank === 1;
 
   // Don't render if opacity is 0
-  if (badgeOpacity === 0) return null;
+  if (baseOpacity === 0) return null;
+
+  // Apply visual emphasis: boost top-3 opacity, dim non-top-3
+  let badgeOpacity = baseOpacity;
+  if (visualEmphasis && baseOpacity > 0) {
+    if (isTopThree) {
+      badgeOpacity = Math.min(baseOpacity + 0.15, 1.0);
+    } else {
+      badgeOpacity = baseOpacity * 0.65;
+    }
+  }
 
   const handleClick = () => {
     if (canTap && onClick) {
@@ -40,10 +53,24 @@ export function RatingBadge({ wine, isTopThree, position, onClick, shelfRank, is
         left: position.x,
         top: position.y,
         opacity: badgeOpacity,
-        zIndex: 10,
+        zIndex: isBestPick ? 20 : 10,
       }}
       onClick={handleClick}
     >
+      {/* Best Pick label above #1 badge */}
+      {isBestPick && (
+        <span
+          className="font-black tracking-wide"
+          style={{
+            fontSize: 8,
+            color: '#FFD700',
+            textShadow: '0 1px 2px rgba(0,0,0,0.8)',
+            marginBottom: 2,
+          }}
+        >
+          BEST PICK
+        </span>
+      )}
       <div className="relative">
         <div
           className={`
@@ -56,9 +83,15 @@ export function RatingBadge({ wine, isTopThree, position, onClick, shelfRank, is
             width: size.width,
             height: size.height,
             backgroundColor: colors.badgeBackground,
-            borderWidth: isTopThree ? 2 : 0,
-            borderColor: isTopThree ? colors.topThreeBorder : 'transparent',
-            boxShadow: isTopThree ? `0 0 12px ${colors.topThreeGlow}40` : undefined,
+            borderWidth: isTopThree ? (isBestPick ? 2.5 : 2) : 0,
+            borderColor: isTopThree
+              ? (isBestPick ? 'rgba(255, 204, 0, 0.9)' : colors.topThreeBorder)
+              : 'transparent',
+            boxShadow: isBestPick
+              ? `0 0 16px rgba(255, 204, 0, 0.6), 0 0 4px rgba(255, 204, 0, 0.3)`
+              : isTopThree
+                ? `0 0 12px ${colors.topThreeGlow}40`
+                : undefined,
           }}
         >
           <Star

@@ -39,8 +39,22 @@ struct RatingBadge: View {
         }
     }
 
+    /// Whether this is the #1 ranked wine and visual emphasis is on
+    private var isBestPick: Bool {
+        FeatureFlags.shared.visualEmphasis && shelfRank == 1
+    }
+
     var body: some View {
         VStack(spacing: 2) {
+            // "Best Pick" label above #1 badge
+            if isBestPick {
+                Text("BEST PICK")
+                    .font(.system(size: 8, weight: .heavy, design: .rounded))
+                    .tracking(0.5)
+                    .foregroundColor(Color.yellow)
+                    .shadow(color: .black.opacity(0.8), radius: 1, x: 0, y: 1)
+            }
+
             HStack(spacing: 2) {
                 Image(systemName: "star.fill")
                     .font(.system(size: isTopThree ? 12 : 10))
@@ -71,11 +85,16 @@ struct RatingBadge: View {
             .overlay(
                 RoundedRectangle(cornerRadius: 6)
                     .stroke(
-                        isTopThree ? Color.yellow.opacity(0.6) : Color.clear,
-                        lineWidth: isTopThree ? 2 : 0
+                        isTopThree ? Color.yellow.opacity(isBestPick ? 0.9 : 0.6) : Color.clear,
+                        lineWidth: isTopThree ? (isBestPick ? 2.5 : 2) : 0
                     )
             )
-            .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
+            .shadow(
+                color: isBestPick ? Color.yellow.opacity(0.6) : .black.opacity(0.5),
+                radius: isBestPick ? 8 : 2,
+                x: 0,
+                y: isBestPick ? 0 : 1
+            )
             .overlay(alignment: .topTrailing) {
                 if let sentiment = userSentiment {
                     Group {

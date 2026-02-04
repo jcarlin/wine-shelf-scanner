@@ -18,7 +18,7 @@ from pillow_heif import register_heif_opener
 from ..config import Config
 from ..feature_flags import FeatureFlags, get_feature_flags
 from ..mocks.fixtures import get_mock_response
-from ..models import BoundingBox, DebugData, FallbackWine, ScanResponse, WineResult
+from ..models import BoundingBox, DebugData, FallbackWine, RatingSourceDetail, ScanResponse, WineResult
 from ..models.debug import PipelineStats
 from ..models.enums import RatingSource, WineSource
 from ..services.claude_vision import get_claude_vision_service, VisionIdentifiedWine
@@ -150,8 +150,44 @@ _SAFE_VARIETALS = {
 
 _pairing_service = PairingService()
 
+# Maps source_name in DB to human-readable display name
+_SOURCE_DISPLAY_NAMES = {
+    "vivino": "Vivino",
+    "kaggle_wine_reviews": "Wine Enthusiast",
+    "wine_enthusiast": "Wine Enthusiast",
+    "wine_spectator": "Wine Spectator",
+    "cellartracker": "CellarTracker",
+    "robert_parker": "Robert Parker",
+    "james_suckling": "James Suckling",
+    "decanter": "Decanter",
+}
 
-def _apply_feature_flags(results: list[WineResult], flags: FeatureFlags) -> None:
+
+def _get_rating_source_details(wine_name: str, wine_matcher: WineMatcher) -> Optional[list[RatingSourceDetail]]:
+    """Look up rating source details for a wine from wine_sources table."""
+    if wine_matcher._repository is None:
+        return None
+    result = wine_matcher._repository.find_by_name_with_id(wine_name)
+    if not result:
+        return None
+    _record, wine_id = result
+    sources = wine_matcher._repository.get_rating_sources(wine_id)
+    if not sources:
+        return None
+    details = []
+    for src in sources:
+        scale_max = src["scale_max"]
+        scale_label = f"/ {int(scale_max)}" if scale_max == int(scale_max) else f"/ {scale_max}"
+        details.append(RatingSourceDetail(
+            source_name=src["source_name"],
+            display_name=_SOURCE_DISPLAY_NAMES.get(src["source_name"], src["source_name"].replace("_", " ").title()),
+            original_rating=src["original_rating"],
+            scale_label=scale_label,
+        ))
+    return details
+
+
+def _apply_feature_flags(results: list[WineResult], flags: FeatureFlags, wine_matcher: Optional[WineMatcher] = None) -> None:
     """Apply feature-flagged enrichments to scan results (mutates in place)."""
     for result in results:
         if flags.feature_pairings:
@@ -159,6 +195,9 @@ def _apply_feature_flags(results: list[WineResult], flags: FeatureFlags) -> None
 
         if flags.feature_safe_pick:
             result.is_safe_pick = _compute_safe_pick(result)
+
+        if flags.feature_trust_signals and wine_matcher:
+            result.rating_sources = _get_rating_source_details(result.wine_name, wine_matcher)
 
 
 def _compute_safe_pick(wine: WineResult) -> bool:
@@ -517,7 +556,7 @@ async def process_image(
 
     # === Feature-flagged post-processing ===
     if flags:
-        _apply_feature_flags(results, flags)
+        _apply_feature_flags(results, flags, wine_matcher=wine_matcher)
 
     stats_final_results = len(results)
     logger.info(f"[{image_id}] Response: {stats_final_results} results, {len(fallback)} fallback")

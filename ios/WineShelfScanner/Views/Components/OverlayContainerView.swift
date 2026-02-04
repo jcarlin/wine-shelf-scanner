@@ -63,7 +63,11 @@ struct OverlayContainerView: View {
                     userSentiment: sentiment
                 )
                 .position(finalPosition)
-                .opacity(OverlayMath.opacity(confidence: wine.confidence))
+                .opacity(OverlayMath.opacity(
+                    confidence: wine.confidence,
+                    isTopThree: isTopThree,
+                    visualEmphasis: FeatureFlags.shared.visualEmphasis
+                ))
                 .onTapGesture {
                     if wine.isTappable {
                         onWineTapped(wine)

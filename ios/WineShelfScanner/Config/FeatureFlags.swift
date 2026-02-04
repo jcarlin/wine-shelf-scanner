@@ -18,6 +18,10 @@ struct FeatureFlags {
         "feature_shelf_ranking": true,
         "feature_safe_pick": true,
         "feature_pairings": true,
+        "feature_trust_signals": true,
+        "feature_visual_emphasis": true,
+        "feature_offline_cache": true,
+        "feature_share": true,
     ]
 
     var wineMemory: Bool {
@@ -34,6 +38,22 @@ struct FeatureFlags {
 
     var pairings: Bool {
         flagValue("feature_pairings")
+    }
+
+    var trustSignals: Bool {
+        flagValue("feature_trust_signals")
+    }
+
+    var visualEmphasis: Bool {
+        flagValue("feature_visual_emphasis")
+    }
+
+    var offlineCache: Bool {
+        flagValue("feature_offline_cache")
+    }
+
+    var share: Bool {
+        flagValue("feature_share")
     }
 
     /// Returns UserDefaults override if set, otherwise compiled default.

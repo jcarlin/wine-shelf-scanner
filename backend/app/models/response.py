@@ -33,6 +33,14 @@ from pydantic import BaseModel, Field, field_validator
 from .enums import RatingSource, WineSource
 
 
+class RatingSourceDetail(BaseModel):
+    """Detail about where a wine's rating comes from."""
+    source_name: str = Field(..., description="Source name (e.g., 'vivino', 'wine_enthusiast')")
+    display_name: str = Field(..., description="Human-readable source name")
+    original_rating: float = Field(..., description="Rating in original scale")
+    scale_label: str = Field(..., description="Scale description (e.g., '/ 5', '/ 100')")
+
+
 class BoundingBox(BaseModel):
     """Normalized bounding box (0-1 range)."""
     x: float = Field(..., ge=0, le=1, description="Left edge (normalized)")
@@ -64,6 +72,7 @@ class WineResult(BaseModel):
     # Feature-flagged fields (null when feature is off)
     is_safe_pick: Optional[bool] = Field(None, description="Crowd favorite badge (feature_safe_pick)")
     pairing: Optional[str] = Field(None, description="Food pairing suggestion (feature_pairings)")
+    rating_sources: Optional[list[RatingSourceDetail]] = Field(None, description="Rating provenance details (feature_trust_signals)")
 
     @field_validator('rating')
     @classmethod

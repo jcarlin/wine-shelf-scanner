@@ -31,6 +31,21 @@ struct ScanResponse: Codable, Equatable {
     }
 }
 
+/// Detail about where a wine's rating comes from
+struct RatingSourceDetail: Codable, Equatable {
+    let sourceName: String
+    let displayName: String
+    let originalRating: Double
+    let scaleLabel: String
+
+    enum CodingKeys: String, CodingKey {
+        case sourceName = "source_name"
+        case displayName = "display_name"
+        case originalRating = "original_rating"
+        case scaleLabel = "scale_label"
+    }
+}
+
 /// A detected wine bottle with rating and position
 struct WineResult: Codable, Equatable, Identifiable {
     let wineName: String
@@ -48,6 +63,7 @@ struct WineResult: Codable, Equatable, Identifiable {
     // Feature-flagged fields (null when feature is off)
     var isSafePick: Bool? = nil       // Crowd favorite badge
     var pairing: String? = nil        // Food pairing suggestion
+    var ratingSources: [RatingSourceDetail]? = nil  // Rating provenance details
 
     /// Unique ID combining name + full bbox (handles duplicate wines on shelf)
     var id: String { "\(wineName)_\(bbox.x)_\(bbox.y)_\(bbox.width)_\(bbox.height)" }
@@ -66,6 +82,7 @@ struct WineResult: Codable, Equatable, Identifiable {
         case reviewSnippets = "review_snippets"
         case isSafePick = "is_safe_pick"
         case pairing
+        case ratingSources = "rating_sources"
     }
 }
 

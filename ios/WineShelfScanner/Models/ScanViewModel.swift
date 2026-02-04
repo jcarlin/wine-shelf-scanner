@@ -33,11 +33,23 @@ class ScanViewModel: ObservableObject {
         Task {
             do {
                 let response = try await scanService.scan(image: image, debug: debugMode)
+                // Cache result for offline access
+                ScanCacheService.shared.save(response: response, image: image)
                 state = .results(response, image)
             } catch {
                 state = .error(error.localizedDescription)
             }
         }
+    }
+
+    /// Whether there are cached scans available for offline viewing
+    var hasCachedScans: Bool {
+        ScanCacheService.shared.hasCachedScans
+    }
+
+    /// Load cached scans for offline viewing
+    func loadCachedScans() -> [(response: ScanResponse, image: UIImage?, timestamp: Date)] {
+        ScanCacheService.shared.loadAll()
     }
 
     /// Reset to idle state

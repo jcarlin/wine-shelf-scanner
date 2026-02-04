@@ -53,4 +53,5 @@ build/
 # Large data directories
 raw-data/
 test-images/
-docs/
+docs/*
+!docs/FEATURE_PLAN.md

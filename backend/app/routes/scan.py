@@ -16,12 +16,14 @@ from PIL import Image
 from pillow_heif import register_heif_opener
 
 from ..config import Config
+from ..feature_flags import FeatureFlags, get_feature_flags
 from ..mocks.fixtures import get_mock_response
 from ..models import BoundingBox, DebugData, FallbackWine, ScanResponse, WineResult
 from ..models.debug import PipelineStats
 from ..models.enums import RatingSource, WineSource
 from ..services.claude_vision import get_claude_vision_service, VisionIdentifiedWine
 from ..services.ocr_processor import BottleText, OCRProcessor, OCRProcessingResult, OrphanedText, extract_wine_names
+from ..services.pairing import PairingService
 from ..services.recognition_pipeline import RecognizedWine, RecognitionPipeline
 from ..services.vision import MockVisionService, ReplayVisionService, VisionResult, VisionService
 from ..services.wine_matcher import WineMatcher
@@ -136,6 +138,54 @@ def _process_orphaned_texts(
     return matches
 
 
+# === Feature flag helpers ===
+
+# Safe pick heuristic: common crowd-pleaser varietals
+_SAFE_VARIETALS = {
+    "cabernet sauvignon", "merlot", "pinot noir", "chardonnay",
+    "sauvignon blanc", "pinot grigio", "pinot gris", "syrah", "shiraz",
+    "malbec", "riesling", "tempranillo", "zinfandel", "rosé",
+    "sangiovese", "grenache",
+}
+
+_pairing_service = PairingService()
+
+
+def _apply_feature_flags(results: list[WineResult], flags: FeatureFlags) -> None:
+    """Apply feature-flagged enrichments to scan results (mutates in place)."""
+    for result in results:
+        if flags.feature_pairings:
+            result.pairing = _pairing_service.get_pairing(result.varietal, result.wine_type)
+
+        if flags.feature_safe_pick:
+            result.is_safe_pick = _compute_safe_pick(result)
+
+
+def _compute_safe_pick(wine: WineResult) -> bool:
+    """Determine if a wine qualifies as a 'safe pick' (crowd favorite).
+
+    Uses heuristic: high rating + high confidence + common varietal.
+    When review_count data is available in the DB, this should be updated
+    to use review_count >= 500 as a primary signal.
+    """
+    if wine.rating is None or wine.rating < 4.0:
+        return False
+    if wine.confidence < 0.85:
+        return False
+    # Only trust database ratings for safe pick designation
+    if wine.rating_source not in (RatingSource.DATABASE, None):
+        return False
+    # Check if varietal is a common crowd-pleaser
+    varietal = (wine.varietal or "").lower()
+    if varietal and varietal in _SAFE_VARIETALS:
+        return True
+    # Fallback: high-rated wines from well-known types still qualify
+    wine_type = (wine.wine_type or "").lower()
+    if wine_type in ("red", "white") and wine.rating >= 4.2:
+        return True
+    return False
+
+
 # Register HEIF/HEIC opener with Pillow
 register_heif_opener()
 
@@ -200,6 +250,7 @@ async def scan_shelf(
     debug: bool = Query(default=None, description="Include pipeline debug info in response"),
     use_vision_fixture: Optional[str] = Query(None, description="Path to captured Vision API response fixture for replay"),
     wine_matcher: WineMatcher = Depends(get_wine_matcher),
+    flags: FeatureFlags = Depends(get_feature_flags),
 ) -> ScanResponse:
     """
     Scan a wine shelf image and return detected wines with ratings.
@@ -257,7 +308,7 @@ async def scan_shelf(
     # Process image
     try:
         return await process_image(
-            image_id, image_bytes, use_vision_api, use_llm, use_vision_fallback, debug_mode, wine_matcher, use_vision_fixture
+            image_id, image_bytes, use_vision_api, use_llm, use_vision_fallback, debug_mode, wine_matcher, flags, use_vision_fixture
         )
     except ValueError as e:
         logger.warning(f"Invalid image format: {e}")
@@ -275,6 +326,7 @@ async def process_image(
     use_vision_fallback: bool,
     debug_mode: bool,
     wine_matcher: WineMatcher,
+    flags: Optional[FeatureFlags] = None,
     vision_fixture: Optional[str] = None,
 ) -> ScanResponse:
     """
@@ -462,6 +514,10 @@ async def process_image(
     # Sort results by rating (wines with ratings first, then by rating value)
     results.sort(key=lambda x: (x.rating is not None, x.rating or 0), reverse=True)
     fallback.sort(key=lambda x: x.rating, reverse=True)
+
+    # === Feature-flagged post-processing ===
+    if flags:
+        _apply_feature_flags(results, flags)
 
     stats_final_results = len(results)
     logger.info(f"[{image_id}] Response: {stats_final_results} results, {len(fallback)} fallback")

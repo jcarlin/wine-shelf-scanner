@@ -34,6 +34,9 @@ export interface WineResult {
   blurb?: string;      // Brief description of the wine or producer
   review_count?: number;        // Number of reviews
   review_snippets?: string[];   // Sample review quotes
+  // Feature-flagged fields (null when feature is off)
+  is_safe_pick?: boolean;       // Crowd favorite badge
+  pairing?: string;             // Food pairing suggestion
 }
 
 export interface FallbackWine {

@@ -1,10 +1,11 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { FeatureFlagProvider } from '../lib/feature-flags';
 import { colors } from '../lib/theme';
 
 export default function RootLayout() {
   return (
-    <>
+    <FeatureFlagProvider>
       <StatusBar style="light" />
       <Stack
         screenOptions={{
@@ -27,6 +28,6 @@ export default function RootLayout() {
           }}
         />
       </Stack>
-    </>
+    </FeatureFlagProvider>
   );
 }

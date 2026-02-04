@@ -20,6 +20,8 @@ import SwiftUI
 struct WineDetailSheet: View {
     let wine: WineResult
     let imageId: String
+    var shelfRank: Int? = nil
+    var shelfTotal: Int? = nil
 
     @State private var feedbackState: FeedbackState = .none
     @State private var showCorrectionField = false
@@ -27,6 +29,7 @@ struct WineDetailSheet: View {
     @State private var isSubmitting = false
 
     private let feedbackService = FeedbackService()
+    private let memoryStore = WineMemoryStore.shared
 
     /// Wine type to display color mapping
     private let wineTypeColors: [String: Color] = [
@@ -130,6 +133,37 @@ struct WineDetailSheet: View {
                     .cornerRadius(12)
                     .accessibilityIdentifier("detailSheetConfidenceLabel")
 
+                // Safe pick badge
+                if FeatureFlags.shared.safePick && wine.isSafePick == true {
+                    HStack(spacing: 6) {
+                        Image(systemName: "checkmark.shield.fill")
+                            .foregroundColor(.green)
+                        Text("Crowd favorite")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundColor(.green)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Color.green.opacity(0.1))
+                    .cornerRadius(12)
+                }
+
+                // Shelf ranking
+                if FeatureFlags.shared.shelfRanking, let rank = shelfRank, let total = shelfTotal {
+                    Group {
+                        if rank == 1 {
+                            Text("Best on this shelf")
+                                .foregroundColor(Color.yellow)
+                        } else {
+                            Text("Ranked #\(rank) of \(total) on this shelf")
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                }
+
                 // Divider
                 if hasMetadata || hasReviews {
                     Divider()
@@ -181,6 +215,28 @@ struct WineDetailSheet: View {
                         .cornerRadius(12)
                 }
 
+                // Food pairing
+                if FeatureFlags.shared.pairings, let pairing = wine.pairing {
+                    HStack(spacing: 8) {
+                        Image(systemName: "fork.knife")
+                            .font(.subheadline)
+                            .foregroundColor(Color(red: 0.8, green: 0.6, blue: 0.2))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Goes with")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Text(pairing)
+                                .font(.subheadline)
+                                .foregroundColor(.primary)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(Color(red: 0.98, green: 0.96, blue: 0.90))
+                    .cornerRadius(12)
+                }
+
                 // Review snippets
                 if let snippets = wine.reviewSnippets, !snippets.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
@@ -210,6 +266,11 @@ struct WineDetailSheet: View {
                     .padding(.horizontal)
                 }
 
+                // Wine memory banner
+                if FeatureFlags.shared.wineMemory {
+                    memoryBanner
+                }
+
                 // Feedback section
                 feedbackSection
 
@@ -228,6 +289,44 @@ struct WineDetailSheet: View {
             return "\(text)K reviews"
         }
         return "\(count) reviews"
+    }
+
+    @ViewBuilder
+    private var memoryBanner: some View {
+        if let sentiment = memoryStore.get(wineName: wine.wineName) {
+            HStack(spacing: 6) {
+                if sentiment == .liked {
+                    Image(systemName: "heart.fill")
+                        .foregroundColor(.green)
+                        .font(.caption)
+                    Text("You liked this wine")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                } else {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.red)
+                        .font(.caption)
+                    Text("You didn't like this wine")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+                Button("Undo") {
+                    memoryStore.clear(wineName: wine.wineName)
+                }
+                .font(.caption)
+                .foregroundColor(.blue)
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(sentiment == .liked
+                        ? Color.green.opacity(0.1)
+                        : Color.red.opacity(0.1))
+            )
+            .accessibilityIdentifier("wineMemoryBanner")
+        }
     }
 
     @ViewBuilder
@@ -326,6 +425,14 @@ struct WineDetailSheet: View {
     private func submitFeedback(isCorrect: Bool, correctedName: String? = nil) {
         isSubmitting = true
         feedbackState = isCorrect ? .correct : .incorrect
+
+        // Save to local wine memory
+        if FeatureFlags.shared.wineMemory {
+            memoryStore.save(
+                wineName: wine.wineName,
+                sentiment: isCorrect ? .liked : .disliked
+            )
+        }
 
         Task {
             do {

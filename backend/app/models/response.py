@@ -61,6 +61,9 @@ class WineResult(BaseModel):
     blurb: Optional[str] = Field(None, description="Brief description of the wine or producer")
     review_count: Optional[int] = Field(None, description="Number of reviews")
     review_snippets: Optional[list[str]] = Field(None, description="Sample review quotes")
+    # Feature-flagged fields (null when feature is off)
+    is_safe_pick: Optional[bool] = Field(None, description="Crowd favorite badge (feature_safe_pick)")
+    pairing: Optional[str] = Field(None, description="Food pairing suggestion (feature_pairings)")
 
     @field_validator('rating')
     @classmethod

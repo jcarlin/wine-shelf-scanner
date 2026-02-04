@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   ScrollView,
 } from 'react-native';
 import { WineResult } from '../lib/types';
+import { useFeatureFlags } from '../lib/feature-flags';
+import { useWineMemory } from '../hooks/useWineMemory';
 import { confidenceLabel } from '../lib/overlay-math';
 import { colors, spacing, borderRadius, fontSize, layout } from '../lib/theme';
 
@@ -16,6 +18,8 @@ interface WineDetailModalProps {
   visible: boolean;
   wine: WineResult | null;
   onClose: () => void;
+  shelfRank?: number;
+  shelfTotal?: number;
 }
 
 /** Maps wine type to display color */
@@ -42,10 +46,16 @@ function formatReviewCount(count: number): string {
   return `${count} reviews`;
 }
 
-export function WineDetailModal({ visible, wine, onClose }: WineDetailModalProps) {
+export function WineDetailModal({ visible, wine, onClose, shelfRank, shelfTotal }: WineDetailModalProps) {
+  const flags = useFeatureFlags();
+  const memory = useWineMemory();
+  const [feedbackGiven, setFeedbackGiven] = useState(false);
+
   if (!wine) {
     return null;
   }
+
+  const existingSentiment = flags.wineMemory ? memory.get(wine.wine_name) : undefined;
 
   const label = confidenceLabel(wine.confidence);
   const hasMetadata = wine.wine_type || wine.brand || wine.region || wine.varietal || wine.blurb;
@@ -119,6 +129,20 @@ export function WineDetailModal({ visible, wine, onClose }: WineDetailModalProps
               {label}
             </Text>
 
+            {/* Safe Pick Badge */}
+            {flags.safePick && wine.is_safe_pick && (
+              <View style={styles.safePickBadge}>
+                <Text style={styles.safePickText}>{'\u2713'} Crowd favorite</Text>
+              </View>
+            )}
+
+            {/* Shelf Ranking */}
+            {flags.shelfRanking && shelfRank !== undefined && shelfTotal !== undefined && (
+              <Text style={[styles.rankLabel, shelfRank === 1 && styles.rankLabelTop]}>
+                {shelfRank === 1 ? 'Best on this shelf' : `Ranked #${shelfRank} of ${shelfTotal} on this shelf`}
+              </Text>
+            )}
+
             {/* Divider */}
             {(hasMetadata || hasReviews) && <View style={styles.divider} />}
 
@@ -144,6 +168,66 @@ export function WineDetailModal({ visible, wine, onClose }: WineDetailModalProps
             {wine.blurb && (
               <View style={styles.blurbContainer}>
                 <Text style={styles.blurb}>"{wine.blurb}"</Text>
+              </View>
+            )}
+
+            {/* Food Pairing */}
+            {flags.pairings && wine.pairing && (
+              <View style={styles.pairingContainer}>
+                <Text style={styles.pairingLabel}>{'\uD83C\uDF74'} Goes with</Text>
+                <Text style={styles.pairingText}>{wine.pairing}</Text>
+              </View>
+            )}
+
+            {/* Wine Memory Banner */}
+            {flags.wineMemory && existingSentiment && !feedbackGiven && (
+              <View style={[
+                styles.memoryBanner,
+                { backgroundColor: existingSentiment === 'liked' ? '#E8F5E9' : '#FFEBEE' },
+              ]}>
+                <Text style={styles.memoryBannerText}>
+                  {existingSentiment === 'liked' ? '\u2665 You liked this wine' : '\u2715 You didn\'t like this wine'}
+                </Text>
+                <TouchableOpacity onPress={() => { memory.clear(wine.wine_name); }}>
+                  <Text style={styles.memoryUndoText}>Undo</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Feedback Section */}
+            {flags.wineMemory && (
+              <View style={styles.feedbackSection}>
+                {feedbackGiven ? (
+                  <Text style={styles.feedbackThanks}>{'\u2713'} Thanks for your feedback!</Text>
+                ) : (
+                  <View style={styles.feedbackPrompt}>
+                    <Text style={styles.feedbackPromptText}>Is this the right wine?</Text>
+                    <View style={styles.feedbackButtons}>
+                      <TouchableOpacity
+                        style={styles.feedbackButton}
+                        onPress={() => {
+                          memory.save(wine.wine_name, 'liked');
+                          setFeedbackGiven(true);
+                        }}
+                        testID="thumbsUpButton"
+                      >
+                        <Text style={styles.feedbackButtonIcon}>{'\uD83D\uDC4D'}</Text>
+                        <Text style={styles.feedbackButtonLabel}>Yes</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.feedbackButton}
+                        onPress={() => {
+                          memory.save(wine.wine_name, 'disliked');
+                          setFeedbackGiven(true);
+                        }}
+                        testID="thumbsDownButton"
+                      >
+                        <Text style={styles.feedbackButtonIcon}>{'\uD83D\uDC4E'}</Text>
+                        <Text style={styles.feedbackButtonLabel}>No</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
               </View>
             )}
 
@@ -338,5 +422,98 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     fontSize: fontSize.lg,
     fontWeight: '600',
+  },
+  safePickBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8F5E9',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.sm,
+  },
+  safePickText: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    color: '#2E7D32',
+  },
+  rankLabel: {
+    fontSize: fontSize.sm,
+    fontWeight: '500',
+    color: colors.textSecondary,
+    marginBottom: spacing.sm,
+  },
+  rankLabelTop: {
+    color: '#D4A017',
+    fontWeight: '600',
+  },
+  pairingContainer: {
+    backgroundColor: '#FBF8F0',
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginVertical: spacing.sm,
+    width: '100%',
+  },
+  pairingLabel: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+    marginBottom: 4,
+  },
+  pairingText: {
+    fontSize: fontSize.md,
+    color: colors.textDark,
+    fontWeight: '500',
+  },
+  memoryBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.sm,
+    width: '100%',
+  },
+  memoryBannerText: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+  },
+  memoryUndoText: {
+    fontSize: fontSize.sm,
+    color: '#2196F3',
+    fontWeight: '500',
+  },
+  feedbackSection: {
+    paddingTop: spacing.sm,
+    alignItems: 'center',
+    width: '100%',
+  },
+  feedbackPrompt: {
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  feedbackPromptText: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+  },
+  feedbackButtons: {
+    flexDirection: 'row',
+    gap: spacing.xl,
+  },
+  feedbackButton: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  feedbackButtonIcon: {
+    fontSize: 28,
+  },
+  feedbackButtonLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
+  },
+  feedbackThanks: {
+    fontSize: fontSize.sm,
+    color: '#4CAF50',
+    fontWeight: '500',
   },
 });

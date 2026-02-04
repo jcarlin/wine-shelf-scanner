@@ -3,7 +3,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Wine Shelf Scanner',
-  description: 'Take a photo of any wine shelf and instantly see ratings overlaid on each bottle',
+  description: 'Never guess at the wine shelf again. Ratings from 21 million reviews, on every bottle, instantly.',
 };
 
 export const viewport: Viewport = {

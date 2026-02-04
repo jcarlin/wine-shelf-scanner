@@ -1,10 +1,28 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+
+const tips = [
+  'Tap any rating badge to see details',
+  'Top-rated bottles get a gold highlight',
+  'Powered by 21 million aggregated reviews',
+  'We cover 181,000+ wines worldwide',
+];
+
 interface ScanningOverlayProps {
   imageUri: string;
 }
 
 export function ScanningOverlay({ imageUri }: ScanningOverlayProps) {
+  const [tipIndex, setTipIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTipIndex((prev) => (prev + 1) % tips.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-4">
       <div className="relative w-full max-w-lg overflow-hidden rounded-xl">
@@ -30,6 +48,14 @@ export function ScanningOverlay({ imageUri }: ScanningOverlayProps) {
           </div>
         </div>
       </div>
+
+      {/* Rotating tip below the image */}
+      <p
+        key={tipIndex}
+        className="text-gray-400 text-sm text-center mt-4 animate-fade-in"
+      >
+        {tips[tipIndex]}
+      </p>
     </div>
   );
 }

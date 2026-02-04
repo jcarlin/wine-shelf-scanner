@@ -6,6 +6,7 @@ struct ContentView: View {
     @State private var showCamera = false
     @State private var showPhotoPicker = false
     @State private var capturedImage: UIImage?
+    @State private var showAbout = false
 
     /// Whether we're running in UI test mode (bypass photo picker)
     private var isUITesting: Bool {
@@ -127,6 +128,17 @@ struct ContentView: View {
             .navigationTitle("Wine Scanner")
             .navigationBarTitleDisplayMode(.inline)
             .preferredColorScheme(.dark)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        showAbout = true
+                    } label: {
+                        Image(systemName: "info.circle")
+                            .foregroundColor(.white.opacity(0.7))
+                    }
+                    .accessibilityIdentifier("aboutButton")
+                }
+            }
             .sheet(isPresented: $showCamera) {
                 CameraView(image: $capturedImage, isPresented: $showCamera)
                     .ignoresSafeArea()
@@ -134,6 +146,10 @@ struct ContentView: View {
             .sheet(isPresented: $showPhotoPicker) {
                 PhotoPicker(image: $capturedImage, isPresented: $showPhotoPicker)
                     .ignoresSafeArea()
+            }
+            .sheet(isPresented: $showAbout) {
+                AboutView()
+                    .presentationDetents([.medium])
             }
             .onChange(of: capturedImage) { newImage in
                 if let image = newImage {
@@ -158,13 +174,18 @@ struct IdleView: View {
                 .font(.system(size: 80))
                 .foregroundColor(.white.opacity(0.7))
 
-            Text("Point at a wine shelf")
+            Text("Never guess at the wine shelf again.")
                 .font(.title2)
+                .fontWeight(.semibold)
                 .foregroundColor(.white)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
 
-            Text("Take a photo to see ratings")
+            Text("Ratings from 21 million reviews — on every bottle, instantly.")
                 .font(.subheadline)
                 .foregroundColor(.white.opacity(0.6))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
 
             VStack(spacing: 12) {
                 if cameraAvailable {
@@ -199,6 +220,16 @@ struct IdleView: View {
 }
 
 struct ProcessingView: View {
+    private let tips = [
+        "Tap any rating badge to see details",
+        "Top-rated bottles get a gold highlight",
+        "Powered by 21 million aggregated reviews",
+        "We cover 181,000+ wines worldwide",
+    ]
+
+    @State private var currentTipIndex = 0
+    let timer = Timer.publish(every: 3, on: .main, in: .common).autoconnect()
+
     var body: some View {
         VStack(spacing: 16) {
             ProgressView()
@@ -209,6 +240,18 @@ struct ProcessingView: View {
             Text("Analyzing wines...")
                 .font(.headline)
                 .foregroundColor(.white)
+
+            Text(tips[currentTipIndex])
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.5))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+                .id(currentTipIndex)
+                .transition(.opacity)
+                .animation(.easeInOut(duration: 0.5), value: currentTipIndex)
+        }
+        .onReceive(timer) { _ in
+            currentTipIndex = (currentTipIndex + 1) % tips.count
         }
     }
 }
@@ -244,6 +287,57 @@ struct ErrorView: View {
             }
         }
         .accessibilityIdentifier("errorView")
+    }
+}
+
+// MARK: - About View
+
+struct AboutView: View {
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 20) {
+                Image(systemName: "wineglass.fill")
+                    .font(.system(size: 48))
+                    .foregroundColor(Color(red: 0.45, green: 0.18, blue: 0.22))
+
+                Text("Wine Shelf Scanner")
+                    .font(.title2)
+                    .fontWeight(.bold)
+
+                Text("Ratings aggregated from 21 million reviews across community wine platforms. Individual scores are combined to provide a single trusted rating for each bottle.")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Label("181,000+ wines with ratings", systemImage: "checkmark.circle.fill")
+                        .foregroundColor(.secondary)
+                    Label("21 million aggregated reviews", systemImage: "star.fill")
+                        .foregroundColor(.secondary)
+                }
+                .font(.subheadline)
+
+                Spacer()
+
+                Text("Ratings sourced from community wine platforms. Wine Shelf Scanner is not affiliated with any rating provider.")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+            }
+            .padding(.top, 32)
+            .padding(.horizontal)
+            .navigationTitle("About")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
     }
 }
 

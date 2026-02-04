@@ -1,9 +1,26 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Wine } from 'lucide-react';
 import { colors } from '@/lib/theme';
 
+const tips = [
+  'Tap any rating badge to see details',
+  'Top-rated bottles get a gold highlight',
+  'Powered by 21 million aggregated reviews',
+  'We cover 181,000+ wines worldwide',
+];
+
 export function ProcessingSpinner() {
+  const [tipIndex, setTipIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTipIndex((prev) => (prev + 1) % tips.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] px-6">
       {/* Animated Wine Icon */}
@@ -22,8 +39,11 @@ export function ProcessingSpinner() {
       <h2 className="text-xl font-semibold text-white mb-2">
         Analyzing wines...
       </h2>
-      <p className="text-gray-400 text-center max-w-sm">
-        Our AI is identifying bottles and fetching ratings. This may take a few seconds.
+      <p
+        key={tipIndex}
+        className="text-gray-400 text-center max-w-sm animate-fade-in"
+      >
+        {tips[tipIndex]}
       </p>
 
       {/* Progress indicator dots */}

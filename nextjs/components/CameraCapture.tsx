@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { Camera, Upload, Wine } from 'lucide-react';
+import { Camera, Upload, Wine, Info, X } from 'lucide-react';
 import { colors } from '@/lib/theme';
 
 interface CameraCaptureProps {
@@ -13,6 +13,7 @@ export function CameraCapture({ onImageSelected, isLoading }: CameraCaptureProps
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -48,7 +49,16 @@ export function CameraCapture({ onImageSelected, isLoading }: CameraCaptureProps
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] px-6">
+    <div className="flex flex-col items-center justify-center min-h-[60vh] px-6 relative">
+      {/* About Button */}
+      <button
+        onClick={() => setShowAbout(true)}
+        className="absolute top-4 right-4 text-white/50 hover:text-white/80 transition-colors p-2"
+        aria-label="About"
+      >
+        <Info className="w-5 h-5" />
+      </button>
+
       {/* Hero Section */}
       <div className="text-center mb-12">
         <div
@@ -58,10 +68,10 @@ export function CameraCapture({ onImageSelected, isLoading }: CameraCaptureProps
           <Wine className="w-12 h-12 text-white" />
         </div>
         <h1 className="text-3xl font-bold text-white mb-3">
-          Wine Shelf Scanner
+          Never guess at the wine shelf again.
         </h1>
         <p className="text-gray-400 text-lg max-w-md">
-          Take a photo of any wine shelf and instantly see ratings overlaid on each bottle
+          Ratings from 21 million reviews — on every bottle, instantly.
         </p>
       </div>
 
@@ -143,6 +153,51 @@ export function CameraCapture({ onImageSelected, isLoading }: CameraCaptureProps
         onChange={handleFileChange}
         className="hidden"
       />
+
+      {/* About Modal */}
+      {showAbout && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-6">
+          <div className="bg-[#1e1e30] rounded-2xl max-w-sm w-full p-6 relative">
+            <button
+              onClick={() => setShowAbout(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="text-center mb-6">
+              <div
+                className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+                style={{ backgroundColor: colors.wine }}
+              >
+                <Wine className="w-8 h-8 text-white" />
+              </div>
+              <h2 className="text-xl font-bold text-white mb-1">Wine Shelf Scanner</h2>
+            </div>
+
+            <p className="text-gray-300 text-sm text-center mb-5">
+              Ratings aggregated from 21 million reviews across community wine platforms. Individual
+              scores are combined to provide a single trusted rating for each bottle.
+            </p>
+
+            <div className="space-y-3 mb-6">
+              <div className="flex items-center gap-3 text-gray-400 text-sm">
+                <span className="text-green-400">&#10003;</span>
+                <span>181,000+ wines with ratings</span>
+              </div>
+              <div className="flex items-center gap-3 text-gray-400 text-sm">
+                <span className="text-yellow-400">&#9733;</span>
+                <span>21 million aggregated reviews</span>
+              </div>
+            </div>
+
+            <p className="text-gray-500 text-xs text-center">
+              Ratings sourced from community wine platforms. Wine Shelf Scanner is not affiliated with any rating provider.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

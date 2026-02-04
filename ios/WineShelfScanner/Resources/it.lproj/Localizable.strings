@@ -1,0 +1,52 @@
+/* App */
+"app.title" = "Scanner Vini";
+
+/* Idle / Camera */
+"idle.pointAtShelf" = "Inquadra uno scaffale di vini";
+"idle.takePhotoToSee" = "Scatta una foto per vedere le valutazioni";
+"idle.scanShelf" = "Scansiona Scaffale";
+"idle.choosePhoto" = "Scegli Foto";
+"idle.selectPhoto" = "Seleziona Foto";
+
+/* Processing */
+"processing.analyzing" = "Analisi dei vini...";
+
+/* Error */
+"error.tryAgain" = "Riprova";
+"error.startOver" = "Ricomincia";
+
+/* Results */
+"results.newScan" = "Nuova Scansione";
+"results.winesFound" = "Vini Trovati";
+"results.partialDetection" = "Alcune bottiglie non sono state riconosciute";
+"results.scannedWith" = "Scansionato con Scanner Vini";
+"results.topPicks" = "Migliori scelte dallo scaffale:";
+"results.stars" = "stelle";
+
+/* Detail Sheet */
+"detail.by" = "di %@";
+"detail.noRating" = "Nessuna valutazione";
+"detail.reviewsK" = "%@K recensioni";
+"detail.reviews" = "%lld recensioni";
+"detail.widelyRated" = "Ampiamente valutato";
+"detail.limitedData" = "Dati limitati";
+"detail.crowdFavorite" = "Preferito dal pubblico";
+"detail.bestOnShelf" = "Migliore su questo scaffale";
+"detail.rankedOnShelf" = "Classificato #%lld di %lld su questo scaffale";
+"detail.region" = "REGIONE";
+"detail.varietal" = "VITIGNO";
+"detail.goesWith" = "Si abbina con";
+"detail.whatPeopleSay" = "Cosa dice la gente";
+"detail.shareThisPick" = "Condividi questa scelta";
+"detail.foundWith" = "Trovato con Scanner Vini";
+"detail.youLiked" = "Ti è piaciuto questo vino";
+"detail.youDisliked" = "Non ti è piaciuto questo vino";
+"detail.undo" = "Annulla";
+"detail.thanksFeedback" = "Grazie per il tuo feedback!";
+"detail.isThisRight" = "È questo il vino giusto?";
+"detail.whatsCorrect" = "Qual è il vino corretto?";
+"detail.wineName" = "Nome del vino";
+"detail.cancel" = "Annulla";
+"detail.submit" = "Invia";
+"detail.yes" = "Sì";
+"detail.no" = "No";

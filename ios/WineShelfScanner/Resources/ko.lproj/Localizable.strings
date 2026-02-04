@@ -1,0 +1,52 @@
+/* App */
+"app.title" = "와인 선반 스캐너";
+
+/* Idle / Camera */
+"idle.pointAtShelf" = "와인 선반을 향해 주세요";
+"idle.takePhotoToSee" = "사진을 찍어 평점을 확인하세요";
+"idle.scanShelf" = "선반 스캔";
+"idle.choosePhoto" = "사진 선택";
+"idle.selectPhoto" = "사진 고르기";
+
+/* Processing */
+"processing.analyzing" = "와인 분석 중...";
+
+/* Error */
+"error.tryAgain" = "다시 시도";
+"error.startOver" = "처음부터";
+
+/* Results */
+"results.newScan" = "새 스캔";
+"results.winesFound" = "발견된 와인";
+"results.partialDetection" = "일부 병을 인식하지 못했습니다";
+"results.scannedWith" = "와인 선반 스캐너로 스캔";
+"results.topPicks" = "선반 추천:";
+"results.stars" = "점";
+
+/* Detail Sheet */
+"detail.by" = "%@ 제조";
+"detail.noRating" = "평점 없음";
+"detail.reviewsK" = "리뷰 %@K개";
+"detail.reviews" = "리뷰 %lld개";
+"detail.widelyRated" = "다수 평가";
+"detail.limitedData" = "제한된 데이터";
+"detail.crowdFavorite" = "대중 인기";
+"detail.bestOnShelf" = "이 선반 최고";
+"detail.rankedOnShelf" = "이 선반 %lld개 중 %lld위";
+"detail.region" = "산지";
+"detail.varietal" = "품종";
+"detail.goesWith" = "어울리는 음식";
+"detail.whatPeopleSay" = "사람들의 평가";
+"detail.shareThisPick" = "이 선택 공유";
+"detail.foundWith" = "와인 선반 스캐너로 발견";
+"detail.youLiked" = "이 와인을 좋아하셨습니다";
+"detail.youDisliked" = "이 와인을 좋아하지 않으셨습니다";
+"detail.undo" = "실행 취소";
+"detail.thanksFeedback" = "피드백 감사합니다!";
+"detail.isThisRight" = "이 와인이 맞나요?";
+"detail.whatsCorrect" = "올바른 와인은 무엇인가요?";
+"detail.wineName" = "와인 이름";
+"detail.cancel" = "취소";
+"detail.submit" = "제출";
+"detail.yes" = "예";
+"detail.no" = "아니오";

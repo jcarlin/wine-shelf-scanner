@@ -1,0 +1,62 @@
+{
+  "app": {
+    "title": "Scanner de Rayon à Vins",
+    "description": "Prenez une photo de n'importe quel rayon à vins et voyez instantanément les notes sur chaque bouteille"
+  },
+  "camera": {
+    "heroTitle": "Scanner de Rayon à Vins",
+    "heroSubtitle": "Prenez une photo de n'importe quel rayon à vins et voyez instantanément les notes sur chaque bouteille",
+    "dragDrop": "Glissez-déposez une image ici",
+    "orBrowse": "ou cliquez pour parcourir",
+    "takePhoto": "Prendre une Photo",
+    "uploadImage": "Télécharger une Image"
+  },
+  "processing": {
+    "analyzing": "Analyse des vins...",
+    "aiIdentifying": "Notre IA identifie les bouteilles et récupère les notes. Cela peut prendre quelques secondes."
+  },
+  "results": {
+    "newScan": "Nouveau Scan",
+    "bottlesFound": "{count, plural, one {# bouteille trouvée} other {# bouteilles trouvées}}",
+    "partialDetection": "Certaines bouteilles n'ont pas pu être reconnues",
+    "scannedWith": "Scanné avec Scanner de Rayon à Vins",
+    "topPicks": "Meilleurs choix du rayon :",
+    "stars": "étoiles"
+  },
+  "fallback": {
+    "couldNotIdentify": "Impossible d'identifier les bouteilles",
+    "popularWines": "Voici quelques vins populaires que vous pourriez rechercher",
+    "tryAnother": "Essayer une Autre Photo",
+    "winesFound": "Vins Trouvés"
+  },
+  "error": {
+    "tryAgain": "Réessayer"
+  },
+  "detail": {
+    "by": "par {brand}",
+    "reviews": "{count, plural, one {# avis} other {# avis}}",
+    "reviewsK": "{count}K avis",
+    "widelyRated": "Largement noté",
+    "limitedData": "Données limitées",
+    "crowdFavorite": "Favori du public",
+    "bestOnShelf": "Meilleur de ce rayon",
+    "rankedOnShelf": "Classé #{rank} sur {total} dans ce rayon",
+    "region": "Région",
+    "varietal": "Cépage",
+    "goesWith": "Se marie avec",
+    "whatPeopleSay": "Ce qu'en disent les gens",
+    "shareThisPick": "Partager ce choix",
+    "foundWith": "Trouvé avec Scanner de Rayon à Vins",
+    "youLiked": "Vous avez aimé ce vin",
+    "youDisliked": "Vous n'avez pas aimé ce vin",
+    "undo": "Annuler",
+    "thanksFeedback": "Merci pour votre retour !",
+    "isThisRight": "Est-ce le bon vin ?",
+    "yes": "Oui",
+    "no": "Non",
+    "noRating": "Pas de note"
+  },
+  "scanning": {
+    "analyzing": "Analyse des vins..."
+  }
+}

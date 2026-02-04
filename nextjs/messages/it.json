@@ -1,0 +1,62 @@
+{
+  "app": {
+    "title": "Scanner Scaffale Vini",
+    "description": "Scatta una foto di qualsiasi scaffale di vini e vedi istantaneamente le valutazioni su ogni bottiglia"
+  },
+  "camera": {
+    "heroTitle": "Scanner Scaffale Vini",
+    "heroSubtitle": "Scatta una foto di qualsiasi scaffale di vini e vedi istantaneamente le valutazioni su ogni bottiglia",
+    "dragDrop": "Trascina e rilascia un'immagine qui",
+    "orBrowse": "o clicca per sfogliare",
+    "takePhoto": "Scatta Foto",
+    "uploadImage": "Carica Immagine"
+  },
+  "processing": {
+    "analyzing": "Analisi dei vini...",
+    "aiIdentifying": "La nostra IA sta identificando le bottiglie e recuperando le valutazioni. Potrebbe richiedere qualche secondo."
+  },
+  "results": {
+    "newScan": "Nuova Scansione",
+    "bottlesFound": "{count, plural, one {# bottiglia trovata} other {# bottiglie trovate}}",
+    "partialDetection": "Alcune bottiglie non sono state riconosciute",
+    "scannedWith": "Scansionato con Scanner Scaffale Vini",
+    "topPicks": "Migliori scelte dallo scaffale:",
+    "stars": "stelle"
+  },
+  "fallback": {
+    "couldNotIdentify": "Impossibile identificare le bottiglie",
+    "popularWines": "Ecco alcuni vini popolari che potresti cercare",
+    "tryAnother": "Prova un'Altra Foto",
+    "winesFound": "Vini Trovati"
+  },
+  "error": {
+    "tryAgain": "Riprova"
+  },
+  "detail": {
+    "by": "di {brand}",
+    "reviews": "{count, plural, one {# recensione} other {# recensioni}}",
+    "reviewsK": "{count}K recensioni",
+    "widelyRated": "Ampiamente valutato",
+    "limitedData": "Dati limitati",
+    "crowdFavorite": "Preferito dal pubblico",
+    "bestOnShelf": "Migliore su questo scaffale",
+    "rankedOnShelf": "Classificato #{rank} di {total} su questo scaffale",
+    "region": "Regione",
+    "varietal": "Vitigno",
+    "goesWith": "Si abbina con",
+    "whatPeopleSay": "Cosa dice la gente",
+    "shareThisPick": "Condividi questa scelta",
+    "foundWith": "Trovato con Scanner Scaffale Vini",
+    "youLiked": "Ti è piaciuto questo vino",
+    "youDisliked": "Non ti è piaciuto questo vino",
+    "undo": "Annulla",
+    "thanksFeedback": "Grazie per il tuo feedback!",
+    "isThisRight": "È questo il vino giusto?",
+    "yes": "Sì",
+    "no": "No",
+    "noRating": "Nessuna valutazione"
+  },
+  "scanning": {
+    "analyzing": "Analisi dei vini..."
+  }
+}

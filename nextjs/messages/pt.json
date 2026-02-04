@@ -1,0 +1,62 @@
+{
+  "app": {
+    "title": "Scanner de Prateleira de Vinhos",
+    "description": "Tire uma foto de qualquer prateleira de vinhos e veja as avaliações sobre cada garrafa instantaneamente"
+  },
+  "camera": {
+    "heroTitle": "Scanner de Prateleira de Vinhos",
+    "heroSubtitle": "Tire uma foto de qualquer prateleira de vinhos e veja as avaliações sobre cada garrafa instantaneamente",
+    "dragDrop": "Arraste e solte uma imagem aqui",
+    "orBrowse": "ou clique para procurar",
+    "takePhoto": "Tirar Foto",
+    "uploadImage": "Enviar Imagem"
+  },
+  "processing": {
+    "analyzing": "Analisando vinhos...",
+    "aiIdentifying": "Nossa IA está identificando garrafas e buscando avaliações. Isso pode levar alguns segundos."
+  },
+  "results": {
+    "newScan": "Nova Digitalização",
+    "bottlesFound": "{count, plural, one {# garrafa encontrada} other {# garrafas encontradas}}",
+    "partialDetection": "Algumas garrafas não puderam ser reconhecidas",
+    "scannedWith": "Digitalizado com Scanner de Prateleira de Vinhos",
+    "topPicks": "Melhores escolhas da prateleira:",
+    "stars": "estrelas"
+  },
+  "fallback": {
+    "couldNotIdentify": "Não foi possível identificar as garrafas",
+    "popularWines": "Aqui estão alguns vinhos populares que você pode estar procurando",
+    "tryAnother": "Tentar Outra Foto",
+    "winesFound": "Vinhos Encontrados"
+  },
+  "error": {
+    "tryAgain": "Tentar Novamente"
+  },
+  "detail": {
+    "by": "por {brand}",
+    "reviews": "{count, plural, one {# avaliação} other {# avaliações}}",
+    "reviewsK": "{count}K avaliações",
+    "widelyRated": "Amplamente avaliado",
+    "limitedData": "Dados limitados",
+    "crowdFavorite": "Favorito do público",
+    "bestOnShelf": "Melhor nesta prateleira",
+    "rankedOnShelf": "Classificado #{rank} de {total} nesta prateleira",
+    "region": "Região",
+    "varietal": "Variedade",
+    "goesWith": "Combina com",
+    "whatPeopleSay": "O que as pessoas dizem",
+    "shareThisPick": "Compartilhar esta escolha",
+    "foundWith": "Encontrado com Scanner de Prateleira de Vinhos",
+    "youLiked": "Você gostou deste vinho",
+    "youDisliked": "Você não gostou deste vinho",
+    "undo": "Desfazer",
+    "thanksFeedback": "Obrigado pelo seu feedback!",
+    "isThisRight": "Este é o vinho certo?",
+    "yes": "Sim",
+    "no": "Não",
+    "noRating": "Sem avaliação"
+  },
+  "scanning": {
+    "analyzing": "Analisando vinhos..."
+  }
+}

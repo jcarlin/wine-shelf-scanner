@@ -1,0 +1,52 @@
+/* App */
+"app.title" = "Сканер Вин";
+
+/* Idle / Camera */
+"idle.pointAtShelf" = "Наведите на полку с вином";
+"idle.takePhotoToSee" = "Сфотографируйте для просмотра рейтингов";
+"idle.scanShelf" = "Сканировать полку";
+"idle.choosePhoto" = "Выбрать фото";
+"idle.selectPhoto" = "Выбрать фото";
+
+/* Processing */
+"processing.analyzing" = "Анализ вин...";
+
+/* Error */
+"error.tryAgain" = "Повторить";
+"error.startOver" = "Начать заново";
+
+/* Results */
+"results.newScan" = "Новое сканирование";
+"results.winesFound" = "Найденные вина";
+"results.partialDetection" = "Некоторые бутылки не удалось распознать";
+"results.scannedWith" = "Отсканировано с помощью Сканера Вин";
+"results.topPicks" = "Лучшее на полке:";
+"results.stars" = "звёзд";
+
+/* Detail Sheet */
+"detail.by" = "от %@";
+"detail.noRating" = "Нет оценки";
+"detail.reviewsK" = "%@K отзывов";
+"detail.reviews" = "%lld отзывов";
+"detail.widelyRated" = "Много оценок";
+"detail.limitedData" = "Мало данных";
+"detail.crowdFavorite" = "Народный фаворит";
+"detail.bestOnShelf" = "Лучшее на этой полке";
+"detail.rankedOnShelf" = "#%lld из %lld на этой полке";
+"detail.region" = "РЕГИОН";
+"detail.varietal" = "СОРТ";
+"detail.goesWith" = "Сочетается с";
+"detail.whatPeopleSay" = "Что говорят люди";
+"detail.shareThisPick" = "Поделиться выбором";
+"detail.foundWith" = "Найдено с помощью Сканера Вин";
+"detail.youLiked" = "Вам понравилось это вино";
+"detail.youDisliked" = "Вам не понравилось это вино";
+"detail.undo" = "Отменить";
+"detail.thanksFeedback" = "Спасибо за отзыв!";
+"detail.isThisRight" = "Это правильное вино?";
+"detail.whatsCorrect" = "Какое вино правильное?";
+"detail.wineName" = "Название вина";
+"detail.cancel" = "Отмена";
+"detail.submit" = "Отправить";
+"detail.yes" = "Да";
+"detail.no" = "Нет";

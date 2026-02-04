@@ -1,0 +1,52 @@
+/* App */
+"app.title" = "葡萄酒货架扫描仪";
+
+/* Idle / Camera */
+"idle.pointAtShelf" = "对准葡萄酒货架";
+"idle.takePhotoToSee" = "拍照查看评分";
+"idle.scanShelf" = "扫描货架";
+"idle.choosePhoto" = "选择照片";
+"idle.selectPhoto" = "选取照片";
+
+/* Processing */
+"processing.analyzing" = "正在分析葡萄酒...";
+
+/* Error */
+"error.tryAgain" = "重试";
+"error.startOver" = "重新开始";
+
+/* Results */
+"results.newScan" = "新扫描";
+"results.winesFound" = "找到的葡萄酒";
+"results.partialDetection" = "部分酒瓶无法识别";
+"results.scannedWith" = "使用葡萄酒货架扫描仪扫描";
+"results.topPicks" = "货架精选：";
+"results.stars" = "星";
+
+/* Detail Sheet */
+"detail.by" = "%@ 出品";
+"detail.noRating" = "暂无评分";
+"detail.reviewsK" = "%@K 条评论";
+"detail.reviews" = "%lld 条评论";
+"detail.widelyRated" = "广泛评价";
+"detail.limitedData" = "数据有限";
+"detail.crowdFavorite" = "大众最爱";
+"detail.bestOnShelf" = "此货架最佳";
+"detail.rankedOnShelf" = "此货架第 %lld 名（共 %lld 款）";
+"detail.region" = "产区";
+"detail.varietal" = "葡萄品种";
+"detail.goesWith" = "搭配";
+"detail.whatPeopleSay" = "大家怎么说";
+"detail.shareThisPick" = "分享这个选择";
+"detail.foundWith" = "通过葡萄酒货架扫描仪发现";
+"detail.youLiked" = "您喜欢这款酒";
+"detail.youDisliked" = "您不喜欢这款酒";
+"detail.undo" = "撤销";
+"detail.thanksFeedback" = "感谢您的反馈！";
+"detail.isThisRight" = "这是正确的酒吗？";
+"detail.whatsCorrect" = "正确的酒是什么？";
+"detail.wineName" = "酒名";
+"detail.cancel" = "取消";
+"detail.submit" = "提交";
+"detail.yes" = "是";
+"detail.no" = "否";

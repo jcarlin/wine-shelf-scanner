@@ -1,0 +1,62 @@
+{
+  "app": {
+    "title": "ワイン棚スキャナー",
+    "description": "ワイン棚の写真を撮って、各ボトルの評価を即座に確認"
+  },
+  "camera": {
+    "heroTitle": "ワイン棚スキャナー",
+    "heroSubtitle": "ワイン棚の写真を撮って、各ボトルの評価を即座に確認",
+    "dragDrop": "ここに画像をドラッグ＆ドロップ",
+    "orBrowse": "またはクリックして選択",
+    "takePhoto": "写真を撮る",
+    "uploadImage": "画像をアップロード"
+  },
+  "processing": {
+    "analyzing": "ワインを分析中...",
+    "aiIdentifying": "AIがボトルを識別し、評価を取得しています。数秒かかる場合があります。"
+  },
+  "results": {
+    "newScan": "新しいスキャン",
+    "bottlesFound": "{count, plural, other {# 本のボトルが見つかりました}}",
+    "partialDetection": "一部のボトルを認識できませんでした",
+    "scannedWith": "ワイン棚スキャナーでスキャン",
+    "topPicks": "棚のおすすめ：",
+    "stars": "つ星"
+  },
+  "fallback": {
+    "couldNotIdentify": "ボトルを識別できませんでした",
+    "popularWines": "お探しの人気ワインをご紹介します",
+    "tryAnother": "別の写真を試す",
+    "winesFound": "見つかったワイン"
+  },
+  "error": {
+    "tryAgain": "再試行"
+  },
+  "detail": {
+    "by": "{brand} 製",
+    "reviews": "{count, plural, other {# 件のレビュー}}",
+    "reviewsK": "{count}K件のレビュー",
+    "widelyRated": "多数の評価",
+    "limitedData": "データ限定",
+    "crowdFavorite": "人気の一本",
+    "bestOnShelf": "この棚のベスト",
+    "rankedOnShelf": "この棚で{total}本中第{rank}位",
+    "region": "産地",
+    "varietal": "品種",
+    "goesWith": "相性の良い料理",
+    "whatPeopleSay": "みんなの声",
+    "shareThisPick": "この選択を共有",
+    "foundWith": "ワイン棚スキャナーで発見",
+    "youLiked": "このワインが気に入りました",
+    "youDisliked": "このワインは好みではありませんでした",
+    "undo": "元に戻す",
+    "thanksFeedback": "フィードバックありがとうございます！",
+    "isThisRight": "このワインで合っていますか？",
+    "yes": "はい",
+    "no": "いいえ",
+    "noRating": "評価なし"
+  },
+  "scanning": {
+    "analyzing": "ワインを分析中..."
+  }
+}

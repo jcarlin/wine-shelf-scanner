@@ -1,0 +1,62 @@
+{
+  "app": {
+    "title": "Weinregal-Scanner",
+    "description": "Fotografieren Sie ein Weinregal und sehen Sie sofort die Bewertungen auf jeder Flasche"
+  },
+  "camera": {
+    "heroTitle": "Weinregal-Scanner",
+    "heroSubtitle": "Fotografieren Sie ein Weinregal und sehen Sie sofort die Bewertungen auf jeder Flasche",
+    "dragDrop": "Bild hierher ziehen",
+    "orBrowse": "oder klicken zum Durchsuchen",
+    "takePhoto": "Foto aufnehmen",
+    "uploadImage": "Bild hochladen"
+  },
+  "processing": {
+    "analyzing": "Weine werden analysiert...",
+    "aiIdentifying": "Unsere KI identifiziert Flaschen und ruft Bewertungen ab. Dies kann einige Sekunden dauern."
+  },
+  "results": {
+    "newScan": "Neuer Scan",
+    "bottlesFound": "{count, plural, one {# Flasche gefunden} other {# Flaschen gefunden}}",
+    "partialDetection": "Einige Flaschen konnten nicht erkannt werden",
+    "scannedWith": "Gescannt mit Weinregal-Scanner",
+    "topPicks": "Top-Auswahl aus dem Regal:",
+    "stars": "Sterne"
+  },
+  "fallback": {
+    "couldNotIdentify": "Flaschen konnten nicht identifiziert werden",
+    "popularWines": "Hier sind einige beliebte Weine, die Sie suchen könnten",
+    "tryAnother": "Anderes Foto versuchen",
+    "winesFound": "Weine gefunden"
+  },
+  "error": {
+    "tryAgain": "Erneut versuchen"
+  },
+  "detail": {
+    "by": "von {brand}",
+    "reviews": "{count, plural, one {# Bewertung} other {# Bewertungen}}",
+    "reviewsK": "{count}K Bewertungen",
+    "widelyRated": "Viel bewertet",
+    "limitedData": "Begrenzte Daten",
+    "crowdFavorite": "Publikumsliebling",
+    "bestOnShelf": "Bester in diesem Regal",
+    "rankedOnShelf": "Platz #{rank} von {total} in diesem Regal",
+    "region": "Region",
+    "varietal": "Rebsorte",
+    "goesWith": "Passt zu",
+    "whatPeopleSay": "Was andere sagen",
+    "shareThisPick": "Diese Auswahl teilen",
+    "foundWith": "Gefunden mit Weinregal-Scanner",
+    "youLiked": "Dieser Wein hat Ihnen gefallen",
+    "youDisliked": "Dieser Wein hat Ihnen nicht gefallen",
+    "undo": "Rückgängig",
+    "thanksFeedback": "Danke für Ihr Feedback!",
+    "isThisRight": "Ist das der richtige Wein?",
+    "yes": "Ja",
+    "no": "Nein",
+    "noRating": "Keine Bewertung"
+  },
+  "scanning": {
+    "analyzing": "Weine werden analysiert..."
+  }
+}

@@ -1,0 +1,52 @@
+/* App */
+"app.title" = "ワイン棚スキャナー";
+
+/* Idle / Camera */
+"idle.pointAtShelf" = "ワイン棚に向けてください";
+"idle.takePhotoToSee" = "写真を撮って評価を確認";
+"idle.scanShelf" = "棚をスキャン";
+"idle.choosePhoto" = "写真を選択";
+"idle.selectPhoto" = "写真を選ぶ";
+
+/* Processing */
+"processing.analyzing" = "ワインを分析中...";
+
+/* Error */
+"error.tryAgain" = "再試行";
+"error.startOver" = "やり直す";
+
+/* Results */
+"results.newScan" = "新しいスキャン";
+"results.winesFound" = "見つかったワイン";
+"results.partialDetection" = "一部のボトルを認識できませんでした";
+"results.scannedWith" = "ワイン棚スキャナーでスキャン";
+"results.topPicks" = "棚のおすすめ：";
+"results.stars" = "つ星";
+
+/* Detail Sheet */
+"detail.by" = "%@ 製";
+"detail.noRating" = "評価なし";
+"detail.reviewsK" = "%@K件のレビュー";
+"detail.reviews" = "%lld件のレビュー";
+"detail.widelyRated" = "多数の評価";
+"detail.limitedData" = "データ限定";
+"detail.crowdFavorite" = "人気の一本";
+"detail.bestOnShelf" = "この棚のベスト";
+"detail.rankedOnShelf" = "この棚で%lld本中第%lld位";
+"detail.region" = "産地";
+"detail.varietal" = "品種";
+"detail.goesWith" = "相性の良い料理";
+"detail.whatPeopleSay" = "みんなの声";
+"detail.shareThisPick" = "この選択を共有";
+"detail.foundWith" = "ワイン棚スキャナーで発見";
+"detail.youLiked" = "このワインが気に入りました";
+"detail.youDisliked" = "このワインは好みではありませんでした";
+"detail.undo" = "元に戻す";
+"detail.thanksFeedback" = "フィードバックありがとうございます！";
+"detail.isThisRight" = "このワインで合っていますか？";
+"detail.whatsCorrect" = "正しいワインは何ですか？";
+"detail.wineName" = "ワイン名";
+"detail.cancel" = "キャンセル";
+"detail.submit" = "送信";
+"detail.yes" = "はい";
+"detail.no" = "いいえ";

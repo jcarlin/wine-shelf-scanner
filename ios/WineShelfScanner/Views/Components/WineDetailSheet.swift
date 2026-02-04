@@ -123,15 +123,38 @@ struct WineDetailSheet: View {
                         .foregroundColor(.secondary)
                 }
 
-                // Confidence label
-                Text(wine.confidenceLabel)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Color.gray.opacity(0.2))
-                    .cornerRadius(12)
-                    .accessibilityIdentifier("detailSheetConfidenceLabel")
+                // Trust signals - rating source breakdown
+                if FeatureFlags.shared.trustSignals, let sources = wine.ratingSources, !sources.isEmpty {
+                    VStack(spacing: 4) {
+                        ForEach(sources.indices, id: \.self) { index in
+                            HStack(spacing: 4) {
+                                Text(sources[index].displayName)
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                                    .foregroundColor(.secondary)
+                                Text("\(String(format: "%.0f", sources[index].originalRating)) \(sources[index].scaleLabel)")
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.primary)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(Color.blue.opacity(0.08))
+                    .cornerRadius(10)
+                    .accessibilityIdentifier("trustSignals")
+                } else {
+                    // Fallback confidence label
+                    Text(wine.confidenceLabel)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.gray.opacity(0.2))
+                        .cornerRadius(12)
+                        .accessibilityIdentifier("detailSheetConfidenceLabel")
+                }
 
                 // Safe pick badge
                 if FeatureFlags.shared.safePick && wine.isSafePick == true {
@@ -269,6 +292,27 @@ struct WineDetailSheet: View {
                 // Wine memory banner
                 if FeatureFlags.shared.wineMemory {
                     memoryBanner
+                }
+
+                // Share button
+                if FeatureFlags.shared.share {
+                    Button {
+                        shareWine()
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "square.and.arrow.up")
+                                .font(.subheadline)
+                            Text("Share this pick")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                        }
+                        .foregroundColor(.blue)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(Color.blue.opacity(0.1))
+                        .cornerRadius(12)
+                    }
+                    .accessibilityIdentifier("shareButton")
                 }
 
                 // Feedback section
@@ -467,6 +511,32 @@ struct WineDetailSheet: View {
             await MainActor.run {
                 isSubmitting = false
             }
+        }
+    }
+
+    private func shareWine() {
+        var text = "\(wine.wineName)"
+        if let rating = wine.rating {
+            text += " - \(String(format: "%.1f", rating)) stars"
+        }
+        if let brand = wine.brand {
+            text += " by \(brand)"
+        }
+        if let region = wine.region {
+            text += " (\(region))"
+        }
+        text += "\n\nFound with Wine Shelf Scanner"
+
+        let activityVC = UIActivityViewController(activityItems: [text], applicationActivities: nil)
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let root = windowScene.windows.first?.rootViewController {
+            // Handle iPad popover
+            if let popover = activityVC.popoverPresentationController {
+                popover.sourceView = root.view
+                popover.sourceRect = CGRect(x: root.view.bounds.midX, y: root.view.bounds.midY, width: 0, height: 0)
+                popover.permittedArrowDirections = []
+            }
+            root.present(activityVC, animated: true)
         }
     }
 

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { X, Star } from 'lucide-react';
+import { useState, useCallback } from 'react';
+import { X, Star, Share2 } from 'lucide-react';
 import { WineResult } from '@/lib/types';
 import { colors, fontSize } from '@/lib/theme';
 import { confidenceLabel } from '@/lib/overlay-math';
@@ -128,18 +128,33 @@ export function WineDetailModal({ wine, onClose, shelfRank, shelfTotal }: WineDe
               </p>
             )}
 
-            {/* Confidence Label */}
-            <div
-              className={`
-                inline-block px-4 py-2 rounded-full text-sm font-medium mb-4
-                ${wine.confidence >= 0.85
-                  ? 'bg-green-100 text-green-700'
-                  : 'bg-yellow-100 text-yellow-700'
-                }
-              `}
-            >
-              {label}
-            </div>
+            {/* Trust Signals - Rating Sources */}
+            {flags.trustSignals && wine.rating_sources && wine.rating_sources.length > 0 ? (
+              <div className="inline-flex flex-col gap-1 px-4 py-2 rounded-xl mb-4"
+                style={{ backgroundColor: 'rgba(59, 130, 246, 0.08)' }}
+              >
+                {wine.rating_sources.map((source, i) => (
+                  <div key={i} className="flex items-center gap-1 text-xs">
+                    <span className="text-gray-500 font-medium">{source.display_name}</span>
+                    <span className="text-gray-900 font-semibold">
+                      {Math.round(source.original_rating)} {source.scale_label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div
+                className={`
+                  inline-block px-4 py-2 rounded-full text-sm font-medium mb-4
+                  ${wine.confidence >= 0.85
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-yellow-100 text-yellow-700'
+                  }
+                `}
+              >
+                {label}
+              </div>
+            )}
 
             {/* Safe Pick Badge */}
             {flags.safePick && wine.is_safe_pick && (
@@ -225,6 +240,33 @@ export function WineDetailModal({ wine, onClose, shelfRank, shelfTotal }: WineDe
                   Undo
                 </button>
               </div>
+            )}
+
+            {/* Share Button */}
+            {flags.share && (
+              <button
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-blue-600 hover:bg-blue-50 transition-colors mb-2"
+                style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)' }}
+                onClick={() => {
+                  const text = [
+                    wine.wine_name,
+                    wine.rating ? `${wine.rating.toFixed(1)} stars` : null,
+                    wine.brand ? `by ${wine.brand}` : null,
+                    wine.region ? `(${wine.region})` : null,
+                    '',
+                    'Found with Wine Shelf Scanner',
+                  ].filter(Boolean).join(' ');
+
+                  if (navigator.share) {
+                    navigator.share({ text }).catch(() => {});
+                  } else {
+                    navigator.clipboard.writeText(text).catch(() => {});
+                  }
+                }}
+              >
+                <Share2 className="w-4 h-4" />
+                Share this pick
+              </button>
             )}
 
             {/* Feedback Section */}

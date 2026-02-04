@@ -507,6 +507,36 @@ class WineRepository:
             aliases=aliases,
         )
 
+    def get_rating_sources(self, wine_id: int) -> list[dict]:
+        """
+        Get rating source details for a wine.
+
+        Returns list of dicts with source_name, original_rating, scale_min, scale_max.
+        """
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT source_name, original_rating, original_scale_min, original_scale_max
+            FROM wine_sources
+            WHERE wine_id = ?
+        """, (wine_id,))
+        return [
+            {
+                "source_name": row["source_name"],
+                "original_rating": row["original_rating"],
+                "scale_min": row["original_scale_min"],
+                "scale_max": row["original_scale_max"],
+            }
+            for row in cursor.fetchall()
+        ]
+
+    def find_by_name_with_id(self, name: str) -> Optional[tuple[WineRecord, int]]:
+        """Find wine by name and also return the database ID for source lookups."""
+        record = self.find_by_name(name)
+        if record:
+            return (record, record.id)
+        return None
+
     # Caching methods
     def _get_cached_wine(self, key: str) -> Optional[WineRecord]:
         """Get wine from cache."""

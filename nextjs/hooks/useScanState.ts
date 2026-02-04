@@ -4,10 +4,13 @@ import { useState, useCallback } from 'react';
 import { ScanState } from '@/lib/types';
 import { scanImage } from '@/lib/api-client';
 import { getDisplayableImageUrl } from '@/lib/image-converter';
+import { useScanCache } from './useScanCache';
+import { featureFlags } from '@/lib/feature-flags';
 
 export function useScanState() {
   const [state, setState] = useState<ScanState>({ status: 'idle' });
   const [debugMode, setDebugMode] = useState(false);
+  const scanCache = useScanCache();
 
   const processImage = useCallback(async (file: File) => {
     let imageUri: string | null = null;
@@ -26,12 +29,16 @@ export function useScanState() {
     const result = await scanImage(file, { debug: debugMode });
 
     if (result.success) {
+      // Cache result for offline access
+      if (featureFlags.offlineCache && imageUri) {
+        scanCache.save(result.data, imageUri);
+      }
       setState({ status: 'results', response: result.data, imageUri: imageUri || '' });
     } else {
       if (imageUri) URL.revokeObjectURL(imageUri);
       setState({ status: 'error', message: result.error.message });
     }
-  }, [debugMode]);
+  }, [debugMode, scanCache]);
 
   const reset = useCallback(() => {
     if (state.status === 'results' && state.imageUri) {
@@ -46,5 +53,5 @@ export function useScanState() {
     setDebugMode((prev) => !prev);
   }, []);
 
-  return { state, processImage, reset, debugMode, toggleDebugMode };
+  return { state, processImage, reset, debugMode, toggleDebugMode, scanCache };
 }

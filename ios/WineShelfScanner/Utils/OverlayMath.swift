@@ -73,6 +73,14 @@ struct OverlayMath {
         }
     }
 
+    /// Opacity with visual emphasis: top-3 wines get full opacity, non-top-3 are dimmed
+    static func opacity(confidence: Double, isTopThree: Bool, visualEmphasis: Bool) -> Double {
+        let baseOpacity = opacity(confidence: confidence)
+        if !visualEmphasis || baseOpacity == 0 { return baseOpacity }
+        if isTopThree { return min(baseOpacity + 0.15, 1.0) }
+        return baseOpacity * 0.65
+    }
+
     // MARK: - Confidence Thresholds
 
     /// Minimum confidence to show overlay (opacity 0.5)

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { ScanResponse, WineResult, Rect, Size } from '@/lib/types';
 import { OverlayContainer } from './OverlayContainer';
@@ -9,6 +9,7 @@ import { Toast } from './Toast';
 import { FallbackList } from './FallbackList';
 import { getImageBounds } from '@/lib/image-bounds';
 import { isVisible } from '@/lib/overlay-math';
+import { useFeatureFlags } from '@/lib/feature-flags';
 
 interface ResultsViewProps {
   response: ScanResponse;
@@ -23,10 +24,30 @@ export function ResultsView({ response, imageUri, onReset }: ResultsViewProps) {
   const [imageBounds, setImageBounds] = useState<Rect | null>(null);
   const [imageSize, setImageSize] = useState<Size | null>(null);
   const [showPartialToast, setShowPartialToast] = useState(false);
+  const { shelfRanking } = useFeatureFlags();
 
   // Check if we should show partial detection toast
   const visibleCount = response.results.filter((w) => isVisible(w.confidence)).length;
   const hasPartialDetection = response.fallback_list.length > 0 && visibleCount > 0;
+
+  // Compute shelf rankings for wine detail modal
+  const shelfRankings = useMemo(() => {
+    if (!shelfRanking) return new Map<string, { rank: number; total: number }>();
+    const visibleWines = response.results.filter((w) => isVisible(w.confidence));
+    const ranked = [...visibleWines]
+      .filter((w) => w.rating !== null)
+      .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+    if (ranked.length < 3) return new Map<string, { rank: number; total: number }>();
+    const rankings = new Map<string, { rank: number; total: number }>();
+    let currentRank = 1;
+    ranked.forEach((wine, index) => {
+      if (index > 0 && wine.rating !== ranked[index - 1].rating) {
+        currentRank = index + 1;
+      }
+      rankings.set(wine.wine_name, { rank: currentRank, total: ranked.length });
+    });
+    return rankings;
+  }, [shelfRanking, response.results]);
 
   // Show toast on mount if partial detection
   useEffect(() => {
@@ -144,6 +165,8 @@ export function ResultsView({ response, imageUri, onReset }: ResultsViewProps) {
       <WineDetailModal
         wine={selectedWine}
         onClose={() => setSelectedWine(null)}
+        shelfRank={selectedWine ? shelfRankings.get(selectedWine.wine_name)?.rank : undefined}
+        shelfTotal={selectedWine ? shelfRankings.get(selectedWine.wine_name)?.total : undefined}
       />
     </div>
   );

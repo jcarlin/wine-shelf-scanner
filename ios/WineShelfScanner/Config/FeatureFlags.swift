@@ -1,0 +1,56 @@
+import Foundation
+
+/// Feature flags backed by UserDefaults.
+///
+/// Defaults are compiled in. Override at runtime via:
+/// - Debug settings UI (dev builds)
+/// - UserDefaults.standard.set(true, forKey: "feature_wine_memory")
+///
+/// Upgrade path: Replace UserDefaults reads with Firebase Remote Config
+/// or LaunchDarkly SDK calls when remote toggling is needed.
+struct FeatureFlags {
+    static let shared = FeatureFlags()
+
+    private let defaults = UserDefaults.standard
+
+    private let compiledDefaults: [String: Bool] = [
+        "feature_wine_memory": false,
+        "feature_shelf_ranking": false,
+        "feature_safe_pick": false,
+        "feature_pairings": false,
+    ]
+
+    var wineMemory: Bool {
+        flagValue("feature_wine_memory")
+    }
+
+    var shelfRanking: Bool {
+        flagValue("feature_shelf_ranking")
+    }
+
+    var safePick: Bool {
+        flagValue("feature_safe_pick")
+    }
+
+    var pairings: Bool {
+        flagValue("feature_pairings")
+    }
+
+    /// Returns UserDefaults override if set, otherwise compiled default.
+    private func flagValue(_ key: String) -> Bool {
+        if defaults.object(forKey: key) != nil {
+            return defaults.bool(forKey: key)
+        }
+        return compiledDefaults[key] ?? false
+    }
+
+    /// Override a flag at runtime (debug builds).
+    func setOverride(_ key: String, value: Bool) {
+        defaults.set(value, forKey: key)
+    }
+
+    /// Remove runtime override, revert to compiled default.
+    func removeOverride(_ key: String) {
+        defaults.removeObject(forKey: key)
+    }
+}

@@ -2,6 +2,8 @@
 
 import { useMemo } from 'react';
 import { WineResult, Size, Rect } from '@/lib/types';
+import { useFeatureFlags } from '@/lib/feature-flags';
+import { useWineMemory } from '@/hooks/useWineMemory';
 import { RatingBadge } from './RatingBadge';
 import {
   isVisible,
@@ -17,6 +19,9 @@ interface OverlayContainerProps {
 }
 
 export function OverlayContainer({ wines, imageBounds, onWineSelect }: OverlayContainerProps) {
+  const { shelfRanking, safePick, wineMemory } = useFeatureFlags();
+  const memory = useWineMemory();
+
   // Filter to visible wines only
   const visibleWines = useMemo(() => {
     return wines.filter((wine) => isVisible(wine.confidence));
@@ -30,6 +35,24 @@ export function OverlayContainer({ wines, imageBounds, onWineSelect }: OverlayCo
       .slice(0, 3)
       .map((w) => w.wine_name);
   }, [visibleWines]);
+
+  // Compute shelf rankings
+  const shelfRankings = useMemo(() => {
+    if (!shelfRanking) return new Map<string, { rank: number; total: number }>();
+    const ranked = [...visibleWines]
+      .filter((w) => w.rating !== null)
+      .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+    if (ranked.length < 3) return new Map<string, { rank: number; total: number }>();
+    const rankings = new Map<string, { rank: number; total: number }>();
+    let currentRank = 1;
+    ranked.forEach((wine, index) => {
+      if (index > 0 && wine.rating !== ranked[index - 1].rating) {
+        currentRank = index + 1;
+      }
+      rankings.set(wine.wine_name, { rank: currentRank, total: ranked.length });
+    });
+    return rankings;
+  }, [shelfRanking, visibleWines]);
 
   // Calculate positions for each wine
   const winePositions = useMemo(() => {
@@ -67,6 +90,9 @@ export function OverlayContainer({ wines, imageBounds, onWineSelect }: OverlayCo
           isTopThree={isTopThree}
           position={position}
           onClick={() => onWineSelect(wine)}
+          shelfRank={shelfRankings.get(wine.wine_name)?.rank}
+          isSafePick={safePick && wine.is_safe_pick === true}
+          userSentiment={wineMemory ? memory.get(wine.wine_name) : undefined}
         />
       ))}
     </>

@@ -12,6 +12,24 @@ struct ResultsView: View {
     @State private var showToast = false
     @State private var toastWorkItem: DispatchWorkItem?
 
+    /// Compute shelf rankings for detail sheet (rank by rating, ties share rank)
+    private var shelfRankingsForDetail: [String: (rank: Int, total: Int)] {
+        guard FeatureFlags.shared.shelfRanking else { return [:] }
+        let ranked = response.visibleResults
+            .filter { $0.rating != nil }
+            .sorted { ($0.rating ?? 0) > ($1.rating ?? 0) }
+        guard ranked.count >= 3 else { return [:] }
+        var rankings: [String: (rank: Int, total: Int)] = [:]
+        var currentRank = 1
+        for (index, wine) in ranked.enumerated() {
+            if index > 0 && wine.rating != ranked[index - 1].rating {
+                currentRank = index + 1
+            }
+            rankings[wine.id] = (rank: currentRank, total: ranked.count)
+        }
+        return rankings
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             // Show fallback list if full failure, otherwise show overlay view
@@ -31,8 +49,14 @@ struct ResultsView: View {
         }
         .accessibilityIdentifier("resultsView")
         .sheet(item: $selectedWine) { wine in
-            WineDetailSheet(wine: wine, imageId: response.imageId)
-                .presentationDetents([.height(280)])
+            let rankings = shelfRankingsForDetail
+            WineDetailSheet(
+                wine: wine,
+                imageId: response.imageId,
+                shelfRank: rankings[wine.id]?.rank,
+                shelfTotal: rankings[wine.id]?.total
+            )
+            .presentationDetents([.height(280)])
         }
         .onAppear {
             if response.isPartialDetection {

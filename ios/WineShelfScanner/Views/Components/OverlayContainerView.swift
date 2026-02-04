@@ -6,13 +6,35 @@ struct OverlayContainerView: View {
     let imageBounds: CGRect
     let onWineTapped: (WineResult) -> Void
 
+    /// Compute shelf rankings for visible wines (rank by rating, ties share rank)
+    private var shelfRankings: [String: (rank: Int, total: Int)] {
+        let ranked = response.visibleResults
+            .filter { $0.rating != nil }
+            .sorted { ($0.rating ?? 0) > ($1.rating ?? 0) }
+
+        guard ranked.count >= 3 else { return [:] }
+
+        var rankings: [String: (rank: Int, total: Int)] = [:]
+        var currentRank = 1
+        for (index, wine) in ranked.enumerated() {
+            if index > 0 && wine.rating != ranked[index - 1].rating {
+                currentRank = index + 1
+            }
+            rankings[wine.id] = (rank: currentRank, total: ranked.count)
+        }
+        return rankings
+    }
+
     var body: some View {
+        let showRanking = FeatureFlags.shared.shelfRanking
+        let rankings = showRanking ? shelfRankings : [:]
+        let showMemory = FeatureFlags.shared.wineMemory
+
         ZStack {
             ForEach(response.visibleResults) { wine in
                 let isTopThree = response.isTopThree(wine)
                 let badgeSize = OverlayMath.badgeSize(isTopThree: isTopThree)
 
-                // Calculate anchor relative to image bounds, then offset by imageBounds origin
                 let anchor = OverlayMath.anchorPoint(bbox: wine.bbox, geo: imageBounds.size)
                 let adjusted = OverlayMath.adjustedAnchorPoint(
                     anchor,
@@ -25,12 +47,20 @@ struct OverlayContainerView: View {
                     y: imageBounds.origin.y + adjusted.y
                 )
 
+                let ranking = rankings[wine.id]
+                let sentiment: WineSentiment? = showMemory
+                    ? WineMemoryStore.shared.get(wineName: wine.wineName)
+                    : nil
+
                 RatingBadge(
                     rating: wine.rating,
                     confidence: wine.confidence,
                     isTopThree: isTopThree,
                     isTappable: wine.isTappable,
-                    wineName: wine.wineName
+                    wineName: wine.wineName,
+                    shelfRank: ranking?.rank,
+                    isSafePick: FeatureFlags.shared.safePick && (wine.isSafePick == true),
+                    userSentiment: sentiment
                 )
                 .position(finalPosition)
                 .opacity(OverlayMath.opacity(confidence: wine.confidence))

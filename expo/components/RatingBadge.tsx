@@ -9,13 +9,17 @@ import {
 import { isTappable, badgeSize, opacity } from '../lib/overlay-math';
 import { colors, spacing, borderRadius, fontSize } from '../lib/theme';
 
+export type WineSentiment = 'liked' | 'disliked';
+
 interface RatingBadgeProps {
   rating: number;
   confidence: number;
   isTopThree: boolean;
   onPress?: () => void;
-  /** Wine name for accessibility testID */
   wineName?: string;
+  shelfRank?: number;
+  isSafePick?: boolean;
+  userSentiment?: WineSentiment;
 }
 
 export function RatingBadge({
@@ -24,6 +28,9 @@ export function RatingBadge({
   isTopThree,
   onPress,
   wineName,
+  shelfRank,
+  isSafePick,
+  userSentiment,
 }: RatingBadgeProps) {
   // Generate testID from wine name (sanitize for valid ID)
   const testID = wineName
@@ -53,14 +60,35 @@ export function RatingBadge({
     ...glowStyle,
   };
 
+  const rankColor = shelfRank === 1 ? colors.star : shelfRank === 2 ? '#D9D9D9' : '#B3B3B3';
+
   const content = (
-    <View style={[styles.badge, containerStyle]} testID={testID}>
-      <Text style={[styles.star, isTopThree && styles.starTopThree]}>
-        {'\u2605'}
-      </Text>
-      <Text style={[styles.rating, isTopThree && styles.ratingTopThree]}>
-        {rating.toFixed(1)}
-      </Text>
+    <View style={styles.badgeColumn} testID={testID}>
+      <View>
+        <View style={[styles.badge, containerStyle]}>
+          <Text style={[styles.star, isTopThree && styles.starTopThree]}>
+            {'\u2605'}
+          </Text>
+          <Text style={[styles.rating, isTopThree && styles.ratingTopThree]}>
+            {rating.toFixed(1)}
+          </Text>
+          {isSafePick && (
+            <Text style={styles.shieldIcon}>{'\u2713'}</Text>
+          )}
+        </View>
+        {userSentiment && (
+          <View style={styles.sentimentIndicator}>
+            <Text style={userSentiment === 'disliked' ? styles.sentimentDisliked : styles.sentimentLiked}>
+              {userSentiment === 'disliked' ? '\u2715' : '\u2665'}
+            </Text>
+          </View>
+        )}
+      </View>
+      {shelfRank !== undefined && (
+        <Text style={[styles.rankText, { color: rankColor }]}>
+          #{shelfRank}
+        </Text>
+      )}
     </View>
   );
 
@@ -76,6 +104,10 @@ export function RatingBadge({
 }
 
 const styles = StyleSheet.create({
+  badgeColumn: {
+    alignItems: 'center',
+    gap: 2,
+  },
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -89,6 +121,18 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     shadowRadius: 2,
     elevation: 4,
+  },
+  shieldIcon: {
+    fontSize: 9,
+    color: '#4CAF50',
+    fontWeight: 'bold',
+  },
+  rankText: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1,
   },
   star: {
     fontSize: 12,
@@ -104,5 +148,25 @@ const styles = StyleSheet.create({
   },
   ratingTopThree: {
     fontSize: fontSize.sm,
+  },
+  sentimentIndicator: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+  },
+  sentimentDisliked: {
+    fontSize: 12,
+    color: '#FF3B30',
+    fontWeight: 'bold',
+    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 1,
+  },
+  sentimentLiked: {
+    fontSize: 12,
+    color: '#34C759',
+    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 1,
   },
 });

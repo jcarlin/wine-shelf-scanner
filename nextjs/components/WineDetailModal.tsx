@@ -1,13 +1,18 @@
 'use client';
 
+import { useState } from 'react';
 import { X, Star } from 'lucide-react';
 import { WineResult } from '@/lib/types';
 import { colors, fontSize } from '@/lib/theme';
 import { confidenceLabel } from '@/lib/overlay-math';
+import { useFeatureFlags } from '@/lib/feature-flags';
+import { useWineMemory } from '@/hooks/useWineMemory';
 
 interface WineDetailModalProps {
   wine: WineResult | null;
   onClose: () => void;
+  shelfRank?: number;
+  shelfTotal?: number;
 }
 
 /** Maps wine type to display color */
@@ -34,8 +39,14 @@ function formatReviewCount(count: number): string {
   return `${count} reviews`;
 }
 
-export function WineDetailModal({ wine, onClose }: WineDetailModalProps) {
+export function WineDetailModal({ wine, onClose, shelfRank, shelfTotal }: WineDetailModalProps) {
+  const flags = useFeatureFlags();
+  const memory = useWineMemory();
+  const [feedbackGiven, setFeedbackGiven] = useState(false);
+
   if (!wine) return null;
+
+  const existingSentiment = flags.wineMemory ? memory.get(wine.wine_name) : undefined;
 
   const label = confidenceLabel(wine.confidence);
   const hasMetadata = wine.wine_type || wine.brand || wine.region || wine.varietal || wine.blurb;
@@ -130,6 +141,26 @@ export function WineDetailModal({ wine, onClose }: WineDetailModalProps) {
               {label}
             </div>
 
+            {/* Safe Pick Badge */}
+            {flags.safePick && wine.is_safe_pick && (
+              <div className="inline-flex items-center gap-1 px-3 py-1 rounded-lg mb-2"
+                style={{ backgroundColor: '#E8F5E9' }}
+              >
+                <span className="text-sm font-semibold" style={{ color: '#2E7D32' }}>
+                  &#x2713; Crowd favorite
+                </span>
+              </div>
+            )}
+
+            {/* Shelf Ranking */}
+            {flags.shelfRanking && shelfRank !== undefined && shelfTotal !== undefined && (
+              <p className={`text-sm mb-2 ${shelfRank === 1 ? 'font-semibold' : 'font-medium text-gray-500'}`}
+                style={shelfRank === 1 ? { color: '#D4A017' } : undefined}
+              >
+                {shelfRank === 1 ? 'Best on this shelf' : `Ranked #${shelfRank} of ${shelfTotal} on this shelf`}
+              </p>
+            )}
+
             {/* Divider */}
             {(hasMetadata || hasReviews) && (
               <div className="w-4/5 h-px bg-gray-200 mx-auto my-4" />
@@ -167,6 +198,69 @@ export function WineDetailModal({ wine, onClose }: WineDetailModalProps) {
                 <p className="text-gray-600 italic text-center leading-relaxed">
                   &ldquo;{wine.blurb}&rdquo;
                 </p>
+              </div>
+            )}
+
+            {/* Food Pairing */}
+            {flags.pairings && wine.pairing && (
+              <div className="rounded-lg p-4 my-2 w-full" style={{ backgroundColor: '#FBF8F0' }}>
+                <p className="text-sm text-gray-500 mb-1">&#x1F374; Goes with</p>
+                <p className="text-base text-gray-900 font-medium">{wine.pairing}</p>
+              </div>
+            )}
+
+            {/* Wine Memory Banner */}
+            {flags.wineMemory && existingSentiment && !feedbackGiven && (
+              <div
+                className="flex items-center justify-between w-full px-3 py-2 rounded-lg mb-2"
+                style={{ backgroundColor: existingSentiment === 'liked' ? '#E8F5E9' : '#FFEBEE' }}
+              >
+                <span className="text-sm text-gray-600">
+                  {existingSentiment === 'liked' ? '\u2665 You liked this wine' : '\u2715 You didn\'t like this wine'}
+                </span>
+                <button
+                  className="text-sm text-blue-500 font-medium hover:text-blue-600"
+                  onClick={() => memory.clear(wine.wine_name)}
+                >
+                  Undo
+                </button>
+              </div>
+            )}
+
+            {/* Feedback Section */}
+            {flags.wineMemory && (
+              <div className="py-2 text-center">
+                {feedbackGiven ? (
+                  <p className="text-sm font-medium" style={{ color: '#4CAF50' }}>
+                    &#x2713; Thanks for your feedback!
+                  </p>
+                ) : (
+                  <div className="flex flex-col items-center gap-2">
+                    <p className="text-sm text-gray-500">Is this the right wine?</p>
+                    <div className="flex gap-8">
+                      <button
+                        className="flex flex-col items-center gap-1 hover:scale-110 transition-transform"
+                        onClick={() => {
+                          memory.save(wine.wine_name, 'liked');
+                          setFeedbackGiven(true);
+                        }}
+                      >
+                        <span className="text-2xl">&#x1F44D;</span>
+                        <span className="text-xs text-gray-500">Yes</span>
+                      </button>
+                      <button
+                        className="flex flex-col items-center gap-1 hover:scale-110 transition-transform"
+                        onClick={() => {
+                          memory.save(wine.wine_name, 'disliked');
+                          setFeedbackGiven(true);
+                        }}
+                      >
+                        <span className="text-2xl">&#x1F44E;</span>
+                        <span className="text-xs text-gray-500">No</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

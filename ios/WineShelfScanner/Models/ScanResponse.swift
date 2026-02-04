@@ -45,6 +45,9 @@ struct WineResult: Codable, Equatable, Identifiable {
     var blurb: String? = nil          // Brief description of the wine or producer
     var reviewCount: Int? = nil       // Number of reviews
     var reviewSnippets: [String]? = nil  // Sample review quotes
+    // Feature-flagged fields (null when feature is off)
+    var isSafePick: Bool? = nil       // Crowd favorite badge
+    var pairing: String? = nil        // Food pairing suggestion
 
     /// Unique ID combining name + full bbox (handles duplicate wines on shelf)
     var id: String { "\(wineName)_\(bbox.x)_\(bbox.y)_\(bbox.width)_\(bbox.height)" }
@@ -61,6 +64,8 @@ struct WineResult: Codable, Equatable, Identifiable {
         case blurb
         case reviewCount = "review_count"
         case reviewSnippets = "review_snippets"
+        case isSafePick = "is_safe_pick"
+        case pairing
     }
 }
 

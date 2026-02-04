@@ -14,6 +14,9 @@ struct RatingBadge: View {
     let isTopThree: Bool
     let isTappable: Bool
     let wineName: String
+    var shelfRank: Int? = nil
+    var isSafePick: Bool = false
+    var userSentiment: WineSentiment? = nil
 
     private var badgeSize: CGSize {
         OverlayMath.badgeSize(isTopThree: isTopThree)
@@ -26,37 +29,79 @@ struct RatingBadge: View {
             .replacingOccurrences(of: "'", with: "")
     }
 
-    var body: some View {
-        HStack(spacing: 2) {
-            Image(systemName: "star.fill")
-                .font(.system(size: isTopThree ? 12 : 10))
-                .foregroundColor(.yellow)
-
-            Text(rating.map { String(format: "%.1f", $0) } ?? "—")
-                .font(.system(
-                    size: isTopThree ? 14 : 12,
-                    weight: .bold,
-                    design: .rounded
-                ))
-                .foregroundColor(.white)
+    /// Color for rank number
+    private var rankColor: Color {
+        guard let rank = shelfRank else { return .white }
+        switch rank {
+        case 1: return Color.yellow
+        case 2: return Color(white: 0.85)
+        default: return Color(white: 0.7)
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .frame(minWidth: badgeSize.width, minHeight: badgeSize.height)
-        .background(
-            RoundedRectangle(cornerRadius: 6)
-                .fill(Color.black.opacity(0.7))
-        )
-        .overlay(
-            // Top-3 glow effect
-            RoundedRectangle(cornerRadius: 6)
-                .stroke(
-                    isTopThree ? Color.yellow.opacity(0.6) : Color.clear,
-                    lineWidth: isTopThree ? 2 : 0
-                )
-        )
-        .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
-        .contentShape(Rectangle()) // Make entire badge tappable
+    }
+
+    var body: some View {
+        VStack(spacing: 2) {
+            HStack(spacing: 2) {
+                Image(systemName: "star.fill")
+                    .font(.system(size: isTopThree ? 12 : 10))
+                    .foregroundColor(.yellow)
+
+                Text(rating.map { String(format: "%.1f", $0) } ?? "—")
+                    .font(.system(
+                        size: isTopThree ? 14 : 12,
+                        weight: .bold,
+                        design: .rounded
+                    ))
+                    .foregroundColor(.white)
+
+                // Safe pick shield icon
+                if isSafePick {
+                    Image(systemName: "checkmark.shield.fill")
+                        .font(.system(size: 9))
+                        .foregroundColor(.green)
+                }
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .frame(minWidth: badgeSize.width, minHeight: badgeSize.height)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color.black.opacity(0.7))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(
+                        isTopThree ? Color.yellow.opacity(0.6) : Color.clear,
+                        lineWidth: isTopThree ? 2 : 0
+                    )
+            )
+            .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
+            .overlay(alignment: .topTrailing) {
+                if let sentiment = userSentiment {
+                    Group {
+                        if sentiment == .disliked {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.red)
+                        } else {
+                            Image(systemName: "heart.fill")
+                                .foregroundColor(.green)
+                        }
+                    }
+                    .font(.system(size: 12))
+                    .shadow(color: .black.opacity(0.8), radius: 1, x: 0, y: 0)
+                    .offset(x: 6, y: -6)
+                }
+            }
+
+            // Shelf rank number below badge
+            if let rank = shelfRank {
+                Text("#\(rank)")
+                    .font(.system(size: rank == 1 ? 10 : 9, weight: .bold, design: .rounded))
+                    .foregroundColor(rankColor)
+                    .shadow(color: .black.opacity(0.8), radius: 1, x: 0, y: 1)
+            }
+        }
+        .contentShape(Rectangle())
         .accessibilityIdentifier("ratingBadge_\(sanitizedWineName)")
     }
 }

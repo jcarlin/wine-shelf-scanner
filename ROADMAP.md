@@ -1,6 +1,6 @@
 # Wine Shelf Scanner - Project Roadmap
 
-**Last Updated:** January 31, 2026
+**Last Updated:** February 3, 2026
 **Single Source of Truth** for project status and next steps.
 
 ---
@@ -179,7 +179,7 @@ Target: 150K+ wines in SQLite + FTS5 (searchable, fast, scalable)
 | Task | Status | Notes |
 |------|--------|-------|
 | Assets.xcassets structure | ✅ Done | AppIcon, AccentColor, LaunchBackground |
-| App icon design | ⏳ TODO | Need 1024x1024 PNG → export all sizes |
+| App icon design | ✅ Done | All 18 sizes in AppIcon.appiconset |
 | Launch screen | ✅ Done | Auto-generated with wine burgundy |
 | PrivacyInfo.xcprivacy | ✅ Done | iOS 17+ privacy manifest |
 | TestFlight checklist doc | ✅ Done | `docs/TESTFLIGHT_CHECKLIST.md` |
@@ -198,7 +198,7 @@ Target: 150K+ wines in SQLite + FTS5 (searchable, fast, scalable)
 | App description | ✅ Draft | See `docs/TESTFLIGHT_CHECKLIST.md` |
 | Keywords | ✅ Draft | wine,ratings,scanner,sommelier,reviews |
 | Screenshots (6.7", 6.5", 5.5") | ⏳ TODO | 4-5 per size |
-| Privacy policy URL | ⏳ TODO | Required (use freeprivacypolicy.com) |
+| Privacy policy URL | ✅ Done | `docs/privacy-policy.html` (needs public hosting) |
 | Category: Food & Drink | ⏳ TODO | - |
 | Age rating: 17+ | ⏳ TODO | Alcohol reference |
 | Submit for review | ⏳ TODO | - |

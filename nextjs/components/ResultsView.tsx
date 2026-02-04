@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { ArrowLeft, Share2 } from 'lucide-react';
+import { ArrowLeft, Share2, Star } from 'lucide-react';
 import { ScanResponse, WineResult, Rect, Size } from '@/lib/types';
 import { OverlayContainer } from './OverlayContainer';
 import { WineDetailModal } from './WineDetailModal';
@@ -122,9 +122,25 @@ export function ResultsView({ response, imageUri, onReset }: ResultsViewProps) {
           <span>New Scan</span>
         </button>
         <div className="flex-1 text-center">
-          <span className="text-gray-400 text-sm">
-            {visibleCount} bottle{visibleCount !== 1 ? 's' : ''} found
-          </span>
+          {(() => {
+            const topWine = [...response.results]
+              .filter((w) => isVisible(w.confidence) && w.rating !== null)
+              .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))[0];
+            if (topWine) {
+              return (
+                <span className="text-gray-300 text-sm flex items-center justify-center gap-1">
+                  <Star className="w-3.5 h-3.5 text-star fill-star" />
+                  <span className="font-medium text-white truncate max-w-[140px]">{topWine.wine_name}</span>
+                  <span className="text-gray-400">+ {visibleCount - 1} more</span>
+                </span>
+              );
+            }
+            return (
+              <span className="text-gray-400 text-sm">
+                {visibleCount} bottle{visibleCount !== 1 ? 's' : ''} found
+              </span>
+            );
+          })()}
         </div>
         <div className="w-20 flex justify-end">
           {shareEnabled && (

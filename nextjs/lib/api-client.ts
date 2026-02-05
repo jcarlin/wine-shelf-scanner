@@ -6,6 +6,71 @@ import { Config } from './config';
 import { ScanResponse } from './types';
 import { getMockResponse } from './mock-service';
 
+export type HealthStatus =
+  | { status: 'healthy' }
+  | { status: 'warming_up'; retryAfter?: number }
+  | { status: 'unavailable'; message: string };
+
+/**
+ * Check if the backend server is healthy and ready to accept requests
+ *
+ * @returns Health status of the server
+ */
+export async function checkServerHealth(): Promise<HealthStatus> {
+  // In mock mode, always report healthy
+  if (Config.USE_MOCKS) {
+    return { status: 'healthy' };
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout for health check
+
+  try {
+    const response = await fetch(`${Config.API_BASE_URL}/health`, {
+      method: 'GET',
+      signal: controller.signal,
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+
+    clearTimeout(timeoutId);
+
+    if (response.ok) {
+      return { status: 'healthy' };
+    }
+
+    // 503 means server is warming up
+    if (response.status === 503) {
+      const retryAfter = response.headers.get('Retry-After');
+      return {
+        status: 'warming_up',
+        retryAfter: retryAfter ? parseInt(retryAfter, 10) : 10,
+      };
+    }
+
+    return {
+      status: 'unavailable',
+      message: `Server returned ${response.status}`,
+    };
+  } catch (error) {
+    clearTimeout(timeoutId);
+
+    if (error instanceof Error && error.name === 'AbortError') {
+      return {
+        status: 'unavailable',
+        message: 'Health check timed out',
+      };
+    }
+
+    // Network error likely means server is cold starting
+    return {
+      status: 'warming_up',
+      retryAfter: 5,
+    };
+  }
+}
+
 export type ApiError =
   | { type: 'NETWORK_ERROR'; message: string }
   | { type: 'SERVER_ERROR'; message: string; status: number }

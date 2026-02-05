@@ -87,5 +87,13 @@
     "thanksImprove": "感谢帮助我们改进！",
     "done": "完成",
     "cancel": "取消"
+  },
+  "warmup": {
+    "checking": "正在连接服务器...",
+    "title": "服务器启动中",
+    "message": "服务器正在启动以扫描您的葡萄酒。通常需要15-30秒。",
+    "attempt": "第 {count} 次尝试",
+    "unavailableTitle": "服务器不可用",
+    "retry": "重试"
   }
 }

@@ -2,17 +2,24 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { CameraCapture, ProcessingSpinner, ScanningOverlay, ResultsView, BugReportModal } from '@/components';
+import { CameraCapture, ProcessingSpinner, ScanningOverlay, ResultsView, BugReportModal, ServerWarmupOverlay } from '@/components';
 import { useScanState } from '@/hooks/useScanState';
+import { useServerHealth } from '@/hooks/useServerHealth';
 import { useFeatureFlags } from '@/lib/feature-flags';
 import { Flag } from 'lucide-react';
 
 export default function Home() {
   const { state, processImage, reset } = useScanState();
+  const { state: serverState, retry: retryServerCheck } = useServerHealth();
   const t = useTranslations('error');
   const tBug = useTranslations('bugReport');
   const { bugReport: bugReportEnabled } = useFeatureFlags();
   const [showBugReport, setShowBugReport] = useState(false);
+
+  // Show warmup overlay while server is not ready
+  if (serverState.status !== 'ready') {
+    return <ServerWarmupOverlay state={serverState} onRetry={retryServerCheck} />;
+  }
 
   return (
     <main className="min-h-screen flex flex-col">

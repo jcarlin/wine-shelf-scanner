@@ -87,5 +87,13 @@
     "thanksImprove": "Merci de nous aider à nous améliorer !",
     "done": "Terminé",
     "cancel": "Annuler"
+  },
+  "warmup": {
+    "checking": "Connexion au serveur...",
+    "title": "Démarrage du serveur",
+    "message": "Notre serveur se prépare pour scanner vos vins. Cela prend généralement 15-30 secondes.",
+    "attempt": "Tentative {count}",
+    "unavailableTitle": "Serveur indisponible",
+    "retry": "Réessayer"
   }
 }

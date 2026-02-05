@@ -87,5 +87,13 @@
     "thanksImprove": "Danke, dass Sie uns helfen, besser zu werden!",
     "done": "Fertig",
     "cancel": "Abbrechen"
+  },
+  "warmup": {
+    "checking": "Verbindung zum Server...",
+    "title": "Server wird gestartet",
+    "message": "Unser Server startet, um Ihre Weine zu scannen. Dies dauert normalerweise 15-30 Sekunden.",
+    "attempt": "Versuch {count}",
+    "unavailableTitle": "Server nicht verfügbar",
+    "retry": "Erneut versuchen"
   }
 }

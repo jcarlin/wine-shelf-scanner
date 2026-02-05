@@ -72,6 +72,7 @@ app.add_middleware(
         "https://wine-shelf-scanner.vercel.app",
         "http://localhost:3000",  # Local Next.js dev
     ],
+    allow_origin_regex=r"https://wine-shelf-scanner(-[a-z0-9-]+)?\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

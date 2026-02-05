@@ -106,20 +106,21 @@ jobs:
           fi
           echo "Alembic migrations: OK"
 
-          # Verify the API can serve a scan request (not just /health)
-          # POST a minimal image to /scan — with USE_MOCKS=true it uses mock Vision API
-          SCAN_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            -X POST http://localhost:8080/scan \
-            -F "image=@/dev/null;type=image/jpeg;filename=test.jpg" \
+          # Verify /scan endpoint loads and can serve a request
+          # Use mock_scenario=full_shelf to bypass Vision API (no GCP creds in CI)
+          # This exercises: route loading, image handling, Pydantic serialization, mock fixtures
+          printf '\xff\xd8\xff\xe0' > /tmp/tiny.jpg
+          SCAN_STATUS=$(curl -s -o /tmp/scan_response.json -w "%{http_code}" \
+            -X POST "http://localhost:8080/scan?mock_scenario=full_shelf" \
+            -F "image=@/tmp/tiny.jpg;type=image/jpeg;filename=test.jpg" \
             2>/dev/null || echo "000")
-          # Accept 200 (success) or 422/400 (validation error on empty file) — both prove the endpoint loaded
-          if [ "$SCAN_STATUS" = "000" ] || [ "$SCAN_STATUS" = "500" ]; then
-            echo "Scan endpoint returned $SCAN_STATUS — container logs:"
+          if [ "$SCAN_STATUS" != "200" ]; then
+            echo "Scan endpoint returned HTTP $SCAN_STATUS (expected 200) — container logs:"
             docker logs wine-test
             docker stop wine-test
             exit 1
           fi
-          echo "Scan endpoint responsive (HTTP $SCAN_STATUS)"
+          echo "Scan endpoint: HTTP 200 OK"
 
           docker stop wine-test
 

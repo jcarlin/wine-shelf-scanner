@@ -130,17 +130,19 @@ run_docker() {
     pass "Alembic migrations OK"
   fi
 
-  # Verify /scan endpoint is reachable (not just /health)
+  # Verify /scan endpoint loads and can serve a request
+  # Use mock_scenario=full_shelf to bypass Vision API (no GCP creds locally)
+  printf '\xff\xd8\xff\xe0' > /tmp/tiny.jpg
   SCAN_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-    -X POST http://localhost:8080/scan \
-    -F "image=@/dev/null;type=image/jpeg;filename=test.jpg" \
+    -X POST "http://localhost:8080/scan?mock_scenario=full_shelf" \
+    -F "image=@/tmp/tiny.jpg;type=image/jpeg;filename=test.jpg" \
     2>/dev/null || echo "000")
-  if [ "$SCAN_STATUS" = "000" ] || [ "$SCAN_STATUS" = "500" ]; then
-    echo "Scan endpoint returned HTTP $SCAN_STATUS"
+  if [ "$SCAN_STATUS" != "200" ]; then
+    echo "Scan endpoint returned HTTP $SCAN_STATUS (expected 200)"
     docker logs wine-test
-    fail "Scan endpoint unreachable or errored (HTTP $SCAN_STATUS)"
+    fail "Scan endpoint returned HTTP $SCAN_STATUS"
   else
-    pass "Scan endpoint responsive (HTTP $SCAN_STATUS)"
+    pass "Scan endpoint: HTTP 200 OK"
   fi
 
   docker stop wine-test > /dev/null 2>&1 || true

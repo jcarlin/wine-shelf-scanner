@@ -404,11 +404,11 @@ async def process_image(
     logger.info(f"[{image_id}] BOTTLES DETECTED: {stats_bottles_detected}")
 
     # Log individual bottle bboxes in debug mode
-    if Config.is_dev():
+    if Config.debug_mode():
         for i, obj in enumerate(vision_result.objects):
             logger.debug(f"[{image_id}]   Bottle {i}: bbox=({obj.bbox.x:.2f},{obj.bbox.y:.2f},{obj.bbox.width:.2f}x{obj.bbox.height:.2f}) conf={obj.confidence:.2f}")
 
-    if Config.is_dev():
+    if Config.debug_mode():
         logger.debug(f"[{image_id}] Raw OCR: {vision_result.raw_text[:500] if vision_result.raw_text else 'None'}...")
 
     if not vision_result.objects:
@@ -446,7 +446,7 @@ async def process_image(
     stats_llm_validated = sum(1 for w in recognized if w.source == WineSource.LLM)
 
     logger.info(f"[{image_id}] MATCHED: {len(recognized)} of {len(bottle_texts)} bottles (fuzzy={stats_fuzzy_matched}, llm={stats_llm_validated})")
-    if Config.is_dev():
+    if Config.debug_mode():
         for w in recognized:
             logger.debug(f"[{image_id}]   {w.wine_name}: rating={w.rating}, conf={w.confidence:.2f}, src={w.source}")
 

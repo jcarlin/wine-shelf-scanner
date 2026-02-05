@@ -27,7 +27,7 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
-logger.info(f"Starting with LOG_LEVEL={Config.log_level()}, DEV_MODE={Config.is_dev()}")
+logger.info(f"Starting with LOG_LEVEL={Config.log_level()}, DEBUG_MODE={Config.debug_mode()}")
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.routes import scan_router, feedback_router, report_router

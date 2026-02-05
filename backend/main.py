@@ -43,7 +43,6 @@ app.add_middleware(
     allow_origins=[
         "https://wine-shelf-scanner.vercel.app",
         "http://localhost:3000",  # Local Next.js dev
-        "http://localhost:8081",  # Local Expo dev
     ],
     allow_credentials=True,
     allow_methods=["*"],

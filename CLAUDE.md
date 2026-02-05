@@ -41,7 +41,6 @@ wine-shelf-scanner/
 │       ├── accuracy/         # Recognition accuracy tests
 │       └── fixtures/         # Captured Vision API responses
 ├── ios/                      # SwiftUI iOS app
-├── expo/                     # React Native app (Expo SDK)
 ├── nextjs/                   # Next.js web app (Vercel deployment)
 ├── raw-data/                 # Wine data sources (Kaggle, Vivino)
 ├── test-images/              # Test assets for Vision API
@@ -53,14 +52,13 @@ wine-shelf-scanner/
 
 ## Frontend Development Strategy
 
-**Current:** iOS, Expo, and Next.js are developed in parallel. Neither is the source of truth.
+**Current:** iOS and Next.js are developed in parallel. Neither is the source of truth.
 
 **Frontends:**
 - **iOS** — Native SwiftUI app
-- **Expo** — React Native for iOS/Android
 - **Next.js** — Web app deployed to Vercel
 
-All frontends implement the same API contract and UX rules, but maintain separate codebases. The Next.js web app shares lib utilities (types, theme, overlay-math) ported from Expo.
+All frontends implement the same API contract and UX rules, but maintain separate codebases.
 
 ---
 
@@ -240,20 +238,13 @@ Tap rating badge → modal sheet.
 - Native camera (photo capture only, no live video)
 - Declarative overlay rendering
 
-### Expo
-- React Native (Expo SDK)
-- TypeScript
-- expo-image-picker for camera/library
-- Same API contract as iOS
-- Centralized theming in `expo/lib/theme.ts`
-
 ### Next.js (Web)
 - Next.js 14 (App Router)
 - TypeScript
 - Tailwind CSS
 - Deployed to Vercel
 - File upload + camera capture (mobile browsers)
-- Shared lib utilities ported from Expo
+- Centralized lib utilities (types, theme, overlay-math)
 
 ### Backend
 - FastAPI (Python 3.9+)
@@ -298,24 +289,6 @@ open ios/WineShelfScanner.xcodeproj
 
 # Run tests
 xcodebuild test -scheme WineShelfScanner -destination 'platform=iOS Simulator,name=iPhone 15'
-```
-
-### Expo
-```bash
-# Install dependencies
-cd expo && npm install
-
-# Start dev server
-npm start
-
-# Run on iOS simulator
-npm run ios
-
-# Run on Android emulator
-npm run android
-
-# Run tests
-npm test
 ```
 
 ### Next.js (Web)

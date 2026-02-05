@@ -37,8 +37,13 @@
 		APP0028 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0022 /* PaywallView.swift */; };
 		APP0029 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0023 /* NetworkMonitor.swift */; };
 		APP0030 /* CachedScansView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0024 /* CachedScansView.swift */; };
+		APP0031 /* BugReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0025 /* BugReport.swift */; };
+		APP0032 /* BugReportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0026 /* BugReportService.swift */; };
+		APP0033 /* BugReportSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0027 /* BugReportSheet.swift */; };
 		TEST0001 /* ScanResponseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0001 /* ScanResponseTests.swift */; };
 		TEST0002 /* OverlayMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0002 /* OverlayMathTests.swift */; };
+		TEST0003 /* BugReportServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0003 /* BugReportServiceTests.swift */; };
+		TEST0004 /* MockURLProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0004 /* MockURLProtocol.swift */; };
 		UITST001 /* AccessibilityIdentifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = UISRC001 /* AccessibilityIdentifiers.swift */; };
 		UITST002 /* BaseUITestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = UISRC002 /* BaseUITestCase.swift */; };
 		UITST003 /* HappyPathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = UISRC003 /* HappyPathTests.swift */; };
@@ -102,8 +107,13 @@
 		SRC0022 /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
 		SRC0023 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
 		SRC0024 /* CachedScansView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CachedScansView.swift; sourceTree = "<group>"; };
+		SRC0025 /* BugReport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BugReport.swift; sourceTree = "<group>"; };
+		SRC0026 /* BugReportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BugReportService.swift; sourceTree = "<group>"; };
+		SRC0027 /* BugReportSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BugReportSheet.swift; sourceTree = "<group>"; };
 		TST0001 /* ScanResponseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanResponseTests.swift; sourceTree = "<group>"; };
 		TST0002 /* OverlayMathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayMathTests.swift; sourceTree = "<group>"; };
+		TST0003 /* BugReportServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BugReportServiceTests.swift; sourceTree = "<group>"; };
+		TST0004 /* MockURLProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockURLProtocol.swift; sourceTree = "<group>"; };
 		UISRC001 /* AccessibilityIdentifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityIdentifiers.swift; sourceTree = "<group>"; };
 		UISRC002 /* BaseUITestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseUITestCase.swift; sourceTree = "<group>"; };
 		UISRC003 /* HappyPathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HappyPathTests.swift; sourceTree = "<group>"; };
@@ -182,6 +192,7 @@
 				SRC0003 /* ScanResponse.swift */,
 				SRC0004 /* ScanState.swift */,
 				SRC0005 /* ScanViewModel.swift */,
+				SRC0025 /* BugReport.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -205,6 +216,7 @@
 				SRC0011 /* RatingBadge.swift */,
 				SRC0012 /* WineDetailSheet.swift */,
 				SRC0015 /* DebugTray.swift */,
+				SRC0027 /* BugReportSheet.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -220,6 +232,7 @@
 				SRC0020 /* ScanCounter.swift */,
 				SRC0021 /* SubscriptionManager.swift */,
 				SRC0023 /* NetworkMonitor.swift */,
+				SRC0026 /* BugReportService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -246,8 +259,18 @@
 			children = (
 				TST0001 /* ScanResponseTests.swift */,
 				TST0002 /* OverlayMathTests.swift */,
+				TST0003 /* BugReportServiceTests.swift */,
+				GRP00015 /* Helpers */,
 			);
 			path = WineShelfScannerTests;
+			sourceTree = "<group>";
+		};
+		GRP00015 /* Helpers */ = {
+			isa = PBXGroup;
+			children = (
+				TST0004 /* MockURLProtocol.swift */,
+			);
+			path = Helpers;
 			sourceTree = "<group>";
 		};
 		GRP00011 /* Products */ = {
@@ -451,6 +474,9 @@
 				APP0028 /* PaywallView.swift in Sources */,
 				APP0029 /* NetworkMonitor.swift in Sources */,
 				APP0030 /* CachedScansView.swift in Sources */,
+				APP0031 /* BugReport.swift in Sources */,
+				APP0032 /* BugReportService.swift in Sources */,
+				APP0033 /* BugReportSheet.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -460,6 +486,8 @@
 			files = (
 				TEST0001 /* ScanResponseTests.swift in Sources */,
 				TEST0002 /* OverlayMathTests.swift in Sources */,
+				TEST0003 /* BugReportServiceTests.swift in Sources */,
+				TEST0004 /* MockURLProtocol.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

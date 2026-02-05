@@ -76,6 +76,12 @@ Response:
 - Ratings are on a 1–5 scale
 - `fallback_list` contains wines detected but not confidently positioned
 
+### Bug Reporting
+
+Users can report issues from the error screen, partial detection toast, or fallback list. Reports are submitted to `POST /report` and stored in SQLite for triage.
+
+Feature-flagged: `feature_bug_report` (iOS) / `NEXT_PUBLIC_FEATURE_BUG_REPORT` (Next.js).
+
 ## Quick Start
 
 ### Prerequisites

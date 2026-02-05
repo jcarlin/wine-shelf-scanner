@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { ArrowLeft, Share2, Star } from 'lucide-react';
+import { ArrowLeft, Share2, Star, Flag } from 'lucide-react';
 import { ScanResponse, WineResult, Rect, Size } from '@/lib/types';
 import { OverlayContainer } from './OverlayContainer';
 import { WineDetailModal } from './WineDetailModal';
+import { BugReportModal } from './BugReportModal';
 import { Toast } from './Toast';
 import { FallbackList } from './FallbackList';
 import { getImageBounds } from '@/lib/image-bounds';
@@ -24,7 +25,8 @@ export function ResultsView({ response, imageUri, onReset }: ResultsViewProps) {
   const [imageBounds, setImageBounds] = useState<Rect | null>(null);
   const [imageSize, setImageSize] = useState<Size | null>(null);
   const [showPartialToast, setShowPartialToast] = useState(false);
-  const { shelfRanking, share: shareEnabled } = useFeatureFlags();
+  const [showBugReport, setShowBugReport] = useState(false);
+  const { shelfRanking, share: shareEnabled, bugReport: bugReportEnabled } = useFeatureFlags();
 
   // Check if we should show partial detection toast
   const visibleCount = response.results.filter((w) => isVisible(w.confidence)).length;
@@ -196,10 +198,21 @@ export function ResultsView({ response, imageUri, onReset }: ResultsViewProps) {
 
       {/* Partial Detection Toast */}
       {showPartialToast && (
-        <Toast
-          message="Some bottles couldn't be recognized"
-          onDismiss={() => setShowPartialToast(false)}
-        />
+        <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 flex items-center gap-3 z-40">
+          <Toast
+            message="Some bottles couldn't be recognized"
+            onDismiss={() => setShowPartialToast(false)}
+          />
+          {bugReportEnabled && (
+            <button
+              onClick={() => setShowBugReport(true)}
+              className="flex items-center gap-1 text-yellow-400 text-xs font-medium hover:text-yellow-300 transition-colors whitespace-nowrap"
+            >
+              <Flag className="w-3 h-3" />
+              Report
+            </button>
+          )}
+        </div>
       )}
 
       {/* Wine Detail Modal */}
@@ -208,6 +221,19 @@ export function ResultsView({ response, imageUri, onReset }: ResultsViewProps) {
         onClose={() => setSelectedWine(null)}
         shelfRank={selectedWine ? shelfRankings.get(selectedWine.wine_name)?.rank : undefined}
         shelfTotal={selectedWine ? shelfRankings.get(selectedWine.wine_name)?.total : undefined}
+      />
+
+      {/* Bug Report Modal */}
+      <BugReportModal
+        isOpen={showBugReport}
+        onClose={() => setShowBugReport(false)}
+        reportType="partial_detection"
+        imageId={response.image_id}
+        metadata={{
+          wines_detected: visibleCount,
+          wines_in_fallback: response.fallback_list.length,
+          confidence_scores: response.results.map((w) => w.confidence),
+        }}
       />
     </div>
   );

@@ -73,5 +73,18 @@ enum AccessibilityIdentifiers {
         static let message = "errorMessage"
         static let retryButton = "retryButton"
         static let startOverButton = "startOverButton"
+        static let reportBugButton = "reportBugButton"
+    }
+
+    // MARK: - Bug Report
+    enum BugReport {
+        static let sheet = "bugReportSheet"
+        static let textField = "bugReportTextField"
+        static let submitButton = "bugReportSubmitButton"
+        static let cancelButton = "bugReportCancelButton"
+        static let doneButton = "bugReportDoneButton"
+        static let confirmation = "bugReportConfirmation"
+        static let partialDetectionReportButton = "partialDetectionReportButton"
+        static let fallbackReportButton = "fallbackReportButton"
     }
 }

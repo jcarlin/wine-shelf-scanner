@@ -30,12 +30,16 @@ CLAUDE_VISION_MAX_SIZE = 5 * 1024 * 1024  # 5MB
 
 def _compress_image_for_vision(image_bytes: bytes, max_size: int = CLAUDE_VISION_MAX_SIZE) -> bytes:
     """
-    Compress image to fit within Claude Vision size limit.
+    Normalize image to JPEG and compress to fit within Claude Vision size limit.
+
+    Always outputs JPEG to match the hardcoded media_type="image/jpeg" used
+    when sending to the Anthropic API.
 
     Strategy:
-    1. If already under limit, return as-is
-    2. Try reducing JPEG quality (85 → 20)
-    3. If still too large, resize progressively (80% → 30%)
+    1. If already JPEG and under limit, return as-is (fast path)
+    2. If non-JPEG (PNG, WebP, etc.), convert to JPEG
+    3. If oversized, reduce JPEG quality (85 → 20)
+    4. If still too large, resize progressively (80% → 30%)
 
     Args:
         image_bytes: Original image bytes
@@ -44,17 +48,28 @@ def _compress_image_for_vision(image_bytes: bytes, max_size: int = CLAUDE_VISION
     Returns:
         Compressed image bytes (JPEG format)
     """
-    if len(image_bytes) <= max_size:
+    # Fast path: already JPEG and under size limit
+    is_jpeg = image_bytes[:2] == b'\xff\xd8'
+    if is_jpeg and len(image_bytes) <= max_size:
         return image_bytes
 
-    original_size = len(image_bytes)
-    logger.info(f"Compressing image for Claude Vision: {original_size / 1024 / 1024:.1f}MB → target {max_size / 1024 / 1024:.1f}MB")
-
     img = Image.open(io.BytesIO(image_bytes))
+
+    if not is_jpeg:
+        logger.info(f"Converting {img.format or 'unknown'} image to JPEG for Claude Vision")
+
+    if len(image_bytes) > max_size:
+        logger.info(f"Compressing image for Claude Vision: {len(image_bytes) / 1024 / 1024:.1f}MB → target {max_size / 1024 / 1024:.1f}MB")
 
     # Convert to RGB if needed (JPEG doesn't support alpha)
     if img.mode in ("RGBA", "P"):
         img = img.convert("RGB")
+
+    # Non-JPEG under size limit: just convert to JPEG at high quality
+    if len(image_bytes) <= max_size:
+        output = io.BytesIO()
+        img.save(output, format="JPEG", quality=95)
+        return output.getvalue()
 
     # Try reducing quality first
     quality = 85

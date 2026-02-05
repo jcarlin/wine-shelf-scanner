@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 logger.info(f"Starting with LOG_LEVEL={Config.log_level()}, DEV_MODE={Config.is_dev()}")
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routes import scan_router, feedback_router
+from app.routes import scan_router, feedback_router, report_router
 
 app = FastAPI(
     title="Wine Shelf Scanner API",
@@ -57,6 +57,7 @@ if static_dir.exists():
 # Include routers
 app.include_router(scan_router, tags=["scan"])
 app.include_router(feedback_router, tags=["feedback"])
+app.include_router(report_router, tags=["report"])
 
 
 @app.get("/")

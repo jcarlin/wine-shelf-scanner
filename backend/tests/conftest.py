@@ -18,6 +18,11 @@ def pytest_configure(config):
         "markers", "asyncio: mark test as an asyncio test"
     )
 
+    # Mark the service as ready for tests (bypasses warmup middleware)
+    # This is needed because TestClient doesn't trigger lifespan events
+    from main import set_ready
+    set_ready(True)
+
 
 def pytest_sessionstart(session):
     """Seed test database from ratings.json if wines.db is empty.

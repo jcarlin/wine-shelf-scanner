@@ -5,6 +5,7 @@ Receives user feedback on wine match accuracy to enable self-improving system.
 """
 
 import logging
+from pathlib import Path
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException
@@ -50,7 +51,10 @@ class FeedbackRepository(BaseRepository):
     """Thread-safe SQLite repository for feedback/corrections."""
 
     def __init__(self, db_path: Optional[str] = None):
-        super().__init__(db_path)  # BaseRepository handles default path via Config
+        # Use local path by default (not Config.database_path() which may point to prod DB)
+        if db_path is None:
+            db_path = str(Path(__file__).parent.parent / "data" / "wines.db")
+        super().__init__(db_path)
         # Table is created by Alembic migration 001
 
     def add_feedback(self, feedback: FeedbackRequest) -> bool:

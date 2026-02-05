@@ -1,7 +1,6 @@
 """Tests for the /report bug reporting endpoint."""
 
 import sqlite3
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -13,27 +12,13 @@ from app.routes.report import ReportRepository, ReportRequest, ReportMetadata
 # === Repository Tests ===
 
 
-def _create_bug_reports_table(db_path: str):
-    """Create bug_reports table on a test database (mimics Alembic migration 002)."""
+SCHEMA_PATH = Path(__file__).parent.parent / "app" / "data" / "schema.sql"
+
+
+def _apply_schema(db_path: str):
+    """Apply the canonical schema.sql to a test database."""
     conn = sqlite3.connect(db_path)
-    conn.executescript("""
-        CREATE TABLE IF NOT EXISTS bug_reports (
-            id TEXT PRIMARY KEY,
-            report_type TEXT NOT NULL,
-            error_type TEXT,
-            error_message TEXT,
-            user_description TEXT,
-            image_id TEXT,
-            device_id TEXT NOT NULL,
-            platform TEXT NOT NULL,
-            app_version TEXT,
-            metadata TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-        CREATE INDEX IF NOT EXISTS idx_bug_reports_type ON bug_reports(report_type);
-        CREATE INDEX IF NOT EXISTS idx_bug_reports_platform ON bug_reports(platform);
-        CREATE INDEX IF NOT EXISTS idx_bug_reports_created_at ON bug_reports(created_at);
-    """)
+    conn.executescript(SCHEMA_PATH.read_text())
     conn.close()
 
 
@@ -41,7 +26,7 @@ def _create_bug_reports_table(db_path: str):
 def repo(tmp_path):
     """Create a repository backed by a temp database with schema pre-applied."""
     db_path = str(tmp_path / "test.db")
-    _create_bug_reports_table(db_path)
+    _apply_schema(db_path)
     return ReportRepository(db_path=db_path)
 
 
@@ -151,7 +136,7 @@ def client(tmp_path):
 
     # Create schema before constructing repository
     db_path = str(tmp_path / "test.db")
-    _create_bug_reports_table(db_path)
+    _apply_schema(db_path)
     test_repo = ReportRepository(db_path=db_path)
     original_repo = report_module._report_repo
     report_module._report_repo = test_repo

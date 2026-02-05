@@ -23,6 +23,7 @@ struct FeatureFlags {
         "feature_offline_cache": true,
         "feature_share": true,
         "feature_background_processing": true,
+        "feature_subscription": false,
     ]
 
     var wineMemory: Bool {
@@ -59,6 +60,10 @@ struct FeatureFlags {
 
     var backgroundProcessing: Bool {
         flagValue("feature_background_processing")
+    }
+
+    var subscription: Bool {
+        flagValue("feature_subscription")
     }
 
     /// Returns UserDefaults override if set, otherwise compiled default.

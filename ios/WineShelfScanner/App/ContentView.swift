@@ -3,10 +3,12 @@ import SwiftUI
 /// Main content view that manages the scan flow
 struct ContentView: View {
     @StateObject private var viewModel: ScanViewModel
+    @ObservedObject private var subscriptionManager = SubscriptionManager.shared
     @State private var showCamera = false
     @State private var showPhotoPicker = false
     @State private var capturedImage: UIImage?
     @State private var showAbout = false
+    @State private var showPaywall = false
     @Environment(\.scenePhase) private var scenePhase
 
     /// Whether we're running in UI test mode (bypass photo picker)
@@ -16,6 +18,22 @@ struct ContentView: View {
         #else
         return false
         #endif
+    }
+
+    /// Whether the paywall should block scan initiation
+    private var shouldShowPaywall: Bool {
+        FeatureFlags.shared.subscription
+            && ScanCounter.shared.hasReachedLimit
+            && !subscriptionManager.isSubscribed
+    }
+
+    /// Remaining free scans to display (nil when feature is off or subscribed)
+    private var scansRemaining: Int? {
+        guard FeatureFlags.shared.subscription,
+              !subscriptionManager.isSubscribed else {
+            return nil
+        }
+        return ScanCounter.shared.remaining
     }
 
     init(viewModel: ScanViewModel? = nil) {
@@ -62,6 +80,15 @@ struct ContentView: View {
         return ScanViewModel()
     }
 
+    /// Attempt to start a scan, showing paywall if limit reached
+    private func attemptScan(action: @escaping () -> Void) {
+        if shouldShowPaywall {
+            showPaywall = true
+        } else {
+            action()
+        }
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -71,25 +98,30 @@ struct ContentView: View {
                 case .idle:
                     IdleView(
                         onScanCamera: {
-                            if isUITesting {
-                                // Bypass camera, directly trigger scan with mock image
-                                let mockImage = Self.createMockImage()
-                                capturedImage = mockImage
-                                viewModel.performScan(with: mockImage)
-                            } else {
-                                showCamera = true
+                            attemptScan {
+                                if isUITesting {
+                                    // Bypass camera, directly trigger scan with mock image
+                                    let mockImage = Self.createMockImage()
+                                    capturedImage = mockImage
+                                    viewModel.performScan(with: mockImage)
+                                } else {
+                                    showCamera = true
+                                }
                             }
                         },
                         onScanLibrary: {
-                            if isUITesting {
-                                // Bypass photo picker, directly trigger scan with mock image
-                                let mockImage = Self.createMockImage()
-                                capturedImage = mockImage
-                                viewModel.performScan(with: mockImage)
-                            } else {
-                                showPhotoPicker = true
+                            attemptScan {
+                                if isUITesting {
+                                    // Bypass photo picker, directly trigger scan with mock image
+                                    let mockImage = Self.createMockImage()
+                                    capturedImage = mockImage
+                                    viewModel.performScan(with: mockImage)
+                                } else {
+                                    showPhotoPicker = true
+                                }
                             }
-                        }
+                        },
+                        scansRemaining: scansRemaining
                     )
 
                 case .processing:
@@ -155,6 +187,9 @@ struct ContentView: View {
                 AboutView()
                     .presentationDetents([.medium])
             }
+            .sheet(isPresented: $showPaywall) {
+                PaywallView(subscriptionManager: subscriptionManager)
+            }
             .onChange(of: capturedImage) { newImage in
                 if let image = newImage {
                     viewModel.performScan(with: image)
@@ -179,6 +214,7 @@ struct ContentView: View {
 struct IdleView: View {
     let onScanCamera: () -> Void
     let onScanLibrary: () -> Void
+    var scansRemaining: Int? = nil
 
     @State private var cameraAvailable = UIImagePickerController.isSourceTypeAvailable(.camera)
 
@@ -229,6 +265,19 @@ struct IdleView: View {
                 .padding(.horizontal, 40)
             }
             .padding(.top, 16)
+
+            // Free scans remaining indicator
+            if let remaining = scansRemaining, remaining > 0 {
+                HStack(spacing: 4) {
+                    Image(systemName: "sparkles")
+                        .font(.caption2)
+                    Text("\(remaining) free scan\(remaining == 1 ? "" : "s") remaining")
+                }
+                .font(.caption)
+                .foregroundColor(.white.opacity(remaining <= 2 ? 0.6 : 0.4))
+                .padding(.top, 4)
+                .accessibilityIdentifier("scansRemainingLabel")
+            }
         }
     }
 }

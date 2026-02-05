@@ -89,6 +89,10 @@ class ScanViewModel: ObservableObject {
                 let response = try await scanService.scan(image: image, debug: debugMode)
                 // Cache result for offline access
                 ScanCacheService.shared.save(response: response, image: image)
+                // Count successful scan for paywall (only when subscription feature is on)
+                if FeatureFlags.shared.subscription {
+                    ScanCounter.shared.increment()
+                }
                 state = .results(response, image)
             } catch {
                 state = .error(error.localizedDescription)
@@ -122,6 +126,10 @@ class ScanViewModel: ObservableObject {
                 }
 
                 if let image = completed.image {
+                    // Count successful scan for paywall (only when subscription feature is on)
+                    if FeatureFlags.shared.subscription {
+                        ScanCounter.shared.increment()
+                    }
                     self.state = .results(completed.response, image)
                 } else {
                     self.state = .error("Scan completed but the image could not be loaded.")

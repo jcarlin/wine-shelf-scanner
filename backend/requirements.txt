@@ -19,3 +19,9 @@ litellm>=1.40.0
 # Keep direct SDKs as optional dependencies (for compatibility/testing)
 anthropic>=0.30.0
 google-genai>=1.0.0
+
+# Database management
+alembic>=1.13.0
+
+# GCS for database storage
+google-cloud-storage>=2.14.0

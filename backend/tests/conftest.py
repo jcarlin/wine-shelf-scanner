@@ -20,12 +20,22 @@ def pytest_configure(config):
 
 
 def pytest_sessionstart(session):
-    """Seed test database from ratings.json if wines.db is empty.
+    """Seed test database and mark app ready for tests.
 
     In CI, wines.db doesn't exist (stored in GCS, not git).
     This seeds the SQLite DB with 60 wines from ratings.json so
     tests that depend on finding wines like "Opus One" pass.
     """
+    _seed_test_db()
+
+    # Mark app as ready so warmup middleware doesn't return 503 in tests.
+    # The warmup middleware is a production concern (Cloud Run cold starts).
+    from main import set_ready
+    set_ready(True)
+
+
+def _seed_test_db():
+    """Seed test database from ratings.json if wines.db is empty."""
     from app.config import Config
 
     if not Config.use_sqlite():

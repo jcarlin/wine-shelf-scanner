@@ -1,6 +1,5 @@
 /**
  * Mock service for development and testing
- * Mock service for development and testing
  */
 
 import {

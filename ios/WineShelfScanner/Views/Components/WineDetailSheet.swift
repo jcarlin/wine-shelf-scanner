@@ -94,7 +94,7 @@ struct WineDetailSheet: View {
 
                 // Brand/winery
                 if let brand = wine.brand {
-                    Text("by \(brand)")
+                    Text(String(format: NSLocalizedString("detail.by", comment: "Brand attribution"), brand))
                         .font(.subheadline)
                         .italic()
                         .foregroundColor(.secondary)
@@ -110,7 +110,7 @@ struct WineDetailSheet: View {
                 }
 
                 // Rating number
-                Text(wine.rating.map { String(format: "%.1f", $0) } ?? "No rating")
+                Text(wine.rating.map { String(format: "%.1f", $0) } ?? NSLocalizedString("detail.noRating", comment: "No rating fallback"))
                     .font(.title)
                     .fontWeight(.bold)
                     .foregroundColor(.primary)
@@ -118,7 +118,7 @@ struct WineDetailSheet: View {
 
                 // Review count
                 if let reviewCount = wine.reviewCount, reviewCount > 0 {
-                    Text(formatReviewCount(reviewCount))
+                    Text(formatReviewCount(reviewCount, localized: true))
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -161,7 +161,7 @@ struct WineDetailSheet: View {
                     HStack(spacing: 6) {
                         Image(systemName: "checkmark.shield.fill")
                             .foregroundColor(.green)
-                        Text("Crowd favorite")
+                        Text(NSLocalizedString("detail.crowdFavorite", comment: "Crowd favorite badge"))
                             .font(.subheadline)
                             .fontWeight(.medium)
                             .foregroundColor(.green)
@@ -176,10 +176,10 @@ struct WineDetailSheet: View {
                 if FeatureFlags.shared.shelfRanking, let rank = shelfRank, let total = shelfTotal {
                     Group {
                         if rank == 1 {
-                            Text("Best on this shelf")
+                            Text(NSLocalizedString("detail.bestOnShelf", comment: "Best on shelf"))
                                 .foregroundColor(Color.yellow)
                         } else {
-                            Text("Ranked #\(rank) of \(total) on this shelf")
+                            Text(String(format: NSLocalizedString("detail.rankedOnShelf", comment: "Shelf ranking"), rank, total))
                                 .foregroundColor(.secondary)
                         }
                     }
@@ -199,7 +199,7 @@ struct WineDetailSheet: View {
                     HStack(spacing: 32) {
                         if let region = wine.region {
                             VStack(spacing: 2) {
-                                Text("REGION")
+                                Text(NSLocalizedString("detail.region", comment: "Region label"))
                                     .font(.caption2)
                                     .foregroundColor(.secondary)
                                     .tracking(0.5)
@@ -211,7 +211,7 @@ struct WineDetailSheet: View {
                         }
                         if let varietal = wine.varietal {
                             VStack(spacing: 2) {
-                                Text("VARIETAL")
+                                Text(NSLocalizedString("detail.varietal", comment: "Varietal label"))
                                     .font(.caption2)
                                     .foregroundColor(.secondary)
                                     .tracking(0.5)
@@ -245,7 +245,7 @@ struct WineDetailSheet: View {
                             .font(.subheadline)
                             .foregroundColor(Color(red: 0.8, green: 0.6, blue: 0.2))
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Goes with")
+                            Text(NSLocalizedString("detail.goesWith", comment: "Food pairing label"))
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                             Text(pairing)
@@ -263,7 +263,7 @@ struct WineDetailSheet: View {
                 // Review snippets
                 if let snippets = wine.reviewSnippets, !snippets.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("What people say")
+                        Text(NSLocalizedString("detail.whatPeopleSay", comment: "Review snippets header"))
                             .font(.subheadline)
                             .fontWeight(.semibold)
                             .foregroundColor(.primary)
@@ -302,7 +302,7 @@ struct WineDetailSheet: View {
                         HStack(spacing: 6) {
                             Image(systemName: "square.and.arrow.up")
                                 .font(.subheadline)
-                            Text("Share this pick")
+                            Text(NSLocalizedString("detail.shareThisPick", comment: "Share button"))
                                 .font(.subheadline)
                                 .fontWeight(.medium)
                         }
@@ -326,13 +326,13 @@ struct WineDetailSheet: View {
     }
 
     /// Format review count (e.g., 12500 -> "12.5K reviews")
-    private func formatReviewCount(_ count: Int) -> String {
+    private func formatReviewCount(_ count: Int, localized: Bool = false) -> String {
         if count >= 1000 {
             let formatted = Double(count) / 1000.0
             let text = String(format: "%.1f", formatted).replacingOccurrences(of: ".0", with: "")
-            return "\(text)K reviews"
+            return String(format: NSLocalizedString("detail.reviewsK", comment: "Review count K format"), text)
         }
-        return "\(count) reviews"
+        return String(format: NSLocalizedString("detail.reviews", comment: "Review count format"), count)
     }
 
     @ViewBuilder
@@ -343,19 +343,19 @@ struct WineDetailSheet: View {
                     Image(systemName: "heart.fill")
                         .foregroundColor(.green)
                         .font(.caption)
-                    Text("You liked this wine")
+                    Text(NSLocalizedString("detail.youLiked", comment: "Wine liked"))
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 } else {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundColor(.red)
                         .font(.caption)
-                    Text("You didn't like this wine")
+                    Text(NSLocalizedString("detail.youDisliked", comment: "Wine disliked"))
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
                 Spacer()
-                Button("Undo") {
+                Button(NSLocalizedString("detail.undo", comment: "Undo button")) {
                     memoryStore.clear(wineName: wine.wineName)
                 }
                 .font(.caption)
@@ -381,7 +381,7 @@ struct WineDetailSheet: View {
                 HStack(spacing: 6) {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundColor(.green)
-                    Text("Thanks for your feedback!")
+                    Text(NSLocalizedString("detail.thanksFeedback", comment: "Feedback confirmation"))
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
@@ -390,17 +390,17 @@ struct WineDetailSheet: View {
             } else if showCorrectionField {
                 // Correction input
                 VStack(spacing: 8) {
-                    Text("What's the correct wine?")
+                    Text(NSLocalizedString("detail.whatsCorrect", comment: "Correction prompt"))
                         .font(.subheadline)
                         .foregroundColor(.secondary)
 
-                    TextField("Wine name", text: $correctionText)
+                    TextField(NSLocalizedString("detail.wineName", comment: "Wine name placeholder"), text: $correctionText)
                         .textFieldStyle(.roundedBorder)
                         .padding(.horizontal)
                         .accessibilityIdentifier("correctionTextField")
 
                     HStack(spacing: 12) {
-                        Button("Cancel") {
+                        Button(NSLocalizedString("detail.cancel", comment: "Cancel button")) {
                             withAnimation {
                                 showCorrectionField = false
                                 correctionText = ""
@@ -408,7 +408,7 @@ struct WineDetailSheet: View {
                         }
                         .foregroundColor(.secondary)
 
-                        Button("Submit") {
+                        Button(NSLocalizedString("detail.submit", comment: "Submit button")) {
                             submitFeedback(isCorrect: false, correctedName: correctionText)
                         }
                         .disabled(isSubmitting)
@@ -420,7 +420,7 @@ struct WineDetailSheet: View {
             } else {
                 // Feedback prompt
                 VStack(spacing: 8) {
-                    Text("Is this the right wine?")
+                    Text(NSLocalizedString("detail.isThisRight", comment: "Feedback prompt"))
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                         .accessibilityIdentifier("feedbackPrompt")
@@ -433,7 +433,7 @@ struct WineDetailSheet: View {
                             VStack(spacing: 4) {
                                 Image(systemName: feedbackState == .correct ? "hand.thumbsup.fill" : "hand.thumbsup")
                                     .font(.title2)
-                                Text("Yes")
+                                Text(NSLocalizedString("detail.yes", comment: "Yes button"))
                                     .font(.caption)
                             }
                         }
@@ -450,7 +450,7 @@ struct WineDetailSheet: View {
                             VStack(spacing: 4) {
                                 Image(systemName: feedbackState == .incorrect ? "hand.thumbsdown.fill" : "hand.thumbsdown")
                                     .font(.title2)
-                                Text("No")
+                                Text(NSLocalizedString("detail.no", comment: "No button"))
                                     .font(.caption)
                             }
                         }
@@ -517,15 +517,15 @@ struct WineDetailSheet: View {
     private func shareWine() {
         var text = "\(wine.wineName)"
         if let rating = wine.rating {
-            text += " - \(String(format: "%.1f", rating)) stars"
+            text += " - \(String(format: "%.1f", rating))"
         }
         if let brand = wine.brand {
-            text += " by \(brand)"
+            text += " " + String(format: NSLocalizedString("detail.by", comment: "Brand attribution"), brand)
         }
         if let region = wine.region {
             text += " (\(region))"
         }
-        text += "\n\nFound with Wine Shelf Scanner"
+        text += "\n\n" + NSLocalizedString("detail.foundWith", comment: "Share attribution")
 
         let activityVC = UIActivityViewController(activityItems: [text], applicationActivities: nil)
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,

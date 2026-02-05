@@ -1,0 +1,91 @@
+{
+  "app": {
+    "title": "ワイン棚スキャナー",
+    "description": "もうワイン棚で迷わない。2100万件のレビューからの評価を、すべてのボトルに、瞬時に。"
+  },
+  "camera": {
+    "heroTitle": "もうワイン棚で迷わない。",
+    "heroSubtitle": "2100万件のレビューからの評価 — すべてのボトルに、瞬時に。",
+    "dragDrop": "ここに画像をドラッグ＆ドロップ",
+    "orBrowse": "またはクリックして選択",
+    "takePhoto": "写真を撮る",
+    "uploadImage": "画像をアップロード"
+  },
+  "processing": {
+    "analyzing": "ワインを分析中...",
+    "aiIdentifying": "AIがボトルを識別し、評価を取得しています。数秒かかる場合があります。",
+    "tip1": "評価バッジをタップして詳細を見る",
+    "tip2": "高評価のボトルにはゴールドのハイライト",
+    "tip3": "2100万件の集約レビューに基づく",
+    "tip4": "世界中の181,000本以上のワインをカバー"
+  },
+  "results": {
+    "newScan": "新しいスキャン",
+    "bottlesFound": "{count, plural, other {# 本のボトルが見つかりました}}",
+    "partialDetection": "一部のボトルを認識できませんでした",
+    "scannedWith": "ワイン棚スキャナーでスキャン",
+    "topPicks": "棚のおすすめ：",
+    "stars": "つ星",
+    "more": "+ 他{count}本"
+  },
+  "fallback": {
+    "couldNotIdentify": "ボトルを識別できませんでした",
+    "popularWines": "お探しの人気ワインをご紹介します",
+    "tryAnother": "別の写真を試す",
+    "winesFound": "見つかったワイン"
+  },
+  "error": {
+    "tryAgain": "再試行"
+  },
+  "detail": {
+    "by": "{brand} 製",
+    "reviews": "{count, plural, other {# 件のレビュー}}",
+    "reviewsK": "{count}K件のレビュー",
+    "widelyRated": "多数の評価",
+    "limitedData": "データ限定",
+    "crowdFavorite": "人気の一本",
+    "bestOnShelf": "この棚のベスト",
+    "rankedOnShelf": "この棚で{total}本中第{rank}位",
+    "region": "産地",
+    "varietal": "品種",
+    "goesWith": "相性の良い料理",
+    "whatPeopleSay": "みんなの声",
+    "shareThisPick": "この選択を共有",
+    "foundWith": "ワイン棚スキャナーで発見",
+    "youLiked": "このワインが気に入りました",
+    "youDisliked": "このワインは好みではありませんでした",
+    "undo": "元に戻す",
+    "thanksFeedback": "フィードバックありがとうございます！",
+    "isThisRight": "このワインで合っていますか？",
+    "yes": "はい",
+    "no": "いいえ",
+    "noRating": "評価なし"
+  },
+  "scanning": {
+    "analyzing": "ワインを分析中..."
+  },
+  "about": {
+    "title": "ワイン棚スキャナー",
+    "description": "コミュニティワインプラットフォームの2100万件のレビューから集約された評価。個々のスコアを組み合わせて、各ボトルの信頼できる評価を提供します。",
+    "winesCount": "181,000本以上の評価付きワイン",
+    "reviewsCount": "2100万件の集約レビュー",
+    "disclaimer": "評価はコミュニティワインプラットフォームから取得しています。ワイン棚スキャナーはいかなる評価プロバイダーとも提携していません。"
+  },
+  "bugReport": {
+    "report": "報告",
+    "reportIssue": "問題を報告",
+    "notExpected": "期待と違いましたか？問題を報告してください",
+    "scanError": "スキャンエラー",
+    "someNotRecognized": "一部のボトルが認識されませんでした",
+    "noBottlesIdentified": "ボトルが識別されませんでした",
+    "wrongMatch": "ワインの一致が間違っています",
+    "whatHappened": "何が起きましたか？（任意）",
+    "describePlaceholder": "問題を説明してください...",
+    "submitReport": "報告を送信",
+    "submitting": "送信中...",
+    "submitted": "報告が送信されました",
+    "thanksImprove": "改善にご協力いただきありがとうございます！",
+    "done": "完了",
+    "cancel": "キャンセル"
+  }
+}

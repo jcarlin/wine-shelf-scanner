@@ -161,7 +161,7 @@ struct ContentView: View {
                     )
                 }
             }
-            .navigationTitle("Wine Scanner")
+            .navigationTitle(NSLocalizedString("app.title", comment: "Navigation title"))
             .navigationBarTitleDisplayMode(.inline)
             .preferredColorScheme(.dark)
             .toolbar {
@@ -224,14 +224,14 @@ struct IdleView: View {
                 .font(.system(size: 80))
                 .foregroundColor(.white.opacity(0.7))
 
-            Text("Never guess at the wine shelf again.")
+            Text(NSLocalizedString("idle.pointAtShelf", comment: "Idle screen title"))
                 .font(.title2)
                 .fontWeight(.semibold)
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
 
-            Text("Ratings from 21 million reviews — on every bottle, instantly.")
+            Text(NSLocalizedString("idle.takePhotoToSee", comment: "Idle screen subtitle"))
                 .font(.subheadline)
                 .foregroundColor(.white.opacity(0.6))
                 .multilineTextAlignment(.center)
@@ -240,7 +240,7 @@ struct IdleView: View {
             VStack(spacing: 12) {
                 if cameraAvailable {
                     Button(action: onScanCamera) {
-                        Label("Scan Shelf", systemImage: "camera.fill")
+                        Label(NSLocalizedString("idle.scanShelf", comment: "Scan shelf button"), systemImage: "camera.fill")
                             .font(.headline)
                             .foregroundColor(.black)
                             .frame(maxWidth: .infinity)
@@ -253,7 +253,7 @@ struct IdleView: View {
                 }
 
                 Button(action: onScanLibrary) {
-                    Label(cameraAvailable ? "Choose Photo" : "Select Photo", systemImage: "photo.on.rectangle")
+                    Label(cameraAvailable ? NSLocalizedString("idle.choosePhoto", comment: "Choose photo button") : NSLocalizedString("idle.selectPhoto", comment: "Select photo button"), systemImage: "photo.on.rectangle")
                         .font(.headline)
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
@@ -284,10 +284,10 @@ struct IdleView: View {
 
 struct ProcessingView: View {
     private let tips = [
-        "Tap any rating badge to see details",
-        "Top-rated bottles get a gold highlight",
-        "Powered by 21 million aggregated reviews",
-        "We cover 181,000+ wines worldwide",
+        NSLocalizedString("processing.tip1", comment: "Tip: tap badge"),
+        NSLocalizedString("processing.tip2", comment: "Tip: gold highlight"),
+        NSLocalizedString("processing.tip3", comment: "Tip: review count"),
+        NSLocalizedString("processing.tip4", comment: "Tip: wine count"),
     ]
 
     @State private var currentTipIndex = 0
@@ -300,7 +300,7 @@ struct ProcessingView: View {
                 .tint(.white)
                 .accessibilityIdentifier("processingSpinner")
 
-            Text("Analyzing wines...")
+            Text(NSLocalizedString("processing.analyzing", comment: "Processing status"))
                 .font(.headline)
                 .foregroundColor(.white)
 
@@ -340,12 +340,12 @@ struct ErrorView: View {
                 .accessibilityIdentifier("errorMessage")
 
             HStack(spacing: 16) {
-                Button("Try Again", action: onRetry)
+                Button(NSLocalizedString("error.tryAgain", comment: "Retry button"), action: onRetry)
                     .buttonStyle(.bordered)
                     .tint(.white)
                     .accessibilityIdentifier("retryButton")
 
-                Button("Start Over", action: onReset)
+                Button(NSLocalizedString("error.startOver", comment: "Start over button"), action: onReset)
                     .buttonStyle(.borderedProminent)
                     .tint(.white)
                     .accessibilityIdentifier("startOverButton")
@@ -355,7 +355,7 @@ struct ErrorView: View {
                 Button {
                     showBugReport = true
                 } label: {
-                    Label("Report an Issue", systemImage: "flag")
+                    Label(NSLocalizedString("bugReport.reportIssue", comment: "Report an issue button"), systemImage: "flag")
                         .font(.subheadline)
                         .foregroundColor(.white.opacity(0.6))
                 }
@@ -387,27 +387,27 @@ struct AboutView: View {
                     .font(.system(size: 48))
                     .foregroundColor(Color(red: 0.45, green: 0.18, blue: 0.22))
 
-                Text("Wine Shelf Scanner")
+                Text(NSLocalizedString("about.title", comment: "About title"))
                     .font(.title2)
                     .fontWeight(.bold)
 
-                Text("Ratings aggregated from 21 million reviews across community wine platforms. Individual scores are combined to provide a single trusted rating for each bottle.")
+                Text(NSLocalizedString("about.description", comment: "About description"))
                     .font(.body)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
 
                 VStack(alignment: .leading, spacing: 8) {
-                    Label("181,000+ wines with ratings", systemImage: "checkmark.circle.fill")
+                    Label(NSLocalizedString("about.winesCount", comment: "Wine count stat"), systemImage: "checkmark.circle.fill")
                         .foregroundColor(.secondary)
-                    Label("21 million aggregated reviews", systemImage: "star.fill")
+                    Label(NSLocalizedString("about.reviewsCount", comment: "Review count stat"), systemImage: "star.fill")
                         .foregroundColor(.secondary)
                 }
                 .font(.subheadline)
 
                 Spacer()
 
-                Text("Ratings sourced from community wine platforms. Wine Shelf Scanner is not affiliated with any rating provider.")
+                Text(NSLocalizedString("about.disclaimer", comment: "About disclaimer"))
                     .font(.caption)
                     .foregroundColor(.gray)
                     .multilineTextAlignment(.center)
@@ -415,11 +415,11 @@ struct AboutView: View {
             }
             .padding(.top, 32)
             .padding(.horizontal)
-            .navigationTitle("About")
+            .navigationTitle(NSLocalizedString("about.heading", comment: "About navigation title"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") { dismiss() }
+                    Button(NSLocalizedString("about.done", comment: "Done button")) { dismiss() }
                 }
             }
         }

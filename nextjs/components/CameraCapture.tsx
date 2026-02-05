@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Camera, Upload, Wine, Info, X } from 'lucide-react';
 import { colors } from '@/lib/theme';
 
@@ -10,6 +11,8 @@ interface CameraCaptureProps {
 }
 
 export function CameraCapture({ onImageSelected, isLoading }: CameraCaptureProps) {
+  const t = useTranslations('camera');
+  const tAbout = useTranslations('about');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -68,10 +71,10 @@ export function CameraCapture({ onImageSelected, isLoading }: CameraCaptureProps
           <Wine className="w-12 h-12 text-white" />
         </div>
         <h1 className="text-3xl font-bold text-white mb-3">
-          Never guess at the wine shelf again.
+          {t('heroTitle')}
         </h1>
         <p className="text-gray-400 text-lg max-w-md">
-          Ratings from 21 million reviews — on every bottle, instantly.
+          {t('heroSubtitle')}
         </p>
       </div>
 
@@ -94,10 +97,10 @@ export function CameraCapture({ onImageSelected, isLoading }: CameraCaptureProps
         <div className="text-center">
           <Upload className={`w-10 h-10 mx-auto mb-3 ${isDragOver ? 'text-star' : 'text-gray-400'}`} />
           <p className="text-gray-300 mb-1">
-            Drag and drop an image here
+            {t('dragDrop')}
           </p>
           <p className="text-gray-500 text-sm">
-            or click to browse
+            {t('orBrowse')}
           </p>
         </div>
       </div>
@@ -117,7 +120,7 @@ export function CameraCapture({ onImageSelected, isLoading }: CameraCaptureProps
           "
         >
           <Camera className="w-5 h-5" />
-          Take Photo
+          {t('takePhoto')}
         </button>
 
         {/* Upload Button */}
@@ -133,7 +136,7 @@ export function CameraCapture({ onImageSelected, isLoading }: CameraCaptureProps
           "
         >
           <Upload className="w-5 h-5" />
-          Upload Image
+          {t('uploadImage')}
         </button>
       </div>
 
@@ -173,27 +176,26 @@ export function CameraCapture({ onImageSelected, isLoading }: CameraCaptureProps
               >
                 <Wine className="w-8 h-8 text-white" />
               </div>
-              <h2 className="text-xl font-bold text-white mb-1">Wine Shelf Scanner</h2>
+              <h2 className="text-xl font-bold text-white mb-1">{tAbout('title')}</h2>
             </div>
 
             <p className="text-gray-300 text-sm text-center mb-5">
-              Ratings aggregated from 21 million reviews across community wine platforms. Individual
-              scores are combined to provide a single trusted rating for each bottle.
+              {tAbout('description')}
             </p>
 
             <div className="space-y-3 mb-6">
               <div className="flex items-center gap-3 text-gray-400 text-sm">
                 <span className="text-green-400">&#10003;</span>
-                <span>181,000+ wines with ratings</span>
+                <span>{tAbout('winesCount')}</span>
               </div>
               <div className="flex items-center gap-3 text-gray-400 text-sm">
                 <span className="text-yellow-400">&#9733;</span>
-                <span>21 million aggregated reviews</span>
+                <span>{tAbout('reviewsCount')}</span>
               </div>
             </div>
 
             <p className="text-gray-500 text-xs text-center">
-              Ratings sourced from community wine platforms. Wine Shelf Scanner is not affiliated with any rating provider.
+              {tAbout('disclaimer')}
             </p>
           </div>
         </div>

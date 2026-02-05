@@ -1,0 +1,82 @@
+/* App */
+"app.title" = "Weinregal-Scanner";
+
+/* Idle / Camera */
+"idle.pointAtShelf" = "Nie wieder raten am Weinregal.";
+"idle.takePhotoToSee" = "Bewertungen aus 21 Millionen Reviews — auf jeder Flasche, sofort.";
+"idle.scanShelf" = "Regal scannen";
+"idle.choosePhoto" = "Foto wählen";
+"idle.selectPhoto" = "Foto auswählen";
+
+/* Processing */
+"processing.analyzing" = "Weine werden analysiert...";
+
+/* Error */
+"error.tryAgain" = "Erneut versuchen";
+"error.startOver" = "Neu beginnen";
+
+/* Results */
+"results.newScan" = "Neuer Scan";
+"results.winesFound" = "Weine gefunden";
+"results.partialDetection" = "Einige Flaschen konnten nicht erkannt werden";
+"results.scannedWith" = "Gescannt mit Weinregal-Scanner";
+"results.topPicks" = "Top-Auswahl aus dem Regal:";
+"results.stars" = "Sterne";
+
+/* Detail Sheet */
+"detail.by" = "von %@";
+"detail.noRating" = "Keine Bewertung";
+"detail.reviewsK" = "%@K Bewertungen";
+"detail.reviews" = "%lld Bewertungen";
+"detail.widelyRated" = "Viel bewertet";
+"detail.limitedData" = "Begrenzte Daten";
+"detail.crowdFavorite" = "Publikumsliebling";
+"detail.bestOnShelf" = "Bester in diesem Regal";
+"detail.rankedOnShelf" = "Platz #%lld von %lld in diesem Regal";
+"detail.region" = "REGION";
+"detail.varietal" = "REBSORTE";
+"detail.goesWith" = "Passt zu";
+"detail.whatPeopleSay" = "Was andere sagen";
+"detail.shareThisPick" = "Diese Auswahl teilen";
+"detail.foundWith" = "Gefunden mit Weinregal-Scanner";
+"detail.youLiked" = "Dieser Wein hat Ihnen gefallen";
+"detail.youDisliked" = "Dieser Wein hat Ihnen nicht gefallen";
+"detail.undo" = "Rückgängig";
+"detail.thanksFeedback" = "Danke für Ihr Feedback!";
+"detail.isThisRight" = "Ist das der richtige Wein?";
+"detail.whatsCorrect" = "Welcher Wein ist korrekt?";
+"detail.wineName" = "Weinname";
+"detail.cancel" = "Abbrechen";
+"detail.submit" = "Absenden";
+"detail.yes" = "Ja";
+"detail.no" = "Nein";
+
+/* Processing Tips */
+"processing.tip1" = "Tippen Sie auf ein Bewertungsbadge für Details";
+"processing.tip2" = "Top-bewertete Flaschen haben eine goldene Hervorhebung";
+"processing.tip3" = "Basierend auf 21 Millionen aggregierten Bewertungen";
+"processing.tip4" = "Wir decken über 181.000 Weine weltweit ab";
+
+/* About */
+"about.title" = "Weinregal-Scanner";
+"about.description" = "Bewertungen aggregiert aus 21 Millionen Reviews auf Community-Weinplattformen. Einzelne Bewertungen werden kombiniert, um eine vertrauenswürdige Gesamtbewertung für jede Flasche zu liefern.";
+"about.winesCount" = "181.000+ Weine mit Bewertungen";
+"about.reviewsCount" = "21 Millionen aggregierte Bewertungen";
+"about.disclaimer" = "Bewertungen stammen von Community-Weinplattformen. Weinregal-Scanner ist nicht mit einem Bewertungsanbieter verbunden.";
+"about.heading" = "Über";
+"about.done" = "Fertig";
+
+/* Bug Report */
+"bugReport.report" = "Melden";
+"bugReport.reportIssue" = "Problem melden";
+"bugReport.scanError" = "Scan-Fehler";
+"bugReport.someNotRecognized" = "Einige Flaschen nicht erkannt";
+"bugReport.noBottlesIdentified" = "Keine Flaschen identifiziert";
+"bugReport.wrongMatch" = "Falsche Weinzuordnung";
+"bugReport.whatHappened" = "Was ist passiert? (optional)";
+"bugReport.describePlaceholder" = "Beschreiben Sie das Problem...";
+"bugReport.submitReport" = "Bericht senden";
+"bugReport.submitted" = "Bericht gesendet";
+"bugReport.thanksImprove" = "Danke, dass Sie uns helfen, besser zu werden!";
+"bugReport.done" = "Fertig";
+"bugReport.cancel" = "Abbrechen";

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { ArrowLeft, Share2, Star, Flag } from 'lucide-react';
 import { ScanResponse, WineResult, Rect, Size } from '@/lib/types';
 import { OverlayContainer } from './OverlayContainer';
@@ -19,6 +20,8 @@ interface ResultsViewProps {
 }
 
 export function ResultsView({ response, imageUri, onReset }: ResultsViewProps) {
+  const t = useTranslations('results');
+  const tBug = useTranslations('bugReport');
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const [selectedWine, setSelectedWine] = useState<WineResult | null>(null);
@@ -121,7 +124,7 @@ export function ResultsView({ response, imageUri, onReset }: ResultsViewProps) {
           className="flex items-center gap-2 text-white hover:text-gray-300 transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
-          <span>New Scan</span>
+          <span>{t('newScan')}</span>
         </button>
         <div className="flex-1 text-center">
           {(() => {
@@ -133,13 +136,13 @@ export function ResultsView({ response, imageUri, onReset }: ResultsViewProps) {
                 <span className="text-gray-300 text-sm flex items-center justify-center gap-1">
                   <Star className="w-3.5 h-3.5 text-star fill-star" />
                   <span className="font-medium text-white truncate max-w-[140px]">{topWine.wine_name}</span>
-                  <span className="text-gray-400">+ {visibleCount - 1} more</span>
+                  <span className="text-gray-400">{t('more', { count: visibleCount - 1 })}</span>
                 </span>
               );
             }
             return (
               <span className="text-gray-400 text-sm">
-                {visibleCount} bottle{visibleCount !== 1 ? 's' : ''} found
+                {t('bottlesFound', { count: visibleCount })}
               </span>
             );
           })()}
@@ -153,10 +156,10 @@ export function ResultsView({ response, imageUri, onReset }: ResultsViewProps) {
                   .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
                   .slice(0, 3);
                 const text = [
-                  'Top picks from the shelf:',
-                  ...topWines.map((w, i) => `${i + 1}. ${w.wine_name} - ${w.rating?.toFixed(1)} stars`),
+                  t('topPicks'),
+                  ...topWines.map((w, i) => `${i + 1}. ${w.wine_name} - ${w.rating?.toFixed(1)} ${t('stars')}`),
                   '',
-                  'Scanned with Wine Shelf Scanner',
+                  t('scannedWith'),
                 ].join('\n');
                 if (navigator.share) {
                   navigator.share({ text }).catch(() => {});
@@ -200,7 +203,7 @@ export function ResultsView({ response, imageUri, onReset }: ResultsViewProps) {
       {showPartialToast && (
         <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 flex items-center gap-3 z-40">
           <Toast
-            message="Some bottles couldn't be recognized"
+            message={t('partialDetection')}
             onDismiss={() => setShowPartialToast(false)}
           />
           {bugReportEnabled && (
@@ -209,7 +212,7 @@ export function ResultsView({ response, imageUri, onReset }: ResultsViewProps) {
               className="flex items-center gap-1 text-yellow-400 text-xs font-medium hover:text-yellow-300 transition-colors whitespace-nowrap"
             >
               <Flag className="w-3 h-3" />
-              Report
+              {tBug('report')}
             </button>
           )}
         </div>

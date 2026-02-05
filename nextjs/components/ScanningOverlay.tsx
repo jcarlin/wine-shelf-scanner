@@ -1,24 +1,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 
-const tips = [
-  'Tap any rating badge to see details',
-  'Top-rated bottles get a gold highlight',
-  'Powered by 21 million aggregated reviews',
-  'We cover 181,000+ wines worldwide',
-];
+const tipKeys = ['tip1', 'tip2', 'tip3', 'tip4'] as const;
 
 interface ScanningOverlayProps {
   imageUri: string;
 }
 
 export function ScanningOverlay({ imageUri }: ScanningOverlayProps) {
+  const t = useTranslations('processing');
   const [tipIndex, setTipIndex] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setTipIndex((prev) => (prev + 1) % tips.length);
+      setTipIndex((prev) => (prev + 1) % tipKeys.length);
     }, 3000);
     return () => clearInterval(interval);
   }, []);
@@ -44,7 +41,7 @@ export function ScanningOverlay({ imageUri }: ScanningOverlayProps) {
         {/* Status text overlay at bottom */}
         <div className="absolute bottom-4 left-0 right-0 text-center">
           <div className="inline-block bg-black/60 backdrop-blur-sm px-4 py-2 rounded-lg">
-            <span className="text-white font-medium">Analyzing wines...</span>
+            <span className="text-white font-medium">{t('analyzing')}</span>
           </div>
         </div>
       </div>
@@ -54,7 +51,7 @@ export function ScanningOverlay({ imageUri }: ScanningOverlayProps) {
         key={tipIndex}
         className="text-gray-400 text-sm text-center mt-4 animate-fade-in"
       >
-        {tips[tipIndex]}
+        {t(tipKeys[tipIndex])}
       </p>
     </div>
   );

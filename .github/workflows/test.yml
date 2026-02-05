@@ -42,7 +42,7 @@ jobs:
           import sqlite3
           conn = sqlite3.connect('app/data/wines.db')
           tables = [r[0] for r in conn.execute(\"SELECT name FROM sqlite_master WHERE type='table'\").fetchall()]
-          expected = ['wines', 'wine_aliases', 'wine_sources', 'wine_fts', 'llm_ratings_cache', 'corrections', 'wine_reviews']
+          expected = ['wines', 'wine_aliases', 'wine_sources', 'wine_fts', 'llm_ratings_cache', 'corrections', 'wine_reviews', 'bug_reports', 'vision_cache']
           missing = [t for t in expected if t not in tables]
           assert not missing, f'Missing tables after migration: {missing}'
           print(f'Migration OK: {len(tables)} tables created')
@@ -147,3 +147,17 @@ jobs:
       - run: npm run build
         env:
           NEXT_PUBLIC_API_BASE_URL: "http://localhost:8000"
+
+  i18n-validation:
+    name: i18n Key Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Validate locale files have matching keys
+        run: node scripts/validate-i18n.js

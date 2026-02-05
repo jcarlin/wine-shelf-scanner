@@ -10,15 +10,18 @@ from pathlib import Path
 
 import pytest
 
+from app.db import ensure_schema
 from app.services.vision import BoundingBox, DetectedObject, TextBlock, VisionResult
 from app.services.vision_cache import VisionCache, reset_vision_cache
 
 
 @pytest.fixture
 def temp_db():
-    """Create a temporary database for testing."""
+    """Create a temporary database for testing with full schema."""
     with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
         db_path = Path(f.name)
+    # Apply migrations to create all tables including vision_cache
+    ensure_schema(str(db_path))
     yield db_path
     # Cleanup
     if db_path.exists():

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { X, Flag, CheckCircle, AlertTriangle, XCircle, ArrowLeftRight } from 'lucide-react';
 import { BugReportType, BugReportMetadata } from '@/lib/types';
 import { submitBugReport, inferErrorType } from '@/lib/report-client';
@@ -14,11 +15,18 @@ interface BugReportModalProps {
   metadata?: BugReportMetadata | null;
 }
 
-const contextConfig: Record<BugReportType, { label: string; icon: typeof AlertTriangle }> = {
-  error: { label: 'Scan error', icon: AlertTriangle },
-  partial_detection: { label: 'Some bottles not recognized', icon: AlertTriangle },
-  full_failure: { label: 'No bottles identified', icon: XCircle },
-  wrong_wine: { label: 'Wrong wine match', icon: ArrowLeftRight },
+const contextIcons: Record<BugReportType, typeof AlertTriangle> = {
+  error: AlertTriangle,
+  partial_detection: AlertTriangle,
+  full_failure: XCircle,
+  wrong_wine: ArrowLeftRight,
+};
+
+const contextLabelKeys: Record<BugReportType, string> = {
+  error: 'scanError',
+  partial_detection: 'someNotRecognized',
+  full_failure: 'noBottlesIdentified',
+  wrong_wine: 'wrongMatch',
 };
 
 export function BugReportModal({
@@ -29,14 +37,14 @@ export function BugReportModal({
   imageId,
   metadata,
 }: BugReportModalProps) {
+  const t = useTranslations('bugReport');
   const [userDescription, setUserDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   if (!isOpen) return null;
 
-  const config = contextConfig[reportType];
-  const ContextIcon = config.icon;
+  const ContextIcon = contextIcons[reportType];
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -74,7 +82,7 @@ export function BugReportModal({
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-white flex items-center gap-2">
             <Flag className="w-5 h-5" />
-            Report an Issue
+            {t('reportIssue')}
           </h2>
           <button
             onClick={handleClose}
@@ -88,15 +96,15 @@ export function BugReportModal({
           /* Confirmation */
           <div className="text-center py-8">
             <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-3" />
-            <p className="text-white font-medium mb-1">Report submitted</p>
+            <p className="text-white font-medium mb-1">{t('submitted')}</p>
             <p className="text-gray-400 text-sm mb-6">
-              Thanks for helping us improve!
+              {t('thanksImprove')}
             </p>
             <button
               onClick={handleClose}
               className="bg-white text-black font-semibold py-2.5 px-8 rounded-xl hover:bg-gray-100 transition-colors"
             >
-              Done
+              {t('done')}
             </button>
           </div>
         ) : (
@@ -106,7 +114,7 @@ export function BugReportModal({
             <div className="bg-white/5 rounded-lg p-3">
               <div className="flex items-center gap-2 text-gray-300 text-sm">
                 <ContextIcon className="w-4 h-4 text-yellow-400" />
-                <span>{config.label}</span>
+                <span>{t(contextLabelKeys[reportType])}</span>
               </div>
               {errorMessage && (
                 <p className="text-gray-500 text-xs mt-1 line-clamp-2">
@@ -118,12 +126,12 @@ export function BugReportModal({
             {/* User description */}
             <div>
               <label className="text-sm text-gray-400 block mb-1.5">
-                What happened? (optional)
+                {t('whatHappened')}
               </label>
               <textarea
                 value={userDescription}
                 onChange={(e) => setUserDescription(e.target.value)}
-                placeholder="Describe the issue..."
+                placeholder={t('describePlaceholder')}
                 maxLength={500}
                 rows={3}
                 className="w-full bg-white/5 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-gray-500 resize-none"
@@ -139,7 +147,7 @@ export function BugReportModal({
               disabled={isSubmitting}
               className="w-full bg-white text-black font-semibold py-3 rounded-xl hover:bg-gray-100 transition-colors disabled:opacity-50"
             >
-              {isSubmitting ? 'Submitting...' : 'Submit Report'}
+              {isSubmitting ? t('submitting') : t('submitReport')}
             </button>
           </div>
         )}

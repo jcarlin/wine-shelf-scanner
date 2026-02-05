@@ -55,66 +55,13 @@ class LLMRatingCache:
         if db_path is None:
             db_path = Path(__file__).parent.parent / "data" / "wines.db"
         self.db_path = db_path
-        self._ensure_table()
+        # Table is created by Alembic migration 001
 
     def _get_connection(self) -> sqlite3.Connection:
         """Get database connection with row factory."""
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
         return conn
-
-    def _ensure_table(self) -> None:
-        """Ensure the cache table exists with all columns."""
-        conn = self._get_connection()
-        try:
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS llm_ratings_cache (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    wine_name TEXT NOT NULL UNIQUE,
-                    estimated_rating REAL NOT NULL,
-                    confidence REAL NOT NULL DEFAULT 0.7,
-                    llm_provider TEXT NOT NULL,
-                    hit_count INTEGER NOT NULL DEFAULT 1,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    last_accessed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    wine_type TEXT,
-                    region TEXT,
-                    varietal TEXT,
-                    brand TEXT
-                )
-            """)
-            conn.execute("""
-                CREATE INDEX IF NOT EXISTS idx_llm_ratings_cache_wine_name
-                ON llm_ratings_cache(LOWER(wine_name))
-            """)
-            conn.execute("""
-                CREATE INDEX IF NOT EXISTS idx_llm_ratings_cache_hit_count
-                ON llm_ratings_cache(hit_count DESC)
-            """)
-
-            # Add columns if they don't exist (for existing databases)
-            self._add_column_if_missing(conn, "wine_type", "TEXT")
-            self._add_column_if_missing(conn, "region", "TEXT")
-            self._add_column_if_missing(conn, "varietal", "TEXT")
-            self._add_column_if_missing(conn, "brand", "TEXT")
-
-            conn.commit()
-        finally:
-            conn.close()
-
-    def _add_column_if_missing(
-        self,
-        conn: sqlite3.Connection,
-        column_name: str,
-        column_type: str
-    ) -> None:
-        """Add column to llm_ratings_cache if it doesn't exist."""
-        cursor = conn.execute("PRAGMA table_info(llm_ratings_cache)")
-        columns = [row[1] for row in cursor.fetchall()]
-        if column_name not in columns:
-            conn.execute(
-                f"ALTER TABLE llm_ratings_cache ADD COLUMN {column_name} {column_type}"
-            )
 
     def _normalize_name(self, wine_name: str) -> str:
         """Normalize wine name for consistent lookups."""

@@ -1,17 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Wine } from 'lucide-react';
 import { colors } from '@/lib/theme';
 
-const tips = [
-  'Tap any rating badge to see details',
-  'Top-rated bottles get a gold highlight',
-  'Powered by 21 million aggregated reviews',
-  'We cover 181,000+ wines worldwide',
-];
-
 export function ProcessingSpinner() {
+  const t = useTranslations('processing');
+  const tips = [
+    t('tip1'),
+    t('tip2'),
+    t('tip3'),
+    t('tip4'),
+  ];
   const [tipIndex, setTipIndex] = useState(0);
 
   useEffect(() => {
@@ -37,7 +38,7 @@ export function ProcessingSpinner() {
 
       {/* Status Text */}
       <h2 className="text-xl font-semibold text-white mb-2">
-        Analyzing wines...
+        {t('analyzing')}
       </h2>
       <p
         key={tipIndex}

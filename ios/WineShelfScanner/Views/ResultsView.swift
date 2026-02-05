@@ -81,12 +81,12 @@ struct ResultsView: View {
         .overlay(alignment: .top) {
             if showToast {
                 HStack(spacing: 8) {
-                    ToastView(message: "Some bottles couldn't be recognized")
+                    ToastView(message: NSLocalizedString("results.partialDetection", comment: "Partial detection toast"))
                     if FeatureFlags.shared.bugReport {
                         Button {
                             showBugReport = true
                         } label: {
-                            Text("Report")
+                            Text(NSLocalizedString("bugReport.report", comment: "Report button"))
                                 .font(.caption)
                                 .fontWeight(.medium)
                                 .foregroundColor(.yellow)
@@ -178,7 +178,7 @@ struct ResultsView: View {
     private var bottomBar: some View {
         HStack {
             Button(action: onNewScan) {
-                Label("New Scan", systemImage: "camera.fill")
+                Label(NSLocalizedString("results.newScan", comment: "New scan button"), systemImage: "camera.fill")
                     .font(.headline)
             }
             .buttonStyle(.borderedProminent)
@@ -216,12 +216,13 @@ struct ResultsView: View {
 
     private func shareShelfResults() {
         let topWines = response.topRatedResults.prefix(3)
-        var text = "Top picks from the shelf:\n"
+        var text = NSLocalizedString("results.topPicks", comment: "Share text header") + "\n"
+        let starsLabel = NSLocalizedString("results.stars", comment: "Stars label")
         for (index, wine) in topWines.enumerated() {
             let ratingStr = wine.rating.map { String(format: "%.1f", $0) } ?? "?"
-            text += "\(index + 1). \(wine.wineName) - \(ratingStr) stars\n"
+            text += "\(index + 1). \(wine.wineName) - \(ratingStr) \(starsLabel)\n"
         }
-        text += "\nScanned with Wine Shelf Scanner"
+        text += "\n" + NSLocalizedString("results.scannedWith", comment: "Share attribution")
 
         let activityVC = UIActivityViewController(activityItems: [text], applicationActivities: nil)
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
@@ -264,7 +265,7 @@ struct FallbackListView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Text("Wines Found")
+            Text(NSLocalizedString("results.winesFound", comment: "Fallback list header"))
                 .font(.headline)
                 .foregroundColor(.white)
                 .padding()

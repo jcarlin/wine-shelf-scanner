@@ -1,0 +1,82 @@
+/* App */
+"app.title" = "Scanner de Vinhos";
+
+/* Idle / Camera */
+"idle.pointAtShelf" = "Nunca mais adivinhe na prateleira de vinhos.";
+"idle.takePhotoToSee" = "Avaliações de 21 milhões de reviews — em cada garrafa, instantaneamente.";
+"idle.scanShelf" = "Escanear Prateleira";
+"idle.choosePhoto" = "Escolher Foto";
+"idle.selectPhoto" = "Selecionar Foto";
+
+/* Processing */
+"processing.analyzing" = "Analisando vinhos...";
+
+/* Error */
+"error.tryAgain" = "Tentar Novamente";
+"error.startOver" = "Recomeçar";
+
+/* Results */
+"results.newScan" = "Nova Digitalização";
+"results.winesFound" = "Vinhos Encontrados";
+"results.partialDetection" = "Algumas garrafas não puderam ser reconhecidas";
+"results.scannedWith" = "Digitalizado com Scanner de Vinhos";
+"results.topPicks" = "Melhores escolhas da prateleira:";
+"results.stars" = "estrelas";
+
+/* Detail Sheet */
+"detail.by" = "por %@";
+"detail.noRating" = "Sem avaliação";
+"detail.reviewsK" = "%@K avaliações";
+"detail.reviews" = "%lld avaliações";
+"detail.widelyRated" = "Amplamente avaliado";
+"detail.limitedData" = "Dados limitados";
+"detail.crowdFavorite" = "Favorito do público";
+"detail.bestOnShelf" = "Melhor nesta prateleira";
+"detail.rankedOnShelf" = "Classificado #%lld de %lld nesta prateleira";
+"detail.region" = "REGIÃO";
+"detail.varietal" = "VARIEDADE";
+"detail.goesWith" = "Combina com";
+"detail.whatPeopleSay" = "O que as pessoas dizem";
+"detail.shareThisPick" = "Compartilhar esta escolha";
+"detail.foundWith" = "Encontrado com Scanner de Vinhos";
+"detail.youLiked" = "Você gostou deste vinho";
+"detail.youDisliked" = "Você não gostou deste vinho";
+"detail.undo" = "Desfazer";
+"detail.thanksFeedback" = "Obrigado pelo seu feedback!";
+"detail.isThisRight" = "Este é o vinho certo?";
+"detail.whatsCorrect" = "Qual é o vinho correto?";
+"detail.wineName" = "Nome do vinho";
+"detail.cancel" = "Cancelar";
+"detail.submit" = "Enviar";
+"detail.yes" = "Sim";
+"detail.no" = "Não";
+
+/* Processing Tips */
+"processing.tip1" = "Toque em qualquer badge de avaliação para ver detalhes";
+"processing.tip2" = "As garrafas mais bem avaliadas têm um destaque dourado";
+"processing.tip3" = "Baseado em 21 milhões de avaliações agregadas";
+"processing.tip4" = "Cobrimos mais de 181.000 vinhos no mundo todo";
+
+/* About */
+"about.title" = "Scanner de Prateleira de Vinhos";
+"about.description" = "Avaliações agregadas de 21 milhões de reviews em plataformas comunitárias de vinhos. As pontuações individuais são combinadas para fornecer uma avaliação confiável para cada garrafa.";
+"about.winesCount" = "181.000+ vinhos com avaliações";
+"about.reviewsCount" = "21 milhões de avaliações agregadas";
+"about.disclaimer" = "Avaliações provenientes de plataformas comunitárias de vinhos. Scanner de Prateleira de Vinhos não é afiliado a nenhum provedor de avaliações.";
+"about.heading" = "Sobre";
+"about.done" = "Concluído";
+
+/* Bug Report */
+"bugReport.report" = "Reportar";
+"bugReport.reportIssue" = "Reportar um Problema";
+"bugReport.scanError" = "Erro de digitalização";
+"bugReport.someNotRecognized" = "Algumas garrafas não reconhecidas";
+"bugReport.noBottlesIdentified" = "Nenhuma garrafa identificada";
+"bugReport.wrongMatch" = "Correspondência de vinho incorreta";
+"bugReport.whatHappened" = "O que aconteceu? (opcional)";
+"bugReport.describePlaceholder" = "Descreva o problema...";
+"bugReport.submitReport" = "Enviar Relatório";
+"bugReport.submitted" = "Relatório enviado";
+"bugReport.thanksImprove" = "Obrigado por nos ajudar a melhorar!";
+"bugReport.done" = "Concluído";
+"bugReport.cancel" = "Cancelar";

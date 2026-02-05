@@ -66,47 +66,13 @@ class VisionCache:
         self.ttl_days = ttl_days
         self.max_size_bytes = max_size_mb * 1024 * 1024
 
-        if enabled:
-            self._ensure_table()
+        # Table is created by Alembic migration 003
 
     def _get_connection(self) -> sqlite3.Connection:
         """Get database connection with row factory."""
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
         return conn
-
-    def _ensure_table(self) -> None:
-        """Ensure the cache table exists."""
-        conn = self._get_connection()
-        try:
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS vision_cache (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    image_hash TEXT NOT NULL UNIQUE,
-                    response_data BLOB NOT NULL,
-                    image_size_bytes INTEGER NOT NULL,
-                    response_size_bytes INTEGER NOT NULL,
-                    hit_count INTEGER NOT NULL DEFAULT 0,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    last_accessed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    ttl_expires_at TIMESTAMP
-                )
-            """)
-            conn.execute("""
-                CREATE INDEX IF NOT EXISTS idx_vision_cache_hash
-                ON vision_cache(image_hash)
-            """)
-            conn.execute("""
-                CREATE INDEX IF NOT EXISTS idx_vision_cache_expires
-                ON vision_cache(ttl_expires_at)
-            """)
-            conn.execute("""
-                CREATE INDEX IF NOT EXISTS idx_vision_cache_lru
-                ON vision_cache(last_accessed_at ASC)
-            """)
-            conn.commit()
-        finally:
-            conn.close()
 
     def _hash_image(self, image_bytes: bytes) -> str:
         """Compute SHA256 hash of image bytes."""

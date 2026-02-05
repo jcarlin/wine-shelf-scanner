@@ -1,0 +1,91 @@
+{
+  "app": {
+    "title": "葡萄酒货架扫描仪",
+    "description": "再也不用在葡萄酒货架前猜测了。2100万条评论的评分，每瓶酒上，即时显示。"
+  },
+  "camera": {
+    "heroTitle": "再也不用在葡萄酒货架前猜测了。",
+    "heroSubtitle": "2100万条评论的评分 — 每瓶酒上，即时显示。",
+    "dragDrop": "将图片拖放到此处",
+    "orBrowse": "或点击浏览",
+    "takePhoto": "拍照",
+    "uploadImage": "上传图片"
+  },
+  "processing": {
+    "analyzing": "正在分析葡萄酒...",
+    "aiIdentifying": "我们的AI正在识别酒瓶并获取评分，这可能需要几秒钟。",
+    "tip1": "点击任意评分标签查看详情",
+    "tip2": "评分最高的酒瓶有金色高亮",
+    "tip3": "基于2100万条聚合评论",
+    "tip4": "覆盖全球181,000+款葡萄酒"
+  },
+  "results": {
+    "newScan": "新扫描",
+    "bottlesFound": "{count, plural, other {发现 # 瓶}}",
+    "partialDetection": "部分酒瓶无法识别",
+    "scannedWith": "使用葡萄酒货架扫描仪扫描",
+    "topPicks": "货架精选：",
+    "stars": "星",
+    "more": "+ {count} 更多"
+  },
+  "fallback": {
+    "couldNotIdentify": "无法识别酒瓶",
+    "popularWines": "以下是一些您可能正在寻找的热门葡萄酒",
+    "tryAnother": "尝试另一张照片",
+    "winesFound": "找到的葡萄酒"
+  },
+  "error": {
+    "tryAgain": "重试"
+  },
+  "detail": {
+    "by": "{brand} 出品",
+    "reviews": "{count, plural, other {# 条评论}}",
+    "reviewsK": "{count}K 条评论",
+    "widelyRated": "广泛评价",
+    "limitedData": "数据有限",
+    "crowdFavorite": "大众最爱",
+    "bestOnShelf": "此货架最佳",
+    "rankedOnShelf": "此货架第 {rank} 名（共 {total} 款）",
+    "region": "产区",
+    "varietal": "葡萄品种",
+    "goesWith": "搭配",
+    "whatPeopleSay": "大家怎么说",
+    "shareThisPick": "分享这个选择",
+    "foundWith": "通过葡萄酒货架扫描仪发现",
+    "youLiked": "您喜欢这款酒",
+    "youDisliked": "您不喜欢这款酒",
+    "undo": "撤销",
+    "thanksFeedback": "感谢您的反馈！",
+    "isThisRight": "这是正确的酒吗？",
+    "yes": "是",
+    "no": "否",
+    "noRating": "暂无评分"
+  },
+  "scanning": {
+    "analyzing": "正在分析葡萄酒..."
+  },
+  "about": {
+    "title": "葡萄酒货架扫描仪",
+    "description": "评分聚合自社区葡萄酒平台的2100万条评论。各平台评分经综合计算，为每瓶酒提供可信的统一评分。",
+    "winesCount": "181,000+ 款有评分的葡萄酒",
+    "reviewsCount": "2100万条聚合评论",
+    "disclaimer": "评分来源于社区葡萄酒平台。葡萄酒货架扫描仪与任何评分提供商无关。"
+  },
+  "bugReport": {
+    "report": "报告",
+    "reportIssue": "报告问题",
+    "notExpected": "结果不对？报告问题",
+    "scanError": "扫描错误",
+    "someNotRecognized": "部分酒瓶未被识别",
+    "noBottlesIdentified": "未识别到酒瓶",
+    "wrongMatch": "酒款匹配错误",
+    "whatHappened": "发生了什么？（可选）",
+    "describePlaceholder": "描述问题...",
+    "submitReport": "提交报告",
+    "submitting": "提交中...",
+    "submitted": "报告已提交",
+    "thanksImprove": "感谢帮助我们改进！",
+    "done": "完成",
+    "cancel": "取消"
+  }
+}

@@ -21,12 +21,26 @@ if config.config_file_name is not None:
 
 
 def get_database_url() -> str:
-    """Get SQLite URL from environment or default."""
-    db_path = os.getenv(
-        "DATABASE_PATH",
-        str(Path(__file__).parent.parent / "app" / "data" / "wines.db"),
-    )
-    return f"sqlite:///{db_path}"
+    """Get SQLite URL from environment, config, or default.
+
+    Resolution order:
+    1. DATABASE_PATH env var (Cloud Run, CI)
+    2. sqlalchemy.url config option (programmatic callers via ensure_schema)
+    3. Default: app/data/wines.db
+    """
+    # Check environment first
+    env_path = os.getenv("DATABASE_PATH")
+    if env_path:
+        return f"sqlite:///{env_path}"
+
+    # Check if set programmatically via config
+    config_url = config.get_main_option("sqlalchemy.url")
+    if config_url:
+        return config_url
+
+    # Default path
+    default_path = Path(__file__).parent.parent / "app" / "data" / "wines.db"
+    return f"sqlite:///{default_path}"
 
 
 def run_migrations_offline() -> None:

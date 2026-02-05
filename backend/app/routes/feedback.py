@@ -56,7 +56,7 @@ class FeedbackRepository:
             db_path = Path(__file__).parent.parent / "data" / "wines.db"
         self.db_path = str(db_path)
         self._local = threading.local()
-        self._ensure_table()
+        # Table is created by Alembic migration 001
 
     def _get_connection(self) -> sqlite3.Connection:
         """Get thread-local database connection."""
@@ -77,26 +77,6 @@ class FeedbackRepository:
         except Exception:
             conn.rollback()
             raise
-
-    def _ensure_table(self):
-        """Ensure corrections table exists."""
-        conn = self._get_connection()
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS corrections (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                image_id TEXT NOT NULL,
-                wine_name TEXT NOT NULL,
-                ocr_text TEXT,
-                is_correct BOOLEAN NOT NULL,
-                corrected_name TEXT,
-                device_id TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_corrections_wine_name ON corrections(LOWER(wine_name))")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_corrections_is_correct ON corrections(is_correct)")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_corrections_created_at ON corrections(created_at)")
-        conn.commit()
 
     def add_feedback(self, feedback: FeedbackRequest) -> bool:
         """Store user feedback. Returns True on success."""

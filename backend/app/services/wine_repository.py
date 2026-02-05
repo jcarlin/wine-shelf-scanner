@@ -12,7 +12,6 @@ import threading
 from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import lru_cache
-from pathlib import Path
 from typing import Optional, Iterator
 import json
 
@@ -94,20 +93,12 @@ class WineRepository:
             raise
 
     def _init_schema(self):
-        """Initialize database schema if needed."""
+        """Initialize database schema via Alembic migrations."""
         if self._schema_initialized:
             return
 
-        schema_path = Path(__file__).parent.parent / "data" / "schema.sql"
-        if not schema_path.exists():
-            raise FileNotFoundError(f"Schema file not found: {schema_path}")
-
-        with open(schema_path, 'r') as f:
-            schema_sql = f.read()
-
-        conn = self._get_connection()
-        conn.executescript(schema_sql)
-        conn.commit()
+        from app.db import ensure_schema
+        ensure_schema(self.db_path)
         self._schema_initialized = True
 
     def find_by_name(self, name: str) -> Optional[WineRecord]:

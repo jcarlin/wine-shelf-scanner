@@ -1,0 +1,91 @@
+{
+  "app": {
+    "title": "Weinregal-Scanner",
+    "description": "Nie wieder raten am Weinregal. Bewertungen aus 21 Millionen Reviews, auf jeder Flasche, sofort."
+  },
+  "camera": {
+    "heroTitle": "Nie wieder raten am Weinregal.",
+    "heroSubtitle": "Bewertungen aus 21 Millionen Reviews — auf jeder Flasche, sofort.",
+    "dragDrop": "Bild hierher ziehen",
+    "orBrowse": "oder klicken zum Durchsuchen",
+    "takePhoto": "Foto aufnehmen",
+    "uploadImage": "Bild hochladen"
+  },
+  "processing": {
+    "analyzing": "Weine werden analysiert...",
+    "aiIdentifying": "Unsere KI identifiziert Flaschen und ruft Bewertungen ab. Dies kann einige Sekunden dauern.",
+    "tip1": "Tippen Sie auf ein Bewertungsbadge für Details",
+    "tip2": "Top-bewertete Flaschen haben eine goldene Hervorhebung",
+    "tip3": "Basierend auf 21 Millionen aggregierten Bewertungen",
+    "tip4": "Wir decken über 181.000 Weine weltweit ab"
+  },
+  "results": {
+    "newScan": "Neuer Scan",
+    "bottlesFound": "{count, plural, one {# Flasche gefunden} other {# Flaschen gefunden}}",
+    "partialDetection": "Einige Flaschen konnten nicht erkannt werden",
+    "scannedWith": "Gescannt mit Weinregal-Scanner",
+    "topPicks": "Top-Auswahl aus dem Regal:",
+    "stars": "Sterne",
+    "more": "+ {count} weitere"
+  },
+  "fallback": {
+    "couldNotIdentify": "Flaschen konnten nicht identifiziert werden",
+    "popularWines": "Hier sind einige beliebte Weine, die Sie suchen könnten",
+    "tryAnother": "Anderes Foto versuchen",
+    "winesFound": "Weine gefunden"
+  },
+  "error": {
+    "tryAgain": "Erneut versuchen"
+  },
+  "detail": {
+    "by": "von {brand}",
+    "reviews": "{count, plural, one {# Bewertung} other {# Bewertungen}}",
+    "reviewsK": "{count}K Bewertungen",
+    "widelyRated": "Viel bewertet",
+    "limitedData": "Begrenzte Daten",
+    "crowdFavorite": "Publikumsliebling",
+    "bestOnShelf": "Bester in diesem Regal",
+    "rankedOnShelf": "Platz #{rank} von {total} in diesem Regal",
+    "region": "Region",
+    "varietal": "Rebsorte",
+    "goesWith": "Passt zu",
+    "whatPeopleSay": "Was andere sagen",
+    "shareThisPick": "Diese Auswahl teilen",
+    "foundWith": "Gefunden mit Weinregal-Scanner",
+    "youLiked": "Dieser Wein hat Ihnen gefallen",
+    "youDisliked": "Dieser Wein hat Ihnen nicht gefallen",
+    "undo": "Rückgängig",
+    "thanksFeedback": "Danke für Ihr Feedback!",
+    "isThisRight": "Ist das der richtige Wein?",
+    "yes": "Ja",
+    "no": "Nein",
+    "noRating": "Keine Bewertung"
+  },
+  "scanning": {
+    "analyzing": "Weine werden analysiert..."
+  },
+  "about": {
+    "title": "Weinregal-Scanner",
+    "description": "Bewertungen aggregiert aus 21 Millionen Reviews auf Community-Weinplattformen. Einzelne Bewertungen werden kombiniert, um eine vertrauenswürdige Gesamtbewertung für jede Flasche zu liefern.",
+    "winesCount": "181.000+ Weine mit Bewertungen",
+    "reviewsCount": "21 Millionen aggregierte Bewertungen",
+    "disclaimer": "Bewertungen stammen von Community-Weinplattformen. Weinregal-Scanner ist nicht mit einem Bewertungsanbieter verbunden."
+  },
+  "bugReport": {
+    "report": "Melden",
+    "reportIssue": "Problem melden",
+    "notExpected": "Nicht das Erwartete? Melden Sie ein Problem",
+    "scanError": "Scan-Fehler",
+    "someNotRecognized": "Einige Flaschen nicht erkannt",
+    "noBottlesIdentified": "Keine Flaschen identifiziert",
+    "wrongMatch": "Falsche Weinzuordnung",
+    "whatHappened": "Was ist passiert? (optional)",
+    "describePlaceholder": "Beschreiben Sie das Problem...",
+    "submitReport": "Meldung senden",
+    "submitting": "Wird gesendet...",
+    "submitted": "Meldung gesendet",
+    "thanksImprove": "Danke, dass Sie uns helfen, besser zu werden!",
+    "done": "Fertig",
+    "cancel": "Abbrechen"
+  }
+}

@@ -1,32 +1,22 @@
 """Tests for the /report bug reporting endpoint."""
 
 import sqlite3
-from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 
+from app.db import ensure_schema
 from app.routes.report import ReportRepository, ReportRequest, ReportMetadata
 
 
 # === Repository Tests ===
 
 
-SCHEMA_PATH = Path(__file__).parent.parent / "app" / "data" / "schema.sql"
-
-
-def _apply_schema(db_path: str):
-    """Apply the canonical schema.sql to a test database."""
-    conn = sqlite3.connect(db_path)
-    conn.executescript(SCHEMA_PATH.read_text())
-    conn.close()
-
-
 @pytest.fixture
 def repo(tmp_path):
     """Create a repository backed by a temp database with schema pre-applied."""
     db_path = str(tmp_path / "test.db")
-    _apply_schema(db_path)
+    ensure_schema(db_path)
     return ReportRepository(db_path=db_path)
 
 
@@ -136,7 +126,7 @@ def client(tmp_path):
 
     # Create schema before constructing repository
     db_path = str(tmp_path / "test.db")
-    _apply_schema(db_path)
+    ensure_schema(db_path)
     test_repo = ReportRepository(db_path=db_path)
     original_repo = report_module._report_repo
     report_module._report_repo = test_repo

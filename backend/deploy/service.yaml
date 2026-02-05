@@ -24,7 +24,11 @@ spec:
     spec:
       containerConcurrency: 80
       timeoutSeconds: 300
-      serviceAccountName: ""  # Uses default compute service account
+      # Uses default Compute Engine service account. Required permissions:
+      # - storage.objects.get (for GCS database download)
+      # - secretmanager.versions.access (for API keys)
+      # - cloudtrace.traces.patch (for tracing, optional)
+      serviceAccountName: ""
       containers:
         - image: IMAGE_PLACEHOLDER  # Substituted during deployment
           ports:
@@ -55,6 +59,8 @@ spec:
               value: "true"
             - name: LLM_PROVIDER
               value: "gemini"
+            - name: GEMINI_MODEL
+              value: "gemini-2.0-flash"
             # Database persistence (GCS)
             - name: GCS_DB_BUCKET
               value: "wine-scanner-db"

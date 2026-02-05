@@ -12,7 +12,7 @@ import { FallbackList } from './FallbackList';
 import { getImageBounds } from '@/lib/image-bounds';
 import { isVisible } from '@/lib/overlay-math';
 import { useFeatureFlags } from '@/lib/feature-flags';
-import { computeShelfRankings, getTopWineNames, TOP_WINES_COUNT } from '@/lib/shelf-rankings';
+import { computeShelfRankings, TOP_WINES_COUNT } from '@/lib/shelf-rankings';
 
 interface ResultsViewProps {
   response: ScanResponse;

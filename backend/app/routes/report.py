@@ -7,7 +7,6 @@ full failure occur during scanning.
 
 import logging
 import uuid
-from pathlib import Path
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException
@@ -74,9 +73,7 @@ class ReportRepository(BaseRepository):
     """Thread-safe SQLite repository for bug reports."""
 
     def __init__(self, db_path: Optional[str] = None):
-        if db_path is None:
-            db_path = str(Path(__file__).parent.parent / "data" / "wines.db")
-        super().__init__(db_path)
+        super().__init__(db_path)  # BaseRepository handles default path via Config
 
     def add_report(self, report: ReportRequest) -> str:
         """Store a bug report. Returns the report ID."""

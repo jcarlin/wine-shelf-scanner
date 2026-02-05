@@ -51,10 +51,11 @@ class WineRepository:
         Initialize repository.
 
         Args:
-            db_path: Path to SQLite database. Defaults to data/wines.db
+            db_path: Path to SQLite database. Defaults to Config.database_path()
         """
         if db_path is None:
-            db_path = Path(__file__).parent.parent / "data" / "wines.db"
+            from app.config import Config
+            db_path = Config.database_path()
 
         self.db_path = str(db_path)
         self._local = threading.local()

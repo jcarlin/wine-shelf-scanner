@@ -19,8 +19,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Create non-root user for security
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+# Create non-root user and ensure data directory exists (for GCS download)
+RUN useradd -m -u 1000 appuser \
+    && mkdir -p /app/app/data \
+    && chown -R appuser:appuser /app
 USER appuser
 
 # Cloud Run uses PORT environment variable
@@ -30,5 +32,5 @@ ENV PYTHONUNBUFFERED=1
 # Expose port
 EXPOSE 8080
 
-# Run the application
-CMD exec uvicorn main:app --host 0.0.0.0 --port ${PORT}
+# Startup: download DB from GCS -> run migrations -> start uvicorn
+CMD ["python", "scripts/startup.py"]

@@ -33,6 +33,8 @@ SOURCES = {
     "xwines_full": "xwines_full",  # Special handling - 100K wines + 21M ratings
     "vivino_brazil": "app/ingestion/adapters/configs/vivino_brazil.yaml",
     "vivino_global": "vivino_global",  # Special handling - multi-file scraped data
+    "vivino_es": "app/ingestion/adapters/configs/vivino_es.yaml",
+    "vivino_webscraper": "app/ingestion/adapters/configs/vivino_webscraper.yaml",
 }
 
 

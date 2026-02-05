@@ -1,0 +1,82 @@
+/* App */
+"app.title" = "Escáner de Vinos";
+
+/* Idle / Camera */
+"idle.pointAtShelf" = "Nunca más adivines en el estante de vinos.";
+"idle.takePhotoToSee" = "Calificaciones de 21 millones de reseñas — en cada botella, al instante.";
+"idle.scanShelf" = "Escanear Estante";
+"idle.choosePhoto" = "Elegir Foto";
+"idle.selectPhoto" = "Seleccionar Foto";
+
+/* Processing */
+"processing.analyzing" = "Analizando vinos...";
+
+/* Error */
+"error.tryAgain" = "Intentar de Nuevo";
+"error.startOver" = "Empezar de Nuevo";
+
+/* Results */
+"results.newScan" = "Nuevo Escaneo";
+"results.winesFound" = "Vinos Encontrados";
+"results.partialDetection" = "Algunas botellas no pudieron ser reconocidas";
+"results.scannedWith" = "Escaneado con Escáner de Vinos";
+"results.topPicks" = "Mejores opciones del estante:";
+"results.stars" = "estrellas";
+
+/* Detail Sheet */
+"detail.by" = "de %@";
+"detail.noRating" = "Sin calificación";
+"detail.reviewsK" = "%@K reseñas";
+"detail.reviews" = "%lld reseñas";
+"detail.widelyRated" = "Ampliamente calificado";
+"detail.limitedData" = "Datos limitados";
+"detail.crowdFavorite" = "Favorito del público";
+"detail.bestOnShelf" = "Mejor en este estante";
+"detail.rankedOnShelf" = "Puesto #%lld de %lld en este estante";
+"detail.region" = "REGIÓN";
+"detail.varietal" = "VARIETAL";
+"detail.goesWith" = "Va bien con";
+"detail.whatPeopleSay" = "Lo que dice la gente";
+"detail.shareThisPick" = "Compartir esta elección";
+"detail.foundWith" = "Encontrado con Escáner de Vinos";
+"detail.youLiked" = "Te gustó este vino";
+"detail.youDisliked" = "No te gustó este vino";
+"detail.undo" = "Deshacer";
+"detail.thanksFeedback" = "¡Gracias por tu opinión!";
+"detail.isThisRight" = "¿Es este el vino correcto?";
+"detail.whatsCorrect" = "¿Cuál es el vino correcto?";
+"detail.wineName" = "Nombre del vino";
+"detail.cancel" = "Cancelar";
+"detail.submit" = "Enviar";
+"detail.yes" = "Sí";
+"detail.no" = "No";
+
+/* Processing Tips */
+"processing.tip1" = "Toca cualquier insignia de calificación para ver detalles";
+"processing.tip2" = "Las botellas mejor calificadas tienen un resaltado dorado";
+"processing.tip3" = "Basado en 21 millones de reseñas agregadas";
+"processing.tip4" = "Cubrimos más de 181,000 vinos en todo el mundo";
+
+/* About */
+"about.title" = "Escáner de Vinos";
+"about.description" = "Calificaciones agregadas de 21 millones de reseñas en plataformas comunitarias de vinos. Las puntuaciones individuales se combinan para proporcionar una calificación confiable para cada botella.";
+"about.winesCount" = "181,000+ vinos con calificaciones";
+"about.reviewsCount" = "21 millones de reseñas agregadas";
+"about.disclaimer" = "Calificaciones obtenidas de plataformas comunitarias de vinos. Escáner de Vinos no está afiliado a ningún proveedor de calificaciones.";
+"about.heading" = "Acerca de";
+"about.done" = "Listo";
+
+/* Bug Report */
+"bugReport.report" = "Reportar";
+"bugReport.reportIssue" = "Reportar un Problema";
+"bugReport.scanError" = "Error de escaneo";
+"bugReport.someNotRecognized" = "Algunas botellas no reconocidas";
+"bugReport.noBottlesIdentified" = "No se identificaron botellas";
+"bugReport.wrongMatch" = "Coincidencia incorrecta de vino";
+"bugReport.whatHappened" = "¿Qué pasó? (opcional)";
+"bugReport.describePlaceholder" = "Describe el problema...";
+"bugReport.submitReport" = "Enviar Reporte";
+"bugReport.submitted" = "Reporte enviado";
+"bugReport.thanksImprove" = "¡Gracias por ayudarnos a mejorar!";
+"bugReport.done" = "Listo";
+"bugReport.cancel" = "Cancelar";

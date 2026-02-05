@@ -1,0 +1,91 @@
+{
+  "app": {
+    "title": "Scanner Scaffale Vini",
+    "description": "Non tirare più a indovinare allo scaffale dei vini. Valutazioni da 21 milioni di recensioni, su ogni bottiglia, istantaneamente."
+  },
+  "camera": {
+    "heroTitle": "Non tirare più a indovinare allo scaffale dei vini.",
+    "heroSubtitle": "Valutazioni da 21 milioni di recensioni — su ogni bottiglia, istantaneamente.",
+    "dragDrop": "Trascina e rilascia un'immagine qui",
+    "orBrowse": "o clicca per sfogliare",
+    "takePhoto": "Scatta Foto",
+    "uploadImage": "Carica Immagine"
+  },
+  "processing": {
+    "analyzing": "Analisi dei vini...",
+    "aiIdentifying": "La nostra IA sta identificando le bottiglie e recuperando le valutazioni. Potrebbe richiedere qualche secondo.",
+    "tip1": "Tocca qualsiasi badge di valutazione per vedere i dettagli",
+    "tip2": "Le bottiglie più apprezzate hanno un'evidenziazione dorata",
+    "tip3": "Basato su 21 milioni di recensioni aggregate",
+    "tip4": "Copriamo oltre 181.000 vini in tutto il mondo"
+  },
+  "results": {
+    "newScan": "Nuova Scansione",
+    "bottlesFound": "{count, plural, one {# bottiglia trovata} other {# bottiglie trovate}}",
+    "partialDetection": "Alcune bottiglie non sono state riconosciute",
+    "scannedWith": "Scansionato con Scanner Scaffale Vini",
+    "topPicks": "Migliori scelte dallo scaffale:",
+    "stars": "stelle",
+    "more": "+ {count} altri"
+  },
+  "fallback": {
+    "couldNotIdentify": "Impossibile identificare le bottiglie",
+    "popularWines": "Ecco alcuni vini popolari che potresti cercare",
+    "tryAnother": "Prova un'Altra Foto",
+    "winesFound": "Vini Trovati"
+  },
+  "error": {
+    "tryAgain": "Riprova"
+  },
+  "detail": {
+    "by": "di {brand}",
+    "reviews": "{count, plural, one {# recensione} other {# recensioni}}",
+    "reviewsK": "{count}K recensioni",
+    "widelyRated": "Ampiamente valutato",
+    "limitedData": "Dati limitati",
+    "crowdFavorite": "Preferito dal pubblico",
+    "bestOnShelf": "Migliore su questo scaffale",
+    "rankedOnShelf": "Classificato #{rank} di {total} su questo scaffale",
+    "region": "Regione",
+    "varietal": "Vitigno",
+    "goesWith": "Si abbina con",
+    "whatPeopleSay": "Cosa dice la gente",
+    "shareThisPick": "Condividi questa scelta",
+    "foundWith": "Trovato con Scanner Scaffale Vini",
+    "youLiked": "Ti è piaciuto questo vino",
+    "youDisliked": "Non ti è piaciuto questo vino",
+    "undo": "Annulla",
+    "thanksFeedback": "Grazie per il tuo feedback!",
+    "isThisRight": "È questo il vino giusto?",
+    "yes": "Sì",
+    "no": "No",
+    "noRating": "Nessuna valutazione"
+  },
+  "scanning": {
+    "analyzing": "Analisi dei vini..."
+  },
+  "about": {
+    "title": "Scanner Scaffale Vini",
+    "description": "Valutazioni aggregate da 21 milioni di recensioni su piattaforme comunitarie di vini. I punteggi individuali sono combinati per fornire una valutazione affidabile per ogni bottiglia.",
+    "winesCount": "181.000+ vini con valutazioni",
+    "reviewsCount": "21 milioni di recensioni aggregate",
+    "disclaimer": "Valutazioni provenienti da piattaforme comunitarie di vini. Scanner Scaffale Vini non è affiliato ad alcun fornitore di valutazioni."
+  },
+  "bugReport": {
+    "report": "Segnala",
+    "reportIssue": "Segnala un Problema",
+    "notExpected": "Non è quello che ti aspettavi? Segnala un problema",
+    "scanError": "Errore di scansione",
+    "someNotRecognized": "Alcune bottiglie non riconosciute",
+    "noBottlesIdentified": "Nessuna bottiglia identificata",
+    "wrongMatch": "Corrispondenza vino errata",
+    "whatHappened": "Cosa è successo? (opzionale)",
+    "describePlaceholder": "Descrivi il problema...",
+    "submitReport": "Invia Segnalazione",
+    "submitting": "Invio in corso...",
+    "submitted": "Segnalazione inviata",
+    "thanksImprove": "Grazie per aiutarci a migliorare!",
+    "done": "Fatto",
+    "cancel": "Annulla"
+  }
+}

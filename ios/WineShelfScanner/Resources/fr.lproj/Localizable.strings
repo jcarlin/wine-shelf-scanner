@@ -1,0 +1,82 @@
+/* App */
+"app.title" = "Scanner de Vins";
+
+/* Idle / Camera */
+"idle.pointAtShelf" = "Ne devinez plus jamais au rayon vins.";
+"idle.takePhotoToSee" = "Notes de 21 millions d'avis — sur chaque bouteille, instantanément.";
+"idle.scanShelf" = "Scanner le Rayon";
+"idle.choosePhoto" = "Choisir une Photo";
+"idle.selectPhoto" = "Sélectionner une Photo";
+
+/* Processing */
+"processing.analyzing" = "Analyse des vins...";
+
+/* Error */
+"error.tryAgain" = "Réessayer";
+"error.startOver" = "Recommencer";
+
+/* Results */
+"results.newScan" = "Nouveau Scan";
+"results.winesFound" = "Vins Trouvés";
+"results.partialDetection" = "Certaines bouteilles n'ont pas pu être reconnues";
+"results.scannedWith" = "Scanné avec Scanner de Vins";
+"results.topPicks" = "Meilleurs choix du rayon :";
+"results.stars" = "étoiles";
+
+/* Detail Sheet */
+"detail.by" = "par %@";
+"detail.noRating" = "Pas de note";
+"detail.reviewsK" = "%@K avis";
+"detail.reviews" = "%lld avis";
+"detail.widelyRated" = "Largement noté";
+"detail.limitedData" = "Données limitées";
+"detail.crowdFavorite" = "Favori du public";
+"detail.bestOnShelf" = "Meilleur de ce rayon";
+"detail.rankedOnShelf" = "Classé #%lld sur %lld dans ce rayon";
+"detail.region" = "RÉGION";
+"detail.varietal" = "CÉPAGE";
+"detail.goesWith" = "Se marie avec";
+"detail.whatPeopleSay" = "Ce qu'en disent les gens";
+"detail.shareThisPick" = "Partager ce choix";
+"detail.foundWith" = "Trouvé avec Scanner de Vins";
+"detail.youLiked" = "Vous avez aimé ce vin";
+"detail.youDisliked" = "Vous n'avez pas aimé ce vin";
+"detail.undo" = "Annuler";
+"detail.thanksFeedback" = "Merci pour votre retour !";
+"detail.isThisRight" = "Est-ce le bon vin ?";
+"detail.whatsCorrect" = "Quel est le bon vin ?";
+"detail.wineName" = "Nom du vin";
+"detail.cancel" = "Annuler";
+"detail.submit" = "Envoyer";
+"detail.yes" = "Oui";
+"detail.no" = "Non";
+
+/* Processing Tips */
+"processing.tip1" = "Appuyez sur un badge de note pour voir les détails";
+"processing.tip2" = "Les bouteilles les mieux notées ont un reflet doré";
+"processing.tip3" = "Basé sur 21 millions d'avis agrégés";
+"processing.tip4" = "Nous couvrons plus de 181 000 vins dans le monde";
+
+/* About */
+"about.title" = "Scanner de Rayon à Vins";
+"about.description" = "Notes agrégées à partir de 21 millions d'avis sur des plateformes communautaires de vins. Les scores individuels sont combinés pour fournir une note de confiance pour chaque bouteille.";
+"about.winesCount" = "181 000+ vins avec des notes";
+"about.reviewsCount" = "21 millions d'avis agrégés";
+"about.disclaimer" = "Notes provenant de plateformes communautaires de vins. Scanner de Rayon à Vins n'est affilié à aucun fournisseur de notes.";
+"about.heading" = "À propos";
+"about.done" = "Terminé";
+
+/* Bug Report */
+"bugReport.report" = "Signaler";
+"bugReport.reportIssue" = "Signaler un Problème";
+"bugReport.scanError" = "Erreur de scan";
+"bugReport.someNotRecognized" = "Certaines bouteilles non reconnues";
+"bugReport.noBottlesIdentified" = "Aucune bouteille identifiée";
+"bugReport.wrongMatch" = "Mauvaise correspondance de vin";
+"bugReport.whatHappened" = "Que s'est-il passé ? (facultatif)";
+"bugReport.describePlaceholder" = "Décrivez le problème...";
+"bugReport.submitReport" = "Envoyer le Rapport";
+"bugReport.submitted" = "Rapport envoyé";
+"bugReport.thanksImprove" = "Merci de nous aider à améliorer !";
+"bugReport.done" = "Terminé";
+"bugReport.cancel" = "Annuler";

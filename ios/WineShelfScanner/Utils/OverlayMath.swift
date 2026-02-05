@@ -106,7 +106,9 @@ struct OverlayMath {
 
     /// Confidence label for detail sheet ("Widely rated" or "Limited data")
     static func confidenceLabel(confidence: Double) -> String {
-        confidence >= highConfidenceThreshold ? "Widely rated" : "Limited data"
+        confidence >= highConfidenceThreshold
+            ? NSLocalizedString("detail.widelyRated", comment: "High confidence label")
+            : NSLocalizedString("detail.limitedData", comment: "Medium confidence label")
     }
 
     // MARK: - Collision Avoidance

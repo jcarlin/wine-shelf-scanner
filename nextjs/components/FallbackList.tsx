@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Star, AlertTriangle, Flag } from 'lucide-react';
 import { FallbackWine } from '@/lib/types';
 import { colors } from '@/lib/theme';
@@ -13,6 +14,8 @@ interface FallbackListProps {
 }
 
 export function FallbackList({ wines, onReset }: FallbackListProps) {
+  const t = useTranslations('fallback');
+  const tBug = useTranslations('bugReport');
   const [showBugReport, setShowBugReport] = useState(false);
   const { bugReport: bugReportEnabled } = useFeatureFlags();
 
@@ -26,11 +29,11 @@ export function FallbackList({ wines, onReset }: FallbackListProps) {
         <div className="flex items-center justify-center gap-2 mb-2">
           <AlertTriangle className="w-5 h-5 text-yellow-400" />
           <h2 className="text-lg font-semibold text-white">
-            Could not identify bottles
+            {t('couldNotIdentify')}
           </h2>
         </div>
         <p className="text-gray-400 text-sm">
-          Here are some popular wines you might be looking for
+          {t('popularWines')}
         </p>
       </div>
 
@@ -62,7 +65,7 @@ export function FallbackList({ wines, onReset }: FallbackListProps) {
             className="flex items-center justify-center gap-1.5 text-gray-500 hover:text-gray-300 text-xs mt-2 transition-colors w-full"
           >
             <Flag className="w-3 h-3" />
-            Not what you expected? Report an issue
+            {tBug('notExpected')}
           </button>
         )}
       </div>
@@ -76,7 +79,7 @@ export function FallbackList({ wines, onReset }: FallbackListProps) {
           hover:bg-gray-100 active:scale-[0.98]
         "
       >
-        Try Another Photo
+        {t('tryAnother')}
       </button>
 
       {/* Bug Report Modal */}

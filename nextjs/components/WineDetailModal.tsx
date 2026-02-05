@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { X, Star, Share2 } from 'lucide-react';
 import { WineResult } from '@/lib/types';
 import { colors, fontSize } from '@/lib/theme';
-import { confidenceLabel } from '@/lib/overlay-math';
+import { HIGH_CONFIDENCE_THRESHOLD } from '@/lib/overlay-math';
 import { useFeatureFlags } from '@/lib/feature-flags';
 import { useWineMemory } from '@/hooks/useWineMemory';
 
@@ -31,15 +32,13 @@ function getWineTypeTextColor(wineType: string): string {
   return darkTextTypes.includes(wineType) ? '#333333' : '#FFFFFF';
 }
 
-/** Formats review count (e.g., 12500 -> "12.5K reviews") */
-function formatReviewCount(count: number): string {
-  if (count >= 1000) {
-    return `${(count / 1000).toFixed(1).replace(/\.0$/, '')}K reviews`;
-  }
-  return `${count} reviews`;
+/** Formats review count number for i18n (e.g., 12500 -> "12.5") */
+function formatReviewCountNumber(count: number): string {
+  return (count / 1000).toFixed(1).replace(/\.0$/, '');
 }
 
 export function WineDetailModal({ wine, onClose, shelfRank, shelfTotal }: WineDetailModalProps) {
+  const t = useTranslations('detail');
   const flags = useFeatureFlags();
   const memory = useWineMemory();
   const [feedbackGiven, setFeedbackGiven] = useState(false);
@@ -48,7 +47,7 @@ export function WineDetailModal({ wine, onClose, shelfRank, shelfTotal }: WineDe
 
   const existingSentiment = flags.wineMemory ? memory.get(wine.wine_name) : undefined;
 
-  const label = confidenceLabel(wine.confidence);
+  const label = wine.confidence >= HIGH_CONFIDENCE_THRESHOLD ? t('widelyRated') : t('limitedData');
   const hasMetadata = wine.wine_type || wine.brand || wine.region || wine.varietal || wine.blurb;
   const hasReviews = wine.review_count || (wine.review_snippets && wine.review_snippets.length > 0);
 
@@ -104,7 +103,7 @@ export function WineDetailModal({ wine, onClose, shelfRank, shelfTotal }: WineDe
 
             {/* Brand/Winery */}
             {wine.brand && (
-              <p className="text-gray-500 italic mb-4">by {wine.brand}</p>
+              <p className="text-gray-500 italic mb-4">{t('by', { brand: wine.brand })}</p>
             )}
 
             {/* Rating */}
@@ -124,7 +123,9 @@ export function WineDetailModal({ wine, onClose, shelfRank, shelfTotal }: WineDe
             {/* Review Count */}
             {wine.review_count && wine.review_count > 0 && (
               <p className="text-sm text-gray-500 mb-2">
-                {formatReviewCount(wine.review_count)}
+                {wine.review_count >= 1000
+                  ? t('reviewsK', { count: formatReviewCountNumber(wine.review_count) })
+                  : t('reviews', { count: wine.review_count })}
               </p>
             )}
 
@@ -162,7 +163,7 @@ export function WineDetailModal({ wine, onClose, shelfRank, shelfTotal }: WineDe
                 style={{ backgroundColor: '#E8F5E9' }}
               >
                 <span className="text-sm font-semibold" style={{ color: '#2E7D32' }}>
-                  &#x2713; Crowd favorite
+                  &#x2713; {t('crowdFavorite')}
                 </span>
               </div>
             )}
@@ -172,7 +173,7 @@ export function WineDetailModal({ wine, onClose, shelfRank, shelfTotal }: WineDe
               <p className={`text-sm mb-2 ${shelfRank === 1 ? 'font-semibold' : 'font-medium text-gray-500'}`}
                 style={shelfRank === 1 ? { color: '#D4A017' } : undefined}
               >
-                {shelfRank === 1 ? 'Best on this shelf' : `Ranked #${shelfRank} of ${shelfTotal} on this shelf`}
+                {shelfRank === 1 ? t('bestOnShelf') : t('rankedOnShelf', { rank: shelfRank, total: shelfTotal })}
               </p>
             )}
 
@@ -187,7 +188,7 @@ export function WineDetailModal({ wine, onClose, shelfRank, shelfTotal }: WineDe
                 {wine.region && (
                   <div className="text-center">
                     <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">
-                      Region
+                      {t('region')}
                     </p>
                     <p className="text-base text-gray-900 font-medium">
                       {wine.region}
@@ -197,7 +198,7 @@ export function WineDetailModal({ wine, onClose, shelfRank, shelfTotal }: WineDe
                 {wine.varietal && (
                   <div className="text-center">
                     <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">
-                      Varietal
+                      {t('varietal')}
                     </p>
                     <p className="text-base text-gray-900 font-medium">
                       {wine.varietal}
@@ -219,7 +220,7 @@ export function WineDetailModal({ wine, onClose, shelfRank, shelfTotal }: WineDe
             {/* Food Pairing */}
             {flags.pairings && wine.pairing && (
               <div className="rounded-lg p-4 my-2 w-full" style={{ backgroundColor: '#FBF8F0' }}>
-                <p className="text-sm text-gray-500 mb-1">&#x1F374; Goes with</p>
+                <p className="text-sm text-gray-500 mb-1">&#x1F374; {t('goesWith')}</p>
                 <p className="text-base text-gray-900 font-medium">{wine.pairing}</p>
               </div>
             )}
@@ -231,13 +232,13 @@ export function WineDetailModal({ wine, onClose, shelfRank, shelfTotal }: WineDe
                 style={{ backgroundColor: existingSentiment === 'liked' ? '#E8F5E9' : '#FFEBEE' }}
               >
                 <span className="text-sm text-gray-600">
-                  {existingSentiment === 'liked' ? '\u2665 You liked this wine' : '\u2715 You didn\'t like this wine'}
+                  {existingSentiment === 'liked' ? `\u2665 ${t('youLiked')}` : `\u2715 ${t('youDisliked')}`}
                 </span>
                 <button
                   className="text-sm text-blue-500 font-medium hover:text-blue-600"
                   onClick={() => memory.clear(wine.wine_name)}
                 >
-                  Undo
+                  {t('undo')}
                 </button>
               </div>
             )}
@@ -250,11 +251,11 @@ export function WineDetailModal({ wine, onClose, shelfRank, shelfTotal }: WineDe
                 onClick={() => {
                   const text = [
                     wine.wine_name,
-                    wine.rating ? `${wine.rating.toFixed(1)} stars` : null,
-                    wine.brand ? `by ${wine.brand}` : null,
+                    wine.rating ? `${wine.rating.toFixed(1)}` : null,
+                    wine.brand ? t('by', { brand: wine.brand }) : null,
                     wine.region ? `(${wine.region})` : null,
                     '',
-                    'Found with Wine Shelf Scanner',
+                    t('foundWith'),
                   ].filter(Boolean).join(' ');
 
                   if (navigator.share) {
@@ -265,7 +266,7 @@ export function WineDetailModal({ wine, onClose, shelfRank, shelfTotal }: WineDe
                 }}
               >
                 <Share2 className="w-4 h-4" />
-                Share this pick
+                {t('shareThisPick')}
               </button>
             )}
 
@@ -274,11 +275,11 @@ export function WineDetailModal({ wine, onClose, shelfRank, shelfTotal }: WineDe
               <div className="py-2 text-center">
                 {feedbackGiven ? (
                   <p className="text-sm font-medium" style={{ color: '#4CAF50' }}>
-                    &#x2713; Thanks for your feedback!
+                    &#x2713; {t('thanksFeedback')}
                   </p>
                 ) : (
                   <div className="flex flex-col items-center gap-2">
-                    <p className="text-sm text-gray-500">Is this the right wine?</p>
+                    <p className="text-sm text-gray-500">{t('isThisRight')}</p>
                     <div className="flex gap-8">
                       <button
                         className="flex flex-col items-center gap-1 hover:scale-110 transition-transform"
@@ -288,7 +289,7 @@ export function WineDetailModal({ wine, onClose, shelfRank, shelfTotal }: WineDe
                         }}
                       >
                         <span className="text-2xl">&#x1F44D;</span>
-                        <span className="text-xs text-gray-500">Yes</span>
+                        <span className="text-xs text-gray-500">{t('yes')}</span>
                       </button>
                       <button
                         className="flex flex-col items-center gap-1 hover:scale-110 transition-transform"
@@ -298,7 +299,7 @@ export function WineDetailModal({ wine, onClose, shelfRank, shelfTotal }: WineDe
                         }}
                       >
                         <span className="text-2xl">&#x1F44E;</span>
-                        <span className="text-xs text-gray-500">No</span>
+                        <span className="text-xs text-gray-500">{t('no')}</span>
                       </button>
                     </div>
                   </div>
@@ -310,7 +311,7 @@ export function WineDetailModal({ wine, onClose, shelfRank, shelfTotal }: WineDe
             {wine.review_snippets && wine.review_snippets.length > 0 && (
               <div className="mt-4 text-left">
                 <p className="text-base font-semibold text-gray-900 mb-2">
-                  What people say
+                  {t('whatPeopleSay')}
                 </p>
                 {wine.review_snippets.map((snippet, index) => (
                   <div

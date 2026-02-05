@@ -1,0 +1,82 @@
+/* App */
+"app.title" = "ワイン棚スキャナー";
+
+/* Idle / Camera */
+"idle.pointAtShelf" = "もうワイン棚で迷わない。";
+"idle.takePhotoToSee" = "2100万件のレビューからの評価 — すべてのボトルに、瞬時に。";
+"idle.scanShelf" = "棚をスキャン";
+"idle.choosePhoto" = "写真を選択";
+"idle.selectPhoto" = "写真を選ぶ";
+
+/* Processing */
+"processing.analyzing" = "ワインを分析中...";
+
+/* Error */
+"error.tryAgain" = "再試行";
+"error.startOver" = "やり直す";
+
+/* Results */
+"results.newScan" = "新しいスキャン";
+"results.winesFound" = "見つかったワイン";
+"results.partialDetection" = "一部のボトルを認識できませんでした";
+"results.scannedWith" = "ワイン棚スキャナーでスキャン";
+"results.topPicks" = "棚のおすすめ：";
+"results.stars" = "つ星";
+
+/* Detail Sheet */
+"detail.by" = "%@ 製";
+"detail.noRating" = "評価なし";
+"detail.reviewsK" = "%@K件のレビュー";
+"detail.reviews" = "%lld件のレビュー";
+"detail.widelyRated" = "多数の評価";
+"detail.limitedData" = "データ限定";
+"detail.crowdFavorite" = "人気の一本";
+"detail.bestOnShelf" = "この棚のベスト";
+"detail.rankedOnShelf" = "この棚で%lld本中第%lld位";
+"detail.region" = "産地";
+"detail.varietal" = "品種";
+"detail.goesWith" = "相性の良い料理";
+"detail.whatPeopleSay" = "みんなの声";
+"detail.shareThisPick" = "この選択を共有";
+"detail.foundWith" = "ワイン棚スキャナーで発見";
+"detail.youLiked" = "このワインが気に入りました";
+"detail.youDisliked" = "このワインは好みではありませんでした";
+"detail.undo" = "元に戻す";
+"detail.thanksFeedback" = "フィードバックありがとうございます！";
+"detail.isThisRight" = "このワインで合っていますか？";
+"detail.whatsCorrect" = "正しいワインは何ですか？";
+"detail.wineName" = "ワイン名";
+"detail.cancel" = "キャンセル";
+"detail.submit" = "送信";
+"detail.yes" = "はい";
+"detail.no" = "いいえ";
+
+/* Processing Tips */
+"processing.tip1" = "評価バッジをタップして詳細を見る";
+"processing.tip2" = "高評価のボトルにはゴールドのハイライト";
+"processing.tip3" = "2100万件の集約レビューに基づく";
+"processing.tip4" = "世界中の181,000本以上のワインをカバー";
+
+/* About */
+"about.title" = "ワイン棚スキャナー";
+"about.description" = "コミュニティワインプラットフォームの2100万件のレビューから集約された評価。個々のスコアを組み合わせて、各ボトルの信頼できる評価を提供します。";
+"about.winesCount" = "181,000本以上の評価付きワイン";
+"about.reviewsCount" = "2100万件の集約レビュー";
+"about.disclaimer" = "評価はコミュニティワインプラットフォームから取得しています。ワイン棚スキャナーはいかなる評価プロバイダーとも提携していません。";
+"about.heading" = "このアプリについて";
+"about.done" = "完了";
+
+/* Bug Report */
+"bugReport.report" = "報告";
+"bugReport.reportIssue" = "問題を報告";
+"bugReport.scanError" = "スキャンエラー";
+"bugReport.someNotRecognized" = "一部のボトルが認識されませんでした";
+"bugReport.noBottlesIdentified" = "ボトルが識別されませんでした";
+"bugReport.wrongMatch" = "ワインの一致が間違っています";
+"bugReport.whatHappened" = "何が起きましたか？（任意）";
+"bugReport.describePlaceholder" = "問題を説明してください...";
+"bugReport.submitReport" = "レポートを送信";
+"bugReport.submitted" = "レポートが送信されました";
+"bugReport.thanksImprove" = "改善にご協力いただきありがとうございます！";
+"bugReport.done" = "完了";
+"bugReport.cancel" = "キャンセル";

@@ -1,0 +1,82 @@
+/* App */
+"app.title" = "Сканер Вин";
+
+/* Idle / Camera */
+"idle.pointAtShelf" = "Больше не гадайте у винной полки.";
+"idle.takePhotoToSee" = "Рейтинги из 21 миллиона отзывов — на каждой бутылке, мгновенно.";
+"idle.scanShelf" = "Сканировать полку";
+"idle.choosePhoto" = "Выбрать фото";
+"idle.selectPhoto" = "Выбрать фото";
+
+/* Processing */
+"processing.analyzing" = "Анализ вин...";
+
+/* Error */
+"error.tryAgain" = "Повторить";
+"error.startOver" = "Начать заново";
+
+/* Results */
+"results.newScan" = "Новое сканирование";
+"results.winesFound" = "Найденные вина";
+"results.partialDetection" = "Некоторые бутылки не удалось распознать";
+"results.scannedWith" = "Отсканировано с помощью Сканера Вин";
+"results.topPicks" = "Лучшее на полке:";
+"results.stars" = "звёзд";
+
+/* Detail Sheet */
+"detail.by" = "от %@";
+"detail.noRating" = "Нет оценки";
+"detail.reviewsK" = "%@K отзывов";
+"detail.reviews" = "%lld отзывов";
+"detail.widelyRated" = "Много оценок";
+"detail.limitedData" = "Мало данных";
+"detail.crowdFavorite" = "Народный фаворит";
+"detail.bestOnShelf" = "Лучшее на этой полке";
+"detail.rankedOnShelf" = "#%lld из %lld на этой полке";
+"detail.region" = "РЕГИОН";
+"detail.varietal" = "СОРТ";
+"detail.goesWith" = "Сочетается с";
+"detail.whatPeopleSay" = "Что говорят люди";
+"detail.shareThisPick" = "Поделиться выбором";
+"detail.foundWith" = "Найдено с помощью Сканера Вин";
+"detail.youLiked" = "Вам понравилось это вино";
+"detail.youDisliked" = "Вам не понравилось это вино";
+"detail.undo" = "Отменить";
+"detail.thanksFeedback" = "Спасибо за отзыв!";
+"detail.isThisRight" = "Это правильное вино?";
+"detail.whatsCorrect" = "Какое вино правильное?";
+"detail.wineName" = "Название вина";
+"detail.cancel" = "Отмена";
+"detail.submit" = "Отправить";
+"detail.yes" = "Да";
+"detail.no" = "Нет";
+
+/* Processing Tips */
+"processing.tip1" = "Нажмите на значок рейтинга для подробностей";
+"processing.tip2" = "Лучшие бутылки выделены золотым";
+"processing.tip3" = "На основе 21 миллиона агрегированных отзывов";
+"processing.tip4" = "Мы покрываем более 181 000 вин по всему миру";
+
+/* About */
+"about.title" = "Сканер Винной Полки";
+"about.description" = "Рейтинги агрегированы из 21 миллиона отзывов на винных платформах сообщества. Оценки из разных источников объединяются для формирования единого надёжного рейтинга каждой бутылки.";
+"about.winesCount" = "181 000+ вин с рейтингами";
+"about.reviewsCount" = "21 миллион агрегированных отзывов";
+"about.disclaimer" = "Рейтинги получены с винных платформ сообщества. Сканер Винной Полки не аффилирован ни с одним поставщиком рейтингов.";
+"about.heading" = "О приложении";
+"about.done" = "Готово";
+
+/* Bug Report */
+"bugReport.report" = "Сообщить";
+"bugReport.reportIssue" = "Сообщить о проблеме";
+"bugReport.scanError" = "Ошибка сканирования";
+"bugReport.someNotRecognized" = "Некоторые бутылки не распознаны";
+"bugReport.noBottlesIdentified" = "Бутылки не идентифицированы";
+"bugReport.wrongMatch" = "Неверное совпадение вина";
+"bugReport.whatHappened" = "Что произошло? (необязательно)";
+"bugReport.describePlaceholder" = "Опишите проблему...";
+"bugReport.submitReport" = "Отправить отчёт";
+"bugReport.submitted" = "Отчёт отправлен";
+"bugReport.thanksImprove" = "Спасибо, что помогаете нам стать лучше!";
+"bugReport.done" = "Готово";
+"bugReport.cancel" = "Отмена";

@@ -1,0 +1,91 @@
+{
+  "app": {
+    "title": "Wine Shelf Scanner",
+    "description": "Never guess at the wine shelf again. Ratings from 21 million reviews, on every bottle, instantly."
+  },
+  "camera": {
+    "heroTitle": "Never guess at the wine shelf again.",
+    "heroSubtitle": "Ratings from 21 million reviews — on every bottle, instantly.",
+    "dragDrop": "Drag and drop an image here",
+    "orBrowse": "or click to browse",
+    "takePhoto": "Take Photo",
+    "uploadImage": "Upload Image"
+  },
+  "processing": {
+    "analyzing": "Analyzing wines...",
+    "aiIdentifying": "Our AI is identifying bottles and fetching ratings. This may take a few seconds.",
+    "tip1": "Tap any rating badge to see details",
+    "tip2": "Top-rated bottles get a gold highlight",
+    "tip3": "Powered by 21 million aggregated reviews",
+    "tip4": "We cover 181,000+ wines worldwide"
+  },
+  "results": {
+    "newScan": "New Scan",
+    "bottlesFound": "{count, plural, one {# bottle found} other {# bottles found}}",
+    "partialDetection": "Some bottles couldn't be recognized",
+    "scannedWith": "Scanned with Wine Shelf Scanner",
+    "topPicks": "Top picks from the shelf:",
+    "stars": "stars",
+    "more": "+ {count} more"
+  },
+  "fallback": {
+    "couldNotIdentify": "Could not identify bottles",
+    "popularWines": "Here are some popular wines you might be looking for",
+    "tryAnother": "Try Another Photo",
+    "winesFound": "Wines Found"
+  },
+  "error": {
+    "tryAgain": "Try Again"
+  },
+  "detail": {
+    "by": "by {brand}",
+    "reviews": "{count, plural, one {# review} other {# reviews}}",
+    "reviewsK": "{count}K reviews",
+    "widelyRated": "Widely rated",
+    "limitedData": "Limited data",
+    "crowdFavorite": "Crowd favorite",
+    "bestOnShelf": "Best on this shelf",
+    "rankedOnShelf": "Ranked #{rank} of {total} on this shelf",
+    "region": "Region",
+    "varietal": "Varietal",
+    "goesWith": "Goes with",
+    "whatPeopleSay": "What people say",
+    "shareThisPick": "Share this pick",
+    "foundWith": "Found with Wine Shelf Scanner",
+    "youLiked": "You liked this wine",
+    "youDisliked": "You didn't like this wine",
+    "undo": "Undo",
+    "thanksFeedback": "Thanks for your feedback!",
+    "isThisRight": "Is this the right wine?",
+    "yes": "Yes",
+    "no": "No",
+    "noRating": "No rating"
+  },
+  "scanning": {
+    "analyzing": "Analyzing wines..."
+  },
+  "about": {
+    "title": "Wine Shelf Scanner",
+    "description": "Ratings aggregated from 21 million reviews across community wine platforms. Individual scores are combined to provide a single trusted rating for each bottle.",
+    "winesCount": "181,000+ wines with ratings",
+    "reviewsCount": "21 million aggregated reviews",
+    "disclaimer": "Ratings sourced from community wine platforms. Wine Shelf Scanner is not affiliated with any rating provider."
+  },
+  "bugReport": {
+    "report": "Report",
+    "reportIssue": "Report an Issue",
+    "notExpected": "Not what you expected? Report an issue",
+    "scanError": "Scan error",
+    "someNotRecognized": "Some bottles not recognized",
+    "noBottlesIdentified": "No bottles identified",
+    "wrongMatch": "Wrong wine match",
+    "whatHappened": "What happened? (optional)",
+    "describePlaceholder": "Describe the issue...",
+    "submitReport": "Submit Report",
+    "submitting": "Submitting...",
+    "submitted": "Report submitted",
+    "thanksImprove": "Thanks for helping us improve!",
+    "done": "Done",
+    "cancel": "Cancel"
+  }
+}

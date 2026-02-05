@@ -24,11 +24,11 @@ struct BugReportSheet: View {
                 }
             }
             .padding()
-            .navigationTitle("Report an Issue")
+            .navigationTitle(NSLocalizedString("bugReport.reportIssue", comment: "Report sheet title"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Cancel") { dismiss() }
+                    Button(NSLocalizedString("bugReport.cancel", comment: "Cancel button")) { dismiss() }
                         .accessibilityIdentifier("bugReportCancelButton")
                 }
             }
@@ -58,11 +58,11 @@ struct BugReportSheet: View {
 
             // User description
             VStack(alignment: .leading, spacing: 6) {
-                Text("What happened? (optional)")
+                Text(NSLocalizedString("bugReport.whatHappened", comment: "What happened label"))
                     .font(.subheadline)
                     .foregroundColor(.secondary)
 
-                TextField("Describe the issue...", text: $userDescription, axis: .vertical)
+                TextField(NSLocalizedString("bugReport.describePlaceholder", comment: "Describe placeholder"), text: $userDescription, axis: .vertical)
                     .lineLimit(3...5)
                     .textFieldStyle(.roundedBorder)
                     .accessibilityIdentifier("bugReportTextField")
@@ -80,7 +80,7 @@ struct BugReportSheet: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
                 } else {
-                    Text("Submit Report")
+                    Text(NSLocalizedString("bugReport.submitReport", comment: "Submit button"))
                         .font(.headline)
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
@@ -100,16 +100,16 @@ struct BugReportSheet: View {
                 .font(.system(size: 48))
                 .foregroundColor(.green)
 
-            Text("Report submitted")
+            Text(NSLocalizedString("bugReport.submitted", comment: "Report submitted"))
                 .font(.headline)
 
-            Text("Thanks for helping us improve!")
+            Text(NSLocalizedString("bugReport.thanksImprove", comment: "Thanks message"))
                 .font(.subheadline)
                 .foregroundColor(.secondary)
 
             Spacer()
 
-            Button("Done") { dismiss() }
+            Button(NSLocalizedString("bugReport.done", comment: "Done button")) { dismiss() }
                 .buttonStyle(.borderedProminent)
                 .accessibilityIdentifier("bugReportDoneButton")
         }
@@ -120,13 +120,13 @@ struct BugReportSheet: View {
     private var contextLabel: String {
         switch reportType {
         case .error:
-            return "Scan error"
+            return NSLocalizedString("bugReport.scanError", comment: "Scan error context")
         case .partialDetection:
-            return "Some bottles not recognized"
+            return NSLocalizedString("bugReport.someNotRecognized", comment: "Partial detection context")
         case .fullFailure:
-            return "No bottles identified"
+            return NSLocalizedString("bugReport.noBottlesIdentified", comment: "Full failure context")
         case .wrongWine:
-            return "Wrong wine match"
+            return NSLocalizedString("bugReport.wrongMatch", comment: "Wrong wine context")
         }
     }
 

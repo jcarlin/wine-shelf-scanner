@@ -22,6 +22,7 @@ struct FeatureFlags {
         "feature_visual_emphasis": true,
         "feature_offline_cache": true,
         "feature_share": true,
+        "feature_bug_report": true,
     ]
 
     var wineMemory: Bool {
@@ -54,6 +55,10 @@ struct FeatureFlags {
 
     var share: Bool {
         flagValue("feature_share")
+    }
+
+    var bugReport: Bool {
+        flagValue("feature_bug_report")
     }
 
     /// Returns UserDefaults override if set, otherwise compiled default.

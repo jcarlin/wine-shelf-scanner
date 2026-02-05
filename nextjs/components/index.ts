@@ -7,3 +7,4 @@ export { FallbackList } from './FallbackList';
 export { Toast } from './Toast';
 export { OverlayContainer } from './OverlayContainer';
 export { ResultsView } from './ResultsView';
+export { BugReportModal } from './BugReportModal';

@@ -261,6 +261,8 @@ struct ErrorView: View {
     let onRetry: () -> Void
     let onReset: () -> Void
 
+    @State private var showBugReport = false
+
     var body: some View {
         VStack(spacing: 24) {
             Image(systemName: "exclamationmark.triangle.fill")
@@ -285,8 +287,28 @@ struct ErrorView: View {
                     .tint(.white)
                     .accessibilityIdentifier("startOverButton")
             }
+
+            if FeatureFlags.shared.bugReport {
+                Button {
+                    showBugReport = true
+                } label: {
+                    Label("Report an Issue", systemImage: "flag")
+                        .font(.subheadline)
+                        .foregroundColor(.white.opacity(0.6))
+                }
+                .accessibilityIdentifier("reportBugButton")
+            }
         }
         .accessibilityIdentifier("errorView")
+        .sheet(isPresented: $showBugReport) {
+            BugReportSheet(
+                reportType: .error,
+                errorMessage: message,
+                imageId: nil,
+                metadata: nil
+            )
+            .presentationDetents([.medium])
+        }
     }
 }
 

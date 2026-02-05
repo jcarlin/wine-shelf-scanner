@@ -2,7 +2,14 @@ import UIKit
 
 /// Protocol for scan services (allows mock/real swapping)
 protocol ScanServiceProtocol {
-    func scan(image: UIImage, debug: Bool) async throws -> ScanResponse
+    func scan(image: UIImage, debug: Bool, compressionQuality: CGFloat) async throws -> ScanResponse
+}
+
+extension ScanServiceProtocol {
+    /// Default compression quality for backward compatibility
+    func scan(image: UIImage, debug: Bool) async throws -> ScanResponse {
+        try await scan(image: image, debug: debug, compressionQuality: 0.8)
+    }
 }
 
 /// Errors from the scan service
@@ -42,8 +49,8 @@ class ScanAPIClient: ScanServiceProtocol {
         self.session = session
     }
 
-    func scan(image: UIImage, debug: Bool = false) async throws -> ScanResponse {
-        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+    func scan(image: UIImage, debug: Bool = false, compressionQuality: CGFloat = 0.8) async throws -> ScanResponse {
+        guard let imageData = image.jpegData(compressionQuality: compressionQuality) else {
             throw ScanError.invalidImage
         }
 

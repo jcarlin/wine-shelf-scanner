@@ -5,14 +5,13 @@ Receives user feedback on wine match accuracy to enable self-improving system.
 """
 
 import logging
-import sqlite3
-import threading
-from contextlib import contextmanager
 from pathlib import Path
-from typing import Iterator, Optional
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
+
+from app.db import BaseRepository
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -48,35 +47,15 @@ class FeedbackStats(BaseModel):
 # === Repository ===
 
 
-class FeedbackRepository:
+class FeedbackRepository(BaseRepository):
     """Thread-safe SQLite repository for feedback/corrections."""
 
     def __init__(self, db_path: Optional[str] = None):
+        # Use local path by default (not Config.database_path() which may point to prod DB)
         if db_path is None:
-            db_path = Path(__file__).parent.parent / "data" / "wines.db"
-        self.db_path = str(db_path)
-        self._local = threading.local()
+            db_path = str(Path(__file__).parent.parent / "data" / "wines.db")
+        super().__init__(db_path)
         # Table is created by Alembic migration 001
-
-    def _get_connection(self) -> sqlite3.Connection:
-        """Get thread-local database connection."""
-        if not hasattr(self._local, 'connection') or self._local.connection is None:
-            conn = sqlite3.connect(self.db_path, check_same_thread=False)
-            conn.row_factory = sqlite3.Row
-            self._local.connection = conn
-        return self._local.connection
-
-    @contextmanager
-    def _transaction(self) -> Iterator[sqlite3.Cursor]:
-        """Context manager for transactions."""
-        conn = self._get_connection()
-        cursor = conn.cursor()
-        try:
-            yield cursor
-            conn.commit()
-        except Exception:
-            conn.rollback()
-            raise
 
     def add_feedback(self, feedback: FeedbackRequest) -> bool:
         """Store user feedback. Returns True on success."""

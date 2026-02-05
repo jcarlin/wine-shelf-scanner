@@ -20,6 +20,13 @@ from .vision import BoundingBox, DetectedObject, TextBlock, VisionResult
 logger = logging.getLogger(__name__)
 
 
+def _get_db_connection(db_path: Path) -> sqlite3.Connection:
+    """Get database connection with row factory."""
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
 @dataclass
 class CacheStats:
     """Statistics for the vision cache."""
@@ -67,12 +74,6 @@ class VisionCache:
         self.max_size_bytes = max_size_mb * 1024 * 1024
 
         # Table is created by Alembic migration 003
-
-    def _get_connection(self) -> sqlite3.Connection:
-        """Get database connection with row factory."""
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        return conn
 
     def _hash_image(self, image_bytes: bytes) -> str:
         """Compute SHA256 hash of image bytes."""
@@ -150,7 +151,7 @@ class VisionCache:
 
         image_hash = self._hash_image(image_bytes)
 
-        conn = self._get_connection()
+        conn = _get_db_connection(self.db_path)
         try:
             # Check for cached result
             cursor = conn.execute(
@@ -222,7 +223,7 @@ class VisionCache:
         if self.ttl_days > 0:
             ttl_expires = datetime.now() + timedelta(days=self.ttl_days)
 
-        conn = self._get_connection()
+        conn = _get_db_connection(self.db_path)
         try:
             conn.execute(
                 """
@@ -301,7 +302,7 @@ class VisionCache:
         if not self.enabled:
             return 0
 
-        conn = self._get_connection()
+        conn = _get_db_connection(self.db_path)
         try:
             cursor = conn.execute(
                 """
@@ -336,7 +337,7 @@ class VisionCache:
                 "ttl_days": self.ttl_days,
             }
 
-        conn = self._get_connection()
+        conn = _get_db_connection(self.db_path)
         try:
             cursor = conn.execute(
                 """
@@ -377,7 +378,7 @@ class VisionCache:
         if not self.enabled:
             return 0
 
-        conn = self._get_connection()
+        conn = _get_db_connection(self.db_path)
         try:
             cursor = conn.execute("DELETE FROM vision_cache")
             conn.commit()

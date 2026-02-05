@@ -15,6 +15,13 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 
+def _get_db_connection(db_path: Path) -> sqlite3.Connection:
+    """Get database connection with row factory."""
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
 @dataclass
 class CachedRating:
     """A cached LLM-estimated rating."""
@@ -57,12 +64,6 @@ class LLMRatingCache:
         self.db_path = db_path
         # Table is created by Alembic migration 001
 
-    def _get_connection(self) -> sqlite3.Connection:
-        """Get database connection with row factory."""
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        return conn
-
     def _normalize_name(self, wine_name: str) -> str:
         """Normalize wine name for consistent lookups."""
         return wine_name.strip().lower()
@@ -82,7 +83,7 @@ class LLMRatingCache:
         """
         normalized = self._normalize_name(wine_name)
 
-        conn = self._get_connection()
+        conn = _get_db_connection(self.db_path)
         try:
             # Get existing rating
             cursor = conn.execute(
@@ -164,7 +165,7 @@ class LLMRatingCache:
         estimated_rating = max(1.0, min(5.0, estimated_rating))
         confidence = max(0.0, min(1.0, confidence))
 
-        conn = self._get_connection()
+        conn = _get_db_connection(self.db_path)
         try:
             conn.execute(
                 """
@@ -206,7 +207,7 @@ class LLMRatingCache:
         if min_hits is None:
             min_hits = self.PROMOTION_THRESHOLD
 
-        conn = self._get_connection()
+        conn = _get_db_connection(self.db_path)
         try:
             cursor = conn.execute(
                 """
@@ -253,7 +254,7 @@ class LLMRatingCache:
         """
         normalized = self._normalize_name(wine_name)
 
-        conn = self._get_connection()
+        conn = _get_db_connection(self.db_path)
         try:
             cursor = conn.execute(
                 "DELETE FROM llm_ratings_cache WHERE LOWER(wine_name) = ?",
@@ -272,7 +273,7 @@ class LLMRatingCache:
         Returns:
             Dict with total_entries, total_hits, promotion_candidates
         """
-        conn = self._get_connection()
+        conn = _get_db_connection(self.db_path)
         try:
             cursor = conn.execute(
                 """

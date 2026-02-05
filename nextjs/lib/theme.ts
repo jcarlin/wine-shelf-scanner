@@ -84,6 +84,38 @@ export const colors = {
 
   /** Secondary button text (white) */
   buttonSecondaryText: '#FFFFFF',
+
+  // Shelf ranking colors
+  /** Gold rank color (#1) */
+  rankGold: '#FFD700',
+
+  /** Silver rank color (#2) */
+  rankSilver: '#D9D9D9',
+
+  /** Bronze rank color (#3) */
+  rankBronze: '#B3B3B3',
+
+  // Safe pick / feature colors
+  /** Safe pick green */
+  safePick: '#4CAF50',
+
+  /** Wine memory liked (green) */
+  memoryLiked: '#34C759',
+
+  /** Wine memory disliked (red) */
+  memoryDisliked: '#FF3B30',
+} as const;
+
+// MARK: - Wine Type Colors
+
+/** Colors for wine type badges in detail modal */
+export const wineTypeColors: Record<string, string> = {
+  Red: '#722F37',
+  White: '#F5E6C8',
+  Rosé: '#F4C2C2',
+  Sparkling: '#FFE4B5',
+  Dessert: '#DAA520',
+  Fortified: '#8B4513',
 } as const;
 
 // MARK: - Spacing

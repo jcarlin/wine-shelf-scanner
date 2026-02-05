@@ -1,26 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { Wine } from 'lucide-react';
 import { colors } from '@/lib/theme';
+import { useTipRotation } from '@/hooks/useTipRotation';
+
+const TIP_COUNT = 4;
 
 export function ProcessingSpinner() {
   const t = useTranslations('processing');
-  const tips = [
-    t('tip1'),
-    t('tip2'),
-    t('tip3'),
-    t('tip4'),
-  ];
-  const [tipIndex, setTipIndex] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTipIndex((prev) => (prev + 1) % tips.length);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
+  const tipIndex = useTipRotation(TIP_COUNT);
+  const tips = [t('tip1'), t('tip2'), t('tip3'), t('tip4')];
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] px-6">

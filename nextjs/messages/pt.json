@@ -1,11 +1,11 @@
 {
   "app": {
     "title": "Scanner de Prateleira de Vinhos",
-    "description": "Tire uma foto de qualquer prateleira de vinhos e veja as avaliações sobre cada garrafa instantaneamente"
+    "description": "Nunca mais adivinhe na prateleira de vinhos. Avaliações de 21 milhões de reviews, em cada garrafa, instantaneamente."
   },
   "camera": {
-    "heroTitle": "Scanner de Prateleira de Vinhos",
-    "heroSubtitle": "Tire uma foto de qualquer prateleira de vinhos e veja as avaliações sobre cada garrafa instantaneamente",
+    "heroTitle": "Nunca mais adivinhe na prateleira de vinhos.",
+    "heroSubtitle": "Avaliações de 21 milhões de reviews — em cada garrafa, instantaneamente.",
     "dragDrop": "Arraste e solte uma imagem aqui",
     "orBrowse": "ou clique para procurar",
     "takePhoto": "Tirar Foto",
@@ -13,7 +13,11 @@
   },
   "processing": {
     "analyzing": "Analisando vinhos...",
-    "aiIdentifying": "Nossa IA está identificando garrafas e buscando avaliações. Isso pode levar alguns segundos."
+    "aiIdentifying": "Nossa IA está identificando garrafas e buscando avaliações. Isso pode levar alguns segundos.",
+    "tip1": "Toque em qualquer badge de avaliação para ver detalhes",
+    "tip2": "As garrafas mais bem avaliadas têm um destaque dourado",
+    "tip3": "Baseado em 21 milhões de avaliações agregadas",
+    "tip4": "Cobrimos mais de 181.000 vinhos no mundo todo"
   },
   "results": {
     "newScan": "Nova Digitalização",
@@ -21,7 +25,8 @@
     "partialDetection": "Algumas garrafas não puderam ser reconhecidas",
     "scannedWith": "Digitalizado com Scanner de Prateleira de Vinhos",
     "topPicks": "Melhores escolhas da prateleira:",
-    "stars": "estrelas"
+    "stars": "estrelas",
+    "more": "+ {count} mais"
   },
   "fallback": {
     "couldNotIdentify": "Não foi possível identificar as garrafas",
@@ -58,5 +63,12 @@
   },
   "scanning": {
     "analyzing": "Analisando vinhos..."
+  },
+  "about": {
+    "title": "Scanner de Prateleira de Vinhos",
+    "description": "Avaliações agregadas de 21 milhões de reviews em plataformas comunitárias de vinhos. As pontuações individuais são combinadas para fornecer uma avaliação confiável para cada garrafa.",
+    "winesCount": "181.000+ vinhos com avaliações",
+    "reviewsCount": "21 milhões de avaliações agregadas",
+    "disclaimer": "Avaliações provenientes de plataformas comunitárias de vinhos. Scanner de Prateleira de Vinhos não é afiliado a nenhum provedor de avaliações."
   }
 }

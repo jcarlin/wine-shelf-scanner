@@ -1,11 +1,27 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { Wine } from 'lucide-react';
 import { colors } from '@/lib/theme';
 
 export function ProcessingSpinner() {
   const t = useTranslations('processing');
+  const tips = [
+    t('tip1'),
+    t('tip2'),
+    t('tip3'),
+    t('tip4'),
+  ];
+  const [tipIndex, setTipIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTipIndex((prev) => (prev + 1) % tips.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] px-6">
       {/* Animated Wine Icon */}
@@ -24,8 +40,11 @@ export function ProcessingSpinner() {
       <h2 className="text-xl font-semibold text-white mb-2">
         {t('analyzing')}
       </h2>
-      <p className="text-gray-400 text-center max-w-sm">
-        {t('aiIdentifying')}
+      <p
+        key={tipIndex}
+        className="text-gray-400 text-center max-w-sm animate-fade-in"
+      >
+        {tips[tipIndex]}
       </p>
 
       {/* Progress indicator dots */}

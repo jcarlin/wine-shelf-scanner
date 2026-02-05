@@ -1,13 +1,25 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
+
+const tipKeys = ['tip1', 'tip2', 'tip3', 'tip4'] as const;
 
 interface ScanningOverlayProps {
   imageUri: string;
 }
 
 export function ScanningOverlay({ imageUri }: ScanningOverlayProps) {
-  const t = useTranslations('scanning');
+  const t = useTranslations('processing');
+  const [tipIndex, setTipIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTipIndex((prev) => (prev + 1) % tipKeys.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-4">
       <div className="relative w-full max-w-lg overflow-hidden rounded-xl">
@@ -33,6 +45,14 @@ export function ScanningOverlay({ imageUri }: ScanningOverlayProps) {
           </div>
         </div>
       </div>
+
+      {/* Rotating tip below the image */}
+      <p
+        key={tipIndex}
+        className="text-gray-400 text-sm text-center mt-4 animate-fade-in"
+      >
+        {t(tipKeys[tipIndex])}
+      </p>
     </div>
   );
 }

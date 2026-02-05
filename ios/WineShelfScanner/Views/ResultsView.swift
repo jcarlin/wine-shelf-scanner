@@ -36,6 +36,7 @@ struct ResultsView: View {
             if response.isFullFailure {
                 FallbackListView(wines: response.fallbackList)
             } else {
+                resultsSummaryHeader
                 overlayImageView
             }
 
@@ -84,6 +85,38 @@ struct ResultsView: View {
                     .accessibilityIdentifier("partialDetectionToast")
             }
         }
+    }
+
+    private var resultsSummaryHeader: some View {
+        let visible = response.visibleResults
+        let topWine = response.topRatedResults.first
+
+        return HStack(spacing: 6) {
+            if let top = topWine, top.rating != nil {
+                Image(systemName: "star.fill")
+                    .foregroundColor(.yellow)
+                    .font(.caption)
+                Text(top.wineName)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(.white)
+                    .lineLimit(1)
+                if visible.count > 1 {
+                    Text("+ \(visible.count - 1) more")
+                        .font(.subheadline)
+                        .foregroundColor(.white.opacity(0.5))
+                }
+            } else {
+                Text("\(visible.count) bottle\(visible.count != 1 ? "s" : "") found")
+                    .font(.subheadline)
+                    .foregroundColor(.white.opacity(0.7))
+            }
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity)
+        .background(Color.black.opacity(0.9))
+        .accessibilityIdentifier("resultsSummaryHeader")
     }
 
     private var overlayImageView: some View {

@@ -2,8 +2,8 @@
 "app.title" = "Escáner de Vinos";
 
 /* Idle / Camera */
-"idle.pointAtShelf" = "Apunta al estante de vinos";
-"idle.takePhotoToSee" = "Toma una foto para ver las calificaciones";
+"idle.pointAtShelf" = "Nunca más adivines en el estante de vinos.";
+"idle.takePhotoToSee" = "Calificaciones de 21 millones de reseñas — en cada botella, al instante.";
 "idle.scanShelf" = "Escanear Estante";
 "idle.choosePhoto" = "Elegir Foto";
 "idle.selectPhoto" = "Seleccionar Foto";
@@ -50,3 +50,18 @@
 "detail.submit" = "Enviar";
 "detail.yes" = "Sí";
 "detail.no" = "No";
+
+/* Processing Tips */
+"processing.tip1" = "Toca cualquier insignia de calificación para ver detalles";
+"processing.tip2" = "Las botellas mejor calificadas tienen un resaltado dorado";
+"processing.tip3" = "Basado en 21 millones de reseñas agregadas";
+"processing.tip4" = "Cubrimos más de 181,000 vinos en todo el mundo";
+
+/* About */
+"about.title" = "Escáner de Vinos";
+"about.description" = "Calificaciones agregadas de 21 millones de reseñas en plataformas comunitarias de vinos. Las puntuaciones individuales se combinan para proporcionar una calificación confiable para cada botella.";
+"about.winesCount" = "181,000+ vinos con calificaciones";
+"about.reviewsCount" = "21 millones de reseñas agregadas";
+"about.disclaimer" = "Calificaciones obtenidas de plataformas comunitarias de vinos. Escáner de Vinos no está afiliado a ningún proveedor de calificaciones.";
+"about.heading" = "Acerca de";
+"about.done" = "Listo";

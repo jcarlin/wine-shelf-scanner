@@ -1,11 +1,11 @@
 {
   "app": {
     "title": "Scanner de Rayon à Vins",
-    "description": "Prenez une photo de n'importe quel rayon à vins et voyez instantanément les notes sur chaque bouteille"
+    "description": "Ne devinez plus jamais au rayon vins. Notes de 21 millions d'avis, sur chaque bouteille, instantanément."
   },
   "camera": {
-    "heroTitle": "Scanner de Rayon à Vins",
-    "heroSubtitle": "Prenez une photo de n'importe quel rayon à vins et voyez instantanément les notes sur chaque bouteille",
+    "heroTitle": "Ne devinez plus jamais au rayon vins.",
+    "heroSubtitle": "Notes de 21 millions d'avis — sur chaque bouteille, instantanément.",
     "dragDrop": "Glissez-déposez une image ici",
     "orBrowse": "ou cliquez pour parcourir",
     "takePhoto": "Prendre une Photo",
@@ -13,7 +13,11 @@
   },
   "processing": {
     "analyzing": "Analyse des vins...",
-    "aiIdentifying": "Notre IA identifie les bouteilles et récupère les notes. Cela peut prendre quelques secondes."
+    "aiIdentifying": "Notre IA identifie les bouteilles et récupère les notes. Cela peut prendre quelques secondes.",
+    "tip1": "Appuyez sur un badge de note pour voir les détails",
+    "tip2": "Les bouteilles les mieux notées ont un reflet doré",
+    "tip3": "Basé sur 21 millions d'avis agrégés",
+    "tip4": "Nous couvrons plus de 181 000 vins dans le monde"
   },
   "results": {
     "newScan": "Nouveau Scan",
@@ -21,7 +25,8 @@
     "partialDetection": "Certaines bouteilles n'ont pas pu être reconnues",
     "scannedWith": "Scanné avec Scanner de Rayon à Vins",
     "topPicks": "Meilleurs choix du rayon :",
-    "stars": "étoiles"
+    "stars": "étoiles",
+    "more": "+ {count} de plus"
   },
   "fallback": {
     "couldNotIdentify": "Impossible d'identifier les bouteilles",
@@ -58,5 +63,12 @@
   },
   "scanning": {
     "analyzing": "Analyse des vins..."
+  },
+  "about": {
+    "title": "Scanner de Rayon à Vins",
+    "description": "Notes agrégées à partir de 21 millions d'avis sur des plateformes communautaires de vins. Les scores individuels sont combinés pour fournir une note de confiance pour chaque bouteille.",
+    "winesCount": "181 000+ vins avec des notes",
+    "reviewsCount": "21 millions d'avis agrégés",
+    "disclaimer": "Notes provenant de plateformes communautaires de vins. Scanner de Rayon à Vins n'est affilié à aucun fournisseur de notes."
   }
 }

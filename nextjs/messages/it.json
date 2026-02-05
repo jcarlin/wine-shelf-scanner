@@ -1,11 +1,11 @@
 {
   "app": {
     "title": "Scanner Scaffale Vini",
-    "description": "Scatta una foto di qualsiasi scaffale di vini e vedi istantaneamente le valutazioni su ogni bottiglia"
+    "description": "Non tirare più a indovinare allo scaffale dei vini. Valutazioni da 21 milioni di recensioni, su ogni bottiglia, istantaneamente."
   },
   "camera": {
-    "heroTitle": "Scanner Scaffale Vini",
-    "heroSubtitle": "Scatta una foto di qualsiasi scaffale di vini e vedi istantaneamente le valutazioni su ogni bottiglia",
+    "heroTitle": "Non tirare più a indovinare allo scaffale dei vini.",
+    "heroSubtitle": "Valutazioni da 21 milioni di recensioni — su ogni bottiglia, istantaneamente.",
     "dragDrop": "Trascina e rilascia un'immagine qui",
     "orBrowse": "o clicca per sfogliare",
     "takePhoto": "Scatta Foto",
@@ -13,7 +13,11 @@
   },
   "processing": {
     "analyzing": "Analisi dei vini...",
-    "aiIdentifying": "La nostra IA sta identificando le bottiglie e recuperando le valutazioni. Potrebbe richiedere qualche secondo."
+    "aiIdentifying": "La nostra IA sta identificando le bottiglie e recuperando le valutazioni. Potrebbe richiedere qualche secondo.",
+    "tip1": "Tocca qualsiasi badge di valutazione per vedere i dettagli",
+    "tip2": "Le bottiglie più apprezzate hanno un'evidenziazione dorata",
+    "tip3": "Basato su 21 milioni di recensioni aggregate",
+    "tip4": "Copriamo oltre 181.000 vini in tutto il mondo"
   },
   "results": {
     "newScan": "Nuova Scansione",
@@ -21,7 +25,8 @@
     "partialDetection": "Alcune bottiglie non sono state riconosciute",
     "scannedWith": "Scansionato con Scanner Scaffale Vini",
     "topPicks": "Migliori scelte dallo scaffale:",
-    "stars": "stelle"
+    "stars": "stelle",
+    "more": "+ {count} altri"
   },
   "fallback": {
     "couldNotIdentify": "Impossibile identificare le bottiglie",
@@ -58,5 +63,12 @@
   },
   "scanning": {
     "analyzing": "Analisi dei vini..."
+  },
+  "about": {
+    "title": "Scanner Scaffale Vini",
+    "description": "Valutazioni aggregate da 21 milioni di recensioni su piattaforme comunitarie di vini. I punteggi individuali sono combinati per fornire una valutazione affidabile per ogni bottiglia.",
+    "winesCount": "181.000+ vini con valutazioni",
+    "reviewsCount": "21 milioni di recensioni aggregate",
+    "disclaimer": "Valutazioni provenienti da piattaforme comunitarie di vini. Scanner Scaffale Vini non è affiliato ad alcun fornitore di valutazioni."
   }
 }

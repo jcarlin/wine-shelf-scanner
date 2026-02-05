@@ -2,8 +2,8 @@
 "app.title" = "葡萄酒货架扫描仪";
 
 /* Idle / Camera */
-"idle.pointAtShelf" = "对准葡萄酒货架";
-"idle.takePhotoToSee" = "拍照查看评分";
+"idle.pointAtShelf" = "再也不用在葡萄酒货架前猜测了。";
+"idle.takePhotoToSee" = "2100万条评论的评分 — 每瓶酒上，即时显示。";
 "idle.scanShelf" = "扫描货架";
 "idle.choosePhoto" = "选择照片";
 "idle.selectPhoto" = "选取照片";
@@ -50,3 +50,18 @@
 "detail.submit" = "提交";
 "detail.yes" = "是";
 "detail.no" = "否";
+
+/* Processing Tips */
+"processing.tip1" = "点击任意评分标签查看详情";
+"processing.tip2" = "评分最高的酒瓶有金色高亮";
+"processing.tip3" = "基于2100万条聚合评论";
+"processing.tip4" = "覆盖全球181,000+款葡萄酒";
+
+/* About */
+"about.title" = "葡萄酒货架扫描仪";
+"about.description" = "评分聚合自社区葡萄酒平台的2100万条评论。各平台评分经综合计算，为每瓶酒提供可信的统一评分。";
+"about.winesCount" = "181,000+ 款有评分的葡萄酒";
+"about.reviewsCount" = "2100万条聚合评论";
+"about.disclaimer" = "评分来源于社区葡萄酒平台。葡萄酒货架扫描仪与任何评分提供商无关。";
+"about.heading" = "关于";
+"about.done" = "完成";

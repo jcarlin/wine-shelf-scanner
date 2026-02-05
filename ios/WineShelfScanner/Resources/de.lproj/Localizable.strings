@@ -2,8 +2,8 @@
 "app.title" = "Weinregal-Scanner";
 
 /* Idle / Camera */
-"idle.pointAtShelf" = "Auf ein Weinregal richten";
-"idle.takePhotoToSee" = "Foto aufnehmen für Bewertungen";
+"idle.pointAtShelf" = "Nie wieder raten am Weinregal.";
+"idle.takePhotoToSee" = "Bewertungen aus 21 Millionen Reviews — auf jeder Flasche, sofort.";
 "idle.scanShelf" = "Regal scannen";
 "idle.choosePhoto" = "Foto wählen";
 "idle.selectPhoto" = "Foto auswählen";
@@ -50,3 +50,18 @@
 "detail.submit" = "Absenden";
 "detail.yes" = "Ja";
 "detail.no" = "Nein";
+
+/* Processing Tips */
+"processing.tip1" = "Tippen Sie auf ein Bewertungsbadge für Details";
+"processing.tip2" = "Top-bewertete Flaschen haben eine goldene Hervorhebung";
+"processing.tip3" = "Basierend auf 21 Millionen aggregierten Bewertungen";
+"processing.tip4" = "Wir decken über 181.000 Weine weltweit ab";
+
+/* About */
+"about.title" = "Weinregal-Scanner";
+"about.description" = "Bewertungen aggregiert aus 21 Millionen Reviews auf Community-Weinplattformen. Einzelne Bewertungen werden kombiniert, um eine vertrauenswürdige Gesamtbewertung für jede Flasche zu liefern.";
+"about.winesCount" = "181.000+ Weine mit Bewertungen";
+"about.reviewsCount" = "21 Millionen aggregierte Bewertungen";
+"about.disclaimer" = "Bewertungen stammen von Community-Weinplattformen. Weinregal-Scanner ist nicht mit einem Bewertungsanbieter verbunden.";
+"about.heading" = "Über";
+"about.done" = "Fertig";

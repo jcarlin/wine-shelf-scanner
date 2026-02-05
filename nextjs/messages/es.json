@@ -1,11 +1,11 @@
 {
   "app": {
     "title": "Escáner de Vinos",
-    "description": "Toma una foto de cualquier estante de vinos y ve las calificaciones sobre cada botella al instante"
+    "description": "Nunca más adivines en el estante de vinos. Calificaciones de 21 millones de reseñas, en cada botella, al instante."
   },
   "camera": {
-    "heroTitle": "Escáner de Vinos",
-    "heroSubtitle": "Toma una foto de cualquier estante de vinos y ve las calificaciones sobre cada botella al instante",
+    "heroTitle": "Nunca más adivines en el estante de vinos.",
+    "heroSubtitle": "Calificaciones de 21 millones de reseñas — en cada botella, al instante.",
     "dragDrop": "Arrastra y suelta una imagen aquí",
     "orBrowse": "o haz clic para buscar",
     "takePhoto": "Tomar Foto",
@@ -13,7 +13,11 @@
   },
   "processing": {
     "analyzing": "Analizando vinos...",
-    "aiIdentifying": "Nuestra IA está identificando botellas y buscando calificaciones. Esto puede tardar unos segundos."
+    "aiIdentifying": "Nuestra IA está identificando botellas y buscando calificaciones. Esto puede tardar unos segundos.",
+    "tip1": "Toca cualquier insignia de calificación para ver detalles",
+    "tip2": "Las botellas mejor calificadas tienen un resaltado dorado",
+    "tip3": "Basado en 21 millones de reseñas agregadas",
+    "tip4": "Cubrimos más de 181,000 vinos en todo el mundo"
   },
   "results": {
     "newScan": "Nuevo Escaneo",
@@ -21,7 +25,8 @@
     "partialDetection": "Algunas botellas no pudieron ser reconocidas",
     "scannedWith": "Escaneado con Escáner de Vinos",
     "topPicks": "Mejores opciones del estante:",
-    "stars": "estrellas"
+    "stars": "estrellas",
+    "more": "+ {count} más"
   },
   "fallback": {
     "couldNotIdentify": "No se pudieron identificar las botellas",
@@ -58,5 +63,12 @@
   },
   "scanning": {
     "analyzing": "Analizando vinos..."
+  },
+  "about": {
+    "title": "Escáner de Vinos",
+    "description": "Calificaciones agregadas de 21 millones de reseñas en plataformas comunitarias de vinos. Las puntuaciones individuales se combinan para proporcionar una calificación confiable para cada botella.",
+    "winesCount": "181,000+ vinos con calificaciones",
+    "reviewsCount": "21 millones de reseñas agregadas",
+    "disclaimer": "Calificaciones obtenidas de plataformas comunitarias de vinos. Escáner de Vinos no está afiliado a ningún proveedor de calificaciones."
   }
 }

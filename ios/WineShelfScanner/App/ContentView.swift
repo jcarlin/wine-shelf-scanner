@@ -3,9 +3,12 @@ import SwiftUI
 /// Main content view that manages the scan flow
 struct ContentView: View {
     @StateObject private var viewModel: ScanViewModel
+    @ObservedObject private var subscriptionManager = SubscriptionManager.shared
     @State private var showCamera = false
     @State private var showPhotoPicker = false
     @State private var capturedImage: UIImage?
+    @State private var showAbout = false
+    @State private var showPaywall = false
 
     /// Whether we're running in UI test mode (bypass photo picker)
     private var isUITesting: Bool {
@@ -14,6 +17,22 @@ struct ContentView: View {
         #else
         return false
         #endif
+    }
+
+    /// Whether the paywall should block scan initiation
+    private var shouldShowPaywall: Bool {
+        FeatureFlags.shared.subscription
+            && ScanCounter.shared.hasReachedLimit
+            && !subscriptionManager.isSubscribed
+    }
+
+    /// Remaining free scans to display (nil when feature is off or subscribed)
+    private var scansRemaining: Int? {
+        guard FeatureFlags.shared.subscription,
+              !subscriptionManager.isSubscribed else {
+            return nil
+        }
+        return ScanCounter.shared.remaining
     }
 
     init(viewModel: ScanViewModel? = nil) {
@@ -60,6 +79,15 @@ struct ContentView: View {
         return ScanViewModel()
     }
 
+    /// Attempt to start a scan, showing paywall if limit reached
+    private func attemptScan(action: @escaping () -> Void) {
+        if shouldShowPaywall {
+            showPaywall = true
+        } else {
+            action()
+        }
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -69,25 +97,30 @@ struct ContentView: View {
                 case .idle:
                     IdleView(
                         onScanCamera: {
-                            if isUITesting {
-                                // Bypass camera, directly trigger scan with mock image
-                                let mockImage = Self.createMockImage()
-                                capturedImage = mockImage
-                                viewModel.performScan(with: mockImage)
-                            } else {
-                                showCamera = true
+                            attemptScan {
+                                if isUITesting {
+                                    // Bypass camera, directly trigger scan with mock image
+                                    let mockImage = Self.createMockImage()
+                                    capturedImage = mockImage
+                                    viewModel.performScan(with: mockImage)
+                                } else {
+                                    showCamera = true
+                                }
                             }
                         },
                         onScanLibrary: {
-                            if isUITesting {
-                                // Bypass photo picker, directly trigger scan with mock image
-                                let mockImage = Self.createMockImage()
-                                capturedImage = mockImage
-                                viewModel.performScan(with: mockImage)
-                            } else {
-                                showPhotoPicker = true
+                            attemptScan {
+                                if isUITesting {
+                                    // Bypass photo picker, directly trigger scan with mock image
+                                    let mockImage = Self.createMockImage()
+                                    capturedImage = mockImage
+                                    viewModel.performScan(with: mockImage)
+                                } else {
+                                    showPhotoPicker = true
+                                }
                             }
-                        }
+                        },
+                        scansRemaining: scansRemaining
                     )
 
                 case .processing:
@@ -127,6 +160,17 @@ struct ContentView: View {
             .navigationTitle(NSLocalizedString("app.title", comment: "Navigation title"))
             .navigationBarTitleDisplayMode(.inline)
             .preferredColorScheme(.dark)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        showAbout = true
+                    } label: {
+                        Image(systemName: "info.circle")
+                            .foregroundColor(.white.opacity(0.7))
+                    }
+                    .accessibilityIdentifier("aboutButton")
+                }
+            }
             .sheet(isPresented: $showCamera) {
                 CameraView(image: $capturedImage, isPresented: $showCamera)
                     .ignoresSafeArea()
@@ -134,6 +178,13 @@ struct ContentView: View {
             .sheet(isPresented: $showPhotoPicker) {
                 PhotoPicker(image: $capturedImage, isPresented: $showPhotoPicker)
                     .ignoresSafeArea()
+            }
+            .sheet(isPresented: $showAbout) {
+                AboutView()
+                    .presentationDetents([.medium])
+            }
+            .sheet(isPresented: $showPaywall) {
+                PaywallView(subscriptionManager: subscriptionManager)
             }
             .onChange(of: capturedImage) { newImage in
                 if let image = newImage {
@@ -149,6 +200,7 @@ struct ContentView: View {
 struct IdleView: View {
     let onScanCamera: () -> Void
     let onScanLibrary: () -> Void
+    var scansRemaining: Int? = nil
 
     @State private var cameraAvailable = UIImagePickerController.isSourceTypeAvailable(.camera)
 
@@ -160,11 +212,16 @@ struct IdleView: View {
 
             Text(NSLocalizedString("idle.pointAtShelf", comment: "Idle screen title"))
                 .font(.title2)
+                .fontWeight(.semibold)
                 .foregroundColor(.white)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
 
             Text(NSLocalizedString("idle.takePhotoToSee", comment: "Idle screen subtitle"))
                 .font(.subheadline)
                 .foregroundColor(.white.opacity(0.6))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
 
             VStack(spacing: 12) {
                 if cameraAvailable {
@@ -194,11 +251,34 @@ struct IdleView: View {
                 .padding(.horizontal, 40)
             }
             .padding(.top, 16)
+
+            // Free scans remaining indicator
+            if let remaining = scansRemaining, remaining > 0 {
+                HStack(spacing: 4) {
+                    Image(systemName: "sparkles")
+                        .font(.caption2)
+                    Text("\(remaining) free scan\(remaining == 1 ? "" : "s") remaining")
+                }
+                .font(.caption)
+                .foregroundColor(.white.opacity(remaining <= 2 ? 0.6 : 0.4))
+                .padding(.top, 4)
+                .accessibilityIdentifier("scansRemainingLabel")
+            }
         }
     }
 }
 
 struct ProcessingView: View {
+    private let tips = [
+        NSLocalizedString("processing.tip1", comment: "Tip: tap badge"),
+        NSLocalizedString("processing.tip2", comment: "Tip: gold highlight"),
+        NSLocalizedString("processing.tip3", comment: "Tip: review count"),
+        NSLocalizedString("processing.tip4", comment: "Tip: wine count"),
+    ]
+
+    @State private var currentTipIndex = 0
+    let timer = Timer.publish(every: 3, on: .main, in: .common).autoconnect()
+
     var body: some View {
         VStack(spacing: 16) {
             ProgressView()
@@ -209,6 +289,18 @@ struct ProcessingView: View {
             Text(NSLocalizedString("processing.analyzing", comment: "Processing status"))
                 .font(.headline)
                 .foregroundColor(.white)
+
+            Text(tips[currentTipIndex])
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.5))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+                .id(currentTipIndex)
+                .transition(.opacity)
+                .animation(.easeInOut(duration: 0.5), value: currentTipIndex)
+        }
+        .onReceive(timer) { _ in
+            currentTipIndex = (currentTipIndex + 1) % tips.count
         }
     }
 }
@@ -244,6 +336,57 @@ struct ErrorView: View {
             }
         }
         .accessibilityIdentifier("errorView")
+    }
+}
+
+// MARK: - About View
+
+struct AboutView: View {
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 20) {
+                Image(systemName: "wineglass.fill")
+                    .font(.system(size: 48))
+                    .foregroundColor(Color(red: 0.45, green: 0.18, blue: 0.22))
+
+                Text(NSLocalizedString("about.title", comment: "About title"))
+                    .font(.title2)
+                    .fontWeight(.bold)
+
+                Text(NSLocalizedString("about.description", comment: "About description"))
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Label(NSLocalizedString("about.winesCount", comment: "Wine count stat"), systemImage: "checkmark.circle.fill")
+                        .foregroundColor(.secondary)
+                    Label(NSLocalizedString("about.reviewsCount", comment: "Review count stat"), systemImage: "star.fill")
+                        .foregroundColor(.secondary)
+                }
+                .font(.subheadline)
+
+                Spacer()
+
+                Text(NSLocalizedString("about.disclaimer", comment: "About disclaimer"))
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+            }
+            .padding(.top, 32)
+            .padding(.horizontal)
+            .navigationTitle(NSLocalizedString("about.heading", comment: "About navigation title"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(NSLocalizedString("about.done", comment: "Done button")) { dismiss() }
+                }
+            }
+        }
     }
 }
 

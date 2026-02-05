@@ -151,6 +151,25 @@ CREATE TABLE IF NOT EXISTS corrections (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Individual wine reviews from various sources
+-- Stores review-level data (21M XWines + 280K Kaggle)
+CREATE TABLE IF NOT EXISTS wine_reviews (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    wine_id INTEGER,                      -- NULL if unmatched to DB wine
+    source_name TEXT NOT NULL,            -- 'xwines', 'kaggle_winemag'
+    user_id TEXT,                         -- Reviewer identifier
+    rating REAL NOT NULL,                 -- Rating on 1-5 scale
+    review_date TEXT,                     -- ISO date string
+    vintage TEXT,                         -- Wine vintage year
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (wine_id) REFERENCES wines(id) ON DELETE SET NULL
+);
+
+-- Indexes for wine_reviews
+CREATE INDEX IF NOT EXISTS idx_wine_reviews_wine_id ON wine_reviews(wine_id);
+CREATE INDEX IF NOT EXISTS idx_wine_reviews_source ON wine_reviews(source_name);
+CREATE INDEX IF NOT EXISTS idx_wine_reviews_rating ON wine_reviews(rating);
+
 -- Indexes for corrections analysis
 CREATE INDEX IF NOT EXISTS idx_corrections_wine_name ON corrections(LOWER(wine_name));
 CREATE INDEX IF NOT EXISTS idx_corrections_is_correct ON corrections(is_correct);

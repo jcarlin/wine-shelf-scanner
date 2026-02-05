@@ -2,8 +2,8 @@
 "app.title" = "Wine Scanner";
 
 /* Idle / Camera */
-"idle.pointAtShelf" = "Point at a wine shelf";
-"idle.takePhotoToSee" = "Take a photo to see ratings";
+"idle.pointAtShelf" = "Never guess at the wine shelf again.";
+"idle.takePhotoToSee" = "Ratings from 21 million reviews — on every bottle, instantly.";
 "idle.scanShelf" = "Scan Shelf";
 "idle.choosePhoto" = "Choose Photo";
 "idle.selectPhoto" = "Select Photo";
@@ -50,3 +50,18 @@
 "detail.submit" = "Submit";
 "detail.yes" = "Yes";
 "detail.no" = "No";
+
+/* Processing Tips */
+"processing.tip1" = "Tap any rating badge to see details";
+"processing.tip2" = "Top-rated bottles get a gold highlight";
+"processing.tip3" = "Powered by 21 million aggregated reviews";
+"processing.tip4" = "We cover 181,000+ wines worldwide";
+
+/* About */
+"about.title" = "Wine Shelf Scanner";
+"about.description" = "Ratings aggregated from 21 million reviews across community wine platforms. Individual scores are combined to provide a single trusted rating for each bottle.";
+"about.winesCount" = "181,000+ wines with ratings";
+"about.reviewsCount" = "21 million aggregated reviews";
+"about.disclaimer" = "Ratings sourced from community wine platforms. Wine Shelf Scanner is not affiliated with any rating provider.";
+"about.heading" = "About";
+"about.done" = "Done";

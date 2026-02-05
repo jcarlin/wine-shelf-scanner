@@ -1,11 +1,11 @@
 {
   "app": {
     "title": "葡萄酒货架扫描仪",
-    "description": "拍一张葡萄酒货架的照片，即时查看每瓶酒的评分"
+    "description": "再也不用在葡萄酒货架前猜测了。2100万条评论的评分，每瓶酒上，即时显示。"
   },
   "camera": {
-    "heroTitle": "葡萄酒货架扫描仪",
-    "heroSubtitle": "拍一张葡萄酒货架的照片，即时查看每瓶酒的评分",
+    "heroTitle": "再也不用在葡萄酒货架前猜测了。",
+    "heroSubtitle": "2100万条评论的评分 — 每瓶酒上，即时显示。",
     "dragDrop": "将图片拖放到此处",
     "orBrowse": "或点击浏览",
     "takePhoto": "拍照",
@@ -13,7 +13,11 @@
   },
   "processing": {
     "analyzing": "正在分析葡萄酒...",
-    "aiIdentifying": "我们的AI正在识别酒瓶并获取评分，这可能需要几秒钟。"
+    "aiIdentifying": "我们的AI正在识别酒瓶并获取评分，这可能需要几秒钟。",
+    "tip1": "点击任意评分标签查看详情",
+    "tip2": "评分最高的酒瓶有金色高亮",
+    "tip3": "基于2100万条聚合评论",
+    "tip4": "覆盖全球181,000+款葡萄酒"
   },
   "results": {
     "newScan": "新扫描",
@@ -21,7 +25,8 @@
     "partialDetection": "部分酒瓶无法识别",
     "scannedWith": "使用葡萄酒货架扫描仪扫描",
     "topPicks": "货架精选：",
-    "stars": "星"
+    "stars": "星",
+    "more": "+ {count} 更多"
   },
   "fallback": {
     "couldNotIdentify": "无法识别酒瓶",
@@ -58,5 +63,12 @@
   },
   "scanning": {
     "analyzing": "正在分析葡萄酒..."
+  },
+  "about": {
+    "title": "葡萄酒货架扫描仪",
+    "description": "评分聚合自社区葡萄酒平台的2100万条评论。各平台评分经综合计算，为每瓶酒提供可信的统一评分。",
+    "winesCount": "181,000+ 款有评分的葡萄酒",
+    "reviewsCount": "2100万条聚合评论",
+    "disclaimer": "评分来源于社区葡萄酒平台。葡萄酒货架扫描仪与任何评分提供商无关。"
   }
 }

@@ -6,6 +6,7 @@ and enable easy configuration management.
 """
 
 import os
+from pathlib import Path
 from typing import List, Optional
 
 
@@ -111,6 +112,26 @@ class Config:
     def vision_cache_max_size_mb() -> int:
         """Maximum vision cache size in MB before LRU eviction."""
         return int(os.getenv("VISION_CACHE_MAX_SIZE_MB", "500"))
+
+    # === Database Persistence ===
+    @staticmethod
+    def database_path() -> str:
+        """Path to SQLite database file.
+        Default: backend/app/data/wines.db (relative to app package).
+        Override with DATABASE_PATH env var for container deployments.
+        """
+        default = str(Path(__file__).parent / "data" / "wines.db")
+        return os.getenv("DATABASE_PATH", default)
+
+    @staticmethod
+    def gcs_db_bucket() -> str:
+        """GCS bucket name for wine database storage."""
+        return os.getenv("GCS_DB_BUCKET", "")
+
+    @staticmethod
+    def gcs_db_path() -> str:
+        """Object path within GCS bucket for wines.db."""
+        return os.getenv("GCS_DB_PATH", "data/wines.db")
 
     # === LLM Rating Cache ===
     @staticmethod

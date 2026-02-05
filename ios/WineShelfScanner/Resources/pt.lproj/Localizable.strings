@@ -2,8 +2,8 @@
 "app.title" = "Scanner de Vinhos";
 
 /* Idle / Camera */
-"idle.pointAtShelf" = "Aponte para uma prateleira de vinhos";
-"idle.takePhotoToSee" = "Tire uma foto para ver as avaliações";
+"idle.pointAtShelf" = "Nunca mais adivinhe na prateleira de vinhos.";
+"idle.takePhotoToSee" = "Avaliações de 21 milhões de reviews — em cada garrafa, instantaneamente.";
 "idle.scanShelf" = "Escanear Prateleira";
 "idle.choosePhoto" = "Escolher Foto";
 "idle.selectPhoto" = "Selecionar Foto";
@@ -50,3 +50,18 @@
 "detail.submit" = "Enviar";
 "detail.yes" = "Sim";
 "detail.no" = "Não";
+
+/* Processing Tips */
+"processing.tip1" = "Toque em qualquer badge de avaliação para ver detalhes";
+"processing.tip2" = "As garrafas mais bem avaliadas têm um destaque dourado";
+"processing.tip3" = "Baseado em 21 milhões de avaliações agregadas";
+"processing.tip4" = "Cobrimos mais de 181.000 vinhos no mundo todo";
+
+/* About */
+"about.title" = "Scanner de Prateleira de Vinhos";
+"about.description" = "Avaliações agregadas de 21 milhões de reviews em plataformas comunitárias de vinhos. As pontuações individuais são combinadas para fornecer uma avaliação confiável para cada garrafa.";
+"about.winesCount" = "181.000+ vinhos com avaliações";
+"about.reviewsCount" = "21 milhões de avaliações agregadas";
+"about.disclaimer" = "Avaliações provenientes de plataformas comunitárias de vinhos. Scanner de Prateleira de Vinhos não é afiliado a nenhum provedor de avaliações.";
+"about.heading" = "Sobre";
+"about.done" = "Concluído";

@@ -29,6 +29,12 @@
 		APP0020 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = RES0006 /* PrivacyInfo.xcprivacy */; };
 		APP0021 /* DebugTray.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0015 /* DebugTray.swift */; };
 		APP0022 /* FeedbackService.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0016 /* FeedbackService.swift */; };
+		APP0023 /* FeatureFlags.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0017 /* FeatureFlags.swift */; };
+		APP0024 /* ScanCacheService.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0018 /* ScanCacheService.swift */; };
+		APP0025 /* WineMemoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0019 /* WineMemoryStore.swift */; };
+		APP0026 /* ScanCounter.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0020 /* ScanCounter.swift */; };
+		APP0027 /* SubscriptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0021 /* SubscriptionManager.swift */; };
+		APP0028 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0022 /* PaywallView.swift */; };
 		TEST0001 /* ScanResponseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0001 /* ScanResponseTests.swift */; };
 		TEST0002 /* OverlayMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0002 /* OverlayMathTests.swift */; };
 		UITST001 /* AccessibilityIdentifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = UISRC001 /* AccessibilityIdentifiers.swift */; };
@@ -86,6 +92,12 @@
 		SRC0014 /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
 		SRC0015 /* DebugTray.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugTray.swift; sourceTree = "<group>"; };
 		SRC0016 /* FeedbackService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedbackService.swift; sourceTree = "<group>"; };
+		SRC0017 /* FeatureFlags.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureFlags.swift; sourceTree = "<group>"; };
+		SRC0018 /* ScanCacheService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanCacheService.swift; sourceTree = "<group>"; };
+		SRC0019 /* WineMemoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WineMemoryStore.swift; sourceTree = "<group>"; };
+		SRC0020 /* ScanCounter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanCounter.swift; sourceTree = "<group>"; };
+		SRC0021 /* SubscriptionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionManager.swift; sourceTree = "<group>"; };
+		SRC0022 /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
 		TST0001 /* ScanResponseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanResponseTests.swift; sourceTree = "<group>"; };
 		TST0002 /* OverlayMathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayMathTests.swift; sourceTree = "<group>"; };
 		UISRC001 /* AccessibilityIdentifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityIdentifiers.swift; sourceTree = "<group>"; };
@@ -138,6 +150,7 @@
 			isa = PBXGroup;
 			children = (
 				GRP00003 /* App */,
+				GRP00014 /* Config */,
 				GRP00004 /* Models */,
 				GRP00005 /* Views */,
 				GRP00007 /* Services */,
@@ -174,6 +187,7 @@
 			children = (
 				SRC0009 /* ResultsView.swift */,
 				SRC0013 /* CameraView.swift */,
+				SRC0022 /* PaywallView.swift */,
 				GRP00006 /* Components */,
 			);
 			path = Views;
@@ -196,6 +210,10 @@
 				SRC0006 /* ScanService.swift */,
 				SRC0007 /* MockScanService.swift */,
 				SRC0016 /* FeedbackService.swift */,
+				SRC0018 /* ScanCacheService.swift */,
+				SRC0019 /* WineMemoryStore.swift */,
+				SRC0020 /* ScanCounter.swift */,
+				SRC0021 /* SubscriptionManager.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -259,6 +277,14 @@
 				UISRC007 /* LowConfidenceTests.swift */,
 			);
 			path = WineShelfScannerUITests;
+			sourceTree = "<group>";
+		};
+		GRP00014 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				SRC0017 /* FeatureFlags.swift */,
+			);
+			path = Config;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -411,6 +437,12 @@
 				APP0018 /* Config.swift in Sources */,
 				APP0021 /* DebugTray.swift in Sources */,
 				APP0022 /* FeedbackService.swift in Sources */,
+				APP0023 /* FeatureFlags.swift in Sources */,
+				APP0024 /* ScanCacheService.swift in Sources */,
+				APP0025 /* WineMemoryStore.swift in Sources */,
+				APP0026 /* ScanCounter.swift in Sources */,
+				APP0027 /* SubscriptionManager.swift in Sources */,
+				APP0028 /* PaywallView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

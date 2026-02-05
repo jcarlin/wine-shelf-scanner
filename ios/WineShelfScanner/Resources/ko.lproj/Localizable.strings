@@ -2,8 +2,8 @@
 "app.title" = "와인 선반 스캐너";
 
 /* Idle / Camera */
-"idle.pointAtShelf" = "와인 선반을 향해 주세요";
-"idle.takePhotoToSee" = "사진을 찍어 평점을 확인하세요";
+"idle.pointAtShelf" = "와인 선반에서 더 이상 고민하지 마세요.";
+"idle.takePhotoToSee" = "2,100만 리뷰의 평점 — 모든 병에, 즉시.";
 "idle.scanShelf" = "선반 스캔";
 "idle.choosePhoto" = "사진 선택";
 "idle.selectPhoto" = "사진 고르기";
@@ -50,3 +50,18 @@
 "detail.submit" = "제출";
 "detail.yes" = "예";
 "detail.no" = "아니오";
+
+/* Processing Tips */
+"processing.tip1" = "평점 배지를 탭하여 상세 정보 보기";
+"processing.tip2" = "최고 평점 병에는 골드 하이라이트 표시";
+"processing.tip3" = "2,100만 통합 리뷰 기반";
+"processing.tip4" = "전 세계 181,000+종 와인 커버";
+
+/* About */
+"about.title" = "와인 선반 스캐너";
+"about.description" = "커뮤니티 와인 플랫폼의 2,100만 리뷰에서 집계된 평점입니다. 개별 점수를 종합하여 각 병에 대한 신뢰할 수 있는 평점을 제공합니다.";
+"about.winesCount" = "181,000+종의 평점 보유 와인";
+"about.reviewsCount" = "2,100만 통합 리뷰";
+"about.disclaimer" = "평점은 커뮤니티 와인 플랫폼에서 제공됩니다. 와인 선반 스캐너는 어떤 평점 제공업체와도 제휴 관계가 없습니다.";
+"about.heading" = "정보";
+"about.done" = "완료";

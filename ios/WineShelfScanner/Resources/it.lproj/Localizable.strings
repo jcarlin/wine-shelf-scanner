@@ -2,8 +2,8 @@
 "app.title" = "Scanner Vini";
 
 /* Idle / Camera */
-"idle.pointAtShelf" = "Inquadra uno scaffale di vini";
-"idle.takePhotoToSee" = "Scatta una foto per vedere le valutazioni";
+"idle.pointAtShelf" = "Non tirare più a indovinare allo scaffale dei vini.";
+"idle.takePhotoToSee" = "Valutazioni da 21 milioni di recensioni — su ogni bottiglia, istantaneamente.";
 "idle.scanShelf" = "Scansiona Scaffale";
 "idle.choosePhoto" = "Scegli Foto";
 "idle.selectPhoto" = "Seleziona Foto";
@@ -50,3 +50,18 @@
 "detail.submit" = "Invia";
 "detail.yes" = "Sì";
 "detail.no" = "No";
+
+/* Processing Tips */
+"processing.tip1" = "Tocca qualsiasi badge di valutazione per vedere i dettagli";
+"processing.tip2" = "Le bottiglie più apprezzate hanno un'evidenziazione dorata";
+"processing.tip3" = "Basato su 21 milioni di recensioni aggregate";
+"processing.tip4" = "Copriamo oltre 181.000 vini in tutto il mondo";
+
+/* About */
+"about.title" = "Scanner Scaffale Vini";
+"about.description" = "Valutazioni aggregate da 21 milioni di recensioni su piattaforme comunitarie di vini. I punteggi individuali sono combinati per fornire una valutazione affidabile per ogni bottiglia.";
+"about.winesCount" = "181.000+ vini con valutazioni";
+"about.reviewsCount" = "21 milioni di recensioni aggregate";
+"about.disclaimer" = "Valutazioni provenienti da piattaforme comunitarie di vini. Scanner Scaffale Vini non è affiliato ad alcun fornitore di valutazioni.";
+"about.heading" = "Informazioni";
+"about.done" = "Fine";

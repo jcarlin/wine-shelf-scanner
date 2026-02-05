@@ -172,78 +172,6 @@ if FeatureFlags.shared.pairings, let pairing = wine.pairing {
 - Replace `flagValue()` body with `RemoteConfig.remoteConfig().configValue(forKey: key).boolValue`
 - No changes to call sites — the `FeatureFlags.shared.pairings` API stays the same
 
-### Expo: `expo-constants` + React Context Provider
-
-Expo's managed SDK provides `expo-constants` for build-time configuration and React Context for runtime flag access. This is the [Expo-recommended pattern](https://docs.expo.dev/versions/latest/sdk/constants/) for app configuration.
-
-```typescript
-// expo/lib/feature-flags.tsx
-import React, { createContext, useContext, useMemo } from 'react';
-import Constants from 'expo-constants';
-
-interface FeatureFlagValues {
-  wineMemory: boolean;
-  shelfRanking: boolean;
-  safePick: boolean;
-  pairings: boolean;
-}
-
-// Build-time defaults from app.json extra config
-const defaults: FeatureFlagValues = {
-  wineMemory: Constants.expoConfig?.extra?.featureWineMemory ?? false,
-  shelfRanking: Constants.expoConfig?.extra?.featureShelfRanking ?? false,
-  safePick: Constants.expoConfig?.extra?.featureSafePick ?? false,
-  pairings: Constants.expoConfig?.extra?.featurePairings ?? false,
-};
-
-const FeatureFlagContext = createContext<FeatureFlagValues>(defaults);
-
-export function FeatureFlagProvider({ children }: { children: React.ReactNode }) {
-  const flags = useMemo(() => defaults, []);
-  return (
-    <FeatureFlagContext.Provider value={flags}>
-      {children}
-    </FeatureFlagContext.Provider>
-  );
-}
-
-export function useFeatureFlags(): FeatureFlagValues {
-  return useContext(FeatureFlagContext);
-}
-```
-
-**Build-time config in `app.json`:**
-```json
-{
-  "expo": {
-    "extra": {
-      "featureWineMemory": false,
-      "featureShelfRanking": false,
-      "featureSafePick": false,
-      "featurePairings": false
-    }
-  }
-}
-```
-
-**Usage in components:**
-```typescript
-// In OverlayContainer.tsx
-const { shelfRanking } = useFeatureFlags();
-
-const rankings = useMemo(() => {
-  if (!shelfRanking) return new Map();
-  // ... compute ranks
-}, [shelfRanking, visibleWines]);
-```
-
-**Why this approach:**
-- `expo-constants` is built into every Expo project — no new dependency
-- `Constants.expoConfig.extra` is Expo's documented mechanism for custom app config
-- React Context is the standard React pattern for cross-component state
-- Flags can be overridden per EAS build profile (dev vs staging vs production)
-- Upgrade path: swap the context provider internals with Statsig React SDK, PostHog, or LaunchDarkly React Native SDK
-
 ### Next.js: Environment Variables + Flags Module
 
 Next.js has built-in support for `NEXT_PUBLIC_*` environment variables, which are the [documented approach](https://nextjs.org/docs/app/building-your-application/configuring/environment-variables) for client-side configuration. Since the app deploys to Vercel, flags can be toggled per-environment in the Vercel dashboard.
@@ -269,7 +197,7 @@ export const featureFlags: FeatureFlagValues = {
   pairings: envBool('NEXT_PUBLIC_FEATURE_PAIRINGS'),
 };
 
-// React hook for component use (re-exports for consistency with Expo)
+// React hook for component use
 export function useFeatureFlags(): FeatureFlagValues {
   return featureFlags;
 }
@@ -327,7 +255,7 @@ func testShelfRanking() {
 }
 ```
 
-**Expo/Next.js:** Mock the context or module:
+**Next.js:** Mock the module:
 ```typescript
 jest.mock('@/lib/feature-flags', () => ({
   useFeatureFlags: () => ({ shelfRanking: true, pairings: true }),
@@ -343,9 +271,9 @@ Device-local thumbs-up/thumbs-down that persists across scans. On future scans, 
 
 ### What exists today
 - **iOS** has thumbs-up/down buttons in `WineDetailSheet.swift` (lines 286-316) + a correction text field
-- **Expo** and **Next.js** have NO feedback UI in their detail modals
+- **Next.js** has NO feedback UI in its detail modal
 - Backend has a `corrections` table (`schema.sql:143-152`) that stores feedback with `device_id` — but this is for backend learning, not user-facing memory
-- **No local persistence** exists on any frontend (no UserDefaults, no AsyncStorage, no localStorage)
+- **No local persistence** exists on any frontend (no UserDefaults, no localStorage)
 
 ### What changes
 
@@ -373,21 +301,13 @@ Storage: dictionary keyed by lowercase `wine_name`.
 | `OverlayContainerView.swift` | Look up each wine in `WineMemoryStore` before rendering badge. Pass sentiment to `RatingBadge`. |
 | `ScanResponse.swift` | No change — memory is overlaid client-side on top of API data. |
 
-#### Expo Changes
-| File | Change |
-|------|--------|
-| **New: `hooks/useWineMemory.ts`** | Hook wrapping `AsyncStorage` (key: `"wine_memory"`). Returns `{ save, get, clear, entries }`. Loads once on mount, updates in-memory cache on writes. |
-| **New: Feedback UI in `WineDetailModal.tsx`** | Port iOS feedback buttons (thumbs-up/down + correction field). Currently Expo has no feedback UI at all. Wire to both `useWineMemory` (local) and API feedback endpoint (server). |
-| `RatingBadge.tsx` | Add `userSentiment?: "liked" \| "disliked"` prop. Render small indicator icon. |
-| `OverlayContainer.tsx` | Consume `useWineMemory` hook. Look up each wine, pass sentiment to badge. |
-
 #### Next.js Changes
 | File | Change |
 |------|--------|
-| **New: `hooks/useWineMemory.ts`** | Hook wrapping `localStorage` (key: `"wine_memory"`). Same interface as Expo hook. SSR-safe (check `typeof window`). |
-| **New: Feedback UI in `WineDetailModal.tsx`** | Same as Expo — port feedback buttons. Currently Next.js has no feedback UI. |
-| `RatingBadge` component | Same `userSentiment` prop treatment. |
-| `OverlayContainer.tsx` | Same lookup + pass pattern. |
+| **New: `hooks/useWineMemory.ts`** | Hook wrapping `localStorage` (key: `"wine_memory"`). SSR-safe (check `typeof window`). Returns `{ save, get, clear, entries }`. |
+| **New: Feedback UI in `WineDetailModal.tsx`** | Port iOS feedback buttons (thumbs-up/down + correction field). Currently Next.js has no feedback UI. Wire to both `useWineMemory` (local) and API feedback endpoint (server). |
+| `RatingBadge` component | Add `userSentiment?: "liked" \| "disliked"` prop. Render small indicator icon. |
+| `OverlayContainer.tsx` | Consume `useWineMemory` hook. Look up each wine, pass sentiment to badge. |
 
 #### Visual Design
 ```
@@ -447,19 +367,12 @@ This computation already partially exists — top-3 is calculated the same way. 
 | `WineDetailSheet.swift` | Add rank context line below rating: "Ranked #2 of 8 on this shelf" or "Best on this shelf" for #1. Subtle, secondary text. |
 | `ScanResponse.swift` | Add computed helper: `func shelfRanking() -> [(wine: WineResult, rank: Int)]` |
 
-#### Expo Changes
-| File | Change |
-|------|--------|
-| `OverlayContainer.tsx` | Compute rankings in `useMemo` (extend existing `topThreeIds` calculation). Pass `shelfRank` and `shelfTotal` to `RatingBadge`. |
-| `RatingBadge.tsx` | New `shelfRank?: number` prop. Small rank text below rating. |
-| `WineDetailModal.tsx` | Accept and display rank context. |
-
 #### Next.js Changes
 | File | Change |
 |------|--------|
-| `OverlayContainer.tsx` | Same as Expo — compute ranks, pass down. |
-| `RatingBadge` | Same prop addition. |
-| `WineDetailModal.tsx` | Same rank display. |
+| `OverlayContainer.tsx` | Compute rankings in `useMemo` (extend existing `topThreeIds` calculation). Pass `shelfRank` and `shelfTotal` to `RatingBadge`. |
+| `RatingBadge` | New `shelfRank?: number` prop. Small rank text below rating. |
+| `WineDetailModal.tsx` | Accept and display rank context. |
 
 #### Visual Design
 ```
@@ -558,7 +471,7 @@ is_safe_pick = (
 
 ### What changes
 
-Gated behind `feature_safe_pick` flag (backend) / `FeatureFlags.safePick` (iOS) / `useFeatureFlags().safePick` (Expo/Next.js). When flag is off, `is_safe_pick` is never computed and remains `null` — frontends skip all safe pick rendering.
+Gated behind `feature_safe_pick` flag (backend) / `FeatureFlags.safePick` (iOS) / `useFeatureFlags().safePick` (Next.js). When flag is off, `is_safe_pick` is never computed and remains `null` — frontends skip all safe pick rendering.
 
 **Backend:**
 | File | Change |
@@ -576,18 +489,12 @@ Gated behind `feature_safe_pick` flag (backend) / `FeatureFlags.safePick` (iOS) 
 | `RatingBadge.swift` | New optional `isSafePick: Bool` param. When true: small shield icon (SF Symbol `checkmark.shield.fill`) next to rating, in green. |
 | `WineDetailSheet.swift` | When `isSafePick`: show "Crowd favorite — hard to go wrong" label below confidence. Green accent color. |
 
-**Expo:**
-| File | Change |
-|------|--------|
-| `lib/types.ts` | Add `is_safe_pick?: boolean` to `WineResult` |
-| `RatingBadge.tsx` | Shield icon when safe pick. |
-| `WineDetailModal.tsx` | "Crowd favorite" label. |
-
 **Next.js:**
 | File | Change |
 |------|--------|
 | `lib/types.ts` | Add `is_safe_pick?: boolean` to `WineResult` |
-| Same component changes as Expo. |
+| `RatingBadge` | Shield icon when safe pick. |
+| `WineDetailModal.tsx` | "Crowd favorite" label. |
 
 #### Visual Design
 ```
@@ -643,7 +550,7 @@ One short food pairing line per wine: "Goes with grilled lamb" or "Pizza wine." 
 
 ### What changes
 
-Gated behind `feature_pairings` flag (backend) / `FeatureFlags.pairings` (iOS) / `useFeatureFlags().pairings` (Expo/Next.js). When flag is off, pairing service is never called and `pairing` remains `null`.
+Gated behind `feature_pairings` flag (backend) / `FeatureFlags.pairings` (iOS) / `useFeatureFlags().pairings` (Next.js). When flag is off, pairing service is never called and `pairing` remains `null`.
 
 **Backend:**
 | File | Change |
@@ -714,17 +621,11 @@ No new dependencies. No API calls. No latency impact.
 | `ScanResponse.swift` | Add `pairing: String?` to `WineResult` |
 | `WineDetailSheet.swift` | New section below blurb: fork icon + pairing text. Single line, italic, warm color. Only show if pairing is non-nil. |
 
-**Expo:**
-| File | Change |
-|------|--------|
-| `lib/types.ts` | Add `pairing?: string` to `WineResult` |
-| `WineDetailModal.tsx` | Pairing section with fork emoji + text. |
-
 **Next.js:**
 | File | Change |
 |------|--------|
 | `lib/types.ts` | Add `pairing?: string` to `WineResult` |
-| `WineDetailModal.tsx` | Same pairing display. |
+| `WineDetailModal.tsx` | Pairing section with fork emoji + text. |
 
 #### Visual Design (Detail Sheet)
 ```
@@ -752,24 +653,24 @@ One line. No scrolling added. If pairing is null, section doesn't render.
 These features have minimal dependencies on each other. Recommended order based on value and simplicity:
 
 ### Phase A: Shelf-Relative Ranking (Feature 2)
-**Why first:** Zero backend changes. Pure frontend computation using data that already exists. Can be shipped to all three frontends independently. Immediately makes every scan more useful.
+**Why first:** Zero backend changes. Pure frontend computation using data that already exists. Can be shipped to both frontends independently. Immediately makes every scan more useful.
 
 **Scope:** ~1 new computed property per frontend, badge modification, detail sheet line.
 
 ### Phase B: Pair-With One-Liner (Feature 7)
 **Why second:** Backend change is tiny (one new service file, one new field). Tier 1 (lookup table) adds zero latency. High perceived value for a casual buyer — answers "what do I eat with this?" without any infrastructure cost.
 
-**Scope:** 1 new backend service, 1 model field, detail sheet section across 3 frontends.
+**Scope:** 1 new backend service, 1 model field, detail sheet section across 2 frontends.
 
 ### Phase C: Safe Pick Badge (Feature 5)
 **Why third:** Requires a data investigation first (do we have review counts?). If yes, straightforward. If no, the heuristic fallback is still useful but less confident. Backend model change + frontend badge addition.
 
-**Scope:** 1 new model field, backend computation, badge/detail sheet across 3 frontends. Possible DB migration.
+**Scope:** 1 new model field, backend computation, badge/detail sheet across 2 frontends. Possible DB migration.
 
 ### Phase D: Wine Memory (Feature 1)
-**Why last:** Largest surface area — requires new local storage on all 3 platforms, feedback UI parity (Expo and Next.js currently lack thumbs-up/down), overlay modifications, and edge case handling. Also the hardest to test (requires multiple scans to verify persistence).
+**Why last:** Largest surface area — requires new local storage on both platforms, feedback UI parity (Next.js currently lacks thumbs-up/down), overlay modifications, and edge case handling. Also the hardest to test (requires multiple scans to verify persistence).
 
-**Scope:** New storage layer per platform, feedback UI on 2 platforms, badge overlay modification, detail sheet state awareness.
+**Scope:** New storage layer per platform, feedback UI on Next.js, badge overlay modification, detail sheet state awareness.
 
 ---
 
@@ -793,10 +694,8 @@ These features have minimal dependencies on each other. Recommended order based 
 |------|---------|---------|
 | `backend/app/feature_flags.py` | All | pydantic-settings feature flag class |
 | `ios/.../Config/FeatureFlags.swift` | All | UserDefaults-backed feature flags |
-| `expo/lib/feature-flags.tsx` | All | Expo Constants + React Context provider |
 | `nextjs/lib/feature-flags.ts` | All | NEXT_PUBLIC env var flags module |
 | `ios/.../WineMemoryStore.swift` | 1 | UserDefaults persistence |
-| `expo/hooks/useWineMemory.ts` | 1 | AsyncStorage hook |
 | `nextjs/hooks/useWineMemory.ts` | 1 | localStorage hook |
 | `backend/app/services/pairing.py` | 7 | Varietal → pairing lookup |
 
@@ -811,10 +710,6 @@ These features have minimal dependencies on each other. Recommended order based 
 | `ios/.../WineDetailSheet.swift` | 1, 2, 5, 7 |
 | `ios/.../OverlayContainerView.swift` | 1, 2 |
 | `ios/.../ScanResponse.swift` | 2, 5, 7 |
-| `expo/components/RatingBadge.tsx` | 1, 2, 5 |
-| `expo/components/WineDetailModal.tsx` | 1, 2, 5, 7 |
-| `expo/components/OverlayContainer.tsx` | 1, 2 |
-| `expo/lib/types.ts` | 5, 7 |
 | `nextjs/components/OverlayContainer.tsx` | 1, 2 |
 | `nextjs/components/WineDetailModal.tsx` | 1, 2, 5, 7 |
 | `nextjs/lib/types.ts` | 5, 7 |

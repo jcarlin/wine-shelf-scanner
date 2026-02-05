@@ -363,8 +363,11 @@ npm run type-check
 
 ### Deployment
 ```bash
-# Deploy backend to Cloud Run
-./deploy.sh PROJECT_ID
+# Deploy backend to Cloud Run (manual)
+cd backend/deploy && ./deploy.sh [project-id]
+
+# Deploy backend via GitHub Actions (automatic)
+# Push to main branch triggers deploy (see .github/workflows/deploy.yml)
 
 # Deploy web to Vercel (auto-deploys on push, or manual)
 cd nextjs && vercel

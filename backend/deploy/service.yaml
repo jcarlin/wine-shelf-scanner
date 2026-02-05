@@ -24,7 +24,11 @@ spec:
     spec:
       containerConcurrency: 80
       timeoutSeconds: 300
-      serviceAccountName: ""  # Uses default compute service account
+      # Uses default Compute Engine service account. Required permissions:
+      # - storage.objects.get (for GCS database download)
+      # - secretmanager.versions.access (for API keys)
+      # - cloudtrace.traces.patch (for tracing, optional)
+      serviceAccountName: ""
       containers:
         - image: IMAGE_PLACEHOLDER  # Substituted during deployment
           ports:

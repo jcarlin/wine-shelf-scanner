@@ -6,9 +6,10 @@
 #
 # Usage:
 #   ./scripts/test-ci.sh           # run all checks
-#   ./scripts/test-ci.sh backend   # backend only
+#   ./scripts/test-ci.sh backend   # backend only (pytest + docker build)
 #   ./scripts/test-ci.sh expo      # expo only
 #   ./scripts/test-ci.sh nextjs    # nextjs only
+#   ./scripts/test-ci.sh docker    # docker build + startup only
 
 set -euo pipefail
 
@@ -66,6 +67,55 @@ run_backend() {
   fi
 
   deactivate
+  cd "$ROOT_DIR"
+}
+
+# ─── Backend Docker Build & Startup ─────────────────────────────────────────
+run_docker() {
+  if ! command -v docker &> /dev/null; then
+    echo -e "${YELLOW}⚠ Docker not available — skipping Docker build check${NC}"
+    echo -e "${YELLOW}  CI will still run this check. Install Docker to test locally.${NC}"
+    return
+  fi
+
+  step "Backend Docker: Build image"
+  cd "$ROOT_DIR/backend"
+
+  if docker build -t wine-scanner-api:test .; then
+    pass "Docker build"
+  else
+    fail "Docker build"
+    cd "$ROOT_DIR"
+    return
+  fi
+
+  step "Backend Docker: Verify container starts and /health responds"
+  docker rm -f wine-test 2>/dev/null || true
+  docker run -d --name wine-test \
+    -p 8080:8080 \
+    -e USE_MOCKS=true \
+    -e USE_SQLITE=true \
+    wine-scanner-api:test
+
+  HEALTH_OK=false
+  for i in $(seq 1 15); do
+    if curl -sf http://localhost:8080/health > /dev/null 2>&1; then
+      HEALTH_OK=true
+      break
+    fi
+    sleep 2
+  done
+
+  if $HEALTH_OK; then
+    pass "Docker health check (/health responded)"
+  else
+    echo "Container logs:"
+    docker logs wine-test
+    fail "Docker health check (container failed to start)"
+  fi
+
+  docker stop wine-test > /dev/null 2>&1 || true
+  docker rm wine-test > /dev/null 2>&1 || true
   cd "$ROOT_DIR"
 }
 
@@ -131,16 +181,21 @@ echo "Mirrors .github/workflows/test.yml"
 echo "─────────────────────────────────"
 
 case "$FILTER" in
-  backend) run_backend ;;
+  backend)
+    run_backend
+    run_docker
+    ;;
+  docker)  run_docker ;;
   expo)    run_expo ;;
   nextjs)  run_nextjs ;;
   all)
     run_backend
+    run_docker
     run_expo
     run_nextjs
     ;;
   *)
-    echo "Usage: $0 [all|backend|expo|nextjs]"
+    echo "Usage: $0 [all|backend|docker|expo|nextjs]"
     exit 1
     ;;
 esac

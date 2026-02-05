@@ -40,6 +40,39 @@ jobs:
           USE_MOCKS: "true"
           USE_SQLITE: "true"
 
+  backend-docker:
+    name: Backend Docker Build & Startup
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        working-directory: backend
+        run: docker build -t wine-scanner-api:test .
+
+      - name: Verify container starts and serves /health
+        run: |
+          docker run -d --name wine-test \
+            -p 8080:8080 \
+            -e USE_MOCKS=true \
+            -e USE_SQLITE=true \
+            wine-scanner-api:test
+          # Wait for the container to be healthy (up to 30s)
+          for i in $(seq 1 15); do
+            if curl -sf http://localhost:8080/health; then
+              echo ""
+              echo "Health check passed"
+              docker stop wine-test
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Health check failed"
+          docker logs wine-test
+          docker stop wine-test
+          exit 1
+
   expo-tests:
     name: Expo Tests
     runs-on: ubuntu-latest

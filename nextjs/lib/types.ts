@@ -130,6 +130,20 @@ export interface DebugData {
   llm_calls_made: number;
 }
 
+// MARK: - API Error Types
+
+/** Error types returned by API client */
+export type ApiError =
+  | { type: 'NETWORK_ERROR'; message: string }
+  | { type: 'SERVER_ERROR'; message: string; status: number }
+  | { type: 'TIMEOUT'; message: string }
+  | { type: 'PARSE_ERROR'; message: string };
+
+/** Discriminated union for scan results */
+export type ScanResult =
+  | { success: true; data: ScanResponse }
+  | { success: false; error: ApiError };
+
 // MARK: - Bug Report Types
 
 export type BugReportType = 'error' | 'partial_detection' | 'full_failure' | 'wrong_wine';

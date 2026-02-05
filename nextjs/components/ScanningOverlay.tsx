@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
+import { useTipRotation } from '@/hooks/useTipRotation';
 
 const tipKeys = ['tip1', 'tip2', 'tip3', 'tip4'] as const;
 
@@ -11,14 +11,7 @@ interface ScanningOverlayProps {
 
 export function ScanningOverlay({ imageUri }: ScanningOverlayProps) {
   const t = useTranslations('processing');
-  const [tipIndex, setTipIndex] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTipIndex((prev) => (prev + 1) % tipKeys.length);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
+  const tipIndex = useTipRotation(tipKeys.length);
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-4">

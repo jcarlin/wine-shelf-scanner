@@ -373,28 +373,6 @@ class OCRProcessor:
             orphaned_texts=orphaned_texts
         )
 
-    def _find_nearby_text(
-        self,
-        bottle: DetectedObject,
-        text_blocks: list[TextBlock]
-    ) -> list[str]:
-        """Find text blocks spatially close to a bottle."""
-        nearby = []
-        bottle_center = bottle.bbox.center
-
-        for block in text_blocks:
-            # Normalize text bbox if needed (Vision API returns pixels)
-            text_center = self._get_normalized_center(block.bbox)
-
-            # Calculate distance
-            distance = self._distance(bottle_center, text_center)
-
-            # Check if text overlaps or is near bottle bbox
-            if distance < Config.PROXIMITY_THRESHOLD or self._overlaps(bottle.bbox, block.bbox):
-                nearby.append(block.text)
-
-        return nearby
-
     def _get_normalized_center(self, bbox: BoundingBox) -> tuple[float, float]:
         """Get center point, normalizing pixel coordinates if needed."""
         # If coordinates are > 1, they're pixels - normalize them

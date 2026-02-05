@@ -5,7 +5,11 @@
 import { Config } from './config';
 import { BugReportRequest, BugReportResponse, BugReportType, BugReportErrorType, BugReportMetadata } from './types';
 import { getDeviceId } from './device-id';
+import { fetchWithTimeout } from './fetch-utils';
 import packageJson from '../package.json';
+
+/** Timeout for bug report submissions (ms) */
+const REPORT_TIMEOUT_MS = 10000;
 
 interface SubmitReportOptions {
   reportType: BugReportType;
@@ -36,17 +40,15 @@ export async function submitBugReport(options: SubmitReportOptions): Promise<boo
       metadata: options.metadata ?? null,
     };
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-    const response = await fetch(`${Config.API_BASE_URL}/report`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
+    const response = await fetchWithTimeout(
+      `${Config.API_BASE_URL}/report`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      },
+      REPORT_TIMEOUT_MS
+    );
 
     if (!response.ok) {
       console.warn(`Bug report failed: ${response.status}`);

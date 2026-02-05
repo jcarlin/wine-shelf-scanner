@@ -5,6 +5,7 @@
 import { Config } from './config';
 import { BugReportRequest, BugReportResponse, BugReportType, BugReportErrorType, BugReportMetadata } from './types';
 import { getDeviceId } from './device-id';
+import packageJson from '../package.json';
 
 interface SubmitReportOptions {
   reportType: BugReportType;
@@ -61,12 +62,7 @@ export async function submitBugReport(options: SubmitReportOptions): Promise<boo
 }
 
 function getAppVersion(): string | null {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    return require('../../package.json').version ?? null;
-  } catch {
-    return null;
-  }
+  return packageJson.version ?? null;
 }
 
 /**

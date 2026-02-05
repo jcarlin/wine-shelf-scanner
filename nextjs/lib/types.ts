@@ -129,3 +129,34 @@ export interface DebugData {
   texts_matched: number;
   llm_calls_made: number;
 }
+
+// MARK: - Bug Report Types
+
+export type BugReportType = 'error' | 'partial_detection' | 'full_failure' | 'wrong_wine';
+
+export type BugReportErrorType = 'NETWORK_ERROR' | 'SERVER_ERROR' | 'TIMEOUT' | 'PARSE_ERROR';
+
+export interface BugReportMetadata {
+  wines_detected?: number;
+  wines_in_fallback?: number;
+  confidence_scores?: number[];
+  debug_data?: Record<string, unknown>;
+}
+
+export interface BugReportRequest {
+  report_type: BugReportType;
+  error_type?: BugReportErrorType | null;
+  error_message?: string | null;
+  user_description?: string | null;
+  image_id?: string | null;
+  device_id: string;
+  platform: string;
+  app_version?: string | null;
+  timestamp?: string | null;
+  metadata?: BugReportMetadata | null;
+}
+
+export interface BugReportResponse {
+  success: boolean;
+  report_id: string;
+}

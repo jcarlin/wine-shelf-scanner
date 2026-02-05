@@ -1,12 +1,18 @@
 'use client';
 
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { CameraCapture, ProcessingSpinner, ScanningOverlay, ResultsView } from '@/components';
+import { CameraCapture, ProcessingSpinner, ScanningOverlay, ResultsView, BugReportModal } from '@/components';
 import { useScanState } from '@/hooks/useScanState';
+import { useFeatureFlags } from '@/lib/feature-flags';
+import { Flag } from 'lucide-react';
 
 export default function Home() {
   const { state, processImage, reset } = useScanState();
   const t = useTranslations('error');
+  const tBug = useTranslations('bugReport');
+  const { bugReport: bugReportEnabled } = useFeatureFlags();
+  const [showBugReport, setShowBugReport] = useState(false);
 
   return (
     <main className="min-h-screen flex flex-col">
@@ -39,6 +45,21 @@ export default function Home() {
           >
             {t('tryAgain')}
           </button>
+          {bugReportEnabled && (
+            <button
+              onClick={() => setShowBugReport(true)}
+              className="mt-4 flex items-center gap-1.5 text-gray-500 hover:text-gray-300 text-sm transition-colors"
+            >
+              <Flag className="w-3.5 h-3.5" />
+              {tBug('reportIssue')}
+            </button>
+          )}
+          <BugReportModal
+            isOpen={showBugReport}
+            onClose={() => setShowBugReport(false)}
+            reportType="error"
+            errorMessage={state.message}
+          />
         </div>
       )}
     </main>

@@ -65,3 +65,18 @@
 "about.disclaimer" = "Bewertungen stammen von Community-Weinplattformen. Weinregal-Scanner ist nicht mit einem Bewertungsanbieter verbunden.";
 "about.heading" = "Über";
 "about.done" = "Fertig";
+
+/* Bug Report */
+"bugReport.report" = "Melden";
+"bugReport.reportIssue" = "Problem melden";
+"bugReport.scanError" = "Scan-Fehler";
+"bugReport.someNotRecognized" = "Einige Flaschen nicht erkannt";
+"bugReport.noBottlesIdentified" = "Keine Flaschen identifiziert";
+"bugReport.wrongMatch" = "Falsche Weinzuordnung";
+"bugReport.whatHappened" = "Was ist passiert? (optional)";
+"bugReport.describePlaceholder" = "Beschreiben Sie das Problem...";
+"bugReport.submitReport" = "Bericht senden";
+"bugReport.submitted" = "Bericht gesendet";
+"bugReport.thanksImprove" = "Danke, dass Sie uns helfen, besser zu werden!";
+"bugReport.done" = "Fertig";
+"bugReport.cancel" = "Abbrechen";

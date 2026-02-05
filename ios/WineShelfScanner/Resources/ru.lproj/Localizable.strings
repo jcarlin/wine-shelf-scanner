@@ -65,3 +65,18 @@
 "about.disclaimer" = "Рейтинги получены с винных платформ сообщества. Сканер Винной Полки не аффилирован ни с одним поставщиком рейтингов.";
 "about.heading" = "О приложении";
 "about.done" = "Готово";
+
+/* Bug Report */
+"bugReport.report" = "Сообщить";
+"bugReport.reportIssue" = "Сообщить о проблеме";
+"bugReport.scanError" = "Ошибка сканирования";
+"bugReport.someNotRecognized" = "Некоторые бутылки не распознаны";
+"bugReport.noBottlesIdentified" = "Бутылки не идентифицированы";
+"bugReport.wrongMatch" = "Неверное совпадение вина";
+"bugReport.whatHappened" = "Что произошло? (необязательно)";
+"bugReport.describePlaceholder" = "Опишите проблему...";
+"bugReport.submitReport" = "Отправить отчёт";
+"bugReport.submitted" = "Отчёт отправлен";
+"bugReport.thanksImprove" = "Спасибо, что помогаете нам стать лучше!";
+"bugReport.done" = "Готово";
+"bugReport.cancel" = "Отмена";

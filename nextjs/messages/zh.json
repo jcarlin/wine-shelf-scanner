@@ -70,5 +70,22 @@
     "winesCount": "181,000+ 款有评分的葡萄酒",
     "reviewsCount": "2100万条聚合评论",
     "disclaimer": "评分来源于社区葡萄酒平台。葡萄酒货架扫描仪与任何评分提供商无关。"
+  },
+  "bugReport": {
+    "report": "报告",
+    "reportIssue": "报告问题",
+    "notExpected": "结果不对？报告问题",
+    "scanError": "扫描错误",
+    "someNotRecognized": "部分酒瓶未被识别",
+    "noBottlesIdentified": "未识别到酒瓶",
+    "wrongMatch": "酒款匹配错误",
+    "whatHappened": "发生了什么？（可选）",
+    "describePlaceholder": "描述问题...",
+    "submitReport": "提交报告",
+    "submitting": "提交中...",
+    "submitted": "报告已提交",
+    "thanksImprove": "感谢帮助我们改进！",
+    "done": "完成",
+    "cancel": "取消"
   }
 }

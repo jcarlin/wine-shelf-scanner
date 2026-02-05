@@ -70,5 +70,22 @@
     "winesCount": "181,000本以上の評価付きワイン",
     "reviewsCount": "2100万件の集約レビュー",
     "disclaimer": "評価はコミュニティワインプラットフォームから取得しています。ワイン棚スキャナーはいかなる評価プロバイダーとも提携していません。"
+  },
+  "bugReport": {
+    "report": "報告",
+    "reportIssue": "問題を報告",
+    "notExpected": "期待と違いましたか？問題を報告してください",
+    "scanError": "スキャンエラー",
+    "someNotRecognized": "一部のボトルが認識されませんでした",
+    "noBottlesIdentified": "ボトルが識別されませんでした",
+    "wrongMatch": "ワインの一致が間違っています",
+    "whatHappened": "何が起きましたか？（任意）",
+    "describePlaceholder": "問題を説明してください...",
+    "submitReport": "報告を送信",
+    "submitting": "送信中...",
+    "submitted": "報告が送信されました",
+    "thanksImprove": "改善にご協力いただきありがとうございます！",
+    "done": "完了",
+    "cancel": "キャンセル"
   }
 }

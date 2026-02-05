@@ -70,5 +70,22 @@
     "winesCount": "181.000+ Weine mit Bewertungen",
     "reviewsCount": "21 Millionen aggregierte Bewertungen",
     "disclaimer": "Bewertungen stammen von Community-Weinplattformen. Weinregal-Scanner ist nicht mit einem Bewertungsanbieter verbunden."
+  },
+  "bugReport": {
+    "report": "Melden",
+    "reportIssue": "Problem melden",
+    "notExpected": "Nicht das Erwartete? Melden Sie ein Problem",
+    "scanError": "Scan-Fehler",
+    "someNotRecognized": "Einige Flaschen nicht erkannt",
+    "noBottlesIdentified": "Keine Flaschen identifiziert",
+    "wrongMatch": "Falsche Weinzuordnung",
+    "whatHappened": "Was ist passiert? (optional)",
+    "describePlaceholder": "Beschreiben Sie das Problem...",
+    "submitReport": "Meldung senden",
+    "submitting": "Wird gesendet...",
+    "submitted": "Meldung gesendet",
+    "thanksImprove": "Danke, dass Sie uns helfen, besser zu werden!",
+    "done": "Fertig",
+    "cancel": "Abbrechen"
   }
 }

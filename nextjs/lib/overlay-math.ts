@@ -2,7 +2,7 @@
  * Centralized overlay placement math
  * All calculations for positioning rating badges on wine bottles
  *
- * Port from expo/lib/overlay-math.ts
+ * Centralized overlay placement math for the web app
  */
 
 import { BoundingBox, Point, Size } from './types';

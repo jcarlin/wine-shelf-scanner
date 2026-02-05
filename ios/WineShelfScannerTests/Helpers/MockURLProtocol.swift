@@ -169,4 +169,18 @@ extension MockURLProtocol {
         {"success": false, "message": "Feedback rejected"}
         """)
     }
+
+    /// Set up a successful bug report response
+    static func setSuccessfulReportResponse() {
+        setSuccessResponse(json: """
+        {"success": true, "report_id": "test-report-id-123"}
+        """)
+    }
+
+    /// Set up a rejected bug report response
+    static func setRejectedReportResponse() {
+        setSuccessResponse(json: """
+        {"success": false, "report_id": ""}
+        """)
+    }
 }

@@ -65,3 +65,18 @@
 "about.disclaimer" = "Valutazioni provenienti da piattaforme comunitarie di vini. Scanner Scaffale Vini non è affiliato ad alcun fornitore di valutazioni.";
 "about.heading" = "Informazioni";
 "about.done" = "Fine";
+
+/* Bug Report */
+"bugReport.report" = "Segnala";
+"bugReport.reportIssue" = "Segnala un Problema";
+"bugReport.scanError" = "Errore di scansione";
+"bugReport.someNotRecognized" = "Alcune bottiglie non riconosciute";
+"bugReport.noBottlesIdentified" = "Nessuna bottiglia identificata";
+"bugReport.wrongMatch" = "Corrispondenza vino errata";
+"bugReport.whatHappened" = "Cosa è successo? (facoltativo)";
+"bugReport.describePlaceholder" = "Descrivi il problema...";
+"bugReport.submitReport" = "Invia Segnalazione";
+"bugReport.submitted" = "Segnalazione inviata";
+"bugReport.thanksImprove" = "Grazie per aiutarci a migliorare!";
+"bugReport.done" = "Fine";
+"bugReport.cancel" = "Annulla";

@@ -65,3 +65,18 @@
 "about.disclaimer" = "Ratings sourced from community wine platforms. Wine Shelf Scanner is not affiliated with any rating provider.";
 "about.heading" = "About";
 "about.done" = "Done";
+
+/* Bug Report */
+"bugReport.report" = "Report";
+"bugReport.reportIssue" = "Report an Issue";
+"bugReport.scanError" = "Scan error";
+"bugReport.someNotRecognized" = "Some bottles not recognized";
+"bugReport.noBottlesIdentified" = "No bottles identified";
+"bugReport.wrongMatch" = "Wrong wine match";
+"bugReport.whatHappened" = "What happened? (optional)";
+"bugReport.describePlaceholder" = "Describe the issue...";
+"bugReport.submitReport" = "Submit Report";
+"bugReport.submitted" = "Report submitted";
+"bugReport.thanksImprove" = "Thanks for helping us improve!";
+"bugReport.done" = "Done";
+"bugReport.cancel" = "Cancel";

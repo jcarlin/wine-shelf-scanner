@@ -70,5 +70,22 @@
     "winesCount": "181 000+ vins avec des notes",
     "reviewsCount": "21 millions d'avis agrégés",
     "disclaimer": "Notes provenant de plateformes communautaires de vins. Scanner de Rayon à Vins n'est affilié à aucun fournisseur de notes."
+  },
+  "bugReport": {
+    "report": "Signaler",
+    "reportIssue": "Signaler un Problème",
+    "notExpected": "Ce n'est pas ce que vous attendiez ? Signalez un problème",
+    "scanError": "Erreur de scan",
+    "someNotRecognized": "Certaines bouteilles non reconnues",
+    "noBottlesIdentified": "Aucune bouteille identifiée",
+    "wrongMatch": "Mauvaise correspondance de vin",
+    "whatHappened": "Que s'est-il passé ? (optionnel)",
+    "describePlaceholder": "Décrivez le problème...",
+    "submitReport": "Envoyer le Signalement",
+    "submitting": "Envoi en cours...",
+    "submitted": "Signalement envoyé",
+    "thanksImprove": "Merci de nous aider à nous améliorer !",
+    "done": "Terminé",
+    "cancel": "Annuler"
   }
 }

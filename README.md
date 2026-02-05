@@ -18,14 +18,9 @@ Wine Shelf Scanner solves decision paralysis for casual wine buyers. Instead of 
         ▲                       │
         │                       ▼
 ┌─────────────────┐     ┌─────────────────┐     ┌──────────────────┐
-│   Expo App      │     │  Ratings DB     │     │  LLM Normalizer  │
-│   (React Native)│     │  (SQLite 191K)  │     │  (Claude/Gemini) │
+│   Next.js Web   │     │  Ratings DB     │     │  LLM Normalizer  │
+│   (Vercel)      │     │  (SQLite 191K)  │     │  (Claude/Gemini) │
 └─────────────────┘     └─────────────────┘     └──────────────────┘
-        ▲
-┌─────────────────┐
-│   Next.js Web   │
-│   (Vercel)      │
-└─────────────────┘
 ```
 
 ### Components
@@ -33,7 +28,6 @@ Wine Shelf Scanner solves decision paralysis for casual wine buyers. Instead of 
 | Component | Stack | Purpose |
 |-----------|-------|---------|
 | **iOS App** | SwiftUI, iOS 16+ | Camera capture, overlay rendering |
-| **Expo App** | React Native, TypeScript | Cross-platform mobile app |
 | **Next.js Web** | Next.js 14, TypeScript, Tailwind | Browser-based scanner (Vercel) |
 | **Backend** | FastAPI (Python 3.9+) | Image processing orchestration, wine matching |
 | **Vision** | Google Cloud Vision API | OCR + bottle detection |
@@ -42,10 +36,9 @@ Wine Shelf Scanner solves decision paralysis for casual wine buyers. Instead of 
 
 ### Frontend Strategy
 
-iOS, Expo, and Next.js are developed in parallel as production-ready frontends. All implement the same API contract and UX rules, but maintain separate codebases.
+iOS and Next.js are developed in parallel as production-ready frontends. Both implement the same API contract and UX rules, but maintain separate codebases.
 
 - **iOS** — Native SwiftUI app (primary)
-- **Expo** — React Native for iOS/Android
 - **Next.js** — Web app deployed to Vercel
 
 ## API Contract
@@ -83,13 +76,19 @@ Response:
 - Ratings are on a 1–5 scale
 - `fallback_list` contains wines detected but not confidently positioned
 
+### Bug Reporting
+
+Users can report issues from the error screen, partial detection toast, or fallback list. Reports are submitted to `POST /report` and stored in SQLite for triage.
+
+Feature-flagged: `feature_bug_report` (iOS) / `NEXT_PUBLIC_FEATURE_BUG_REPORT` (Next.js).
+
 ## Quick Start
 
 ### Prerequisites
 
 - Python 3.9+
 - Xcode 15+ (for iOS development)
-- Node.js 18+ (for Expo and Next.js)
+- Node.js 18+ (for Next.js)
 - Google Cloud account with Vision API enabled
 
 ### Backend Setup
@@ -123,24 +122,6 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
    return URL(string: "http://YOUR_MAC_IP:8000")!
    ```
 3. Build and run on simulator or device
-
-### Expo Setup
-
-```bash
-cd expo
-
-# Install dependencies
-npm install
-
-# Start development server
-npm start
-
-# Or run directly on iOS/Android
-npm run ios
-npm run android
-```
-
-For physical device testing, update `expo/lib/config.ts` with your Mac's IP address.
 
 ### Next.js Setup
 
@@ -234,15 +215,10 @@ wine-shelf-scanner/
 │       ├── Views/           # UI components
 │       ├── Services/        # API client, mock service
 │       └── Utils/           # OverlayMath
-├── expo/
-│   ├── app/                 # Expo Router screens
-│   ├── components/          # UI components
-│   ├── hooks/               # Custom React hooks
-│   └── lib/                 # API client, types, overlay math
 ├── nextjs/
 │   ├── app/                 # Next.js App Router pages
 │   ├── components/          # UI components
-│   └── lib/                 # Shared utilities (ported from Expo)
+│   └── lib/                 # Shared utilities (types, theme, overlay-math)
 ├── raw-data/                # Wine data sources (Kaggle, Vivino)
 ├── PRD.md                   # Product requirements
 ├── ROADMAP.md               # Project status tracking
@@ -350,7 +326,7 @@ npm test           # Run unit tests
 npm run type-check # TypeScript validation
 ```
 
-Note: Next.js has minimal test coverage currently (basic component tests).
+Test coverage includes overlay placement math, mock service scenarios, API client behavior, and config validation.
 
 ## Performance Targets
 

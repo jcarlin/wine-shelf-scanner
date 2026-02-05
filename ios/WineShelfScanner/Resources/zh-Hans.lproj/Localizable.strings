@@ -65,3 +65,18 @@
 "about.disclaimer" = "评分来源于社区葡萄酒平台。葡萄酒货架扫描仪与任何评分提供商无关。";
 "about.heading" = "关于";
 "about.done" = "完成";
+
+/* Bug Report */
+"bugReport.report" = "报告";
+"bugReport.reportIssue" = "报告问题";
+"bugReport.scanError" = "扫描错误";
+"bugReport.someNotRecognized" = "部分酒瓶未识别";
+"bugReport.noBottlesIdentified" = "未识别到酒瓶";
+"bugReport.wrongMatch" = "酒款匹配错误";
+"bugReport.whatHappened" = "发生了什么？（可选）";
+"bugReport.describePlaceholder" = "描述问题...";
+"bugReport.submitReport" = "提交报告";
+"bugReport.submitted" = "报告已提交";
+"bugReport.thanksImprove" = "感谢您帮助我们改进！";
+"bugReport.done" = "完成";
+"bugReport.cancel" = "取消";

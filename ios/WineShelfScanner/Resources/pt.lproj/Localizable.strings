@@ -65,3 +65,18 @@
 "about.disclaimer" = "Avaliações provenientes de plataformas comunitárias de vinhos. Scanner de Prateleira de Vinhos não é afiliado a nenhum provedor de avaliações.";
 "about.heading" = "Sobre";
 "about.done" = "Concluído";
+
+/* Bug Report */
+"bugReport.report" = "Reportar";
+"bugReport.reportIssue" = "Reportar um Problema";
+"bugReport.scanError" = "Erro de digitalização";
+"bugReport.someNotRecognized" = "Algumas garrafas não reconhecidas";
+"bugReport.noBottlesIdentified" = "Nenhuma garrafa identificada";
+"bugReport.wrongMatch" = "Correspondência de vinho incorreta";
+"bugReport.whatHappened" = "O que aconteceu? (opcional)";
+"bugReport.describePlaceholder" = "Descreva o problema...";
+"bugReport.submitReport" = "Enviar Relatório";
+"bugReport.submitted" = "Relatório enviado";
+"bugReport.thanksImprove" = "Obrigado por nos ajudar a melhorar!";
+"bugReport.done" = "Concluído";
+"bugReport.cancel" = "Cancelar";

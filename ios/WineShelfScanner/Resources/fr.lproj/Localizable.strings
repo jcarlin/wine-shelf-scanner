@@ -65,3 +65,18 @@
 "about.disclaimer" = "Notes provenant de plateformes communautaires de vins. Scanner de Rayon à Vins n'est affilié à aucun fournisseur de notes.";
 "about.heading" = "À propos";
 "about.done" = "Terminé";
+
+/* Bug Report */
+"bugReport.report" = "Signaler";
+"bugReport.reportIssue" = "Signaler un Problème";
+"bugReport.scanError" = "Erreur de scan";
+"bugReport.someNotRecognized" = "Certaines bouteilles non reconnues";
+"bugReport.noBottlesIdentified" = "Aucune bouteille identifiée";
+"bugReport.wrongMatch" = "Mauvaise correspondance de vin";
+"bugReport.whatHappened" = "Que s'est-il passé ? (facultatif)";
+"bugReport.describePlaceholder" = "Décrivez le problème...";
+"bugReport.submitReport" = "Envoyer le Rapport";
+"bugReport.submitted" = "Rapport envoyé";
+"bugReport.thanksImprove" = "Merci de nous aider à améliorer !";
+"bugReport.done" = "Terminé";
+"bugReport.cancel" = "Annuler";

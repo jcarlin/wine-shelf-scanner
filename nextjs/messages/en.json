@@ -70,5 +70,22 @@
     "winesCount": "181,000+ wines with ratings",
     "reviewsCount": "21 million aggregated reviews",
     "disclaimer": "Ratings sourced from community wine platforms. Wine Shelf Scanner is not affiliated with any rating provider."
+  },
+  "bugReport": {
+    "report": "Report",
+    "reportIssue": "Report an Issue",
+    "notExpected": "Not what you expected? Report an issue",
+    "scanError": "Scan error",
+    "someNotRecognized": "Some bottles not recognized",
+    "noBottlesIdentified": "No bottles identified",
+    "wrongMatch": "Wrong wine match",
+    "whatHappened": "What happened? (optional)",
+    "describePlaceholder": "Describe the issue...",
+    "submitReport": "Submit Report",
+    "submitting": "Submitting...",
+    "submitted": "Report submitted",
+    "thanksImprove": "Thanks for helping us improve!",
+    "done": "Done",
+    "cancel": "Cancel"
   }
 }

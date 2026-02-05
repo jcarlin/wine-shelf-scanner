@@ -70,5 +70,22 @@
     "winesCount": "181,000+종의 평점 보유 와인",
     "reviewsCount": "2,100만 통합 리뷰",
     "disclaimer": "평점은 커뮤니티 와인 플랫폼에서 제공됩니다. 와인 선반 스캐너는 어떤 평점 제공업체와도 제휴 관계가 없습니다."
+  },
+  "bugReport": {
+    "report": "신고",
+    "reportIssue": "문제 신고",
+    "notExpected": "예상과 다른가요? 문제를 신고해 주세요",
+    "scanError": "스캔 오류",
+    "someNotRecognized": "일부 병이 인식되지 않았습니다",
+    "noBottlesIdentified": "식별된 병이 없습니다",
+    "wrongMatch": "잘못된 와인 매칭",
+    "whatHappened": "무슨 일이 있었나요? (선택사항)",
+    "describePlaceholder": "문제를 설명해 주세요...",
+    "submitReport": "신고 제출",
+    "submitting": "제출 중...",
+    "submitted": "신고가 제출되었습니다",
+    "thanksImprove": "개선에 도움을 주셔서 감사합니다!",
+    "done": "완료",
+    "cancel": "취소"
   }
 }

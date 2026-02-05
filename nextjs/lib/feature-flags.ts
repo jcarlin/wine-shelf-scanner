@@ -7,6 +7,7 @@ export interface FeatureFlagValues {
   visualEmphasis: boolean;
   offlineCache: boolean;
   share: boolean;
+  bugReport: boolean;
 }
 
 function envBool(key: string, defaultValue = true): boolean {
@@ -24,6 +25,7 @@ export const featureFlags: FeatureFlagValues = {
   visualEmphasis: envBool('NEXT_PUBLIC_FEATURE_VISUAL_EMPHASIS'),
   offlineCache: envBool('NEXT_PUBLIC_FEATURE_OFFLINE_CACHE'),
   share: envBool('NEXT_PUBLIC_FEATURE_SHARE'),
+  bugReport: envBool('NEXT_PUBLIC_FEATURE_BUG_REPORT'),
 };
 
 export function useFeatureFlags(): FeatureFlagValues {

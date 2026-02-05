@@ -70,5 +70,22 @@
     "winesCount": "181,000+ vinos con calificaciones",
     "reviewsCount": "21 millones de reseñas agregadas",
     "disclaimer": "Calificaciones obtenidas de plataformas comunitarias de vinos. Escáner de Vinos no está afiliado a ningún proveedor de calificaciones."
+  },
+  "bugReport": {
+    "report": "Reportar",
+    "reportIssue": "Reportar un Problema",
+    "notExpected": "¿No es lo que esperabas? Reporta un problema",
+    "scanError": "Error de escaneo",
+    "someNotRecognized": "Algunas botellas no reconocidas",
+    "noBottlesIdentified": "No se identificaron botellas",
+    "wrongMatch": "Coincidencia de vino incorrecta",
+    "whatHappened": "¿Qué pasó? (opcional)",
+    "describePlaceholder": "Describe el problema...",
+    "submitReport": "Enviar Reporte",
+    "submitting": "Enviando...",
+    "submitted": "Reporte enviado",
+    "thanksImprove": "¡Gracias por ayudarnos a mejorar!",
+    "done": "Listo",
+    "cancel": "Cancelar"
   }
 }

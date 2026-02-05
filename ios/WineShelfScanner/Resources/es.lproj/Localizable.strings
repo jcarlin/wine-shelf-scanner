@@ -65,3 +65,18 @@
 "about.disclaimer" = "Calificaciones obtenidas de plataformas comunitarias de vinos. Escáner de Vinos no está afiliado a ningún proveedor de calificaciones.";
 "about.heading" = "Acerca de";
 "about.done" = "Listo";
+
+/* Bug Report */
+"bugReport.report" = "Reportar";
+"bugReport.reportIssue" = "Reportar un Problema";
+"bugReport.scanError" = "Error de escaneo";
+"bugReport.someNotRecognized" = "Algunas botellas no reconocidas";
+"bugReport.noBottlesIdentified" = "No se identificaron botellas";
+"bugReport.wrongMatch" = "Coincidencia incorrecta de vino";
+"bugReport.whatHappened" = "¿Qué pasó? (opcional)";
+"bugReport.describePlaceholder" = "Describe el problema...";
+"bugReport.submitReport" = "Enviar Reporte";
+"bugReport.submitted" = "Reporte enviado";
+"bugReport.thanksImprove" = "¡Gracias por ayudarnos a mejorar!";
+"bugReport.done" = "Listo";
+"bugReport.cancel" = "Cancelar";

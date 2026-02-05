@@ -70,5 +70,22 @@
     "winesCount": "181.000+ vini con valutazioni",
     "reviewsCount": "21 milioni di recensioni aggregate",
     "disclaimer": "Valutazioni provenienti da piattaforme comunitarie di vini. Scanner Scaffale Vini non è affiliato ad alcun fornitore di valutazioni."
+  },
+  "bugReport": {
+    "report": "Segnala",
+    "reportIssue": "Segnala un Problema",
+    "notExpected": "Non è quello che ti aspettavi? Segnala un problema",
+    "scanError": "Errore di scansione",
+    "someNotRecognized": "Alcune bottiglie non riconosciute",
+    "noBottlesIdentified": "Nessuna bottiglia identificata",
+    "wrongMatch": "Corrispondenza vino errata",
+    "whatHappened": "Cosa è successo? (opzionale)",
+    "describePlaceholder": "Descrivi il problema...",
+    "submitReport": "Invia Segnalazione",
+    "submitting": "Invio in corso...",
+    "submitted": "Segnalazione inviata",
+    "thanksImprove": "Grazie per aiutarci a migliorare!",
+    "done": "Fatto",
+    "cancel": "Annulla"
   }
 }

@@ -70,5 +70,22 @@
     "winesCount": "181.000+ vinhos com avaliações",
     "reviewsCount": "21 milhões de avaliações agregadas",
     "disclaimer": "Avaliações provenientes de plataformas comunitárias de vinhos. Scanner de Prateleira de Vinhos não é afiliado a nenhum provedor de avaliações."
+  },
+  "bugReport": {
+    "report": "Reportar",
+    "reportIssue": "Reportar um Problema",
+    "notExpected": "Não é o que esperava? Reporte um problema",
+    "scanError": "Erro de digitalização",
+    "someNotRecognized": "Algumas garrafas não reconhecidas",
+    "noBottlesIdentified": "Nenhuma garrafa identificada",
+    "wrongMatch": "Correspondência de vinho incorreta",
+    "whatHappened": "O que aconteceu? (opcional)",
+    "describePlaceholder": "Descreva o problema...",
+    "submitReport": "Enviar Relatório",
+    "submitting": "Enviando...",
+    "submitted": "Relatório enviado",
+    "thanksImprove": "Obrigado por nos ajudar a melhorar!",
+    "done": "Concluído",
+    "cancel": "Cancelar"
   }
 }

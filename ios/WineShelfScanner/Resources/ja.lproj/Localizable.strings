@@ -65,3 +65,18 @@
 "about.disclaimer" = "評価はコミュニティワインプラットフォームから取得しています。ワイン棚スキャナーはいかなる評価プロバイダーとも提携していません。";
 "about.heading" = "このアプリについて";
 "about.done" = "完了";
+
+/* Bug Report */
+"bugReport.report" = "報告";
+"bugReport.reportIssue" = "問題を報告";
+"bugReport.scanError" = "スキャンエラー";
+"bugReport.someNotRecognized" = "一部のボトルが認識されませんでした";
+"bugReport.noBottlesIdentified" = "ボトルが識別されませんでした";
+"bugReport.wrongMatch" = "ワインの一致が間違っています";
+"bugReport.whatHappened" = "何が起きましたか？（任意）";
+"bugReport.describePlaceholder" = "問題を説明してください...";
+"bugReport.submitReport" = "レポートを送信";
+"bugReport.submitted" = "レポートが送信されました";
+"bugReport.thanksImprove" = "改善にご協力いただきありがとうございます！";
+"bugReport.done" = "完了";
+"bugReport.cancel" = "キャンセル";

@@ -174,3 +174,22 @@ CREATE INDEX IF NOT EXISTS idx_wine_reviews_rating ON wine_reviews(rating);
 CREATE INDEX IF NOT EXISTS idx_corrections_wine_name ON corrections(LOWER(wine_name));
 CREATE INDEX IF NOT EXISTS idx_corrections_is_correct ON corrections(is_correct);
 CREATE INDEX IF NOT EXISTS idx_corrections_created_at ON corrections(created_at);
+
+-- Bug reports from users (error, partial detection, full failure)
+CREATE TABLE IF NOT EXISTS bug_reports (
+    id TEXT PRIMARY KEY,
+    report_type TEXT NOT NULL,
+    error_type TEXT,
+    error_message TEXT,
+    user_description TEXT,
+    image_id TEXT,
+    device_id TEXT NOT NULL,
+    platform TEXT NOT NULL,
+    app_version TEXT,
+    metadata TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_bug_reports_type ON bug_reports(report_type);
+CREATE INDEX IF NOT EXISTS idx_bug_reports_platform ON bug_reports(platform);
+CREATE INDEX IF NOT EXISTS idx_bug_reports_created_at ON bug_reports(created_at);

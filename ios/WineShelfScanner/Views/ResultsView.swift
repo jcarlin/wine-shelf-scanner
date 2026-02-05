@@ -11,6 +11,7 @@ struct ResultsView: View {
     @State private var selectedWine: WineResult?
     @State private var showToast = false
     @State private var toastWorkItem: DispatchWorkItem?
+    @State private var showBugReport = false
 
     /// Compute shelf rankings for detail sheet (rank by rating, ties share rank)
     private var shelfRankingsForDetail: [String: (rank: Int, total: Int)] {
@@ -79,11 +80,38 @@ struct ResultsView: View {
         }
         .overlay(alignment: .top) {
             if showToast {
-                ToastView(message: "Some bottles couldn't be recognized")
-                    .transition(.move(edge: .top).combined(with: .opacity))
-                    .animation(.easeInOut, value: showToast)
-                    .accessibilityIdentifier("partialDetectionToast")
+                HStack(spacing: 8) {
+                    ToastView(message: "Some bottles couldn't be recognized")
+                    if FeatureFlags.shared.bugReport {
+                        Button {
+                            showBugReport = true
+                        } label: {
+                            Text("Report")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                                .foregroundColor(.yellow)
+                        }
+                        .accessibilityIdentifier("partialDetectionReportButton")
+                    }
+                }
+                .padding(.horizontal, 8)
+                .transition(.move(edge: .top).combined(with: .opacity))
+                .animation(.easeInOut, value: showToast)
+                .accessibilityIdentifier("partialDetectionToast")
             }
+        }
+        .sheet(isPresented: $showBugReport) {
+            BugReportSheet(
+                reportType: response.isFullFailure ? .fullFailure : .partialDetection,
+                errorMessage: nil,
+                imageId: response.imageId,
+                metadata: BugReportMetadata(
+                    winesDetected: response.visibleResults.count,
+                    winesInFallback: response.fallbackList.count,
+                    confidenceScores: response.results.map { $0.confidence }
+                )
+            )
+            .presentationDetents([.medium])
         }
     }
 
@@ -228,6 +256,8 @@ struct ToastView: View {
 struct FallbackListView: View {
     let wines: [FallbackWine]
 
+    @State private var showBugReport = false
+
     var sortedWines: [FallbackWine] {
         wines.sorted { ($0.rating ?? 0) > ($1.rating ?? 0) }
     }
@@ -245,12 +275,37 @@ struct FallbackListView: View {
                     ForEach(sortedWines) { wine in
                         FallbackWineRow(wine: wine)
                     }
+
+                    if FeatureFlags.shared.bugReport {
+                        Button {
+                            showBugReport = true
+                        } label: {
+                            Label("Not what you expected? Report an issue", systemImage: "flag")
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.5))
+                        }
+                        .padding(.top, 8)
+                        .accessibilityIdentifier("fallbackReportButton")
+                    }
                 }
                 .padding()
             }
             .accessibilityIdentifier("fallbackList")
         }
         .accessibilityIdentifier("fallbackContainer")
+        .sheet(isPresented: $showBugReport) {
+            BugReportSheet(
+                reportType: .fullFailure,
+                errorMessage: nil,
+                imageId: nil,
+                metadata: BugReportMetadata(
+                    winesDetected: 0,
+                    winesInFallback: wines.count,
+                    confidenceScores: nil
+                )
+            )
+            .presentationDetents([.medium])
+        }
     }
 }
 

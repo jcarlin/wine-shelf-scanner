@@ -124,26 +124,6 @@ jobs:
 
           docker stop wine-test
 
-  expo-tests:
-    name: Expo Tests
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: expo
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-          cache-dependency-path: expo/package-lock.json
-
-      - run: npm ci
-      - run: npm run type-check
-      - run: npm test
-
   nextjs-tests:
     name: Next.js Tests
     runs-on: ubuntu-latest
@@ -162,6 +142,7 @@ jobs:
 
       - run: npm ci
       - run: npm run type-check
+      - run: npm test
       - run: npm run lint
       - run: npm run build
         env:

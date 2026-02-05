@@ -41,7 +41,6 @@ wine-shelf-scanner/
 │       ├── accuracy/         # Recognition accuracy tests
 │       └── fixtures/         # Captured Vision API responses
 ├── ios/                      # SwiftUI iOS app
-├── expo/                     # React Native app (Expo SDK)
 ├── nextjs/                   # Next.js web app (Vercel deployment)
 ├── raw-data/                 # Wine data sources (Kaggle, Vivino)
 ├── test-images/              # Test assets for Vision API
@@ -53,14 +52,13 @@ wine-shelf-scanner/
 
 ## Frontend Development Strategy
 
-**Current:** iOS, Expo, and Next.js are developed in parallel. Neither is the source of truth.
+**Current:** iOS and Next.js are developed in parallel. Neither is the source of truth.
 
 **Frontends:**
 - **iOS** — Native SwiftUI app
-- **Expo** — React Native for iOS/Android
 - **Next.js** — Web app deployed to Vercel
 
-All frontends implement the same API contract and UX rules, but maintain separate codebases. The Next.js web app shares lib utilities (types, theme, overlay-math) ported from Expo.
+All frontends implement the same API contract and UX rules, but maintain separate codebases.
 
 ---
 
@@ -171,11 +169,22 @@ Tap rating badge → modal sheet.
 ### Partial Detection
 - Show overlays that passed confidence threshold
 - Toast: "Some bottles couldn't be recognized"
+- Optional "Report" link on toast (feature-flagged: `bugReport`)
 
 ### Full Failure
 - Auto-switch to fallback list view
 - Sort by rating descending
 - Never show a dead end
+- "Not what you expected? Report an issue" link at bottom of fallback list
+
+### Bug Report (Feature-Flagged)
+- "Report an Issue" button appears on error screen, partial detection toast, and fallback list
+- Opens a lightweight report sheet/modal
+- Auto-captures: error type, error message, image ID, device ID, platform, app version, timestamp
+- Optional free-text field (max 500 chars)
+- Fire-and-forget submission — always shows success, never blocks the user
+- Backend: `POST /report` → stores in `bug_reports` SQLite table
+- Feature flag: `feature_bug_report` (iOS) / `NEXT_PUBLIC_FEATURE_BUG_REPORT` (Next.js)
 
 ---
 
@@ -218,6 +227,31 @@ Tap rating badge → modal sheet.
 - `use_llm` — Toggle LLM fallback (default: true)
 - `mock_scenario` — Select fixture (full_shelf, partial_detection, etc.)
 
+### Bug Report Endpoint
+
+`POST /report` — Receives bug reports from clients.
+
+```json
+{
+  "report_type": "error | partial_detection | full_failure | wrong_wine",
+  "error_type": "NETWORK_ERROR | SERVER_ERROR | TIMEOUT | PARSE_ERROR",
+  "error_message": "string",
+  "user_description": "string (optional, max 500)",
+  "image_id": "string (optional)",
+  "device_id": "string",
+  "platform": "ios | web | expo",
+  "app_version": "string",
+  "timestamp": "ISO 8601",
+  "metadata": {
+    "wines_detected": 0,
+    "wines_in_fallback": 5,
+    "confidence_scores": [0.42, 0.38]
+  }
+}
+```
+
+`GET /report/stats` — Returns aggregated bug report statistics.
+
 ---
 
 ## Paywall Rules
@@ -240,20 +274,13 @@ Tap rating badge → modal sheet.
 - Native camera (photo capture only, no live video)
 - Declarative overlay rendering
 
-### Expo
-- React Native (Expo SDK)
-- TypeScript
-- expo-image-picker for camera/library
-- Same API contract as iOS
-- Centralized theming in `expo/lib/theme.ts`
-
 ### Next.js (Web)
 - Next.js 14 (App Router)
 - TypeScript
 - Tailwind CSS
 - Deployed to Vercel
 - File upload + camera capture (mobile browsers)
-- Shared lib utilities ported from Expo
+- Centralized lib utilities (types, theme, overlay-math)
 
 ### Backend
 - FastAPI (Python 3.9+)
@@ -298,24 +325,6 @@ open ios/WineShelfScanner.xcodeproj
 
 # Run tests
 xcodebuild test -scheme WineShelfScanner -destination 'platform=iOS Simulator,name=iPhone 15'
-```
-
-### Expo
-```bash
-# Install dependencies
-cd expo && npm install
-
-# Start dev server
-npm start
-
-# Run on iOS simulator
-npm run ios
-
-# Run on Android emulator
-npm run android
-
-# Run tests
-npm test
 ```
 
 ### Next.js (Web)

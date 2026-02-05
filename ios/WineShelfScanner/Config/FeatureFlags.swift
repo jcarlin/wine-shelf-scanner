@@ -23,6 +23,7 @@ struct FeatureFlags {
         "feature_offline_cache": true,
         "feature_share": true,
         "feature_background_processing": true,
+        "feature_bug_report": true,
         "feature_subscription": false,
     ]
 
@@ -60,6 +61,10 @@ struct FeatureFlags {
 
     var backgroundProcessing: Bool {
         flagValue("feature_background_processing")
+    }
+
+    var bugReport: Bool {
+        flagValue("feature_bug_report")
     }
 
     var subscription: Bool {

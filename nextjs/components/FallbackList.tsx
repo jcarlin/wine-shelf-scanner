@@ -1,8 +1,11 @@
 'use client';
 
-import { Star, AlertTriangle } from 'lucide-react';
+import { useState } from 'react';
+import { Star, AlertTriangle, Flag } from 'lucide-react';
 import { FallbackWine } from '@/lib/types';
 import { colors } from '@/lib/theme';
+import { BugReportModal } from './BugReportModal';
+import { useFeatureFlags } from '@/lib/feature-flags';
 
 interface FallbackListProps {
   wines: FallbackWine[];
@@ -10,6 +13,9 @@ interface FallbackListProps {
 }
 
 export function FallbackList({ wines, onReset }: FallbackListProps) {
+  const [showBugReport, setShowBugReport] = useState(false);
+  const { bugReport: bugReportEnabled } = useFeatureFlags();
+
   // Sort by rating descending
   const sortedWines = [...wines].sort((a, b) => b.rating - a.rating);
 
@@ -30,7 +36,7 @@ export function FallbackList({ wines, onReset }: FallbackListProps) {
 
       {/* Wine List */}
       <div className="flex-1 space-y-2 mb-6">
-        {sortedWines.map((wine, index) => (
+        {sortedWines.map((wine) => (
           <div
             key={wine.wine_name}
             className="flex items-center justify-between bg-white/5 rounded-lg px-4 py-3"
@@ -49,6 +55,16 @@ export function FallbackList({ wines, onReset }: FallbackListProps) {
             </div>
           </div>
         ))}
+
+        {bugReportEnabled && (
+          <button
+            onClick={() => setShowBugReport(true)}
+            className="flex items-center justify-center gap-1.5 text-gray-500 hover:text-gray-300 text-xs mt-2 transition-colors w-full"
+          >
+            <Flag className="w-3 h-3" />
+            Not what you expected? Report an issue
+          </button>
+        )}
       </div>
 
       {/* Reset Button */}
@@ -62,6 +78,17 @@ export function FallbackList({ wines, onReset }: FallbackListProps) {
       >
         Try Another Photo
       </button>
+
+      {/* Bug Report Modal */}
+      <BugReportModal
+        isOpen={showBugReport}
+        onClose={() => setShowBugReport(false)}
+        reportType="full_failure"
+        metadata={{
+          wines_detected: 0,
+          wines_in_fallback: wines.length,
+        }}
+      />
     </div>
   );
 }

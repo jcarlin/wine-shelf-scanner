@@ -1,6 +1,5 @@
 /**
  * Mock service for development and testing
- * Port from expo/lib/mock-service.ts
  */
 
 import {

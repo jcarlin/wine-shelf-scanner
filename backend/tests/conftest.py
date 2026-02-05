@@ -8,6 +8,7 @@ from pathlib import Path
 
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
+DATA_DIR = Path(__file__).parent.parent / "app" / "data"
 
 
 # Configure pytest-asyncio to use auto mode for async tests
@@ -16,6 +17,57 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "asyncio: mark test as an asyncio test"
     )
+
+
+def pytest_sessionstart(session):
+    """Seed test database from ratings.json if wines.db is empty.
+
+    In CI, wines.db doesn't exist (stored in GCS, not git).
+    This seeds the SQLite DB with 60 wines from ratings.json so
+    tests that depend on finding wines like "Opus One" pass.
+    """
+    from app.config import Config
+
+    if not Config.use_sqlite():
+        return
+
+    db_path = Path(Config.database_path())
+    ratings_path = DATA_DIR / "ratings.json"
+
+    if not ratings_path.exists():
+        return
+
+    # Import repository to create/open DB and check if it needs seeding
+    from app.services.wine_repository import WineRepository
+    repo = WineRepository(str(db_path))
+
+    if repo.count() > 0:
+        repo.close()
+        return
+
+    # Seed from ratings.json
+    with open(ratings_path) as f:
+        data = json.load(f)
+
+    wines = []
+    for wine in data.get("wines", []):
+        wines.append({
+            "canonical_name": wine["canonical_name"],
+            "rating": wine["rating"],
+            "aliases": wine.get("aliases", []),
+            "wine_type": wine.get("wine_type"),
+            "region": wine.get("region"),
+            "winery": wine.get("winery"),
+            "country": wine.get("country"),
+            "varietal": wine.get("varietal"),
+        })
+
+    inserted, skipped = repo.bulk_insert(wines)
+    repo.close()
+
+    # Clear any cached matcher state from previous test runs
+    from app.services.wine_matcher import WineMatcher
+    WineMatcher.clear_cache()
 
 
 def pytest_collection_modifyitems(config, items):

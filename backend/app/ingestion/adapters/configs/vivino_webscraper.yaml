@@ -1,0 +1,16 @@
+source_name: vivino_webscraper
+file_path: ../raw-data/vivino-webscraper-and-data/vivino.csv
+rating_scale: [1, 5]
+encoding: utf-8
+
+column_mapping:
+  wine_name: Wine
+  rating: Rating
+  winery: Winery
+  region: Region
+  country: Country
+
+transformations:
+  wine_name:
+    - strip_whitespace
+    - remove_vintage_suffix

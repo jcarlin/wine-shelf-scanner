@@ -35,6 +35,10 @@
 		APP0026 /* ScanCounter.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0020 /* ScanCounter.swift */; };
 		APP0027 /* SubscriptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0021 /* SubscriptionManager.swift */; };
 		APP0028 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0022 /* PaywallView.swift */; };
+		APP0029 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0023 /* AppDelegate.swift */; };
+		APP0030 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0024 /* NotificationService.swift */; };
+		APP0031 /* BackgroundScanManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0025 /* BackgroundScanManager.swift */; };
+		TEST0003 /* BackgroundScanManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0003 /* BackgroundScanManagerTests.swift */; };
 		TEST0001 /* ScanResponseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0001 /* ScanResponseTests.swift */; };
 		TEST0002 /* OverlayMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0002 /* OverlayMathTests.swift */; };
 		UITST001 /* AccessibilityIdentifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = UISRC001 /* AccessibilityIdentifiers.swift */; };
@@ -98,6 +102,10 @@
 		SRC0020 /* ScanCounter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanCounter.swift; sourceTree = "<group>"; };
 		SRC0021 /* SubscriptionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionManager.swift; sourceTree = "<group>"; };
 		SRC0022 /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
+		SRC0023 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		SRC0024 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
+		SRC0025 /* BackgroundScanManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundScanManager.swift; sourceTree = "<group>"; };
+		TST0003 /* BackgroundScanManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundScanManagerTests.swift; sourceTree = "<group>"; };
 		TST0001 /* ScanResponseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanResponseTests.swift; sourceTree = "<group>"; };
 		TST0002 /* OverlayMathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayMathTests.swift; sourceTree = "<group>"; };
 		UISRC001 /* AccessibilityIdentifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityIdentifiers.swift; sourceTree = "<group>"; };
@@ -168,6 +176,7 @@
 				SRC0001 /* WineShelfScannerApp.swift */,
 				SRC0002 /* ContentView.swift */,
 				SRC0014 /* Config.swift */,
+				SRC0023 /* AppDelegate.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -214,6 +223,8 @@
 				SRC0019 /* WineMemoryStore.swift */,
 				SRC0020 /* ScanCounter.swift */,
 				SRC0021 /* SubscriptionManager.swift */,
+				SRC0024 /* NotificationService.swift */,
+				SRC0025 /* BackgroundScanManager.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -240,6 +251,7 @@
 			children = (
 				TST0001 /* ScanResponseTests.swift */,
 				TST0002 /* OverlayMathTests.swift */,
+				TST0003 /* BackgroundScanManagerTests.swift */,
 			);
 			path = WineShelfScannerTests;
 			sourceTree = "<group>";
@@ -443,6 +455,9 @@
 				APP0026 /* ScanCounter.swift in Sources */,
 				APP0027 /* SubscriptionManager.swift in Sources */,
 				APP0028 /* PaywallView.swift in Sources */,
+				APP0029 /* AppDelegate.swift in Sources */,
+				APP0030 /* NotificationService.swift in Sources */,
+				APP0031 /* BackgroundScanManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -452,6 +467,7 @@
 			files = (
 				TEST0001 /* ScanResponseTests.swift in Sources */,
 				TEST0002 /* OverlayMathTests.swift in Sources */,
+				TEST0003 /* BackgroundScanManagerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

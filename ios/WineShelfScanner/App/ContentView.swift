@@ -9,6 +9,7 @@ struct ContentView: View {
     @State private var capturedImage: UIImage?
     @State private var showAbout = false
     @State private var showPaywall = false
+    @Environment(\.scenePhase) private var scenePhase
 
     /// Whether we're running in UI test mode (bypass photo picker)
     private var isUITesting: Bool {
@@ -126,6 +127,9 @@ struct ContentView: View {
                 case .processing:
                     ProcessingView()
 
+                case .backgroundProcessing:
+                    ProcessingView()
+
                 case .results(let response, let image):
                     ResultsView(
                         response: response,
@@ -189,6 +193,16 @@ struct ContentView: View {
             .onChange(of: capturedImage) { newImage in
                 if let image = newImage {
                     viewModel.performScan(with: image)
+                }
+            }
+            .onAppear {
+                // Restore completed background scan from previous session
+                viewModel.restoreBackgroundScanIfNeeded()
+            }
+            .onChange(of: scenePhase) { newPhase in
+                if newPhase == .active {
+                    // Check for completed background scan when returning to foreground
+                    viewModel.restoreBackgroundScanIfNeeded()
                 }
             }
         }

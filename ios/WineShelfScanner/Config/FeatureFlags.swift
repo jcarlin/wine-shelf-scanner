@@ -22,6 +22,7 @@ struct FeatureFlags {
         "feature_visual_emphasis": true,
         "feature_offline_cache": true,
         "feature_share": true,
+        "feature_background_processing": true,
         "feature_bug_report": true,
         "feature_subscription": false,
     ]
@@ -56,6 +57,10 @@ struct FeatureFlags {
 
     var share: Bool {
         flagValue("feature_share")
+    }
+
+    var backgroundProcessing: Bool {
+        flagValue("feature_background_processing")
     }
 
     var bugReport: Bool {

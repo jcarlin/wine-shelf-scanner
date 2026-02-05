@@ -41,3 +41,8 @@ Thumbs.db
 # Google Cloud credentials (should use Secret Manager in production)
 *.json
 !app/data/ratings.json
+
+# Wine database (downloaded from GCS at runtime)
+app/data/*.db
+app/data/*.db-*
+app/data/*.db.backup

@@ -46,6 +46,10 @@ class ScanViewModel: ObservableObject {
                 )
                 // Cache result for offline access
                 ScanCacheService.shared.save(response: response, image: image)
+                // Count successful scan for paywall (only when subscription feature is on)
+                if FeatureFlags.shared.subscription {
+                    ScanCounter.shared.increment()
+                }
                 state = .results(response, image)
             } catch {
                 // On network failure, fall back to cache if offline and cache is available

@@ -79,7 +79,6 @@ class ReportRepository:
             db_path = Path(__file__).parent.parent / "data" / "wines.db"
         self.db_path = str(db_path)
         self._local = threading.local()
-        self._ensure_table()
 
     def _get_connection(self) -> sqlite3.Connection:
         """Get thread-local database connection."""
@@ -100,29 +99,6 @@ class ReportRepository:
         except Exception:
             conn.rollback()
             raise
-
-    def _ensure_table(self):
-        """Ensure bug_reports table exists."""
-        conn = self._get_connection()
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS bug_reports (
-                id TEXT PRIMARY KEY,
-                report_type TEXT NOT NULL,
-                error_type TEXT,
-                error_message TEXT,
-                user_description TEXT,
-                image_id TEXT,
-                device_id TEXT NOT NULL,
-                platform TEXT NOT NULL,
-                app_version TEXT,
-                metadata TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_bug_reports_type ON bug_reports(report_type)")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_bug_reports_platform ON bug_reports(platform)")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_bug_reports_created_at ON bug_reports(created_at)")
-        conn.commit()
 
     def add_report(self, report: ReportRequest) -> str:
         """Store a bug report. Returns the report ID."""

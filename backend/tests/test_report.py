@@ -13,11 +13,36 @@ from app.routes.report import ReportRepository, ReportRequest, ReportMetadata
 # === Repository Tests ===
 
 
+def _create_bug_reports_table(db_path: str):
+    """Create bug_reports table on a test database (mimics Alembic migration 002)."""
+    conn = sqlite3.connect(db_path)
+    conn.executescript("""
+        CREATE TABLE IF NOT EXISTS bug_reports (
+            id TEXT PRIMARY KEY,
+            report_type TEXT NOT NULL,
+            error_type TEXT,
+            error_message TEXT,
+            user_description TEXT,
+            image_id TEXT,
+            device_id TEXT NOT NULL,
+            platform TEXT NOT NULL,
+            app_version TEXT,
+            metadata TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE INDEX IF NOT EXISTS idx_bug_reports_type ON bug_reports(report_type);
+        CREATE INDEX IF NOT EXISTS idx_bug_reports_platform ON bug_reports(platform);
+        CREATE INDEX IF NOT EXISTS idx_bug_reports_created_at ON bug_reports(created_at);
+    """)
+    conn.close()
+
+
 @pytest.fixture
 def repo(tmp_path):
-    """Create a repository backed by a temp database."""
-    db_path = tmp_path / "test.db"
-    return ReportRepository(db_path=str(db_path))
+    """Create a repository backed by a temp database with schema pre-applied."""
+    db_path = str(tmp_path / "test.db")
+    _create_bug_reports_table(db_path)
+    return ReportRepository(db_path=db_path)
 
 
 def make_report(**overrides) -> ReportRequest:
@@ -124,8 +149,10 @@ def client(tmp_path):
     from app.routes import report as report_module
     from main import app
 
-    # Override with temp database
-    test_repo = ReportRepository(db_path=str(tmp_path / "test.db"))
+    # Create schema before constructing repository
+    db_path = str(tmp_path / "test.db")
+    _create_bug_reports_table(db_path)
+    test_repo = ReportRepository(db_path=db_path)
     original_repo = report_module._report_repo
     report_module._report_repo = test_repo
 

@@ -87,5 +87,13 @@
     "thanksImprove": "개선에 도움을 주셔서 감사합니다!",
     "done": "완료",
     "cancel": "취소"
+  },
+  "warmup": {
+    "checking": "서버에 연결 중...",
+    "title": "서버 시작 중",
+    "message": "와인을 스캔하기 위해 서버가 시작되고 있습니다. 보통 15-30초 정도 소요됩니다.",
+    "attempt": "시도 {count}",
+    "unavailableTitle": "서버를 사용할 수 없음",
+    "retry": "다시 시도"
   }
 }

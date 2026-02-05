@@ -87,5 +87,13 @@
     "thanksImprove": "Thanks for helping us improve!",
     "done": "Done",
     "cancel": "Cancel"
+  },
+  "warmup": {
+    "checking": "Connecting to server...",
+    "title": "Waking up the server",
+    "message": "Our server is spinning up to scan your wines. This typically takes 15-30 seconds.",
+    "attempt": "Attempt {count}",
+    "unavailableTitle": "Server Unavailable",
+    "retry": "Try Again"
   }
 }

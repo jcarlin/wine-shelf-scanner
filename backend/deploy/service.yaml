@@ -59,6 +59,8 @@ spec:
               value: "true"
             - name: LLM_PROVIDER
               value: "gemini"
+            - name: GEMINI_MODEL
+              value: "gemini-2.0-flash"
             # Database persistence (GCS)
             - name: GCS_DB_BUCKET
               value: "wine-scanner-db"

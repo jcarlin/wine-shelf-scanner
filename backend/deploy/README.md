@@ -142,7 +142,5 @@ gcloud secrets add-iam-policy-binding anthropic-api-key \
 | File | Purpose |
 |------|---------|
 | `service.yaml` | Cloud Run service definition (source of truth) |
-| `env.production.yaml` | Documentation of non-secret env vars |
 | `deploy.sh` | Manual deployment script |
 | `setup.sh` | One-time GCP infrastructure setup |
-| `update-env.sh` | Update env vars without rebuild (use cautiously) |

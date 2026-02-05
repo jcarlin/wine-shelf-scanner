@@ -3,10 +3,12 @@ import SwiftUI
 /// Main content view that manages the scan flow
 struct ContentView: View {
     @StateObject private var viewModel: ScanViewModel
+    @StateObject private var networkMonitor = NetworkMonitor.shared
     @State private var showCamera = false
     @State private var showPhotoPicker = false
     @State private var capturedImage: UIImage?
     @State private var showAbout = false
+    @State private var showCachedScans = false
 
     /// Whether we're running in UI test mode (bypass photo picker)
     private var isUITesting: Bool {
@@ -66,63 +68,117 @@ struct ContentView: View {
             ZStack {
                 Color.black.ignoresSafeArea()
 
-                switch viewModel.state {
-                case .idle:
-                    IdleView(
-                        onScanCamera: {
-                            if isUITesting {
-                                // Bypass camera, directly trigger scan with mock image
-                                let mockImage = Self.createMockImage()
-                                capturedImage = mockImage
-                                viewModel.performScan(with: mockImage)
+                VStack(spacing: 0) {
+                    // Offline banner (persistent, above content)
+                    if FeatureFlags.shared.offlineCache && !networkMonitor.isConnected {
+                        OfflineBanner()
+                    }
+
+                    // Main content
+                    switch viewModel.state {
+                    case .idle:
+                        IdleView(
+                            onScanCamera: {
+                                if isUITesting {
+                                    let mockImage = Self.createMockImage()
+                                    capturedImage = mockImage
+                                    viewModel.performScan(with: mockImage)
+                                } else {
+                                    showCamera = true
+                                }
+                            },
+                            onScanLibrary: {
+                                if isUITesting {
+                                    let mockImage = Self.createMockImage()
+                                    capturedImage = mockImage
+                                    viewModel.performScan(with: mockImage)
+                                } else {
+                                    showPhotoPicker = true
+                                }
+                            },
+                            onViewCachedScans: {
+                                showCachedScans = true
+                            },
+                            hasCachedScans: viewModel.hasCachedScans,
+                            isOffline: FeatureFlags.shared.offlineCache && !networkMonitor.isConnected
+                        )
+
+                    case .processing:
+                        ProcessingView()
+
+                    case .results(let response, let image):
+                        ResultsView(
+                            response: response,
+                            image: image,
+                            onNewScan: {
+                                viewModel.reset()
+                                capturedImage = nil
+                            },
+                            onToggleDebugMode: {
+                                viewModel.toggleDebugMode()
+                            },
+                            debugMode: viewModel.debugMode
+                        )
+
+                    case .cachedResults(let response, let image, let timestamp):
+                        VStack(spacing: 0) {
+                            CachedResultBanner(timestamp: timestamp)
+                            if let image = image {
+                                ResultsView(
+                                    response: response,
+                                    image: image,
+                                    onNewScan: {
+                                        viewModel.reset()
+                                        capturedImage = nil
+                                    },
+                                    onToggleDebugMode: {
+                                        viewModel.toggleDebugMode()
+                                    },
+                                    debugMode: viewModel.debugMode
+                                )
                             } else {
-                                showCamera = true
-                            }
-                        },
-                        onScanLibrary: {
-                            if isUITesting {
-                                // Bypass photo picker, directly trigger scan with mock image
-                                let mockImage = Self.createMockImage()
-                                capturedImage = mockImage
-                                viewModel.performScan(with: mockImage)
-                            } else {
-                                showPhotoPicker = true
+                                // No cached image — show results as fallback list
+                                FallbackListView(
+                                    wines: response.results.map {
+                                        FallbackWine(wineName: $0.wineName, rating: $0.rating)
+                                    } + response.fallbackList
+                                )
+                                HStack {
+                                    Button(action: {
+                                        viewModel.reset()
+                                        capturedImage = nil
+                                    }) {
+                                        Label("New Scan", systemImage: "camera.fill")
+                                            .font(.headline)
+                                    }
+                                    .buttonStyle(.borderedProminent)
+                                    .tint(.white)
+                                    .accessibilityIdentifier("newScanButton")
+                                }
+                                .padding()
+                                .background(Color.black.opacity(0.9))
                             }
                         }
-                    )
 
-                case .processing:
-                    ProcessingView()
-
-                case .results(let response, let image):
-                    ResultsView(
-                        response: response,
-                        image: image,
-                        onNewScan: {
-                            viewModel.reset()
-                            capturedImage = nil
-                        },
-                        onToggleDebugMode: {
-                            viewModel.toggleDebugMode()
-                        },
-                        debugMode: viewModel.debugMode
-                    )
-
-                case .error(let message):
-                    ErrorView(
-                        message: message,
-                        onRetry: {
-                            if let image = capturedImage {
-                                viewModel.performScan(with: image)
-                            } else {
-                                showCamera = true
-                            }
-                        },
-                        onReset: {
-                            viewModel.reset()
-                            capturedImage = nil
-                        }
-                    )
+                    case .error(let message):
+                        ErrorView(
+                            message: message,
+                            onRetry: {
+                                if let image = capturedImage {
+                                    viewModel.performScan(with: image)
+                                } else {
+                                    showCamera = true
+                                }
+                            },
+                            onReset: {
+                                viewModel.reset()
+                                capturedImage = nil
+                            },
+                            onViewCached: viewModel.hasCachedScans ? {
+                                viewModel.showCachedScans()
+                            } : nil
+                        )
+                    }
                 }
             }
             .navigationTitle("Wine Scanner")
@@ -151,6 +207,9 @@ struct ContentView: View {
                 AboutView()
                     .presentationDetents([.medium])
             }
+            .sheet(isPresented: $showCachedScans) {
+                CachedScansView(viewModel: viewModel)
+            }
             .onChange(of: capturedImage) { newImage in
                 if let image = newImage {
                     viewModel.performScan(with: image)
@@ -160,11 +219,62 @@ struct ContentView: View {
     }
 }
 
+// MARK: - Offline Banner
+
+/// Persistent banner shown when device is offline
+struct OfflineBanner: View {
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "wifi.slash")
+                .font(.caption)
+            Text("Offline")
+                .font(.caption)
+                .fontWeight(.medium)
+        }
+        .foregroundColor(.white.opacity(0.9))
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 6)
+        .background(Color.orange.opacity(0.8))
+        .accessibilityIdentifier("offlineBanner")
+    }
+}
+
+// MARK: - Cached Result Banner
+
+/// Banner indicating results are from cache, with relative timestamp
+struct CachedResultBanner: View {
+    let timestamp: Date
+
+    private var relativeTime: String {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .short
+        return formatter.localizedString(for: timestamp, relativeTo: Date())
+    }
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "clock.arrow.circlepath")
+                .font(.caption)
+            Text("Cached \(relativeTime)")
+                .font(.caption)
+                .fontWeight(.medium)
+        }
+        .foregroundColor(.white.opacity(0.9))
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 6)
+        .background(Color.blue.opacity(0.7))
+        .accessibilityIdentifier("cachedResultBanner")
+    }
+}
+
 // MARK: - Supporting Views
 
 struct IdleView: View {
     let onScanCamera: () -> Void
     let onScanLibrary: () -> Void
+    var onViewCachedScans: (() -> Void)? = nil
+    var hasCachedScans: Bool = false
+    var isOffline: Bool = false
 
     @State private var cameraAvailable = UIImagePickerController.isSourceTypeAvailable(.camera)
 
@@ -213,6 +323,21 @@ struct IdleView: View {
                 }
                 .accessibilityIdentifier("choosePhotoButton")
                 .padding(.horizontal, 40)
+
+                // Recent scans button — shown when cache has entries
+                if hasCachedScans, let onViewCachedScans = onViewCachedScans {
+                    Button(action: onViewCachedScans) {
+                        Label("Recent Scans", systemImage: "clock.arrow.circlepath")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(Color.white.opacity(0.12))
+                            .cornerRadius(12)
+                    }
+                    .accessibilityIdentifier("recentScansButton")
+                    .padding(.horizontal, 40)
+                }
             }
             .padding(.top, 16)
         }
@@ -260,6 +385,7 @@ struct ErrorView: View {
     let message: String
     let onRetry: () -> Void
     let onReset: () -> Void
+    var onViewCached: (() -> Void)? = nil
 
     var body: some View {
         VStack(spacing: 24) {
@@ -284,6 +410,17 @@ struct ErrorView: View {
                     .buttonStyle(.borderedProminent)
                     .tint(.white)
                     .accessibilityIdentifier("startOverButton")
+            }
+
+            // Cache fallback button — shown when cached scans are available
+            if let onViewCached = onViewCached {
+                Button(action: onViewCached) {
+                    Label("View Recent Scans", systemImage: "clock.arrow.circlepath")
+                        .font(.subheadline)
+                }
+                .buttonStyle(.bordered)
+                .tint(.orange)
+                .accessibilityIdentifier("viewCachedScansButton")
             }
         }
         .accessibilityIdentifier("errorView")

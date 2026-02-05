@@ -31,7 +31,7 @@ spec:
             - containerPort: 8080
           resources:
             limits:
-              memory: "1Gi"
+              memory: "4Gi"
               cpu: "1"
           env:
             # Non-secret environment variables
@@ -55,6 +55,13 @@ spec:
               value: "true"
             - name: LLM_PROVIDER
               value: "gemini"
+            # Database persistence (GCS)
+            - name: GCS_DB_BUCKET
+              value: "wine-scanner-db"
+            - name: GCS_DB_PATH
+              value: "data/wines.db"
+            - name: DATABASE_PATH
+              value: "/app/app/data/wines.db"
             # Secrets from Secret Manager (multiple keys enable automatic fallback)
             - name: GOOGLE_API_KEY
               valueFrom:
@@ -81,7 +88,7 @@ spec:
             initialDelaySeconds: 0
             periodSeconds: 10
             timeoutSeconds: 3
-            failureThreshold: 3
+            failureThreshold: 12
           # Liveness probe - restarts unhealthy containers
           livenessProbe:
             httpGet:

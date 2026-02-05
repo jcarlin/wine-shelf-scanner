@@ -47,8 +47,6 @@ spec:
               value: "true"
             - name: LOG_LEVEL
               value: "INFO"
-            - name: DEV_MODE
-              value: "false"
             - name: DEBUG_MODE
               value: "true"
             # Caching configuration

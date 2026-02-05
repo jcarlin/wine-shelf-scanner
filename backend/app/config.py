@@ -88,11 +88,6 @@ class Config:
         return os.getenv("LOG_LEVEL", "INFO").upper()
 
     @staticmethod
-    def is_dev() -> bool:
-        """Dev mode enables verbose logging."""
-        return os.getenv("DEV_MODE", "false").lower() == "true"
-
-    @staticmethod
     def debug_mode() -> bool:
         """Always include debug info in scan responses. Default: False."""
         return os.getenv("DEBUG_MODE", "false").lower() == "true"
@@ -106,12 +101,18 @@ class Config:
     @staticmethod
     def vision_cache_ttl_days() -> int:
         """Vision cache TTL in days (0 = no expiry)."""
-        return int(os.getenv("VISION_CACHE_TTL_DAYS", "7"))
+        try:
+            return int(os.getenv("VISION_CACHE_TTL_DAYS", "7"))
+        except ValueError:
+            return 7
 
     @staticmethod
     def vision_cache_max_size_mb() -> int:
         """Maximum vision cache size in MB before LRU eviction."""
-        return int(os.getenv("VISION_CACHE_MAX_SIZE_MB", "500"))
+        try:
+            return int(os.getenv("VISION_CACHE_MAX_SIZE_MB", "500"))
+        except ValueError:
+            return 500
 
     # === Database Persistence ===
     @staticmethod

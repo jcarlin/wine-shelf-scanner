@@ -272,7 +272,7 @@ Device-local thumbs-up/thumbs-down that persists across scans. On future scans, 
 ### What exists today
 - **iOS** has thumbs-up/down buttons in `WineDetailSheet.swift` (lines 286-316) + a correction text field
 - **Next.js** has NO feedback UI in its detail modal
-- Backend has a `corrections` table (`schema.sql:143-152`) that stores feedback with `device_id` — but this is for backend learning, not user-facing memory
+- Backend has a `corrections` table (Alembic migration 001) that stores feedback with `device_id` — but this is for backend learning, not user-facing memory
 - **No local persistence** exists on any frontend (no UserDefaults, no localStorage)
 
 ### What changes
@@ -427,7 +427,7 @@ The Kaggle wine reviews dataset (`raw-data/`) likely contains review counts or c
 
 | File | Change |
 |------|--------|
-| `schema.sql` | Add `review_count INTEGER` column to `wines` table |
+| New Alembic migration | Add `review_count INTEGER` column to `wines` table |
 | `wine_repository.py` | Return `review_count` in queries |
 | Kaggle adapter config | Map review count column |
 | `ingest.py` | Populate review_count during ingestion |
@@ -479,7 +479,7 @@ Gated behind `feature_safe_pick` flag (backend) / `FeatureFlags.safePick` (iOS) 
 | `response.py` | Add `is_safe_pick: Optional[bool] = Field(None)` to `WineResult` |
 | `config.py` | Add `SAFE_PICK_MIN_RATING = 4.0`, `SAFE_PICK_MIN_REVIEWS = 500` |
 | `routes/scan.py` | Compute `is_safe_pick` only when `flags.feature_safe_pick` is True. Simple boolean derived from existing data. |
-| `schema.sql` | (Approach A) Add `review_count` column |
+| New Alembic migration | (Approach A) Add `review_count` column |
 | `wine_repository.py` | (Approach A) Include `review_count` in query results |
 
 **iOS:**
@@ -705,7 +705,7 @@ These features have minimal dependencies on each other. Recommended order based 
 | `backend/app/models/response.py` | 5, 7 |
 | `backend/app/config.py` | 5, 7 |
 | `backend/app/routes/scan.py` | 5, 7 |
-| `backend/app/data/schema.sql` | 5 (if adding review_count) |
+| New Alembic migration | 5 (if adding review_count) |
 | `ios/.../RatingBadge.swift` | 1, 2, 5 |
 | `ios/.../WineDetailSheet.swift` | 1, 2, 5, 7 |
 | `ios/.../OverlayContainerView.swift` | 1, 2 |

@@ -291,6 +291,22 @@ Tap rating badge → modal sheet.
 - rapidfuzz (multi-algorithm fuzzy matching)
 - jellyfish (phonetic matching)
 - SQLite with FTS5 (191K wine database)
+- Alembic for database migrations (single source of truth for schema)
+
+### Database Schema
+
+**All schema changes must go through Alembic migrations.**
+
+Tables are created by migrations in `backend/alembic/versions/`:
+- Migration 001: Core tables (wines, wine_aliases, wine_sources, wine_fts, llm_ratings_cache, corrections, wine_reviews)
+- Migration 002: bug_reports
+- Migration 003: vision_cache
+
+To add a new table or modify schema:
+1. Create a new migration: `cd backend && alembic revision -m "description"`
+2. Edit the generated file in `alembic/versions/`
+3. Test locally: `alembic upgrade head`
+4. Migrations run automatically on Cloud Run deploy via `startup.py`
 
 ---
 

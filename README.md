@@ -241,6 +241,29 @@ wine-shelf-scanner/
 
 The SQLite database is located at `backend/app/data/wines.db` (191K wines with FTS5 full-text search).
 
+### Feature Flags
+
+Feature flags control optional functionality. All default to `true` (enabled) unless noted.
+
+| Flag | Backend | iOS | Next.js | Default | Description |
+|------|---------|-----|---------|---------|-------------|
+| `bug_report` | — | ✓ | ✓ | `true` | "Report an Issue" UI on errors |
+| `background_processing` | — | ✓ | — | `true` | Background scan processing |
+| `offline_cache` | — | ✓ | ✓ | `true` | Cache scans for offline use |
+| `visual_emphasis` | — | ✓ | ✓ | `true` | Top-3 glow effect |
+| `share` | — | ✓ | ✓ | `true` | Share results functionality |
+| `subscription` | — | ✓ | — | **`false`** | Paywall/scan counter (Phase 5) |
+| `wine_memory` | ✓ | ✓ | ✓ | `true` | Wine preference memory (future) |
+| `shelf_ranking` | ✓ | ✓ | ✓ | `true` | Shelf position ranking |
+| `safe_pick` | ✓ | ✓ | ✓ | `true` | "Safe pick" badge |
+| `pairings` | ✓ | ✓ | ✓ | `true` | Food pairing display |
+| `trust_signals` | ✓ | ✓ | ✓ | `true` | Rating source attribution |
+
+**Environment variable naming:**
+- Backend: `FEATURE_<FLAG_NAME>` (e.g., `FEATURE_WINE_MEMORY`)
+- Next.js: `NEXT_PUBLIC_FEATURE_<FLAG_NAME>` (e.g., `NEXT_PUBLIC_FEATURE_BUG_REPORT`)
+- iOS: Configured in `FeatureFlags.swift`, overridable via UserDefaults
+
 ### iOS Build Settings
 
 - **Debug**: Points to local backend (Mac IP)

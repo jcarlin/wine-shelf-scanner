@@ -34,6 +34,22 @@ jobs:
       - name: Install Playwright browsers
         run: playwright install chromium
 
+      - name: Verify Alembic migrations (fresh DB)
+        run: |
+          rm -f app/data/wines.db
+          alembic upgrade head
+          python -c "
+          import sqlite3
+          conn = sqlite3.connect('app/data/wines.db')
+          tables = [r[0] for r in conn.execute(\"SELECT name FROM sqlite_master WHERE type='table'\").fetchall()]
+          expected = ['wines', 'wine_aliases', 'wine_sources', 'wine_fts', 'llm_ratings_cache', 'corrections', 'wine_reviews']
+          missing = [t for t in expected if t not in tables]
+          assert not missing, f'Missing tables after migration: {missing}'
+          print(f'Migration OK: {len(tables)} tables created')
+          conn.close()
+          "
+          rm -f app/data/wines.db
+
       - name: Run pytest
         run: pytest tests/ -v --tb=short -k "not (test_scan_returns_valid_response or test_accepts_jpeg or test_accepts_png)"
         env:
@@ -51,27 +67,61 @@ jobs:
         working-directory: backend
         run: docker build -t wine-scanner-api:test .
 
-      - name: Verify container starts and serves /health
+      - name: Verify startup script, migrations, and health
         run: |
+          # Run the container exactly as Cloud Run does:
+          #   CMD ["python", "scripts/startup.py"]
+          # which does: GCS download (skipped, no bucket) -> Alembic migrations -> uvicorn
           docker run -d --name wine-test \
             -p 8080:8080 \
             -e USE_MOCKS=true \
             -e USE_SQLITE=true \
             wine-scanner-api:test
-          # Wait for the container to be healthy (up to 30s)
+
+          # Wait for startup.py -> alembic -> uvicorn to be ready (up to 30s)
           for i in $(seq 1 15); do
             if curl -sf http://localhost:8080/health; then
               echo ""
               echo "Health check passed"
-              docker stop wine-test
-              exit 0
+              break
             fi
             sleep 2
           done
-          echo "Health check failed"
-          docker logs wine-test
+
+          # Fail fast if health never responded
+          if ! curl -sf http://localhost:8080/health > /dev/null; then
+            echo "Health check failed — container logs:"
+            docker logs wine-test
+            docker stop wine-test
+            exit 1
+          fi
+
+          # Verify startup.py ran Alembic migrations successfully
+          LOGS=$(docker logs wine-test 2>&1)
+          if echo "$LOGS" | grep -q "Migration failed"; then
+            echo "Alembic migration failed — container logs:"
+            echo "$LOGS"
+            docker stop wine-test
+            exit 1
+          fi
+          echo "Alembic migrations: OK"
+
+          # Verify the API can serve a scan request (not just /health)
+          # POST a minimal image to /scan — with USE_MOCKS=true it uses mock Vision API
+          SCAN_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST http://localhost:8080/scan \
+            -F "image=@/dev/null;type=image/jpeg;filename=test.jpg" \
+            2>/dev/null || echo "000")
+          # Accept 200 (success) or 422/400 (validation error on empty file) — both prove the endpoint loaded
+          if [ "$SCAN_STATUS" = "000" ] || [ "$SCAN_STATUS" = "500" ]; then
+            echo "Scan endpoint returned $SCAN_STATUS — container logs:"
+            docker logs wine-test
+            docker stop wine-test
+            exit 1
+          fi
+          echo "Scan endpoint responsive (HTTP $SCAN_STATUS)"
+
           docker stop wine-test
-          exit 1
 
   expo-tests:
     name: Expo Tests

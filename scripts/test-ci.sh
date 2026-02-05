@@ -89,8 +89,10 @@ run_docker() {
     return
   fi
 
-  step "Backend Docker: Verify container starts and /health responds"
+  step "Backend Docker: Verify startup.py, Alembic migrations, and /health"
   docker rm -f wine-test 2>/dev/null || true
+  # Runs CMD ["python", "scripts/startup.py"] which does:
+  #   GCS download (skipped, no bucket) -> Alembic migrations -> exec uvicorn
   docker run -d --name wine-test \
     -p 8080:8080 \
     -e USE_MOCKS=true \
@@ -112,6 +114,33 @@ run_docker() {
     echo "Container logs:"
     docker logs wine-test
     fail "Docker health check (container failed to start)"
+    docker stop wine-test > /dev/null 2>&1 || true
+    docker rm wine-test > /dev/null 2>&1 || true
+    cd "$ROOT_DIR"
+    return
+  fi
+
+  # Verify Alembic migrations ran without errors
+  LOGS=$(docker logs wine-test 2>&1)
+  if echo "$LOGS" | grep -q "Migration failed"; then
+    echo "Container logs:"
+    echo "$LOGS"
+    fail "Alembic migrations failed inside container"
+  else
+    pass "Alembic migrations OK"
+  fi
+
+  # Verify /scan endpoint is reachable (not just /health)
+  SCAN_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+    -X POST http://localhost:8080/scan \
+    -F "image=@/dev/null;type=image/jpeg;filename=test.jpg" \
+    2>/dev/null || echo "000")
+  if [ "$SCAN_STATUS" = "000" ] || [ "$SCAN_STATUS" = "500" ]; then
+    echo "Scan endpoint returned HTTP $SCAN_STATUS"
+    docker logs wine-test
+    fail "Scan endpoint unreachable or errored (HTTP $SCAN_STATUS)"
+  else
+    pass "Scan endpoint responsive (HTTP $SCAN_STATUS)"
   fi
 
   docker stop wine-test > /dev/null 2>&1 || true

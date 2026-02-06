@@ -65,12 +65,12 @@ struct ResultsView: View {
                 showToast = true
                 // Cancel any pending dismissal
                 toastWorkItem?.cancel()
-                // Auto-dismiss after 3 seconds
+                // Auto-dismiss after 6 seconds
                 let workItem = DispatchWorkItem { [self] in
                     showToast = false
                 }
                 toastWorkItem = workItem
-                DispatchQueue.main.asyncAfter(deadline: .now() + 3, execute: workItem)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 6, execute: workItem)
             }
         }
         .onDisappear {
@@ -87,9 +87,10 @@ struct ResultsView: View {
                             showBugReport = true
                         } label: {
                             Text(NSLocalizedString("bugReport.report", comment: "Report button"))
-                                .font(.caption)
-                                .fontWeight(.medium)
+                                .font(.footnote)
+                                .fontWeight(.semibold)
                                 .foregroundColor(.yellow)
+                                .underline()
                         }
                         .accessibilityIdentifier("partialDetectionReportButton")
                     }
@@ -244,11 +245,17 @@ struct ToastView: View {
     var body: some View {
         Text(message)
             .font(.subheadline)
+            .fontWeight(.medium)
             .foregroundColor(.white)
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
-            .background(Color.black.opacity(0.8))
+            .background(Color.black.opacity(0.85))
             .cornerRadius(8)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.yellow.opacity(0.4), lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(0.3), radius: 8, y: 4)
             .padding(.top, 8)
     }
 }

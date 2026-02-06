@@ -222,7 +222,7 @@ export const animation = {
   toastDuration: 300,
 
   /** Toast auto-dismiss timeout in ms */
-  toastTimeout: 3000,
+  toastTimeout: 6000,
 } as const;
 
 // MARK: - Layout

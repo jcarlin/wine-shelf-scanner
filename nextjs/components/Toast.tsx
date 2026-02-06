@@ -29,13 +29,14 @@ export function Toast({ message, duration = animation.toastTimeout, onDismiss }:
       className={`
         fixed bottom-24 left-1/2 transform -translate-x-1/2
         flex items-center gap-2 px-4 py-3 rounded-lg
+        border border-yellow-500/40 shadow-lg shadow-black/30
         transition-opacity duration-300
         ${isVisible ? 'opacity-100' : 'opacity-0'}
       `}
       style={{ backgroundColor: colors.toastBackground }}
     >
-      <AlertCircle className="w-5 h-5 text-yellow-400" />
-      <span className="text-white text-sm">{message}</span>
+      <AlertCircle className="w-5 h-5 text-yellow-400 flex-shrink-0" />
+      <span className="text-white text-sm font-medium">{message}</span>
     </div>
   );
 }

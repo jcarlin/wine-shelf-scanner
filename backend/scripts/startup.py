@@ -65,19 +65,33 @@ def download_db_from_gcs() -> bool:
         bucket_obj = client.bucket(bucket)
         blob = bucket_obj.blob(gcs_path)
 
+        is_gz = gcs_path.endswith(".gz")
+
         if not blob.exists():
-            # Fall back to uncompressed path
-            fallback_path = gcs_path.replace(".gz", "")
-            logger.info(f"gz not found, trying uncompressed: {fallback_path}")
-            blob = bucket_obj.blob(fallback_path)
-            if not blob.exists():
-                logger.error(f"GCS object not found at {gcs_path} or {fallback_path}")
+            if is_gz:
+                # .gz not found, fall back to uncompressed
+                fallback_path = gcs_path[:-3]
+                logger.info(f"gz not found, trying uncompressed: {fallback_path}")
+                blob = bucket_obj.blob(fallback_path)
+                if not blob.exists():
+                    logger.error(f"GCS object not found at {gcs_path} or {fallback_path}")
+                    return False
+            else:
+                logger.error(f"GCS object gs://{bucket}/{gcs_path} does not exist")
                 return False
             # Download uncompressed directly
             blob.download_to_filename(db_path)
             elapsed = time.time() - start
             size_mb = Path(db_path).stat().st_size / (1024 * 1024)
             logger.info(f"Downloaded {size_mb:.1f} MB in {elapsed:.1f}s (uncompressed)")
+            return True
+
+        if not is_gz:
+            # Download uncompressed directly
+            blob.download_to_filename(db_path)
+            elapsed = time.time() - start
+            size_mb = Path(db_path).stat().st_size / (1024 * 1024)
+            logger.info(f"Downloaded {size_mb:.1f} MB in {elapsed:.1f}s")
             return True
 
         # Download gzip to temp file, then decompress

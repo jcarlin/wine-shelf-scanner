@@ -125,6 +125,7 @@ class IngestionPipeline:
             country=record.country,
             varietal=record.varietal,
             wine_type=record.wine_type,
+            description=record.description,
         )
 
         stats.records_processed += 1
@@ -147,6 +148,7 @@ class IngestionPipeline:
                 "winery": entity.winery,
                 "country": entity.country,
                 "varietal": entity.varietal,
+                "description": entity.description,
                 "aliases": list(entity.aliases),
                 "sources": entity.original_ratings,  # Preserve source provenance
             })

@@ -244,6 +244,8 @@ For ALL wines where wine_name is not null, provide:
 - brand: The producer/winery name (e.g., "Caymus", "Château Margaux")
 - region: The wine region (e.g., "Napa Valley", "Burgundy", "Marlborough")
 - varietal: The grape variety (e.g., "Cabernet Sauvignon", "Pinot Noir", "Chardonnay")
+- review_count: Estimated number of ratings across major platforms (Vivino, Wine Enthusiast, etc.). Omit if unknown.
+- review_snippets: 1-2 brief tasting note quotes (max 15 words each). Omit if uncertain.
 
 For wines NOT in our database (when db_candidate is null or match is invalid):
 - Also provide estimated_rating (1.0-5.0) based on your wine knowledge
@@ -253,8 +255,8 @@ For wines NOT in our database (when db_candidate is null or match is invalid):
 
 Return a JSON array with one result per input item (same order). Keep responses concise:
 [
-  {"index": 0, "is_valid_match": true, "wine_name": "Caymus Cabernet Sauvignon", "confidence": 0.95, "reasoning": "Match confirmed", "wine_type": "Red", "brand": "Caymus Vineyards", "region": "Napa Valley", "varietal": "Cabernet Sauvignon"},
-  {"index": 1, "is_valid_match": false, "wine_name": "Wente Morning Fog Chardonnay", "confidence": 0.85, "reasoning": "Valid wine but not in database", "estimated_rating": 3.9, "wine_type": "White", "brand": "Wente Vineyards", "region": "Livermore Valley", "varietal": "Chardonnay"},
+  {"index": 0, "is_valid_match": true, "wine_name": "Caymus Cabernet Sauvignon", "confidence": 0.95, "reasoning": "Match confirmed", "wine_type": "Red", "brand": "Caymus Vineyards", "region": "Napa Valley", "varietal": "Cabernet Sauvignon", "review_count": 12500, "review_snippets": ["Rich dark fruit with velvety tannins", "Outstanding Napa Cab, age-worthy"]},
+  {"index": 1, "is_valid_match": false, "wine_name": "Wente Morning Fog Chardonnay", "confidence": 0.85, "reasoning": "Valid wine but not in database", "estimated_rating": 3.9, "wine_type": "White", "brand": "Wente Vineyards", "region": "Livermore Valley", "varietal": "Chardonnay", "review_count": 3200, "review_snippets": ["Crisp apple and citrus notes"]},
   {"index": 2, "is_valid_match": false, "wine_name": null, "confidence": 0.0, "reasoning": "No valid wine name found"}
 ]"""
 

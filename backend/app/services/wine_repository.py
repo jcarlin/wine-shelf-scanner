@@ -27,6 +27,7 @@ class WineRecord:
     winery: Optional[str] = None
     country: Optional[str] = None
     varietal: Optional[str] = None
+    description: Optional[str] = None
     aliases: list[str] = None
 
     def __post_init__(self):
@@ -88,7 +89,7 @@ class WineRepository(BaseRepository):
 
         # Try canonical name
         cursor.execute("""
-            SELECT id, canonical_name, rating, wine_type, region, winery, country, varietal
+            SELECT id, canonical_name, rating, wine_type, region, winery, country, varietal, description
             FROM wines
             WHERE LOWER(canonical_name) = LOWER(?)
         """, (name,))
@@ -101,7 +102,7 @@ class WineRepository(BaseRepository):
 
         # Try alias
         cursor.execute("""
-            SELECT w.id, w.canonical_name, w.rating, w.wine_type, w.region, w.winery, w.country, w.varietal
+            SELECT w.id, w.canonical_name, w.rating, w.wine_type, w.region, w.winery, w.country, w.varietal, w.description
             FROM wines w
             JOIN wine_aliases a ON w.id = a.wine_id
             WHERE LOWER(a.alias_name) = LOWER(?)
@@ -136,7 +137,7 @@ class WineRepository(BaseRepository):
             return []
 
         cursor.execute("""
-            SELECT w.id, w.canonical_name, w.rating, w.wine_type, w.region, w.winery, w.country, w.varietal
+            SELECT w.id, w.canonical_name, w.rating, w.wine_type, w.region, w.winery, w.country, w.varietal, w.description
             FROM wines w
             JOIN wine_fts ON w.id = wine_fts.rowid
             WHERE wine_fts MATCH ?
@@ -179,7 +180,7 @@ class WineRepository(BaseRepository):
 
         try:
             cursor.execute("""
-                SELECT w.id, w.canonical_name, w.rating, w.wine_type, w.region, w.winery, w.country, w.varietal
+                SELECT w.id, w.canonical_name, w.rating, w.wine_type, w.region, w.winery, w.country, w.varietal, w.description
                 FROM wines w
                 JOIN wine_fts ON w.id = wine_fts.rowid
                 WHERE wine_fts MATCH ?
@@ -202,6 +203,7 @@ class WineRepository(BaseRepository):
             winery=row['winery'],
             country=row['country'],
             varietal=row['varietal'],
+            description=row['description'],
             aliases=[],  # Skip aliases for FTS results (performance)
         )
 
@@ -213,7 +215,7 @@ class WineRepository(BaseRepository):
         # Single query with GROUP_CONCAT to avoid N+1 problem
         cursor.execute("""
             SELECT w.id, w.canonical_name, w.rating, w.wine_type, w.region,
-                   w.winery, w.country, w.varietal,
+                   w.winery, w.country, w.varietal, w.description,
                    GROUP_CONCAT(a.alias_name, '|') as aliases
             FROM wines w
             LEFT JOIN wine_aliases a ON w.id = a.wine_id
@@ -233,6 +235,7 @@ class WineRepository(BaseRepository):
                 winery=row['winery'],
                 country=row['country'],
                 varietal=row['varietal'],
+                description=row['description'],
                 aliases=aliases,
             ))
 
@@ -399,7 +402,7 @@ class WineRepository(BaseRepository):
         cursor = conn.cursor()
 
         cursor.execute("""
-            SELECT id, canonical_name, rating, wine_type, region, winery, country, varietal
+            SELECT id, canonical_name, rating, wine_type, region, winery, country, varietal, description
             FROM wines
             WHERE id = ?
         """, (wine_id,))
@@ -447,8 +450,8 @@ class WineRepository(BaseRepository):
         for i, wine in enumerate(wines):
             try:
                 cursor.execute("""
-                    INSERT INTO wines (canonical_name, rating, wine_type, region, winery, country, varietal)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO wines (canonical_name, rating, wine_type, region, winery, country, varietal, description)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     wine['canonical_name'],
                     wine['rating'],
@@ -457,6 +460,7 @@ class WineRepository(BaseRepository):
                     wine.get('winery'),
                     wine.get('country'),
                     wine.get('varietal'),
+                    wine.get('description'),
                 ))
                 inserted += 1
 
@@ -507,6 +511,7 @@ class WineRepository(BaseRepository):
             winery=row['winery'],
             country=row['country'],
             varietal=row['varietal'],
+            description=row['description'],
             aliases=aliases,
         )
 

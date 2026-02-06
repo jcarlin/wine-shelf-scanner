@@ -30,6 +30,7 @@ class CanonicalWine:
     winery: Optional[str] = None
     country: Optional[str] = None
     varietal: Optional[str] = None
+    description: Optional[str] = None
 
     # Source tracking
     sources: dict[str, float] = field(default_factory=dict)  # source_name → normalized_rating
@@ -133,6 +134,7 @@ class WineEntityResolver:
         country: Optional[str] = None,
         varietal: Optional[str] = None,
         wine_type: Optional[str] = None,
+        description: Optional[str] = None,
     ) -> tuple[CanonicalWine, bool]:
         """
         Resolve a wine record to a canonical entity.
@@ -159,7 +161,7 @@ class WineEntityResolver:
             entity = self._entities[normalized_name]
             entity.add_source(source_name, normalized_rating, original_rating, original_scale)
             entity.add_alias(wine_name)
-            self._update_metadata(entity, winery, region, country, varietal, wine_type)
+            self._update_metadata(entity, winery, region, country, varietal, wine_type, description)
             return entity, False
 
         # Check alias index
@@ -168,7 +170,7 @@ class WineEntityResolver:
             entity = self._entities[canonical_key]
             entity.add_source(source_name, normalized_rating, original_rating, original_scale)
             entity.add_alias(wine_name)
-            self._update_metadata(entity, winery, region, country, varietal, wine_type)
+            self._update_metadata(entity, winery, region, country, varietal, wine_type, description)
             return entity, False
 
         # Pass 2: Fuzzy match (optional, enabled in Phase 6.4)
@@ -178,7 +180,7 @@ class WineEntityResolver:
                 match.add_source(source_name, normalized_rating, original_rating, original_scale)
                 match.add_alias(wine_name)
                 self._alias_index[normalized_name] = self._normalize_for_key(match.canonical_name)
-                self._update_metadata(match, winery, region, country, varietal, wine_type)
+                self._update_metadata(match, winery, region, country, varietal, wine_type, description)
                 return match, False
 
         # Create new entity
@@ -190,6 +192,7 @@ class WineEntityResolver:
             country=country,
             varietal=varietal,
             wine_type=wine_type,
+            description=description,
         )
         entity.add_source(source_name, normalized_rating, original_rating, original_scale)
 
@@ -228,6 +231,7 @@ class WineEntityResolver:
         country: Optional[str],
         varietal: Optional[str],
         wine_type: Optional[str],
+        description: Optional[str] = None,
     ):
         """Update entity metadata if not already set."""
         if winery and not entity.winery:
@@ -240,6 +244,8 @@ class WineEntityResolver:
             entity.varietal = varietal
         if wine_type and not entity.wine_type:
             entity.wine_type = wine_type
+        if description and not entity.description:
+            entity.description = description
 
     def _fuzzy_match(self, wine_name: str) -> Optional[CanonicalWine]:
         """

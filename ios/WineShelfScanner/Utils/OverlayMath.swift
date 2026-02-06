@@ -57,28 +57,28 @@ struct OverlayMath {
     /// | Confidence | Opacity |
     /// |------------|---------|
     /// | >= 0.85    | 1.0     |
-    /// | 0.65-0.85  | 0.75    |
-    /// | 0.45-0.65  | 0.5     |
+    /// | 0.65-0.85  | 0.9     |
+    /// | 0.45-0.65  | 0.75    |
     /// | < 0.45     | 0.0     |
     static func opacity(confidence: Double) -> Double {
         switch confidence {
         case 0.85...1.0:
             return 1.0
         case 0.65..<0.85:
-            return 0.75
+            return 0.9
         case 0.45..<0.65:
-            return 0.5
+            return 0.75
         default:
             return 0.0
         }
     }
 
-    /// Opacity with visual emphasis: top-3 wines get full opacity, non-top-3 are dimmed
+    /// Opacity with visual emphasis: top-3 wines get full opacity, non-top-3 slightly dimmed
     static func opacity(confidence: Double, isTopThree: Bool, visualEmphasis: Bool) -> Double {
         let baseOpacity = opacity(confidence: confidence)
         if !visualEmphasis || baseOpacity == 0 { return baseOpacity }
-        if isTopThree { return min(baseOpacity + 0.15, 1.0) }
-        return baseOpacity * 0.65
+        if isTopThree { return min(baseOpacity + 0.1, 1.0) }
+        return baseOpacity * 0.85
     }
 
     // MARK: - Confidence Thresholds

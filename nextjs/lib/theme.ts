@@ -32,8 +32,8 @@ export const colors = {
   /** Processing spinner text */
   textProcessing: '#333333',
 
-  /** Badge background (semi-transparent) */
-  badgeBackground: 'rgba(0, 0, 0, 0.7)',
+  /** Badge background (high-contrast for visibility) */
+  badgeBackground: 'rgba(0, 0, 0, 0.85)',
 
   /** Top-3 border color */
   topThreeBorder: 'rgba(255, 204, 0, 0.6)',

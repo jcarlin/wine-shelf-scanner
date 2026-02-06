@@ -73,16 +73,16 @@ describe('overlay-math', () => {
       expect(opacity(1.0)).toBe(1.0);
     });
 
-    it('should return 0.75 for confidence 0.65-0.85', () => {
-      expect(opacity(0.75)).toBe(0.75);
-      expect(opacity(0.65)).toBe(0.75);
-      expect(opacity(0.84)).toBe(0.75);
+    it('should return 0.9 for confidence 0.65-0.85', () => {
+      expect(opacity(0.75)).toBe(0.9);
+      expect(opacity(0.65)).toBe(0.9);
+      expect(opacity(0.84)).toBe(0.9);
     });
 
-    it('should return 0.5 for confidence 0.45-0.65', () => {
-      expect(opacity(0.55)).toBe(0.5);
-      expect(opacity(0.45)).toBe(0.5);
-      expect(opacity(0.64)).toBe(0.5);
+    it('should return 0.75 for confidence 0.45-0.65', () => {
+      expect(opacity(0.55)).toBe(0.75);
+      expect(opacity(0.45)).toBe(0.75);
+      expect(opacity(0.64)).toBe(0.75);
     });
 
     it('should return 0.0 for confidence < 0.45', () => {

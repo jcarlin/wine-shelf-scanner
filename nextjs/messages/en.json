@@ -90,10 +90,30 @@
   },
   "warmup": {
     "checking": "Connecting to server...",
-    "title": "Waking up the server",
-    "message": "Our server is spinning up to scan your wines. This typically takes 15-30 seconds.",
+    "title": "Dusting off the cellar",
+    "message": "We keep our server asleep to save on hosting costs (wine isn't cheap!). Hang tight while it wakes up — usually about a minute.",
     "attempt": "Attempt {count}",
     "unavailableTitle": "Server Unavailable",
-    "retry": "Try Again"
+    "retry": "Try Again",
+    "tip1": "The world's most expensive bottle sold for $558,000 — a 1945 Romanee-Conti",
+    "tip2": "There are more than 10,000 grape varieties used for wine worldwide",
+    "tip3": "Champagne has about 49 million bubbles per bottle",
+    "tip4": "The oldest known wine cellar is over 6,000 years old, found in Armenia",
+    "tip5": "Wine was first made around 6000 BC in the region now known as Georgia",
+    "tip6": "A 'butt' is an actual unit of wine measurement — about 126 gallons",
+    "tip7": "The Vatican has the highest per-capita wine consumption in the world",
+    "tip8": "It takes about 600 grapes to make one bottle of wine",
+    "tip9": "Ancient Romans added lead to wine to sweeten it. Please don't try this.",
+    "tip10": "Fear of wine is called 'oenophobia.' You clearly don't have it.",
+    "tip11": "Women tend to be better wine tasters — they have more taste buds on average",
+    "tip12": "California produces about 85% of all American wine",
+    "tip13": "In space, wine would boil because of the low pressure. NASA has not confirmed this.",
+    "tip14": "The custom of toasting started in ancient Rome to make sure the wine wasn't poisoned",
+    "tip15": "There's a high-end wine called 'Screaming Eagle' and a bottle goes for thousands",
+    "tip16": "Some monks in Belgium brew beer to fund their monastery. But we're here for wine.",
+    "tip17": "Thomas Jefferson was one of America's first great wine nerds",
+    "tip18": "Red wine gets its color from grape skins, not grape juice",
+    "tip19": "A single vine can produce about 10 bottles of wine",
+    "tip20": "The word 'sommelier' comes from old French for 'pack animal driver.' Glamorous."
   }
 }

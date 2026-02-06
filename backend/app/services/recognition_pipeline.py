@@ -38,6 +38,7 @@ from .llm_normalizer import (
 from .llm_rating_cache import get_llm_rating_cache, LLMRatingCache
 from .ocr_processor import BottleText
 from .wine_matcher import WineMatcher, WineMatch, WineMatchWithScores, _is_generic_query, _is_llm_generic_response
+from .wine_repository import WineRepository
 
 
 class DebugCollector:
@@ -596,6 +597,35 @@ class RecognitionPipeline:
                         varietal=validation.varietal,
                         brand=validation.brand,
                     )
+
+                # Auto-promote LLM-discovered wine to main database
+                if rating is not None and not _is_llm_generic_response(validation.wine_name):
+                    try:
+                        repo = WineRepository()
+                        # Build description from blurb and review snippets
+                        description = validation.blurb
+                        if not description and validation.review_snippets:
+                            description = validation.review_snippets[0]
+                        repo.add_wine(
+                            canonical_name=validation.wine_name,
+                            rating=rating,
+                            wine_type=validation.wine_type,
+                            region=validation.region,
+                            winery=validation.brand,
+                            varietal=validation.varietal,
+                            description=description,
+                            source_name="llm_discovered",
+                            original_rating=rating,
+                            original_scale=(1.0, 5.0),
+                        )
+                        logger.info(
+                            f"Auto-promoted LLM wine to DB: '{validation.wine_name}' "
+                            f"(rating={rating:.1f}, type={validation.wine_type}, "
+                            f"region={validation.region})"
+                        )
+                    except Exception as e:
+                        # Don't fail the scan if auto-promotion fails (e.g. duplicate)
+                        logger.debug(f"Auto-promote skipped for '{validation.wine_name}': {e}")
 
                 return result
 

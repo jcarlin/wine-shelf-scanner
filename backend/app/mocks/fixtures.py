@@ -18,49 +18,49 @@ MOCK_SCENARIOS = {
                 wine_name="Caymus Cabernet Sauvignon",
                 rating=4.5,
                 confidence=0.94,
-                bbox=BoundingBox(x=0.05, y=0.15, width=0.08, height=0.35)
+                bbox=BoundingBox(x=0.05, y=0.15, width=0.08, height=0.35),
             ),
             WineResult(
                 wine_name="Opus One",
                 rating=4.8,
                 confidence=0.91,
-                bbox=BoundingBox(x=0.15, y=0.12, width=0.09, height=0.38)
+                bbox=BoundingBox(x=0.15, y=0.12, width=0.09, height=0.38),
             ),
             WineResult(
                 wine_name="Silver Oak Alexander Valley",
                 rating=4.4,
                 confidence=0.88,
-                bbox=BoundingBox(x=0.26, y=0.14, width=0.08, height=0.36)
+                bbox=BoundingBox(x=0.26, y=0.14, width=0.08, height=0.36),
             ),
             WineResult(
                 wine_name="Jordan Cabernet Sauvignon",
                 rating=4.3,
                 confidence=0.85,
-                bbox=BoundingBox(x=0.36, y=0.13, width=0.08, height=0.37)
+                bbox=BoundingBox(x=0.36, y=0.13, width=0.08, height=0.37),
             ),
             WineResult(
                 wine_name="Kendall-Jackson Vintner's Reserve",
                 rating=3.8,
                 confidence=0.79,
-                bbox=BoundingBox(x=0.46, y=0.16, width=0.08, height=0.34)
+                bbox=BoundingBox(x=0.46, y=0.16, width=0.08, height=0.34),
             ),
             WineResult(
                 wine_name="La Crema Sonoma Coast Pinot Noir",
                 rating=4.1,
                 confidence=0.72,
-                bbox=BoundingBox(x=0.56, y=0.14, width=0.08, height=0.36)
+                bbox=BoundingBox(x=0.56, y=0.14, width=0.08, height=0.36),
             ),
             WineResult(
                 wine_name="Meiomi Pinot Noir",
                 rating=3.9,
                 confidence=0.68,
-                bbox=BoundingBox(x=0.66, y=0.15, width=0.08, height=0.35)
+                bbox=BoundingBox(x=0.66, y=0.15, width=0.08, height=0.35),
             ),
             WineResult(
                 wine_name="Bread & Butter Chardonnay",
                 rating=3.7,
                 confidence=0.52,
-                bbox=BoundingBox(x=0.76, y=0.17, width=0.08, height=0.33)
+                bbox=BoundingBox(x=0.76, y=0.17, width=0.08, height=0.33),
             ),
         ],
         "fallback_list": []

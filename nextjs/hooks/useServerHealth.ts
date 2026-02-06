@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { checkServerHealth, HealthStatus } from '@/lib/api-client';
+import { checkServerHealth, HealthStatus, checkServerReady } from '@/lib/api-client';
 
 export type ServerHealthState =
   | { status: 'checking' }
@@ -15,8 +15,9 @@ const DEFAULT_RETRY_INTERVAL = 10000; // 10 seconds
 /**
  * Hook to check server health on mount and poll until ready
  *
- * This is designed for cold-start scenarios where Cloud Run has
- * minInstances=0 and needs to spin up a new instance.
+ * After the health endpoint responds, a secondary readiness check verifies
+ * the server can actually handle scan requests (health bypasses the warmup
+ * middleware, so it can return "healthy" before the server is truly ready).
  */
 export function useServerHealth() {
   const [state, setState] = useState<ServerHealthState>({ status: 'checking' });
@@ -27,7 +28,26 @@ export function useServerHealth() {
       const result: HealthStatus = await checkServerHealth();
 
       if (result.status === 'healthy') {
-        setState({ status: 'ready' });
+        // Health endpoint responded — now verify actual readiness
+        // by pinging an endpoint that goes through the warmup middleware
+        setState({ status: 'warming_up', attempt });
+
+        const ready = await checkServerReady();
+        if (ready) {
+          setState({ status: 'ready' });
+          return;
+        }
+
+        // Server is reachable but not ready yet — keep polling
+        if (attempt >= MAX_RETRY_ATTEMPTS) {
+          setState({
+            status: 'unavailable',
+            message: 'Server is taking too long to start. Please try again later.',
+          });
+          return;
+        }
+
+        setTimeout(() => doCheck(attempt + 1), DEFAULT_RETRY_INTERVAL);
         return;
       }
 

@@ -49,17 +49,17 @@ export function anchorPoint(bbox: BoundingBox, containerSize: Size): Point {
  * | Confidence | Opacity |
  * |------------|---------|
  * | >= 0.85    | 1.0     |
- * | 0.65-0.85  | 0.75    |
- * | 0.45-0.65  | 0.5     |
+ * | 0.65-0.85  | 0.9     |
+ * | 0.45-0.65  | 0.75    |
  * | < 0.45     | 0.0     |
  */
 export function opacity(confidence: number): number {
   if (confidence >= 0.85) {
     return 1.0;
   } else if (confidence >= 0.65) {
-    return 0.75;
+    return 0.9;
   } else if (confidence >= 0.45) {
-    return 0.5;
+    return 0.75;
   } else {
     return 0.0;
   }

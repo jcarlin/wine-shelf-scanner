@@ -69,6 +69,35 @@ export async function checkServerHealth(): Promise<HealthStatus> {
   }
 }
 
+/**
+ * Verify the server is truly ready by pinging an endpoint that goes through
+ * the warmup middleware. The /health endpoint bypasses middleware, so it can
+ * return 200 before the server is actually ready to handle scan requests.
+ *
+ * @returns true if server is ready, false otherwise
+ */
+export async function checkServerReady(): Promise<boolean> {
+  if (Config.USE_MOCKS) {
+    return true;
+  }
+
+  try {
+    const response = await fetchWithTimeout(
+      `${Config.API_BASE_URL}/scan/debug`,
+      {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+      },
+      HEALTH_CHECK_TIMEOUT_MS
+    );
+
+    // 200 means server is fully ready; 503 means still warming up
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
 // ApiError and ScanResult are re-exported from types.ts
 export type { ApiError, ScanResult } from './types';
 

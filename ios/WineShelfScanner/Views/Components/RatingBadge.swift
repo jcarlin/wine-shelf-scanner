@@ -80,7 +80,7 @@ struct RatingBadge: View {
             .frame(minWidth: badgeSize.width, minHeight: badgeSize.height)
             .background(
                 RoundedRectangle(cornerRadius: 6)
-                    .fill(Color.black.opacity(0.7))
+                    .fill(Color.black.opacity(0.85))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 6)

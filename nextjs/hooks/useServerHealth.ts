@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { checkServerHealth, HealthStatus } from '@/lib/api-client';
 
 export type ServerHealthState =
@@ -20,47 +20,48 @@ const DEFAULT_RETRY_INTERVAL = 10000; // 10 seconds
  */
 export function useServerHealth() {
   const [state, setState] = useState<ServerHealthState>({ status: 'checking' });
+  const checkHealthRef = useRef<(attempt?: number) => Promise<void>>();
 
-  const checkHealth = useCallback(async (attempt: number = 1) => {
-    const result: HealthStatus = await checkServerHealth();
+  useEffect(() => {
+    const doCheck = async (attempt: number = 1) => {
+      const result: HealthStatus = await checkServerHealth();
 
-    if (result.status === 'healthy') {
-      setState({ status: 'ready' });
-      return;
-    }
-
-    if (result.status === 'warming_up') {
-      if (attempt >= MAX_RETRY_ATTEMPTS) {
-        setState({
-          status: 'unavailable',
-          message: 'Server is taking too long to start. Please try again later.',
-        });
+      if (result.status === 'healthy') {
+        setState({ status: 'ready' });
         return;
       }
 
-      setState({ status: 'warming_up', attempt });
+      if (result.status === 'warming_up') {
+        if (attempt >= MAX_RETRY_ATTEMPTS) {
+          setState({
+            status: 'unavailable',
+            message: 'Server is taking too long to start. Please try again later.',
+          });
+          return;
+        }
 
-      // Schedule next check
-      const retryInterval = (result.retryAfter || 10) * 1000;
-      setTimeout(() => checkHealth(attempt + 1), Math.min(retryInterval, DEFAULT_RETRY_INTERVAL));
-      return;
-    }
+        setState({ status: 'warming_up', attempt });
 
-    // Unavailable
-    setState({
-      status: 'unavailable',
-      message: result.message || 'Server is unavailable',
-    });
+        const retryInterval = (result.retryAfter || 10) * 1000;
+        setTimeout(() => doCheck(attempt + 1), Math.min(retryInterval, DEFAULT_RETRY_INTERVAL));
+        return;
+      }
+
+      // Unavailable
+      setState({
+        status: 'unavailable',
+        message: result.message || 'Server is unavailable',
+      });
+    };
+
+    checkHealthRef.current = doCheck;
+    doCheck();
   }, []);
-
-  useEffect(() => {
-    checkHealth();
-  }, [checkHealth]);
 
   const retry = useCallback(() => {
     setState({ status: 'checking' });
-    checkHealth();
-  }, [checkHealth]);
+    checkHealthRef.current?.();
+  }, []);
 
   return { state, retry };
 }

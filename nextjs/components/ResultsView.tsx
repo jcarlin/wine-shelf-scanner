@@ -28,7 +28,9 @@ export function ResultsView({ response, imageUri, onReset }: ResultsViewProps) {
   const [selectedWine, setSelectedWine] = useState<WineResult | null>(null);
   const [imageBounds, setImageBounds] = useState<Rect | null>(null);
   const [imageSize, setImageSize] = useState<Size | null>(null);
-  const [showPartialToast, setShowPartialToast] = useState(false);
+  const [showPartialToast, setShowPartialToast] = useState(() => {
+    return response.fallback_list.length > 0 && response.results.filter((w) => isVisible(w.confidence)).length > 0;
+  });
   const [showBugReport, setShowBugReport] = useState(false);
   const { shelfRanking, share: shareEnabled, bugReport: bugReportEnabled } = useFeatureFlags();
 
@@ -50,12 +52,6 @@ export function ResultsView({ response, imageUri, onReset }: ResultsViewProps) {
       .slice(0, TOP_WINES_COUNT);
   }, [response.results]);
 
-  // Show toast on mount if partial detection
-  useEffect(() => {
-    if (hasPartialDetection) {
-      setShowPartialToast(true);
-    }
-  }, [hasPartialDetection]);
 
   // Calculate image bounds when image loads or container resizes
   const calculateBounds = useCallback(() => {

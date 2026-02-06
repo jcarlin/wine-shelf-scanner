@@ -135,6 +135,15 @@ def backfill(db_path: str, csv_paths: list[str], dry_run: bool = False) -> tuple
     # Write updates in batches
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
+    # Ensure WAL mode for concurrent reads
+    cursor.execute("PRAGMA journal_mode=WAL")
+
+    # Temporarily disable the FTS update trigger — we're only changing
+    # `description` which isn't indexed in FTS, so the trigger is wasteful
+    # and can fail on some rows with FTS inconsistencies.
+    cursor.execute("DROP TRIGGER IF EXISTS wines_au")
+    conn.commit()
+
     batch_size = 1000
     written = 0
 
@@ -148,6 +157,15 @@ def backfill(db_path: str, csv_paths: list[str], dry_run: bool = False) -> tuple
         written += len(batch)
         if written % 10000 == 0:
             print(f"  Updated {written}/{len(updates)}...")
+
+    # Restore the FTS update trigger
+    cursor.execute("""CREATE TRIGGER IF NOT EXISTS wines_au AFTER UPDATE ON wines BEGIN
+        INSERT INTO wine_fts(wine_fts, rowid, canonical_name, region, winery, varietal)
+        VALUES ('delete', old.id, old.canonical_name, old.region, old.winery, old.varietal);
+        INSERT INTO wine_fts(rowid, canonical_name, region, winery, varietal)
+        VALUES (new.id, new.canonical_name, new.region, new.winery, new.varietal);
+    END""")
+    conn.commit()
 
     conn.close()
     print(f"Updated {written} wines with descriptions")

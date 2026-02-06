@@ -3,7 +3,8 @@
 import { useTranslations } from 'next-intl';
 import { useTipRotation } from '@/hooks/useTipRotation';
 
-const tipKeys = ['tip1', 'tip2', 'tip3', 'tip4'] as const;
+const TIP_COUNT = 8;
+const tipKeys = Array.from({ length: TIP_COUNT }, (_, i) => `tip${i + 1}`);
 
 interface ScanningOverlayProps {
   imageUri: string;
@@ -11,7 +12,7 @@ interface ScanningOverlayProps {
 
 export function ScanningOverlay({ imageUri }: ScanningOverlayProps) {
   const t = useTranslations('processing');
-  const tipIndex = useTipRotation(tipKeys.length);
+  const tipIndex = useTipRotation(TIP_COUNT);
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-4">

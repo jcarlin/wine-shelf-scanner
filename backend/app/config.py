@@ -153,6 +153,30 @@ class Config:
         """Enable Claude Vision fallback for unmatched bottles. Default: True."""
         return os.getenv("USE_VISION_FALLBACK", "true").lower() == "true"
 
+    # === Fast Pipeline ===
+    @staticmethod
+    def use_fast_pipeline() -> bool:
+        """Use single-pass multimodal LLM pipeline instead of legacy multi-stage. Default: False."""
+        return os.getenv("USE_FAST_PIPELINE", "false").lower() == "true"
+
+    @staticmethod
+    def fast_pipeline_model() -> str:
+        """Multimodal model for fast pipeline. Default: gemini-2.0-flash."""
+        return os.getenv("FAST_PIPELINE_MODEL", "gemini-2.0-flash")
+
+    @staticmethod
+    def fast_pipeline_timeout() -> float:
+        """Timeout in seconds for fast pipeline LLM call. Default: 15.0."""
+        try:
+            return float(os.getenv("FAST_PIPELINE_TIMEOUT", "15.0"))
+        except ValueError:
+            return 15.0
+
+    @staticmethod
+    def fast_pipeline_fallback() -> bool:
+        """Fall back to legacy pipeline if fast pipeline fails. Default: True."""
+        return os.getenv("FAST_PIPELINE_FALLBACK", "true").lower() == "true"
+
     # === Security ===
     MAX_IMAGE_SIZE_MB = 10
     MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024

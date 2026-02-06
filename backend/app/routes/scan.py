@@ -7,6 +7,7 @@ Uses tiered recognition pipeline: fuzzy match → LLM fallback.
 
 import io
 import logging
+import time
 import uuid
 from functools import lru_cache
 from typing import Optional
@@ -29,6 +30,7 @@ from ..services.recognition_pipeline import RecognizedWine, RecognitionPipeline
 from ..services.llm_normalizer import BatchValidationItem, get_normalizer
 from ..services.vision import MockVisionService, ReplayVisionService, VisionResult, VisionService
 from ..services.wine_matcher import WineMatcher, _is_llm_generic_response
+from ..services.fast_pipeline import FastPipeline
 from ..services.wine_sync import sync_discovered_wines
 
 logger = logging.getLogger(__name__)
@@ -390,6 +392,83 @@ async def scan_shelf(
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
+async def _run_fast_pipeline(
+    image_id: str,
+    image_bytes: bytes,
+    debug_mode: bool,
+    wine_matcher: WineMatcher,
+    flags: Optional[FeatureFlags] = None,
+) -> Optional[ScanResponse]:
+    """Run single-pass multimodal LLM pipeline.
+
+    Returns ScanResponse on success, or None if no results were found
+    (allowing fallback to legacy pipeline when Config.fast_pipeline_fallback() is True).
+    """
+    t0 = time.perf_counter()
+
+    pipeline = FastPipeline(
+        wine_matcher=wine_matcher,
+        model=f"gemini/{Config.fast_pipeline_model()}",
+    )
+    result = await pipeline.scan(image_bytes)
+    recognized = result.recognized_wines
+
+    if not recognized:
+        elapsed = time.perf_counter() - t0
+        logger.info(f"[{image_id}] Fast pipeline returned 0 results in {elapsed:.2f}s")
+        if Config.fast_pipeline_fallback():
+            return None
+        # No fallback — return empty response
+        return ScanResponse(image_id=image_id, results=[], fallback_list=[])
+
+    # Enrich with review data
+    _enrich_with_reviews(recognized, wine_matcher)
+
+    # Deduplicate by wine name (keep highest confidence)
+    seen_wines: dict[str, RecognizedWine] = {}
+    for wine in recognized:
+        name_key = wine.wine_name.lower().strip()
+        if name_key not in seen_wines or wine.confidence > seen_wines[name_key].confidence:
+            seen_wines[name_key] = wine
+    recognized = list(seen_wines.values())
+
+    # Build results and fallback lists
+    results: list[WineResult] = []
+    fallback: list[FallbackWine] = []
+
+    for wine in recognized:
+        if wine.confidence >= Config.VISIBILITY_THRESHOLD:
+            results.append(_to_wine_result(wine))
+        elif wine.rating is not None:
+            fallback.append(FallbackWine(
+                wine_name=wine.wine_name,
+                rating=wine.rating,
+            ))
+
+    # Sort by rating descending
+    results.sort(key=lambda x: (x.rating is not None, x.rating or 0), reverse=True)
+    fallback.sort(key=lambda x: x.rating, reverse=True)
+
+    # Apply feature flags
+    if flags:
+        _apply_feature_flags(results, flags, wine_matcher=wine_matcher)
+
+    # Sync discovered wines back to DB
+    sync_discovered_wines(results, fallback)
+
+    elapsed = time.perf_counter() - t0
+    logger.info(
+        f"[{image_id}] Fast pipeline completed in {elapsed:.2f}s: "
+        f"{len(results)} results, {len(fallback)} fallback"
+    )
+
+    return ScanResponse(
+        image_id=image_id,
+        results=results,
+        fallback_list=fallback,
+    )
+
+
 async def process_image(
     image_id: str,
     image_bytes: bytes,
@@ -409,6 +488,21 @@ async def process_image(
     4. LLM fallback for low-confidence/unknown wines
     5. Response construction
     """
+    # === Fast Pipeline Branch ===
+    if Config.use_fast_pipeline():
+        try:
+            fast_result = await _run_fast_pipeline(
+                image_id, image_bytes, debug_mode, wine_matcher, flags
+            )
+            if fast_result is not None:
+                return fast_result
+            logger.info(f"[{image_id}] Fast pipeline returned no results, falling back to legacy")
+        except Exception as e:
+            logger.warning(f"[{image_id}] Fast pipeline failed: {e}")
+            if not Config.fast_pipeline_fallback():
+                raise
+            logger.info(f"[{image_id}] Falling back to legacy pipeline")
+
     # Choose vision service
     if vision_fixture:
         # Use captured fixture for deterministic replay

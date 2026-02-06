@@ -61,6 +61,15 @@ spec:
               value: "gemini"
             - name: GEMINI_MODEL
               value: "gemini-2.0-flash"
+            # Fast pipeline (single-pass multimodal LLM)
+            - name: USE_FAST_PIPELINE
+              value: "true"
+            - name: FAST_PIPELINE_MODEL
+              value: "gemini-2.0-flash"
+            - name: FAST_PIPELINE_TIMEOUT
+              value: "15.0"
+            - name: FAST_PIPELINE_FALLBACK
+              value: "true"
             # Database persistence (GCS)
             - name: GCS_DB_BUCKET
               value: "wine-scanner-db"

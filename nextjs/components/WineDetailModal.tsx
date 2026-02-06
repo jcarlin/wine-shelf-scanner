@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { X, Star, Share2 } from 'lucide-react';
-import { WineResult } from '@/lib/types';
+import { WineResult, ReviewItem } from '@/lib/types';
 import { colors, fontSize } from '@/lib/theme';
 import { HIGH_CONFIDENCE_THRESHOLD } from '@/lib/overlay-math';
 import { useFeatureFlags } from '@/lib/feature-flags';
@@ -14,6 +14,8 @@ interface WineDetailModalProps {
   onClose: () => void;
   shelfRank?: number;
   shelfTotal?: number;
+  /** Reviews fetched from /wines/{id}/reviews (prefetched by ResultsView) */
+  fetchedReviews?: ReviewItem[];
 }
 
 /** Maps wine type to display color */
@@ -37,7 +39,16 @@ function formatReviewCountNumber(count: number): string {
   return (count / 1000).toFixed(1).replace(/\.0$/, '');
 }
 
-export function WineDetailModal({ wine, onClose, shelfRank, shelfTotal }: WineDetailModalProps) {
+/** Max characters to display per review snippet before truncating */
+const REVIEW_TEXT_MAX_LENGTH = 200;
+
+/** Truncate long review text with ellipsis */
+function truncateReview(text: string): string {
+  if (text.length <= REVIEW_TEXT_MAX_LENGTH) return text;
+  return text.slice(0, REVIEW_TEXT_MAX_LENGTH).trimEnd() + '\u2026';
+}
+
+export function WineDetailModal({ wine, onClose, shelfRank, shelfTotal, fetchedReviews }: WineDetailModalProps) {
   const t = useTranslations('detail');
   const flags = useFeatureFlags();
   const memory = useWineMemory();
@@ -49,7 +60,24 @@ export function WineDetailModal({ wine, onClose, shelfRank, shelfTotal }: WineDe
 
   const label = wine.confidence >= HIGH_CONFIDENCE_THRESHOLD ? t('widelyRated') : t('limitedData');
   const hasMetadata = wine.wine_type || wine.brand || wine.region || wine.varietal || wine.blurb;
-  const hasReviews = wine.review_count || (wine.review_snippets && wine.review_snippets.length > 0);
+
+  // Build review display data:
+  // 1. Prefer fetched reviews from /wines/{id}/reviews endpoint (richer data)
+  // 2. Fall back to review_snippets from scan response
+  // 3. If neither, no reviews to show
+  const reviewTexts: string[] = [];
+  if (fetchedReviews && fetchedReviews.length > 0) {
+    for (const review of fetchedReviews) {
+      if (review.review_text) {
+        reviewTexts.push(review.review_text);
+      }
+    }
+  }
+  if (reviewTexts.length === 0 && wine.review_snippets && wine.review_snippets.length > 0) {
+    reviewTexts.push(...wine.review_snippets);
+  }
+
+  const hasReviews = wine.review_count || reviewTexts.length > 0;
 
   return (
     <>
@@ -307,20 +335,20 @@ export function WineDetailModal({ wine, onClose, shelfRank, shelfTotal }: WineDe
               </div>
             )}
 
-            {/* Review Snippets */}
-            {wine.review_snippets && wine.review_snippets.length > 0 && (
+            {/* Reviews - only shown when review text is available */}
+            {reviewTexts.length > 0 && (
               <div className="mt-4 text-left">
                 <p className="text-base font-semibold text-gray-900 mb-2">
                   {t('whatPeopleSay')}
                 </p>
-                {wine.review_snippets.map((snippet, index) => (
+                {reviewTexts.map((text, index) => (
                   <div
                     key={index}
                     className="bg-gray-50 border-l-3 py-2 px-3 mb-2 rounded-sm"
                     style={{ borderLeftWidth: 3, borderLeftColor: colors.star }}
                   >
                     <p className="text-sm text-gray-500 italic leading-relaxed">
-                      &ldquo;{snippet}&rdquo;
+                      &ldquo;{truncateReview(text)}&rdquo;
                     </p>
                   </div>
                 ))}

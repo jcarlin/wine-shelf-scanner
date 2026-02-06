@@ -3,7 +3,7 @@
  */
 
 import { Config } from './config';
-import { ScanResponse, ApiError, ScanResult } from './types';
+import { ScanResponse, ApiError, ScanResult, WineReviewsResponse } from './types';
 import { getMockResponse } from './mock-service';
 import { fetchWithTimeout, isAbortError } from './fetch-utils';
 
@@ -170,5 +170,51 @@ export async function scanImage(
         message: 'An unexpected error occurred.',
       },
     };
+  }
+}
+
+/** Timeout for review fetches (ms) */
+const REVIEWS_TIMEOUT_MS = 10000;
+
+/**
+ * Fetch reviews for a specific wine by database ID.
+ *
+ * @param wineId - Wine database ID (from WineResult.wine_id)
+ * @param options - Optional query params (limit, textOnly)
+ * @returns WineReviewsResponse or null if not found / error
+ */
+export async function fetchWineReviews(
+  wineId: number,
+  options: { limit?: number; textOnly?: boolean } = {}
+): Promise<WineReviewsResponse | null> {
+  if (Config.USE_MOCKS) {
+    return null;
+  }
+
+  const url = new URL(`${Config.API_BASE_URL}/wines/${wineId}/reviews`);
+  if (options.limit !== undefined) {
+    url.searchParams.set('limit', String(options.limit));
+  }
+  if (options.textOnly !== undefined) {
+    url.searchParams.set('text_only', String(options.textOnly));
+  }
+
+  try {
+    const response = await fetchWithTimeout(
+      url.toString(),
+      {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+      },
+      REVIEWS_TIMEOUT_MS
+    );
+
+    if (!response.ok) {
+      return null;
+    }
+
+    return (await response.json()) as WineReviewsResponse;
+  } catch {
+    return null;
   }
 }

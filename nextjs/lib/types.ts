@@ -30,6 +30,7 @@ export interface RatingSourceDetail {
 
 export interface WineResult {
   wine_name: string;
+  wine_id?: number;    // Database ID (for fetching reviews via /wines/{id}/reviews)
   rating: number | null;
   confidence: number;
   bbox: BoundingBox;
@@ -45,6 +46,26 @@ export interface WineResult {
   is_safe_pick?: boolean;       // Crowd favorite badge
   pairing?: string;             // Food pairing suggestion
   rating_sources?: RatingSourceDetail[];  // Rating provenance details
+}
+
+// MARK: - Wine Reviews Types
+
+export interface ReviewItem {
+  source_name: string;
+  reviewer?: string | null;
+  rating?: number | null;
+  review_text?: string | null;
+  review_date?: string | null;
+  vintage?: string | null;
+}
+
+export interface WineReviewsResponse {
+  wine_id: number;
+  wine_name: string;
+  total_reviews: number;
+  text_reviews: number;
+  avg_rating?: number | null;
+  reviews: ReviewItem[];
 }
 
 export interface FallbackWine {

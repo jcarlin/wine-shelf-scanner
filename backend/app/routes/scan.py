@@ -189,6 +189,35 @@ def _get_rating_source_details(wine_name: str, wine_matcher: WineMatcher) -> Opt
     return details
 
 
+def _enrich_with_reviews(recognized: list[RecognizedWine], wine_matcher: WineMatcher) -> None:
+    """Enrich recognized wines with actual review text from wine_reviews table.
+
+    For DB-matched wines with a wine_id, fetches review stats (count) and
+    review text snippets from the wine_reviews table. Only overrides
+    review_snippets if actual text reviews are found; otherwise preserves
+    any existing description-based snippets.
+    """
+    if wine_matcher._repository is None:
+        return
+
+    repo = wine_matcher._repository
+    for wine in recognized:
+        if wine.wine_id is None:
+            continue
+
+        # Get review stats (total count)
+        stats = repo.get_review_stats(wine.wine_id)
+        if stats['total_reviews'] > 0:
+            wine.review_count = stats['total_reviews']
+
+        # Fetch actual review text (up to 3 snippets)
+        reviews = repo.get_reviews(wine.wine_id, limit=3, text_only=True)
+        if reviews:
+            snippets = [r.review_text for r in reviews if r.review_text]
+            if snippets:
+                wine.review_snippets = snippets
+
+
 def _apply_feature_flags(results: list[WineResult], flags: FeatureFlags, wine_matcher: Optional[WineMatcher] = None) -> None:
     """Apply feature-flagged enrichments to scan results (mutates in place)."""
     for result in results:
@@ -553,6 +582,9 @@ async def process_image(
         except Exception as e:
             stats_vision_error = str(e)
             logger.warning(f"[{image_id}] Claude Vision fallback failed: {e}")
+
+    # Enrich recognized wines with actual review data from wine_reviews table
+    _enrich_with_reviews(recognized, wine_matcher)
 
     # Build response
     results: list[WineResult] = []

@@ -29,7 +29,6 @@
 "detail.reviewsK" = "%@K отзывов";
 "detail.reviews" = "%lld отзывов";
 "detail.widelyRated" = "Много оценок";
-"detail.limitedData" = "Мало данных";
 "detail.crowdFavorite" = "Народный фаворит";
 "detail.bestOnShelf" = "Лучшее на этой полке";
 "detail.rankedOnShelf" = "#%lld из %lld на этой полке";

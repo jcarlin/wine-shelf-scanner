@@ -29,7 +29,6 @@
 "detail.reviewsK" = "리뷰 %@K개";
 "detail.reviews" = "리뷰 %lld개";
 "detail.widelyRated" = "다수 평가";
-"detail.limitedData" = "제한된 데이터";
 "detail.crowdFavorite" = "대중 인기";
 "detail.bestOnShelf" = "이 선반 최고";
 "detail.rankedOnShelf" = "이 선반 %lld개 중 %lld위";

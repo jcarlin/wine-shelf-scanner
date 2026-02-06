@@ -82,10 +82,10 @@ export function isTappable(confidence: number): boolean {
 }
 
 /**
- * Confidence label for detail sheet ("Widely rated" or "Limited data")
+ * Confidence label for detail sheet ("Widely rated" for high confidence, null otherwise)
  */
-export function confidenceLabel(confidence: number): string {
-  return confidence >= HIGH_CONFIDENCE_THRESHOLD ? 'Widely rated' : 'Limited data';
+export function confidenceLabel(confidence: number): string | null {
+  return confidence >= HIGH_CONFIDENCE_THRESHOLD ? 'Widely rated' : null;
 }
 
 // MARK: - Badge Sizing

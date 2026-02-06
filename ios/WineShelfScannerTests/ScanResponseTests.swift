@@ -206,7 +206,7 @@ final class ScanResponseTests: XCTestCase {
         let mediumConfidence = WineResult(wineName: "B", rating: 4.5, confidence: 0.75, bbox: BoundingBox(x: 0, y: 0, width: 0.1, height: 0.1))
 
         XCTAssertEqual(highConfidence.confidenceLabel, "Widely rated")
-        XCTAssertEqual(mediumConfidence.confidenceLabel, "Limited data")
+        XCTAssertNil(mediumConfidence.confidenceLabel)
     }
 
     func testIsTappable() {

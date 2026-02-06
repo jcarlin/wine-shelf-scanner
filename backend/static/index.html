@@ -466,9 +466,9 @@
             return confidence >= THRESHOLDS.TAPPABLE;
         }
 
-        // Get confidence label
+        // Get confidence label (null for non-high confidence)
         function getConfidenceLabel(confidence) {
-            return confidence >= THRESHOLDS.HIGH_CONFIDENCE ? 'Widely rated' : 'Limited data';
+            return confidence >= THRESHOLDS.HIGH_CONFIDENCE ? 'Widely rated' : null;
         }
 
         // Check if wine is visible
@@ -525,7 +525,10 @@
             document.querySelector('[data-testid="modal-wine-name"]').textContent = wine.wine_name;
             document.querySelector('[data-testid="modal-stars"]').textContent = generateStars(wine.rating);
             document.querySelector('[data-testid="modal-rating"]').textContent = wine.rating.toFixed(1);
-            document.querySelector('[data-testid="modal-confidence"]').textContent = getConfidenceLabel(wine.confidence);
+            const confidenceEl = document.querySelector('[data-testid="modal-confidence"]');
+            const label = getConfidenceLabel(wine.confidence);
+            confidenceEl.textContent = label || '';
+            confidenceEl.style.display = label ? '' : 'none';
 
             modal.style.display = 'flex';
         }

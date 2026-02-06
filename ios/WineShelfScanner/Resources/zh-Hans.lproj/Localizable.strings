@@ -29,7 +29,6 @@
 "detail.reviewsK" = "%@K 条评论";
 "detail.reviews" = "%lld 条评论";
 "detail.widelyRated" = "广泛评价";
-"detail.limitedData" = "数据有限";
 "detail.crowdFavorite" = "大众最爱";
 "detail.bestOnShelf" = "此货架最佳";
 "detail.rankedOnShelf" = "此货架第 %lld 名（共 %lld 款）";

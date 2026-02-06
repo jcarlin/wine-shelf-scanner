@@ -113,9 +113,7 @@ No hiding. No shaming low ratings.
 Detail sheet shows:
 - Wine name
 - Star rating
-- Confidence label:
-  - “Widely rated” (high confidence)
-  - “Limited data” (medium confidence)
+- Confidence label: "Widely rated" (shown only for high confidence)
 - Optional short summary (future)
 
 Rules:

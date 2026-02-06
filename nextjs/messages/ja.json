@@ -42,7 +42,6 @@
     "reviews": "{count, plural, other {# 件のレビュー}}",
     "reviewsK": "{count}K件のレビュー",
     "widelyRated": "多数の評価",
-    "limitedData": "データ限定",
     "crowdFavorite": "人気の一本",
     "bestOnShelf": "この棚のベスト",
     "rankedOnShelf": "この棚で{total}本中第{rank}位",

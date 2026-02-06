@@ -78,10 +78,8 @@ final class LowConfidenceTests: BaseUITestCase {
         // Then: Detail sheet should open
         assertExists(wineDetailSheet, message: "Medium confidence badges should be tappable")
 
-        // And: Should show "Limited data" label (below 0.85)
-        assertExists(detailSheetConfidenceLabel)
-        let label = detailSheetConfidenceLabel.label
-        XCTAssertEqual(label, "Limited data", "Medium confidence should show 'Limited data'")
+        // And: Should NOT show confidence label (below 0.85, no badge shown)
+        assertNotExists(detailSheetConfidenceLabel, message: "Medium confidence should not show confidence label")
     }
 
     func testHighConfidenceShowsWidelyRated() throws {

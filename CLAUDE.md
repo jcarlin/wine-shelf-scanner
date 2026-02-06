@@ -152,9 +152,7 @@ Tap rating badge → modal sheet.
 **Content (max):**
 - Wine name (headline)
 - Star rating (large)
-- Confidence label:
-  - "Widely rated" (high confidence ≥0.85)
-  - "Limited data" (medium confidence 0.65–0.85)
+- Confidence label: "Widely rated" (shown only for high confidence ≥0.85)
 - Optional 1–2 sentence summary (future)
 
 **Rules:**

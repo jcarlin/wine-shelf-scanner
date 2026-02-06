@@ -29,7 +29,6 @@
 "detail.reviewsK" = "%@K reviews";
 "detail.reviews" = "%lld reviews";
 "detail.widelyRated" = "Widely rated";
-"detail.limitedData" = "Limited data";
 "detail.crowdFavorite" = "Crowd favorite";
 "detail.bestOnShelf" = "Best on this shelf";
 "detail.rankedOnShelf" = "Ranked #%lld of %lld on this shelf";

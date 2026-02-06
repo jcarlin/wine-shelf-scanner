@@ -42,7 +42,6 @@
     "reviews": "{count, plural, one {# reseña} other {# reseñas}}",
     "reviewsK": "{count}K reseñas",
     "widelyRated": "Ampliamente calificado",
-    "limitedData": "Datos limitados",
     "crowdFavorite": "Favorito del público",
     "bestOnShelf": "Mejor en este estante",
     "rankedOnShelf": "Puesto #{rank} de {total} en este estante",

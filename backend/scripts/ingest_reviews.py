@@ -3,13 +3,15 @@
 Standalone script to ingest wine reviews into the wine_reviews table.
 
 Sources:
-  1. XWines Full 21M Ratings CSV (~21M rows)
-  2. Kaggle WineEnthusiast CSVs (~280K rows)
+  1. XWines Full 21M Ratings CSV (~21M rows, ratings only)
+  2. Kaggle WineEnthusiast CSVs (~280K rows, with tasting notes)
 
 Usage:
   cd backend && python -m scripts.ingest_reviews
+  cd backend && python -m scripts.ingest_reviews --force   # re-ingest Kaggle with review_text
 """
 
+import argparse
 import csv
 import os
 import sqlite3
@@ -148,7 +150,7 @@ def ingest_xwines_ratings(conn, xwines_mapping):
     return inserted
 
 
-def ingest_kaggle_reviews(conn, name_mapping):
+def ingest_kaggle_reviews(conn, name_mapping, force=False):
     """Ingest Kaggle WineEnthusiast reviews."""
     print(f"\n{'='*60}")
     print("Ingesting Kaggle WineEnthusiast reviews...")
@@ -158,12 +160,17 @@ def ingest_kaggle_reviews(conn, name_mapping):
         "SELECT COUNT(*) FROM wine_reviews WHERE source_name = 'kaggle_winemag'"
     ).fetchone()[0]
     if existing > 0:
-        print(f"  Already have {existing:,} kaggle_winemag reviews — skipping (idempotent).")
-        return existing
+        if force:
+            print(f"  --force: Deleting {existing:,} existing kaggle_winemag rows...")
+            conn.execute("DELETE FROM wine_reviews WHERE source_name = 'kaggle_winemag'")
+            conn.commit()
+        else:
+            print(f"  Already have {existing:,} kaggle_winemag reviews — skipping (use --force to re-ingest).")
+            return existing
 
     total_inserted = 0
 
-    # Process the 130K file (has title column for wine matching)
+    # Process the 130K file (has title + description columns)
     if os.path.exists(KAGGLE_130K):
         count = _ingest_kaggle_file(conn, KAGGLE_130K, name_mapping, has_title=True)
         total_inserted += count
@@ -214,6 +221,9 @@ def _ingest_kaggle_file(conn, filepath, name_mapping, has_title):
 
             user_id = row.get("taster_name", "").strip() or None
 
+            # Extract review text (tasting notes) from description column
+            review_text = row.get("description", "").strip() or None
+
             batch.append((
                 wine_id,
                 "kaggle_winemag",
@@ -221,12 +231,13 @@ def _ingest_kaggle_file(conn, filepath, name_mapping, has_title):
                 rating,
                 None,  # no review_date
                 None,  # no vintage in review context
+                review_text,
             ))
 
             if len(batch) >= BATCH_SIZE:
                 conn.executemany(
-                    """INSERT INTO wine_reviews (wine_id, source_name, user_id, rating, review_date, vintage)
-                       VALUES (?, ?, ?, ?, ?, ?)""",
+                    """INSERT INTO wine_reviews (wine_id, source_name, user_id, rating, review_date, vintage, review_text)
+                       VALUES (?, ?, ?, ?, ?, ?, ?)""",
                     batch,
                 )
                 inserted += len(batch)
@@ -234,8 +245,8 @@ def _ingest_kaggle_file(conn, filepath, name_mapping, has_title):
 
     if batch:
         conn.executemany(
-            """INSERT INTO wine_reviews (wine_id, source_name, user_id, rating, review_date, vintage)
-               VALUES (?, ?, ?, ?, ?, ?)""",
+            """INSERT INTO wine_reviews (wine_id, source_name, user_id, rating, review_date, vintage, review_text)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
             batch,
         )
         inserted += len(batch)
@@ -244,8 +255,15 @@ def _ingest_kaggle_file(conn, filepath, name_mapping, has_title):
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Ingest wine reviews into the database")
+    parser.add_argument("--force", action="store_true",
+                        help="Delete existing Kaggle reviews and re-ingest (with review_text)")
+    args = parser.parse_args()
+
     print("Wine Reviews Ingestion Script")
     print(f"Database: {DB_PATH}")
+    if args.force:
+        print("Mode: --force (re-ingest Kaggle with review_text)")
     print()
 
     conn = get_db_connection()
@@ -257,8 +275,8 @@ def main():
     # Ingest XWines ratings (21M)
     xwines_count = ingest_xwines_ratings(conn, xwines_mapping)
 
-    # Ingest Kaggle reviews (~280K)
-    kaggle_count = ingest_kaggle_reviews(conn, name_mapping)
+    # Ingest Kaggle reviews (~280K, with tasting notes)
+    kaggle_count = ingest_kaggle_reviews(conn, name_mapping, force=args.force)
 
     # Final report
     total = conn.execute("SELECT COUNT(*) FROM wine_reviews").fetchone()[0]

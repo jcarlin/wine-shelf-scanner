@@ -35,6 +35,18 @@ class WineRecord:
             self.aliases = []
 
 
+@dataclass
+class WineReview:
+    """A wine review from the database."""
+    id: int
+    source_name: str
+    user_id: Optional[str] = None
+    rating: Optional[float] = None
+    review_text: Optional[str] = None
+    review_date: Optional[str] = None
+    vintage: Optional[str] = None
+
+
 class WineRepository(BaseRepository):
     """
     Thread-safe SQLite repository for wine data.
@@ -573,6 +585,73 @@ class WineRepository(BaseRepository):
         """Clear entire cache."""
         with self._cache_lock:
             self._wine_cache.clear()
+
+    def get_reviews(self, wine_id: int, limit: int = 10, text_only: bool = True) -> list[WineReview]:
+        """
+        Get reviews for a wine.
+
+        Args:
+            wine_id: Wine database ID
+            limit: Maximum reviews to return
+            text_only: If True, only return reviews with review_text
+        """
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        if text_only:
+            cursor.execute("""
+                SELECT id, source_name, user_id, rating, review_text, review_date, vintage
+                FROM wine_reviews
+                WHERE wine_id = ? AND review_text IS NOT NULL
+                ORDER BY rating DESC
+                LIMIT ?
+            """, (wine_id, limit))
+        else:
+            cursor.execute("""
+                SELECT id, source_name, user_id, rating, review_text, review_date, vintage
+                FROM wine_reviews
+                WHERE wine_id = ?
+                ORDER BY rating DESC
+                LIMIT ?
+            """, (wine_id, limit))
+
+        return [
+            WineReview(
+                id=row['id'],
+                source_name=row['source_name'],
+                user_id=row['user_id'],
+                rating=row['rating'],
+                review_text=row['review_text'],
+                review_date=row['review_date'],
+                vintage=row['vintage'],
+            )
+            for row in cursor.fetchall()
+        ]
+
+    def get_review_stats(self, wine_id: int) -> dict:
+        """
+        Get review statistics for a wine.
+
+        Returns dict with total_reviews, avg_rating, text_reviews.
+        """
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT
+                COUNT(*) as total_reviews,
+                AVG(rating) as avg_rating,
+                COALESCE(SUM(CASE WHEN review_text IS NOT NULL THEN 1 ELSE 0 END), 0) as text_reviews
+            FROM wine_reviews
+            WHERE wine_id = ?
+        """, (wine_id,))
+
+        row = cursor.fetchone()
+        return {
+            "total_reviews": row['total_reviews'],
+            "avg_rating": round(row['avg_rating'], 2) if row['avg_rating'] else None,
+            "text_reviews": row['text_reviews'],
+        }
 
     def migrate_from_json(self, json_path: str) -> tuple[int, int]:
         """

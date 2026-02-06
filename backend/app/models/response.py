@@ -52,6 +52,7 @@ class BoundingBox(BaseModel):
 class WineResult(BaseModel):
     """A detected wine bottle with rating and position."""
     wine_name: str = Field(..., description="Canonical wine name")
+    wine_id: Optional[int] = Field(None, description="Database wine ID (for /wines/{id}/reviews)")
     rating: Optional[float] = Field(None, description="Star rating (1-5), None if no rating available")
     confidence: float = Field(..., ge=0, le=1, description="Detection confidence")
     bbox: BoundingBox = Field(..., description="Bounding box position")

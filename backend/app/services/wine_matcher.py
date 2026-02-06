@@ -124,6 +124,7 @@ class WineMatch:
     region: Optional[str] = None
     varietal: Optional[str] = None
     description: Optional[str] = None
+    wine_id: Optional[int] = None
 
 
 @dataclass
@@ -140,6 +141,7 @@ class WineMatchWithScores:
     region: Optional[str] = None
     varietal: Optional[str] = None
     description: Optional[str] = None
+    wine_id: Optional[int] = None
 
 
 class WineMatcher:
@@ -279,6 +281,7 @@ class WineMatcher:
                 region=result.region,
                 varietal=result.varietal,
                 description=result.description,
+                wine_id=result.id,
             )
 
         # Step 2: Try FTS5 for prefix matches (handles OCR fragments)
@@ -304,6 +307,7 @@ class WineMatcher:
                     region=best_match.region,
                     varietal=best_match.varietal,
                     description=best_match.description,
+                    wine_id=best_match.id,
                 )
 
         # Step 3: Fuzzy match against database candidates
@@ -381,6 +385,7 @@ class WineMatcher:
                 region=best_match.region,
                 varietal=best_match.varietal,
                 description=best_match.description,
+                wine_id=best_match.id,
             )
 
         return None
@@ -432,6 +437,7 @@ class WineMatcher:
             region=match.region,
             varietal=match.varietal,
             description=match.description,
+            wine_id=match.wine_id,
         )
 
     def match_many(self, queries: list[str]) -> list[Optional[WineMatch]]:

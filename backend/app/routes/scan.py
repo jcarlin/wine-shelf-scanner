@@ -74,6 +74,7 @@ def _to_wine_result(wine: RecognizedWine) -> WineResult:
     """Convert RecognizedWine to WineResult for API response."""
     return WineResult(
         wine_name=wine.wine_name,
+        wine_id=wine.wine_id,
         rating=wine.rating,
         confidence=wine.confidence,
         bbox=BoundingBox(

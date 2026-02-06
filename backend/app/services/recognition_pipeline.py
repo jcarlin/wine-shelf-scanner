@@ -143,6 +143,7 @@ class RecognizedWine:
     blurb: Optional[str] = None
     review_count: Optional[int] = None
     review_snippets: Optional[list[str]] = None
+    wine_id: Optional[int] = None
 
 
 class RecognitionPipeline:
@@ -340,6 +341,7 @@ class RecognitionPipeline:
             region=match.region,
             varietal=match.varietal,
             review_snippets=[match.description] if match.description else None,
+            wine_id=match.wine_id,
         )
 
     async def _validate_batch(
@@ -509,6 +511,7 @@ class RecognitionPipeline:
                 review_count=validation.review_count,
                 # Prefer DB description over LLM snippets for confirmed DB matches
                 review_snippets=[match.description] if match.description else validation.review_snippets,
+                wine_id=match.wine_id,
             )
 
         # LLM rejected the match - try to find the correct wine in DB
@@ -542,6 +545,7 @@ class RecognitionPipeline:
                     review_count=validation.review_count,
                     # Prefer DB description over LLM snippets for DB matches
                     review_snippets=[new_match.description] if new_match.description else validation.review_snippets,
+                    wine_id=new_match.wine_id,
                 )
 
             # Wine not in DB (or only low-confidence matches) - use LLM-identified name

@@ -56,6 +56,10 @@
 "processing.tip2" = "Las botellas mejor calificadas tienen un resaltado dorado";
 "processing.tip3" = "Basado en 21 millones de reseñas agregadas";
 "processing.tip4" = "Cubrimos más de 181,000 vinos en todo el mundo";
+"processing.tip5" = "Las calificaciones combinan puntuaciones de las principales plataformas de vinos";
+"processing.tip6" = "Funciona mejor con fotos claras y bien iluminadas de estantes de vinos";
+"processing.tip7" = "Los puntajes de confianza muestran qué tan segura es cada coincidencia";
+"processing.tip8" = "Los vinos mejor calificados se destacan para una selección rápida";
 
 /* About */
 "about.title" = "Escáner de Vinos";
@@ -80,3 +84,19 @@
 "bugReport.thanksImprove" = "¡Gracias por ayudarnos a mejorar!";
 "bugReport.done" = "Listo";
 "bugReport.cancel" = "Cancelar";
+
+/* Server Warmup */
+"warmup.checking" = "Conectando al servidor...";
+"warmup.title" = "Iniciando el servidor";
+"warmup.message" = "Nuestro servidor se está iniciando. Esto suele tardar entre 15 y 30 segundos.";
+"warmup.timeout" = "El servidor está tardando demasiado en iniciar. Por favor, inténtalo más tarde.";
+"warmup.unavailableTitle" = "Servidor no disponible";
+"warmup.retry" = "Intentar de nuevo";
+"warmup.tip1" = "El primer inicio del día puede tardar un momento";
+"warmup.tip2" = "Nuestra IA está cargando más de 181,000 vinos en memoria";
+"warmup.tip3" = "Las calificaciones de vinos provienen de 21 millones de reseñas comunitarias";
+"warmup.tip4" = "Cada escaneo usa la IA de Vision de Google para leer etiquetas";
+"warmup.tip5" = "Comparamos el texto OCR con nuestra base de datos de vinos";
+"warmup.tip6" = "Múltiples algoritmos de coincidencia aseguran la precisión";
+"warmup.tip7" = "Los resultados incluyen calificaciones de las principales plataformas de vinos";
+"warmup.tip8" = "El servidor se mantiene activo unos 15 minutos después de su uso";

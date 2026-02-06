@@ -22,6 +22,7 @@ struct WineDetailSheet: View {
     let imageId: String
     var shelfRank: Int? = nil
     var shelfTotal: Int? = nil
+    var fetchedReviews: [ReviewItem]? = nil
 
     @State private var feedbackState: FeedbackState = .none
     @State private var showCorrectionField = false
@@ -260,8 +261,49 @@ struct WineDetailSheet: View {
                     .cornerRadius(12)
                 }
 
-                // Review snippets
-                if let snippets = wine.reviewSnippets, !snippets.isEmpty {
+                // Review snippets — prefer fetched reviews over static snippets
+                if let fetched = fetchedReviews, !fetched.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(NSLocalizedString("detail.whatPeopleSay", comment: "Review snippets header"))
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.primary)
+
+                        ForEach(fetched) { review in
+                            VStack(alignment: .leading, spacing: 4) {
+                                if let text = review.reviewText {
+                                    HStack(alignment: .top, spacing: 8) {
+                                        Rectangle()
+                                            .fill(Color.yellow)
+                                            .frame(width: 3)
+                                        Text("\"\(text)\"")
+                                            .font(.caption)
+                                            .italic()
+                                            .foregroundColor(.secondary)
+                                            .lineLimit(4)
+                                            .truncationMode(.tail)
+                                    }
+                                }
+                                HStack(spacing: 4) {
+                                    Text(review.sourceName)
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary.opacity(0.7))
+                                    if let reviewer = review.reviewer {
+                                        Text("— \(reviewer)")
+                                            .font(.caption2)
+                                            .foregroundColor(.secondary.opacity(0.7))
+                                    }
+                                }
+                            }
+                            .padding(.vertical, 4)
+                            .padding(.horizontal, 8)
+                            .background(Color.gray.opacity(0.05))
+                            .cornerRadius(4)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal)
+                } else if let snippets = wine.reviewSnippets, !snippets.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(NSLocalizedString("detail.whatPeopleSay", comment: "Review snippets header"))
                             .font(.subheadline)

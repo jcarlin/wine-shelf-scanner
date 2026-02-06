@@ -16,7 +16,8 @@ export function ScanningOverlay({ imageUri }: ScanningOverlayProps) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-4">
       <div className="relative w-full max-w-lg overflow-hidden rounded-xl">
-        {/* Uploaded image */}
+        {/* Uploaded image — blob URL from camera/file upload, not compatible with next/image */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={imageUri}
           alt="Scanning wine shelf"

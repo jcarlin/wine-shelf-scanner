@@ -10,6 +10,12 @@ import { fetchWithTimeout, isAbortError } from './fetch-utils';
 /** Timeout for health checks (ms) */
 const HEALTH_CHECK_TIMEOUT_MS = 10000;
 
+/** Max retries for transient scan failures (NETWORK_ERROR, TIMEOUT) */
+const SCAN_MAX_RETRIES = 2;
+
+/** Base delay between retries in ms (doubles each attempt: 2s, 4s) */
+const SCAN_RETRY_BASE_DELAY_MS = 2000;
+
 export type HealthStatus =
   | { status: 'healthy' }
   | { status: 'warming_up'; retryAfter?: number }
@@ -80,6 +86,9 @@ export interface ScanOptions {
 /**
  * Scan a wine shelf image (Web version)
  *
+ * Retries up to SCAN_MAX_RETRIES times on transient failures
+ * (NETWORK_ERROR, TIMEOUT) with exponential backoff.
+ *
  * @param file - File object from file input
  * @param options - Optional scan options (debug mode, etc.)
  * @returns Scan result with wine data or error
@@ -104,12 +113,42 @@ export async function scanImage(
     }
   }
 
+  let lastResult: ScanResult | null = null;
+
+  for (let attempt = 0; attempt <= SCAN_MAX_RETRIES; attempt++) {
+    // Wait before retry (exponential backoff: 2s, 4s)
+    if (attempt > 0) {
+      await sleep(SCAN_RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1));
+    }
+
+    lastResult = await scanImageOnce(file, options);
+
+    // Success or non-transient error — return immediately
+    if (
+      lastResult.success ||
+      (lastResult.error.type !== 'NETWORK_ERROR' && lastResult.error.type !== 'TIMEOUT')
+    ) {
+      return lastResult;
+    }
+  }
+
+  return lastResult!;
+}
+
+/** Single scan attempt (no retry). */
+async function scanImageOnce(
+  file: File,
+  options: ScanOptions
+): Promise<ScanResult> {
   // Use debug from options, fall back to config
   const debug = options.debug ?? Config.DEBUG_MODE;
 
+  // Adapt image quality based on network conditions (matches iOS NetworkMonitor behavior)
+  const uploadFile = await maybeCompressForNetwork(file);
+
   // Create form data with image file
   const formData = new FormData();
-  formData.append('image', file, file.name);
+  formData.append('image', uploadFile, file.name);
 
   // Build URL with optional debug query param
   const url = new URL(`${Config.API_BASE_URL}/scan`);
@@ -170,6 +209,71 @@ export async function scanImage(
         message: 'An unexpected error occurred.',
       },
     };
+  }
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Compress image for upload when on a slow/metered connection.
+ * Uses the Network Information API where available.
+ * On fast connections or when API is unsupported, returns the original file.
+ */
+async function maybeCompressForNetwork(file: File): Promise<Blob> {
+  // Only compress JPEG/PNG — other types (HEIC) are handled separately
+  if (!file.type.startsWith('image/jpeg') && !file.type.startsWith('image/png')) {
+    return file;
+  }
+
+  const quality = getNetworkAdaptiveQuality();
+  if (quality >= 0.8) return file; // Good connection, no compression needed
+
+  try {
+    const bitmap = await createImageBitmap(file);
+    // Scale down on very slow connections
+    const maxDim = quality <= 0.5 ? 1200 : 1600;
+    const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
+    const width = Math.round(bitmap.width * scale);
+    const height = Math.round(bitmap.height * scale);
+
+    const canvas = new OffscreenCanvas(width, height);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return file;
+
+    ctx.drawImage(bitmap, 0, 0, width, height);
+    bitmap.close();
+
+    return canvas.convertToBlob({ type: 'image/jpeg', quality });
+  } catch {
+    return file; // Compression failed, use original
+  }
+}
+
+/**
+ * Get adaptive JPEG quality based on network conditions.
+ * Mirrors iOS NetworkMonitor.compressionQuality behavior.
+ */
+function getNetworkAdaptiveQuality(): number {
+  if (typeof navigator === 'undefined') return 0.8;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const conn = (navigator as any).connection;
+  if (!conn) return 0.8; // API not supported — assume good connection
+
+  // Data saver mode enabled
+  if (conn.saveData) return 0.5;
+
+  // Adapt based on effective connection type
+  switch (conn.effectiveType) {
+    case 'slow-2g':
+    case '2g':
+      return 0.4;
+    case '3g':
+      return 0.6;
+    default: // '4g' or unknown
+      return 0.8;
   }
 }
 

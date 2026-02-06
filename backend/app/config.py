@@ -95,8 +95,12 @@ class Config:
     # === Vision Cache ===
     @staticmethod
     def vision_cache_enabled() -> bool:
-        """Enable Vision API response caching."""
-        return os.getenv("VISION_CACHE_ENABLED", "false").lower() == "true"
+        """Enable Vision API response caching. Default: True.
+
+        The cache saves ~2s per hit by avoiding repeat Vision API calls.
+        Storage is bounded by max_size_mb (LRU eviction) and ttl_days.
+        """
+        return os.getenv("VISION_CACHE_ENABLED", "true").lower() == "true"
 
     @staticmethod
     def vision_cache_ttl_days() -> int:

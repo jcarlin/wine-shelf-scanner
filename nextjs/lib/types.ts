@@ -84,6 +84,7 @@ export type ScanState =
   | { status: 'idle' }
   | { status: 'processing'; imageUri: string | null }
   | { status: 'results'; response: ScanResponse; imageUri: string }
+  | { status: 'cachedResults'; response: ScanResponse; imageUri: string | null; timestamp: string }
   | { status: 'error'; message: string };
 
 export interface Size {

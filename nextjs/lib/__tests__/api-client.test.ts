@@ -107,7 +107,8 @@ describe('api-client', () => {
     });
 
     it('should return NETWORK_ERROR on fetch failure', async () => {
-      mockFetch.mockRejectedValueOnce(new Error('Network request failed'));
+      // Mock all attempts (initial + 2 retries) to fail with network error
+      mockFetch.mockRejectedValue(new Error('Network request failed'));
 
       const { scanImage } = require('../api-client');
       const file = new File(['test'], 'image.jpg', { type: 'image/jpeg' });
@@ -117,13 +118,16 @@ describe('api-client', () => {
       if (!result.success) {
         expect(result.error.type).toBe('NETWORK_ERROR');
       }
-    });
+      // Should have retried (initial + 2 retries = 3 attempts)
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+    }, 30000);
 
     it('should return TIMEOUT on abort', async () => {
       // Create an AbortError
       const abortError = new Error('Aborted');
       abortError.name = 'AbortError';
-      mockFetch.mockRejectedValueOnce(abortError);
+      // Mock all attempts to timeout
+      mockFetch.mockRejectedValue(abortError);
 
       const { scanImage } = require('../api-client');
       const file = new File(['test'], 'image.jpg', { type: 'image/jpeg' });
@@ -133,7 +137,9 @@ describe('api-client', () => {
       if (!result.success) {
         expect(result.error.type).toBe('TIMEOUT');
       }
-    });
+      // Should have retried (initial + 2 retries = 3 attempts)
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+    }, 30000);
   });
 
   describe('scanImage with debug option', () => {

@@ -22,7 +22,7 @@ export const featureFlags: FeatureFlagValues = {
   shelfRanking: envBool('NEXT_PUBLIC_FEATURE_SHELF_RANKING'),
   safePick: envBool('NEXT_PUBLIC_FEATURE_SAFE_PICK'),
   pairings: envBool('NEXT_PUBLIC_FEATURE_PAIRINGS'),
-  trustSignals: envBool('NEXT_PUBLIC_FEATURE_TRUST_SIGNALS'),
+  trustSignals: envBool('NEXT_PUBLIC_FEATURE_TRUST_SIGNALS', false),
   visualEmphasis: envBool('NEXT_PUBLIC_FEATURE_VISUAL_EMPHASIS'),
   cornerBrackets: envBool('NEXT_PUBLIC_FEATURE_CORNER_BRACKETS', false),
   offlineCache: envBool('NEXT_PUBLIC_FEATURE_OFFLINE_CACHE'),

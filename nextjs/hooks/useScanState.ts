@@ -6,10 +6,11 @@ import { scanImage } from '@/lib/api-client';
 import { getDisplayableImageUrl } from '@/lib/image-converter';
 import { useScanCache } from './useScanCache';
 import { featureFlags } from '@/lib/feature-flags';
+import { Config } from '@/lib/config';
 
 export function useScanState() {
   const [state, setState] = useState<ScanState>({ status: 'idle' });
-  const [debugMode, setDebugMode] = useState(false);
+  const [debugMode, setDebugMode] = useState(Config.DEBUG_MODE);
   const scanCache = useScanCache();
 
   const processImage = useCallback(async (file: File) => {

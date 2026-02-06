@@ -138,7 +138,7 @@ export interface LLMValidationDebug {
 export interface DebugFinalResult {
   wine_name: string;
   confidence: number;
-  source: 'fuzzy' | 'llm' | 'none';
+  source: 'database' | 'llm' | 'vision';
 }
 
 export interface NormalizationTrace {

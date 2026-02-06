@@ -264,7 +264,7 @@ function createPipelineStep(
     final_result: {
       wine_name: wine.name,
       confidence: wine.confidence,
-      source: useLlm ? 'llm' : 'fuzzy',
+      source: useLlm ? 'llm' : 'database',
     },
     step_failed: false,
     included_in_results: wine.confidence >= 0.45,

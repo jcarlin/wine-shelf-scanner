@@ -22,7 +22,7 @@ MOCK_DEBUG_STEPS = [
             rating=4.5
         ),
         llm_validation=None,
-        final_result={"wine_name": "Caymus Cabernet Sauvignon", "confidence": 0.94, "source": "fuzzy"},
+        final_result={"wine_name": "Caymus Cabernet Sauvignon", "confidence": 0.94, "source": "database"},
         step_failed=None,
         included_in_results=True
     ),
@@ -55,7 +55,7 @@ MOCK_DEBUG_STEPS = [
             rating=4.4
         ),
         llm_validation=None,
-        final_result={"wine_name": "Silver Oak Alexander Valley", "confidence": 0.88, "source": "fuzzy"},
+        final_result={"wine_name": "Silver Oak Alexander Valley", "confidence": 0.88, "source": "database"},
         step_failed=None,
         included_in_results=True
     ),
@@ -69,7 +69,7 @@ MOCK_DEBUG_STEPS = [
             rating=4.3
         ),
         llm_validation=None,
-        final_result={"wine_name": "Jordan Cabernet Sauvignon", "confidence": 0.85, "source": "fuzzy"},
+        final_result={"wine_name": "Jordan Cabernet Sauvignon", "confidence": 0.85, "source": "database"},
         step_failed=None,
         included_in_results=True
     ),
@@ -83,7 +83,7 @@ MOCK_DEBUG_STEPS = [
             rating=3.8
         ),
         llm_validation=None,
-        final_result={"wine_name": "Kendall-Jackson Vintner's Reserve", "confidence": 0.79, "source": "fuzzy"},
+        final_result={"wine_name": "Kendall-Jackson Vintner's Reserve", "confidence": 0.79, "source": "database"},
         step_failed=None,
         included_in_results=True
     ),
@@ -116,7 +116,7 @@ MOCK_DEBUG_STEPS = [
             rating=3.9
         ),
         llm_validation=None,
-        final_result={"wine_name": "Meiomi Pinot Noir", "confidence": 0.68, "source": "fuzzy"},
+        final_result={"wine_name": "Meiomi Pinot Noir", "confidence": 0.68, "source": "database"},
         step_failed=None,
         included_in_results=True
     ),

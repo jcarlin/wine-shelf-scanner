@@ -122,17 +122,21 @@ function StepRow({ step, index }: { step: DebugPipelineStep; index: number }) {
       ? colors.statusFailure
       : colors.statusWarning;
 
-  const sourceLabel = step.final_result?.source === 'llm'
-    ? 'LLM'
-    : step.final_result?.source === 'fuzzy'
-      ? 'Fuzzy'
-      : 'No match';
+  const sourceLabel = step.final_result?.source === 'database'
+    ? 'DB'
+    : step.final_result?.source === 'llm'
+      ? 'LLM'
+      : step.final_result?.source === 'vision'
+        ? 'Vision'
+        : 'No match';
 
-  const sourceBadgeColor = step.final_result?.source === 'llm'
-    ? colors.debugOrange
-    : step.final_result?.source === 'fuzzy'
-      ? colors.statusSuccess
-      : colors.statusFailure;
+  const sourceBadgeColor = step.final_result?.source === 'database'
+    ? colors.statusSuccess
+    : step.final_result?.source === 'llm'
+      ? colors.debugOrange
+      : step.final_result?.source === 'vision'
+        ? '#60A5FA'
+        : colors.statusFailure;
 
   return (
     <div

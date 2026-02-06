@@ -20,7 +20,7 @@ class FeatureFlags(BaseSettings):
     feature_shelf_ranking: bool = True
     feature_safe_pick: bool = True
     feature_pairings: bool = True
-    feature_trust_signals: bool = True
+    feature_trust_signals: bool = False
 
     model_config = {
         "env_prefix": "",

@@ -18,7 +18,7 @@ struct FeatureFlags {
         "feature_shelf_ranking": true,
         "feature_safe_pick": true,
         "feature_pairings": true,
-        "feature_trust_signals": true,
+        "feature_trust_signals": false,
         "feature_visual_emphasis": true,
         "feature_offline_cache": true,
         "feature_share": true,

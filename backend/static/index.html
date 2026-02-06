@@ -620,9 +620,10 @@
                     renderOverlays(response, resultImage);
                     showScreen('results');
 
-                    if (isPartialDetection) {
-                        showToast("Some bottles couldn't be recognized");
-                    }
+                    // Partial detection toast — disabled: just show what we found.
+                    // if (isPartialDetection) {
+                    //     showToast("Some bottles couldn't be recognized");
+                    // }
                 };
             }
         }

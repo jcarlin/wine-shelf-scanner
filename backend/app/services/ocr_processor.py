@@ -169,28 +169,32 @@ class OCRProcessor:
     }
 
     # Marketing/filler words to remove
+    # NOTE: Do NOT add wine-identity words here (reserve, estate, vineyard,
+    # cellars, region names like napa/sonoma/valley/coast, or classification
+    # terms like classico/riserva/crianza/reserva). Those are critical for
+    # matching wines like "Kendall-Jackson Vintner's Reserve" or "Chianti Classico".
     FILLER_WORDS = {
-        'reserve', 'special', 'edition', 'limited', 'select', 'premium',
-        'estate', 'bottled', 'produced', 'imported', 'product', 'contains',
-        'sulfites', 'wine', 'vino', 'vin', 'winery', 'vineyard', 'cellars',
+        'special', 'edition', 'limited', 'select', 'premium',
+        'bottled', 'produced', 'imported', 'product', 'contains',
+        'sulfites', 'wine', 'vino', 'vin', 'winery',
         'vintage', 'aged', 'barrel', 'oak', 'months', 'years',
         # Region names that appear on labels but shouldn't be in wine name
-        'napa', 'sonoma', 'lodi', 'paso', 'robles', 'california', 'oregon',
-        'washington', 'mendocino', 'monterey', 'valley', 'county', 'coast',
+        'lodi', 'california', 'oregon',
+        'washington', 'mendocino', 'monterey', 'county',
         'central', 'north', 'south', 'eastern', 'western', 'appellation',
         # French generic terms (not specific appellations - keep village names!)
         'bourgogne', 'burgundy', 'loire', 'rhone', 'alsace',
         'provence', 'languedoc', 'roussillon', 'grand', 'cru',
         'premier', 'appellation', 'controlee', 'contrôlée', 'origine', 'protegee',
         'côtes', 'cotes', 'haut',
-        # Italian terms
+        # Italian terms (keep classico, riserva - they're wine identity)
         'toscana', 'tuscany', 'piemonte', 'piedmont', 'veneto', 'sicilia',
-        'docg', 'doc', 'igt', 'classico', 'superiore', 'riserva',
-        # Spanish terms
-        'rioja', 'ribera', 'duero', 'priorat', 'rueda', 'denominacion',
-        'crianza', 'reserva', 'gran',
-        # Australian regions
-        'barossa', 'mclaren', 'vale', 'hunter', 'clare', 'margaret', 'river',
+        'docg', 'doc', 'igt', 'superiore',
+        # Spanish terms (keep rioja, crianza, reserva - they're wine identity)
+        'ribera', 'duero', 'priorat', 'rueda', 'denominacion',
+        'gran',
+        # Australian regions (keep barossa - it's wine identity)
+        'mclaren', 'vale', 'hunter', 'clare', 'margaret', 'river',
         # Common label words to remove
         'vinted', 'grown', 'made', 'crafted', 'selected', 'from', 'the',
         'and', 'for', 'with', 'our', 'this', 'that', 'by', 'of', 'in',

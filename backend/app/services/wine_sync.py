@@ -8,11 +8,32 @@ surfaced to the user.
 """
 
 import logging
+import re
 from typing import Optional
 
 from ..models.enums import RatingSource, WineSource
 
 logger = logging.getLogger(__name__)
+
+
+def _is_valid_wine_name(wine_name: str) -> bool:
+    """Reject OCR garbage before writing to the database."""
+    if len(wine_name) > 100:
+        logger.debug(f"Skipping sync: name too long ({len(wine_name)} chars): '{wine_name[:50]}...'")
+        return False
+
+    word_count = len(wine_name.split())
+    if word_count > 15:
+        logger.debug(f"Skipping sync: too many words ({word_count}): '{wine_name[:50]}...'")
+        return False
+
+    # Count tokens that contain non-alphabetic characters as a garbage signal
+    non_alpha_words = sum(1 for w in wine_name.split() if not re.match(r'^[A-Za-zÀ-ÿ\'-]+$', w))
+    if non_alpha_words > 2:
+        logger.debug(f"Skipping sync: likely OCR garbage: '{wine_name[:50]}...'")
+        return False
+
+    return True
 
 
 def sync_discovered_wines(results: list, fallback: Optional[list] = None) -> int:
@@ -53,6 +74,10 @@ def sync_discovered_wines(results: list, fallback: Optional[list] = None) -> int
                 rating = getattr(wine, 'rating', None)
 
                 if not wine_name or rating is None:
+                    continue
+
+                # Validate wine name to prevent OCR garbage from polluting DB
+                if not _is_valid_wine_name(wine_name):
                     continue
 
                 # Skip if already in DB (another scan may have synced it)
@@ -99,6 +124,10 @@ def sync_discovered_wines(results: list, fallback: Optional[list] = None) -> int
                     rating = getattr(fw, 'rating', None)
 
                     if not wine_name or rating is None:
+                        continue
+
+                    # Validate wine name to prevent OCR garbage from polluting DB
+                    if not _is_valid_wine_name(wine_name):
                         continue
 
                     if repo.exists(wine_name):

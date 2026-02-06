@@ -769,7 +769,7 @@ Return JSON: {"wine_name": "...", "confidence": 0.0-1.0, "is_wine": true/false, 
                 fallbacks=self.models[1:] if len(self.models) > 1 else None,
                 num_retries=self.num_retries,
                 timeout=self.timeout,
-                max_tokens=150 * len(items),  # Reduced: core metadata only, no blurbs
+                max_tokens=min(300 * len(items), 4000),  # Cap at 4000 for Haiku compatibility
             )
 
             return self._parse_batch_response(

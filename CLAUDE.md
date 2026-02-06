@@ -391,7 +391,7 @@ Set these in the Vercel dashboard for production:
 | `GEMINI_MODEL` | `gemini-2.0-flash` | Gemini model name |
 | `LOG_LEVEL` | `INFO` | Logging level (DEBUG, INFO, WARNING, ERROR) |
 | `DEBUG_MODE` | `false` | Include debug info in scan responses and enable verbose logging |
-| `USE_LLM_CACHE` | `false` | Cache LLM-discovered wines for promotion to DB |
+| `USE_LLM_CACHE` | `true` | Cache LLM/Vision-discovered wines for promotion to DB |
 
 ---
 

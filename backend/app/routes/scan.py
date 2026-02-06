@@ -539,14 +539,30 @@ async def process_image(
                     recognized_wine = _vision_to_recognized(vision_wine, bottle_text)
 
                     if bt_id in low_conf_bottle_ids:
-                        # Replace the low-confidence match with Vision result
-                        # Remove old result and add new one
-                        recognized = [w for w in recognized if id(w.bottle_text) != bt_id]
-                        recognized.append(recognized_wine)
-                        logger.info(
-                            f"[{image_id}] Vision REPLACED low-conf match: {vision_wine.wine_name} "
-                            f"(conf={vision_wine.confidence:.2f}, rating={vision_wine.estimated_rating})"
+                        # Check if we'd downgrade a real DB rating to a default rating
+                        existing_wine = bottle_to_wine.get(bt_id)
+                        has_real_db_rating = (
+                            existing_wine is not None
+                            and existing_wine.rating is not None
+                            and existing_wine.rating_source == RatingSource.DATABASE
                         )
+                        vision_has_real_rating = vision_wine.estimated_rating is not None
+
+                        if has_real_db_rating and not vision_has_real_rating:
+                            # Keep the DB-rated wine — don't downgrade to default 3.5
+                            logger.info(
+                                f"[{image_id}] Vision SKIPPED replacement (would downgrade "
+                                f"DB rating {existing_wine.rating} to default): "
+                                f"{vision_wine.wine_name} (conf={vision_wine.confidence:.2f})"
+                            )
+                        else:
+                            # Replace the low-confidence match with Vision result
+                            recognized = [w for w in recognized if id(w.bottle_text) != bt_id]
+                            recognized.append(recognized_wine)
+                            logger.info(
+                                f"[{image_id}] Vision REPLACED low-conf match: {vision_wine.wine_name} "
+                                f"(conf={vision_wine.confidence:.2f}, rating={vision_wine.estimated_rating})"
+                            )
                     else:
                         # Add new result for previously unmatched bottle
                         recognized.append(recognized_wine)

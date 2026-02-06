@@ -409,45 +409,45 @@ class RecognitionPipeline:
         items_needing_llm: list[tuple[BottleText, Optional[WineMatch], Optional[WineMatchWithScores], int]] = []
         cache_hit_indices: set[int] = set()
 
-        # Phase 1: Check cache for items without a DB candidate
+        # Phase 1: Check cache for ALL items (not just those without DB match)
+        # Low-confidence DB matches may have been previously identified by Vision/LLM
+        # with a real rating — the cache provides that better result.
         if self._llm_cache:
             for idx, (bt, match, match_with_scores, bottle_idx) in enumerate(items):
-                # Only check cache for items without a DB match
-                if match is None:
-                    ocr_text = bt.combined_text or bt.normalized_name
-                    cached = self._llm_cache.get(ocr_text)
-                    # Also try normalized name (Vision results are cached under wine names)
-                    if not cached and bt.normalized_name and bt.normalized_name != ocr_text:
-                        cached = self._llm_cache.get(bt.normalized_name)
-                    if cached:
-                        # Create result from cached data
-                        result = RecognizedWine(
-                            wine_name=cached.wine_name,
-                            rating=cached.estimated_rating,
-                            confidence=min(bt.bottle.confidence, cached.confidence),
-                            source=WineSource.LLM,
-                            identified=True,
-                            bottle_text=bt,
-                            rating_source=RatingSource.LLM_ESTIMATED,
-                            wine_type=cached.wine_type,
-                            brand=cached.brand,
-                            region=cached.region,
-                            varietal=cached.varietal,
-                        )
-                        results.append(result)
-                        cache_hit_indices.add(idx)
+                ocr_text = bt.combined_text or bt.normalized_name
+                cached = self._llm_cache.get(ocr_text)
+                # Also try normalized name (Vision results are cached under wine names)
+                if not cached and bt.normalized_name and bt.normalized_name != ocr_text:
+                    cached = self._llm_cache.get(bt.normalized_name)
+                if cached:
+                    # Create result from cached data
+                    result = RecognizedWine(
+                        wine_name=cached.wine_name,
+                        rating=cached.estimated_rating,
+                        confidence=min(bt.bottle.confidence, cached.confidence),
+                        source=WineSource.LLM,
+                        identified=True,
+                        bottle_text=bt,
+                        rating_source=RatingSource.LLM_ESTIMATED,
+                        wine_type=cached.wine_type,
+                        brand=cached.brand,
+                        region=cached.region,
+                        varietal=cached.varietal,
+                    )
+                    results.append(result)
+                    cache_hit_indices.add(idx)
 
-                        # Create debug info for cache hit
-                        cache_debug = LLMValidationDebug(
-                            is_valid_match=True,
-                            wine_name=cached.wine_name,
-                            confidence=cached.confidence,
-                            reasoning=f"Cache hit (provider: {cached.llm_provider}, hits: {cached.hit_count})"
-                        )
-                        self._debug.add_step(
-                            bt, bottle_idx, match_with_scores, cache_debug, result,
-                            step_failed=None, included=True
-                        )
+                    # Create debug info for cache hit
+                    cache_debug = LLMValidationDebug(
+                        is_valid_match=True,
+                        wine_name=cached.wine_name,
+                        confidence=cached.confidence,
+                        reasoning=f"Cache hit (provider: {cached.llm_provider}, hits: {cached.hit_count})"
+                    )
+                    self._debug.add_step(
+                        bt, bottle_idx, match_with_scores, cache_debug, result,
+                        step_failed=None, included=True
+                    )
 
         # Collect items that still need LLM validation
         for idx, item in enumerate(items):
@@ -598,8 +598,7 @@ class RecognitionPipeline:
                 # Cache the LLM-identified wine for future lookups
                 if self._llm_cache and rating is not None:
                     llm_provider = self.normalizer.models[0] if hasattr(self.normalizer, 'models') else 'unknown'
-                    self._llm_cache.set(
-                        wine_name=validation.wine_name,
+                    cache_kwargs = dict(
                         estimated_rating=rating,
                         confidence=capped_confidence,
                         llm_provider=llm_provider,
@@ -608,6 +607,17 @@ class RecognitionPipeline:
                         varietal=validation.varietal,
                         brand=validation.brand,
                     )
+                    # Cache under the canonical wine name
+                    self._llm_cache.set(wine_name=validation.wine_name, **cache_kwargs)
+                    # Also cache under the raw OCR text so future scans
+                    # can find it without re-calling the LLM
+                    ocr_text = bottle_text.combined_text or bottle_text.normalized_name
+                    if ocr_text and ocr_text.lower() != validation.wine_name.lower():
+                        self._llm_cache.set(wine_name=ocr_text, **cache_kwargs)
+                    if (bottle_text.normalized_name
+                            and bottle_text.normalized_name.lower() != validation.wine_name.lower()
+                            and bottle_text.normalized_name != ocr_text):
+                        self._llm_cache.set(wine_name=bottle_text.normalized_name, **cache_kwargs)
 
                 return result
 

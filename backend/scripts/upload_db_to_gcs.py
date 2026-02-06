@@ -1,19 +1,22 @@
 #!/usr/bin/env python3
 """
-Upload wines.db to GCS bucket.
+Upload wines.db to GCS bucket (gzip-compressed).
 
 Usage:
     python scripts/upload_db_to_gcs.py [--bucket BUCKET] [--path PATH] [--db-file DB]
 
 Defaults:
     --bucket: GCS_DB_BUCKET env var (required)
-    --path:   data/wines.db
+    --path:   data/wines.db.gz
     --db-file: app/data/wines.db
 """
 
 import argparse
+import gzip
 import os
+import shutil
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -21,7 +24,7 @@ BACKEND_DIR = Path(__file__).parent.parent
 
 
 def upload(db_file: str, bucket_name: str, gcs_path: str):
-    """Upload local DB file to GCS."""
+    """Gzip-compress and upload local DB file to GCS."""
     from google.cloud import storage
 
     db_path = Path(db_file)
@@ -29,24 +32,41 @@ def upload(db_file: str, bucket_name: str, gcs_path: str):
         print(f"Error: Database file not found: {db_path}")
         sys.exit(1)
 
-    size_mb = db_path.stat().st_size / (1024 * 1024)
-    print(f"Uploading {db_path} ({size_mb:.1f} MB)")
-    print(f"  -> gs://{bucket_name}/{gcs_path}")
+    raw_size_mb = db_path.stat().st_size / (1024 * 1024)
+    print(f"Compressing {db_path} ({raw_size_mb:.1f} MB)...")
 
     start = time.time()
-    client = storage.Client()
-    bucket = client.bucket(bucket_name)
-    blob = bucket.blob(gcs_path)
 
-    # Resumable upload for large files
-    blob.upload_from_filename(str(db_path), timeout=600)
+    # Compress to a temp file
+    with tempfile.NamedTemporaryFile(suffix=".gz", delete=False) as tmp:
+        tmp_path = tmp.name
+        with open(db_path, "rb") as f_in, gzip.open(tmp, "wb", compresslevel=6) as f_out:
+            shutil.copyfileobj(f_in, f_out)
 
-    elapsed = time.time() - start
-    print(f"Upload complete in {elapsed:.1f}s ({size_mb / elapsed:.1f} MB/s)")
+    gz_size_mb = Path(tmp_path).stat().st_size / (1024 * 1024)
+    compress_time = time.time() - start
+    ratio = (1 - gz_size_mb / raw_size_mb) * 100
+    print(f"Compressed to {gz_size_mb:.1f} MB ({ratio:.0f}% reduction) in {compress_time:.1f}s")
+    print(f"Uploading -> gs://{bucket_name}/{gcs_path}")
+
+    try:
+        upload_start = time.time()
+        client = storage.Client()
+        bucket = client.bucket(bucket_name)
+        blob = bucket.blob(gcs_path)
+
+        blob.upload_from_filename(tmp_path, timeout=600)
+
+        upload_time = time.time() - upload_start
+        total_time = time.time() - start
+        print(f"Upload complete in {upload_time:.1f}s ({gz_size_mb / upload_time:.1f} MB/s)")
+        print(f"Total time: {total_time:.1f}s")
+    finally:
+        os.unlink(tmp_path)
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Upload wines.db to GCS")
+    parser = argparse.ArgumentParser(description="Upload wines.db to GCS (gzip)")
     parser.add_argument(
         "--bucket",
         default=os.getenv("GCS_DB_BUCKET", ""),
@@ -54,8 +74,8 @@ def main():
     )
     parser.add_argument(
         "--path",
-        default="data/wines.db",
-        help="GCS object path (default: data/wines.db)",
+        default="data/wines.db.gz",
+        help="GCS object path (default: data/wines.db.gz)",
     )
     parser.add_argument(
         "--db-file",

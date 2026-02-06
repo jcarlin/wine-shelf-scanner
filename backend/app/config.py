@@ -31,7 +31,7 @@ class Config:
     MIN_SIMILARITY = 0.65
 
     # === OCR Processing ===
-    PROXIMITY_THRESHOLD = 0.20  # Text must be within this distance of bottle
+    PROXIMITY_THRESHOLD = 0.25  # Text must be within this distance of bottle
     MIN_TEXT_LENGTH = 3
     MAX_TEXT_LENGTH = 50
     DEFAULT_IMAGE_WIDTH = 1000

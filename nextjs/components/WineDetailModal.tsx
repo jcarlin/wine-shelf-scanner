@@ -52,15 +52,15 @@ export function WineDetailModal({ wine, onClose, shelfRank, shelfTotal }: WineDe
   const hasReviews = wine.review_count || (wine.review_snippets && wine.review_snippets.length > 0);
 
   return (
-    <>
+    <div
+      className="fixed inset-0 z-50 animate-fade-in"
+      onClick={onClose}
+    >
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/50 z-40 animate-fade-in"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-black/50" />
 
       {/* Modal */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 animate-slide-up max-h-[85vh]">
+      <div className="absolute bottom-0 left-0 right-0 animate-slide-up max-h-[85vh]">
         <div
           className="bg-white rounded-t-3xl px-6 pt-4 pb-8 max-w-lg mx-auto overflow-y-auto max-h-[85vh]"
           onClick={(e) => e.stopPropagation()}
@@ -329,6 +329,6 @@ export function WineDetailModal({ wine, onClose, shelfRank, shelfTotal }: WineDe
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }

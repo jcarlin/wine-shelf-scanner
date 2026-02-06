@@ -34,7 +34,7 @@ export function RatingBadge({ wine, isTopThree, position, onClick, shelfRank, is
     if (isTopThree) {
       badgeOpacity = Math.min(baseOpacity + 0.15, 1.0);
     } else {
-      badgeOpacity = baseOpacity * 0.65;
+      badgeOpacity = baseOpacity * 0.85;
     }
   }
 
@@ -83,15 +83,15 @@ export function RatingBadge({ wine, isTopThree, position, onClick, shelfRank, is
             width: size.width,
             height: size.height,
             backgroundColor: colors.badgeBackground,
-            borderWidth: isTopThree ? (isBestPick ? 2.5 : 2) : 0,
+            borderWidth: isTopThree ? (isBestPick ? 2.5 : 2) : 1,
             borderColor: isTopThree
               ? (isBestPick ? 'rgba(255, 204, 0, 0.9)' : colors.topThreeBorder)
-              : 'transparent',
+              : 'rgba(255, 255, 255, 0.3)',
             boxShadow: isBestPick
               ? `0 0 16px rgba(255, 204, 0, 0.6), 0 0 4px rgba(255, 204, 0, 0.3)`
               : isTopThree
                 ? `0 0 12px ${colors.topThreeGlow}40`
-                : undefined,
+                : '0 0 6px rgba(0, 0, 0, 0.5)',
           }}
         >
           <Star

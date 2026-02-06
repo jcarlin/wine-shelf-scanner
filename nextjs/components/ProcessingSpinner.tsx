@@ -5,12 +5,12 @@ import { Wine } from 'lucide-react';
 import { colors } from '@/lib/theme';
 import { useTipRotation } from '@/hooks/useTipRotation';
 
-const TIP_COUNT = 4;
+const TIP_COUNT = 8;
 
 export function ProcessingSpinner() {
   const t = useTranslations('processing');
   const tipIndex = useTipRotation(TIP_COUNT);
-  const tips = [t('tip1'), t('tip2'), t('tip3'), t('tip4')];
+  const tips = Array.from({ length: TIP_COUNT }, (_, i) => t(`tip${i + 1}`));
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] px-6">

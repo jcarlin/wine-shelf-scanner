@@ -4,6 +4,9 @@ import { useTranslations } from 'next-intl';
 import { Wine, RefreshCw } from 'lucide-react';
 import { colors } from '@/lib/theme';
 import { ServerHealthState } from '@/hooks/useServerHealth';
+import { useTipRotation } from '@/hooks/useTipRotation';
+
+const WARMUP_TIP_COUNT = 30;
 
 interface ServerWarmupOverlayProps {
   state: ServerHealthState;
@@ -12,6 +15,9 @@ interface ServerWarmupOverlayProps {
 
 export function ServerWarmupOverlay({ state, onRetry }: ServerWarmupOverlayProps) {
   const t = useTranslations('warmup');
+  const tipIndex = useTipRotation(WARMUP_TIP_COUNT, 4000);
+
+  const tipKey = `tip${tipIndex + 1}` as const;
 
   if (state.status === 'checking') {
     return (
@@ -46,14 +52,17 @@ export function ServerWarmupOverlay({ state, onRetry }: ServerWarmupOverlayProps
         <h2 className="text-xl font-semibold text-white mb-2">{t('title')}</h2>
         <p className="text-gray-400 text-center max-w-sm mb-4">{t('message')}</p>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 mb-6">
           <div className="w-2 h-2 rounded-full bg-star animate-bounce" style={{ animationDelay: '0ms' }} />
           <div className="w-2 h-2 rounded-full bg-star animate-bounce" style={{ animationDelay: '150ms' }} />
           <div className="w-2 h-2 rounded-full bg-star animate-bounce" style={{ animationDelay: '300ms' }} />
         </div>
 
-        <p className="text-gray-500 text-sm mt-6">
-          {t('attempt', { count: state.attempt })}
+        <p
+          key={tipIndex}
+          className="text-gray-500 text-sm text-center max-w-xs italic animate-fade-in"
+        >
+          {t(tipKey)}
         </p>
       </div>
     );

@@ -24,7 +24,7 @@ export const featureFlags: FeatureFlagValues = {
   pairings: envBool('NEXT_PUBLIC_FEATURE_PAIRINGS'),
   trustSignals: envBool('NEXT_PUBLIC_FEATURE_TRUST_SIGNALS'),
   visualEmphasis: envBool('NEXT_PUBLIC_FEATURE_VISUAL_EMPHASIS'),
-  cornerBrackets: envBool('NEXT_PUBLIC_FEATURE_CORNER_BRACKETS'),
+  cornerBrackets: envBool('NEXT_PUBLIC_FEATURE_CORNER_BRACKETS', false),
   offlineCache: envBool('NEXT_PUBLIC_FEATURE_OFFLINE_CACHE'),
   share: envBool('NEXT_PUBLIC_FEATURE_SHARE'),
   bugReport: envBool('NEXT_PUBLIC_FEATURE_BUG_REPORT'),

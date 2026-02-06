@@ -65,7 +65,7 @@ spec:
             - name: GCS_DB_BUCKET
               value: "wine-scanner-db"
             - name: GCS_DB_PATH
-              value: "data/wines.db"
+              value: "data/wines.db.gz"
             - name: DATABASE_PATH
               value: "/app/app/data/wines.db"
             # Secrets from Secret Manager (multiple keys enable automatic fallback)
@@ -94,7 +94,7 @@ spec:
             initialDelaySeconds: 0
             periodSeconds: 10
             timeoutSeconds: 3
-            failureThreshold: 12
+            failureThreshold: 18
           # Liveness probe - restarts unhealthy containers
           livenessProbe:
             httpGet:

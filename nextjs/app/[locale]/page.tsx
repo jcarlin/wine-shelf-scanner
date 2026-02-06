@@ -6,10 +6,10 @@ import { CameraCapture, ProcessingSpinner, ScanningOverlay, ResultsView, BugRepo
 import { useScanState } from '@/hooks/useScanState';
 import { useServerHealth } from '@/hooks/useServerHealth';
 import { useFeatureFlags } from '@/lib/feature-flags';
-import { Flag } from 'lucide-react';
+import { Flag, Wrench } from 'lucide-react';
 
 export default function Home() {
-  const { state, processImage, reset } = useScanState();
+  const { state, processImage, reset, debugMode, toggleDebugMode } = useScanState();
   const { state: serverState, retry: retryServerCheck } = useServerHealth();
   const t = useTranslations('error');
   const tBug = useTranslations('bugReport');
@@ -23,6 +23,21 @@ export default function Home() {
 
   return (
     <main className="min-h-screen flex flex-col">
+      {/* Debug mode toggle */}
+      <button
+        onClick={toggleDebugMode}
+        className="fixed bottom-4 right-4 z-50 p-2 rounded-full transition-colors"
+        style={{
+          backgroundColor: debugMode ? 'rgba(255, 165, 0, 0.2)' : 'rgba(0, 0, 0, 0.3)',
+        }}
+        title={debugMode ? 'Debug mode ON' : 'Debug mode OFF'}
+      >
+        <Wrench
+          className="w-4 h-4"
+          style={{ color: debugMode ? '#FFA500' : 'rgba(255,255,255,0.3)' }}
+        />
+      </button>
+
       {state.status === 'idle' && (
         <CameraCapture onImageSelected={processImage} />
       )}

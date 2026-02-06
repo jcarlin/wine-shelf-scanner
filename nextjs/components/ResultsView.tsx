@@ -7,6 +7,7 @@ import { ScanResponse, WineResult, Rect, Size } from '@/lib/types';
 import { OverlayContainer } from './OverlayContainer';
 import { WineDetailModal } from './WineDetailModal';
 import { BugReportModal } from './BugReportModal';
+import { DebugPanel } from './DebugPanel';
 import { Toast } from './Toast';
 import { FallbackList } from './FallbackList';
 import { getImageBounds } from '@/lib/image-bounds';
@@ -182,6 +183,9 @@ export function ResultsView({ response, imageUri, onReset }: ResultsViewProps) {
           />
         )}
       </div>
+
+      {/* Debug Panel */}
+      {response.debug && <DebugPanel data={response.debug} />}
 
       {/* Partial Detection Toast — disabled: we should never tell users
          "some bottles couldn't be recognized", just show what we found.

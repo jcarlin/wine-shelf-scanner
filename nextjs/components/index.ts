@@ -9,4 +9,5 @@ export { Toast } from './Toast';
 export { OverlayContainer } from './OverlayContainer';
 export { ResultsView } from './ResultsView';
 export { BugReportModal } from './BugReportModal';
+export { DebugPanel } from './DebugPanel';
 export { ServerWarmupOverlay } from './ServerWarmupOverlay';

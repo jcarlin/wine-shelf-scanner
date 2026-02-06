@@ -98,7 +98,21 @@ def sync_discovered_wines(results: list, fallback: Optional[list] = None) -> int
                     source_name=source_name,
                     original_rating=rating,
                     original_scale=(1.0, 5.0),
+                    description=getattr(wine, 'blurb', None),
                 )
+
+                # Persist LLM-generated review snippets
+                snippets = getattr(wine, 'review_snippets', None)
+                if snippets and wine_id:
+                    for snippet in snippets:
+                        if snippet and isinstance(snippet, str):
+                            conn = repo._get_connection()
+                            conn.execute(
+                                """INSERT INTO wine_reviews (wine_id, source_name, rating, review_text)
+                                   VALUES (?, ?, ?, ?)""",
+                                (wine_id, "llm_generated", rating, snippet),
+                            )
+                            conn.commit()
 
                 logger.info(
                     f"Auto-synced wine to DB: '{wine_name}' "
@@ -150,7 +164,21 @@ def sync_discovered_wines(results: list, fallback: Optional[list] = None) -> int
                         source_name="llm_discovered",
                         original_rating=rating,
                         original_scale=(1.0, 5.0),
+                        description=getattr(cached, 'blurb', None),
                     )
+
+                    # Persist LLM-generated review snippets
+                    snippets = getattr(cached, 'review_snippets', None)
+                    if snippets and wine_id:
+                        for snippet in snippets:
+                            if snippet and isinstance(snippet, str):
+                                conn = repo._get_connection()
+                                conn.execute(
+                                    """INSERT INTO wine_reviews (wine_id, source_name, rating, review_text)
+                                       VALUES (?, ?, ?, ?)""",
+                                    (wine_id, "llm_generated", rating, snippet),
+                                )
+                                conn.commit()
 
                     logger.info(
                         f"Auto-synced fallback wine to DB: '{wine_name}' "

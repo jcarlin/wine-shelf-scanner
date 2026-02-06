@@ -5,6 +5,7 @@ Caches LLM-estimated wine ratings to reduce API calls for repeated requests.
 Also tracks hit counts for promoting popular wines to the main database.
 """
 
+import json
 import logging
 import sqlite3
 from dataclasses import dataclass
@@ -37,6 +38,8 @@ class CachedRating:
     region: Optional[str] = None
     varietal: Optional[str] = None
     brand: Optional[str] = None
+    blurb: Optional[str] = None
+    review_snippets: Optional[list[str]] = None
 
 
 class LLMRatingCache:
@@ -90,7 +93,8 @@ class LLMRatingCache:
                 """
                 SELECT wine_name, estimated_rating, confidence, llm_provider,
                        hit_count, created_at, last_accessed_at,
-                       wine_type, region, varietal, brand
+                       wine_type, region, varietal, brand,
+                       blurb, review_snippets
                 FROM llm_ratings_cache
                 WHERE LOWER(wine_name) = ?
                 """,
@@ -129,6 +133,8 @@ class LLMRatingCache:
                 region=row["region"],
                 varietal=row["varietal"],
                 brand=row["brand"],
+                blurb=row["blurb"] if "blurb" in row.keys() else None,
+                review_snippets=json.loads(row["review_snippets"]) if ("review_snippets" in row.keys() and row["review_snippets"]) else None,
             )
 
         finally:
@@ -144,6 +150,8 @@ class LLMRatingCache:
         region: Optional[str] = None,
         varietal: Optional[str] = None,
         brand: Optional[str] = None,
+        blurb: Optional[str] = None,
+        review_snippets: Optional[list[str]] = None,
     ) -> None:
         """
         Cache an LLM-estimated rating.
@@ -171,8 +179,8 @@ class LLMRatingCache:
                 """
                 INSERT INTO llm_ratings_cache
                     (wine_name, estimated_rating, confidence, llm_provider,
-                     wine_type, region, varietal, brand)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                     wine_type, region, varietal, brand, blurb, review_snippets)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(wine_name) DO UPDATE SET
                     estimated_rating = excluded.estimated_rating,
                     confidence = excluded.confidence,
@@ -181,10 +189,13 @@ class LLMRatingCache:
                     region = excluded.region,
                     varietal = excluded.varietal,
                     brand = excluded.brand,
+                    blurb = excluded.blurb,
+                    review_snippets = excluded.review_snippets,
                     last_accessed_at = CURRENT_TIMESTAMP
                 """,
                 (wine_name.strip(), estimated_rating, confidence, llm_provider,
-                 wine_type, region, varietal, brand)
+                 wine_type, region, varietal, brand, blurb,
+                 json.dumps(review_snippets) if review_snippets else None)
             )
             conn.commit()
             logger.debug(f"Cached LLM rating: {wine_name} = {estimated_rating:.1f}")
@@ -213,7 +224,8 @@ class LLMRatingCache:
                 """
                 SELECT wine_name, estimated_rating, confidence, llm_provider,
                        hit_count, created_at, last_accessed_at,
-                       wine_type, region, varietal, brand
+                       wine_type, region, varietal, brand,
+                       blurb, review_snippets
                 FROM llm_ratings_cache
                 WHERE hit_count >= ?
                 ORDER BY hit_count DESC
@@ -235,6 +247,8 @@ class LLMRatingCache:
                     region=row["region"],
                     varietal=row["varietal"],
                     brand=row["brand"],
+                    blurb=row["blurb"] if "blurb" in row.keys() else None,
+                    review_snippets=json.loads(row["review_snippets"]) if ("review_snippets" in row.keys() and row["review_snippets"]) else None,
                 ))
 
             return results

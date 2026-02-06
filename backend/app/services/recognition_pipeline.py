@@ -664,6 +664,8 @@ class RecognitionPipeline:
                         region=validation.region,
                         varietal=validation.varietal,
                         brand=validation.brand,
+                        blurb=validation.blurb,
+                        review_snippets=validation.review_snippets,
                     )
                     # Cache under the canonical wine name
                     self._llm_cache.set(wine_name=validation.wine_name, **cache_kwargs)

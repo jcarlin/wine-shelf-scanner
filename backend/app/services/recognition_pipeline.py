@@ -416,9 +416,13 @@ class RecognitionPipeline:
             for idx, (bt, match, match_with_scores, bottle_idx) in enumerate(items):
                 ocr_text = bt.combined_text or bt.normalized_name
                 cached = self._llm_cache.get(ocr_text)
+                if cached and (len(cached.wine_name) > 80 or len(cached.wine_name.split()) > 10):
+                    cached = None  # Reject garbage cached entries
                 # Also try normalized name (Vision results are cached under wine names)
                 if not cached and bt.normalized_name and bt.normalized_name != ocr_text:
                     cached = self._llm_cache.get(bt.normalized_name)
+                if cached and (len(cached.wine_name) > 80 or len(cached.wine_name.split()) > 10):
+                    cached = None  # Reject garbage cached entries
                 if cached:
                     # Create result from cached data
                     result = RecognizedWine(
@@ -596,7 +600,8 @@ class RecognitionPipeline:
                 )
 
                 # Cache the LLM-identified wine for future lookups
-                if self._llm_cache and rating is not None:
+                # Skip caching garbage names (too long or too many words)
+                if self._llm_cache and rating is not None and len(validation.wine_name) <= 80 and len(validation.wine_name.split()) <= 10:
                     llm_provider = self.normalizer.models[0] if hasattr(self.normalizer, 'models') else 'unknown'
                     cache_kwargs = dict(
                         estimated_rating=rating,
@@ -612,9 +617,10 @@ class RecognitionPipeline:
                     # Also cache under the raw OCR text so future scans
                     # can find it without re-calling the LLM
                     ocr_text = bottle_text.combined_text or bottle_text.normalized_name
-                    if ocr_text and ocr_text.lower() != validation.wine_name.lower():
+                    if ocr_text and len(ocr_text) <= 80 and ocr_text.lower() != validation.wine_name.lower():
                         self._llm_cache.set(wine_name=ocr_text, **cache_kwargs)
                     if (bottle_text.normalized_name
+                            and len(bottle_text.normalized_name) <= 80
                             and bottle_text.normalized_name.lower() != validation.wine_name.lower()
                             and bottle_text.normalized_name != ocr_text):
                         self._llm_cache.set(wine_name=bottle_text.normalized_name, **cache_kwargs)

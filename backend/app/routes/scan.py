@@ -577,6 +577,9 @@ async def process_image(
             llm_cache = get_llm_rating_cache()
             for vision_wine in vision_results:
                 if vision_wine.wine_name and vision_wine.estimated_rating is not None and vision_wine.bottle_index < len(bottles_for_vision):
+                    # Skip caching garbage names (too long or too many words)
+                    if len(vision_wine.wine_name) > 80 or len(vision_wine.wine_name.split()) > 10:
+                        continue
                     capped_conf = min(vision_wine.confidence, Config.VISION_FALLBACK_CONFIDENCE_CAP)
                     cache_kwargs = dict(
                         estimated_rating=vision_wine.estimated_rating,
@@ -592,7 +595,7 @@ async def process_image(
                     # Also cache under the normalized OCR text so the pipeline
                     # can find it on future scans without re-calling Vision
                     bt = bottles_for_vision[vision_wine.bottle_index]
-                    if bt.normalized_name and bt.normalized_name.lower() != vision_wine.wine_name.lower():
+                    if bt.normalized_name and len(bt.normalized_name) <= 80 and bt.normalized_name.lower() != vision_wine.wine_name.lower():
                         llm_cache.set(wine_name=bt.normalized_name, **cache_kwargs)
                     logger.debug(f"[{image_id}] Cached Vision result: {vision_wine.wine_name} (rating={vision_wine.estimated_rating})")
 
@@ -735,6 +738,14 @@ async def process_image(
 
     # Enrich recognized wines with actual review data from wine_reviews table
     _enrich_with_reviews(recognized, wine_matcher)
+
+    # Deduplicate recognized wines by name (keep highest confidence)
+    seen_wines = {}
+    for wine in recognized:
+        name_key = wine.wine_name.lower().strip()
+        if name_key not in seen_wines or wine.confidence > seen_wines[name_key].confidence:
+            seen_wines[name_key] = wine
+    recognized = list(seen_wines.values())
 
     # Build response
     results: list[WineResult] = []

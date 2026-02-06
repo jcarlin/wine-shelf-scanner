@@ -76,6 +76,7 @@ struct OverlayContainerView: View {
                 .opacity(OverlayMath.opacity(
                     confidence: wine.confidence,
                     isTopThree: isTopThree,
+                    isBestPick: isTopThree && wine.id == response.topThree.first?.id,
                     visualEmphasis: FeatureFlags.shared.visualEmphasis
                 ))
                 .onTapGesture {

@@ -494,7 +494,7 @@ struct ErrorView: View {
                 } label: {
                     Label(NSLocalizedString("bugReport.reportIssue", comment: "Report an issue button"), systemImage: "flag")
                         .font(.subheadline)
-                        .foregroundColor(.white.opacity(0.6))
+                        .foregroundColor(.white.opacity(0.45))
                 }
                 .accessibilityIdentifier("reportBugButton")
             }

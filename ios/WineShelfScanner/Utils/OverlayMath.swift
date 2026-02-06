@@ -53,31 +53,32 @@ struct OverlayMath {
 
     // MARK: - Opacity
 
-    /// Confidence-based opacity for badges
+    /// Confidence-based opacity for badges (dimmed base values)
     /// | Confidence | Opacity |
     /// |------------|---------|
-    /// | >= 0.85    | 1.0     |
-    /// | 0.65-0.85  | 0.75    |
-    /// | 0.45-0.65  | 0.5     |
+    /// | >= 0.85    | 0.85    |
+    /// | 0.65-0.85  | 0.60    |
+    /// | 0.45-0.65  | 0.35    |
     /// | < 0.45     | 0.0     |
     static func opacity(confidence: Double) -> Double {
         switch confidence {
         case 0.85...1.0:
-            return 1.0
+            return 0.85
         case 0.65..<0.85:
-            return 0.75
+            return 0.60
         case 0.45..<0.65:
-            return 0.5
+            return 0.35
         default:
             return 0.0
         }
     }
 
-    /// Opacity with visual emphasis: top-3 wines get full opacity, non-top-3 are dimmed
-    static func opacity(confidence: Double, isTopThree: Bool, visualEmphasis: Bool) -> Double {
+    /// Opacity with visual emphasis: top-3 wines get boosted, #1 gets extra boost, non-top-3 are dimmed
+    static func opacity(confidence: Double, isTopThree: Bool, isBestPick: Bool = false, visualEmphasis: Bool) -> Double {
         let baseOpacity = opacity(confidence: confidence)
         if !visualEmphasis || baseOpacity == 0 { return baseOpacity }
-        if isTopThree { return min(baseOpacity + 0.15, 1.0) }
+        if isBestPick { return min(baseOpacity + 0.35, 1.0) }
+        if isTopThree { return min(baseOpacity + 0.25, 1.0) }
         return baseOpacity * 0.65
     }
 

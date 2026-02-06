@@ -78,29 +78,31 @@ struct ResultsView: View {
             toastWorkItem?.cancel()
             toastWorkItem = nil
         }
-        .overlay(alignment: .top) {
-            if showToast {
-                HStack(spacing: 8) {
-                    ToastView(message: NSLocalizedString("results.partialDetection", comment: "Partial detection toast"))
-                    if FeatureFlags.shared.bugReport {
-                        Button {
-                            showBugReport = true
-                        } label: {
-                            Text(NSLocalizedString("bugReport.report", comment: "Report button"))
-                                .font(.footnote)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.yellow.opacity(0.7))
-                                .underline()
-                        }
-                        .accessibilityIdentifier("partialDetectionReportButton")
-                    }
-                }
-                .padding(.horizontal, 8)
-                .transition(.move(edge: .top).combined(with: .opacity))
-                .animation(.easeInOut, value: showToast)
-                .accessibilityIdentifier("partialDetectionToast")
-            }
-        }
+        // Partial detection toast — disabled: we should never tell users
+        // "some bottles couldn't be recognized", just show what we found.
+        // .overlay(alignment: .top) {
+        //     if showToast {
+        //         HStack(spacing: 8) {
+        //             ToastView(message: NSLocalizedString("results.partialDetection", comment: "Partial detection toast"))
+        //             if FeatureFlags.shared.bugReport {
+        //                 Button {
+        //                     showBugReport = true
+        //                 } label: {
+        //                     Text(NSLocalizedString("bugReport.report", comment: "Report button"))
+        //                         .font(.footnote)
+        //                         .fontWeight(.semibold)
+        //                         .foregroundColor(.yellow.opacity(0.7))
+        //                         .underline()
+        //                 }
+        //                 .accessibilityIdentifier("partialDetectionReportButton")
+        //             }
+        //         }
+        //         .padding(.horizontal, 8)
+        //         .transition(.move(edge: .top).combined(with: .opacity))
+        //         .animation(.easeInOut, value: showToast)
+        //         .accessibilityIdentifier("partialDetectionToast")
+        //     }
+        // }
         .sheet(isPresented: $showBugReport) {
             BugReportSheet(
                 reportType: response.isFullFailure ? .fullFailure : .partialDetection,

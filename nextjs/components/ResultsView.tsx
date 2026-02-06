@@ -183,7 +183,8 @@ export function ResultsView({ response, imageUri, onReset }: ResultsViewProps) {
         )}
       </div>
 
-      {/* Partial Detection Toast */}
+      {/* Partial Detection Toast — disabled: we should never tell users
+         "some bottles couldn't be recognized", just show what we found.
       {showPartialToast && (
         <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 flex items-center gap-3 z-40">
           <Toast
@@ -201,6 +202,7 @@ export function ResultsView({ response, imageUri, onReset }: ResultsViewProps) {
           )}
         </div>
       )}
+      */}
 
       {/* Wine Detail Modal */}
       <WineDetailModal

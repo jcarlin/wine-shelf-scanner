@@ -29,6 +29,7 @@ from ..services.recognition_pipeline import RecognizedWine, RecognitionPipeline
 from ..services.llm_normalizer import BatchValidationItem, get_normalizer
 from ..services.vision import MockVisionService, ReplayVisionService, VisionResult, VisionService
 from ..services.wine_matcher import WineMatcher, _is_llm_generic_response
+from ..services.wine_sync import sync_discovered_wines
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -826,6 +827,9 @@ async def process_image(
         pipeline_stats=pipeline_stats
     )
 
+    # Auto-sync LLM/Vision-discovered wines back to the database
+    sync_discovered_wines(results, fallback)
+
     return ScanResponse(
         image_id=image_id,
         results=results,
@@ -911,6 +915,9 @@ async def _direct_ocr_response(
             texts_matched=len([s for s in pipeline.debug_steps if s.included_in_results]),
             llm_calls_made=pipeline.llm_call_count
         )
+
+    # Auto-sync LLM/Vision-discovered wines back to the database
+    sync_discovered_wines(results, fallback)
 
     return ScanResponse(
         image_id=image_id,

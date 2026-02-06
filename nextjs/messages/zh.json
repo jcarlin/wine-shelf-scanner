@@ -42,7 +42,6 @@
     "reviews": "{count, plural, other {# 条评论}}",
     "reviewsK": "{count}K 条评论",
     "widelyRated": "广泛评价",
-    "limitedData": "数据有限",
     "crowdFavorite": "大众最爱",
     "bestOnShelf": "此货架最佳",
     "rankedOnShelf": "此货架第 {rank} 名（共 {total} 款）",

@@ -115,18 +115,18 @@ class TestOverlayRules:
         """Verify high confidence shows 'Widely rated'."""
         result = page.evaluate("""
             () => {
-                const getConfidenceLabel = (c) => c >= 0.85 ? 'Widely rated' : 'Limited data';
+                const getConfidenceLabel = (c) => c >= 0.85 ? 'Widely rated' : null;
                 return getConfidenceLabel(0.92);
             }
         """)
         assert result == "Widely rated"
 
     def test_confidence_label_medium(self, page: Page):
-        """Verify medium confidence shows 'Limited data'."""
+        """Verify medium confidence returns null (no badge)."""
         result = page.evaluate("""
             () => {
-                const getConfidenceLabel = (c) => c >= 0.85 ? 'Widely rated' : 'Limited data';
+                const getConfidenceLabel = (c) => c >= 0.85 ? 'Widely rated' : null;
                 return getConfidenceLabel(0.72);
             }
         """)
-        assert result == "Limited data"
+        assert result is None

@@ -58,7 +58,7 @@ export function WineDetailModal({ wine, onClose, shelfRank, shelfTotal, fetchedR
 
   const existingSentiment = flags.wineMemory ? memory.get(wine.wine_name) : undefined;
 
-  const label = wine.confidence >= HIGH_CONFIDENCE_THRESHOLD ? t('widelyRated') : t('limitedData');
+  const label = wine.confidence >= HIGH_CONFIDENCE_THRESHOLD ? t('widelyRated') : null;
   const hasMetadata = wine.wine_type || wine.brand || wine.region || wine.varietal || wine.blurb;
 
   // Build review display data:
@@ -171,19 +171,13 @@ export function WineDetailModal({ wine, onClose, shelfRank, shelfTotal, fetchedR
                   </div>
                 ))}
               </div>
-            ) : (
+            ) : label ? (
               <div
-                className={`
-                  inline-block px-4 py-2 rounded-full text-sm font-medium mb-4
-                  ${wine.confidence >= 0.85
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-yellow-100 text-yellow-700'
-                  }
-                `}
+                className="inline-block px-4 py-2 rounded-full text-sm font-medium mb-4 bg-green-100 text-green-700"
               >
                 {label}
               </div>
-            )}
+            ) : null}
 
             {/* Safe Pick Badge */}
             {flags.safePick && wine.is_safe_pick && (

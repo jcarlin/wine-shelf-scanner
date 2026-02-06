@@ -107,7 +107,7 @@ class TestDetailModal:
                     return '★'.repeat(fullStars) + (halfStar ? '☆' : '') + '☆'.repeat(emptyStars);
                 };
 
-                const getConfidenceLabel = (c) => c >= 0.85 ? 'Widely rated' : 'Limited data';
+                const getConfidenceLabel = (c) => c >= 0.85 ? 'Widely rated' : null;
 
                 document.querySelector('[data-testid="modal-wine-name"]').textContent = wine.wine_name;
                 document.querySelector('[data-testid="modal-stars"]').textContent = generateStars(wine.rating);

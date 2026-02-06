@@ -29,7 +29,6 @@
 "detail.reviewsK" = "%@K Bewertungen";
 "detail.reviews" = "%lld Bewertungen";
 "detail.widelyRated" = "Viel bewertet";
-"detail.limitedData" = "Begrenzte Daten";
 "detail.crowdFavorite" = "Publikumsliebling";
 "detail.bestOnShelf" = "Bester in diesem Regal";
 "detail.rankedOnShelf" = "Platz #%lld von %lld in diesem Regal";

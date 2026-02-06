@@ -42,7 +42,6 @@
     "reviews": "{count, plural, other {리뷰 #개}}",
     "reviewsK": "리뷰 {count}K개",
     "widelyRated": "다수 평가",
-    "limitedData": "제한된 데이터",
     "crowdFavorite": "대중 인기",
     "bestOnShelf": "이 선반 최고",
     "rankedOnShelf": "이 선반 {total}개 중 {rank}위",

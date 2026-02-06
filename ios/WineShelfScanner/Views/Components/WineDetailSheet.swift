@@ -8,7 +8,7 @@ import SwiftUI
 /// - Brand/winery line
 /// - Star rating (large)
 /// - Review count
-/// - Confidence label ("Widely rated" / "Limited data")
+/// - Confidence label ("Widely rated" for high confidence)
 /// - Region & varietal
 /// - Blurb/description
 /// - Review snippets
@@ -144,9 +144,9 @@ struct WineDetailSheet: View {
                     .background(Color.blue.opacity(0.08))
                     .cornerRadius(10)
                     .accessibilityIdentifier("trustSignals")
-                } else {
-                    // Fallback confidence label
-                    Text(wine.confidenceLabel)
+                } else if let label = wine.confidenceLabel {
+                    // Confidence label (only shown for high confidence)
+                    Text(label)
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                         .padding(.horizontal, 12)

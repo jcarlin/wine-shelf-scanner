@@ -29,7 +29,6 @@
 "detail.reviewsK" = "%@K件のレビュー";
 "detail.reviews" = "%lld件のレビュー";
 "detail.widelyRated" = "多数の評価";
-"detail.limitedData" = "データ限定";
 "detail.crowdFavorite" = "人気の一本";
 "detail.bestOnShelf" = "この棚のベスト";
 "detail.rankedOnShelf" = "この棚で%lld本中第%lld位";

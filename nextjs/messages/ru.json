@@ -42,7 +42,6 @@
     "reviews": "{count, plural, one {# отзыв} few {# отзыва} other {# отзывов}}",
     "reviewsK": "{count}K отзывов",
     "widelyRated": "Много оценок",
-    "limitedData": "Мало данных",
     "crowdFavorite": "Народный фаворит",
     "bestOnShelf": "Лучшее на этой полке",
     "rankedOnShelf": "#{rank} из {total} на этой полке",

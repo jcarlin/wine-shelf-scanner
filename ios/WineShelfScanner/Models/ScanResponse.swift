@@ -278,7 +278,7 @@ extension WineResult {
     }
 
     /// Confidence label for detail sheet
-    var confidenceLabel: String {
+    var confidenceLabel: String? {
         OverlayMath.confidenceLabel(confidence: confidence)
     }
 }

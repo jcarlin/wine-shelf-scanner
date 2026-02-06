@@ -127,10 +127,10 @@ describe('overlay-math', () => {
       expect(confidenceLabel(1.0)).toBe('Widely rated');
     });
 
-    it('should return "Limited data" for confidence < 0.85', () => {
-      expect(confidenceLabel(0.84)).toBe('Limited data');
-      expect(confidenceLabel(0.5)).toBe('Limited data');
-      expect(confidenceLabel(0.0)).toBe('Limited data');
+    it('should return null for confidence < 0.85', () => {
+      expect(confidenceLabel(0.84)).toBeNull();
+      expect(confidenceLabel(0.5)).toBeNull();
+      expect(confidenceLabel(0.0)).toBeNull();
     });
   });
 

@@ -15,7 +15,7 @@ from ..models.enums import RatingSource, WineSource
 logger = logging.getLogger(__name__)
 
 
-def sync_discovered_wines(results: list, fallback: list | None = None) -> int:
+def sync_discovered_wines(results: list, fallback: Optional[list] = None) -> int:
     """
     Persist LLM/Vision-discovered wines to the main database.
 

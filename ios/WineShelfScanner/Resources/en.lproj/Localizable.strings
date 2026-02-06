@@ -56,6 +56,10 @@
 "processing.tip2" = "Top-rated bottles get a gold highlight";
 "processing.tip3" = "Powered by 21 million aggregated reviews";
 "processing.tip4" = "We cover 181,000+ wines worldwide";
+"processing.tip5" = "Ratings combine scores from major wine platforms";
+"processing.tip6" = "Works best with clear, well-lit photos of wine shelves";
+"processing.tip7" = "Confidence scores show how certain each match is";
+"processing.tip8" = "Higher-rated wines are highlighted for quick selection";
 
 /* About */
 "about.title" = "Wine Shelf Scanner";
@@ -80,3 +84,19 @@
 "bugReport.thanksImprove" = "Thanks for helping us improve!";
 "bugReport.done" = "Done";
 "bugReport.cancel" = "Cancel";
+
+/* Server Warmup */
+"warmup.checking" = "Connecting to server...";
+"warmup.title" = "Waking up the server";
+"warmup.message" = "Our server is starting up. This usually takes 15-30 seconds.";
+"warmup.timeout" = "Server is taking too long to start. Please try again later.";
+"warmup.unavailableTitle" = "Server Unavailable";
+"warmup.retry" = "Try Again";
+"warmup.tip1" = "First launch of the day can take a moment";
+"warmup.tip2" = "Our AI is loading 181,000+ wines into memory";
+"warmup.tip3" = "Wine ratings come from 21 million community reviews";
+"warmup.tip4" = "Each scan uses Google's Vision AI to read labels";
+"warmup.tip5" = "We match OCR text against our wine database";
+"warmup.tip6" = "Multiple matching algorithms ensure accuracy";
+"warmup.tip7" = "Results include ratings from major wine platforms";
+"warmup.tip8" = "The server stays warm for about 15 minutes after use";

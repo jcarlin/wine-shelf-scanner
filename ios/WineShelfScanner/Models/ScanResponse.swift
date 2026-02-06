@@ -49,6 +49,7 @@ struct RatingSourceDetail: Codable, Equatable {
 /// A detected wine bottle with rating and position
 struct WineResult: Codable, Equatable, Identifiable {
     let wineName: String
+    var wineId: Int? = nil            // Database ID (for fetching reviews via /wines/{id}/reviews)
     let rating: Double?
     let confidence: Double
     let bbox: BoundingBox
@@ -70,6 +71,7 @@ struct WineResult: Codable, Equatable, Identifiable {
 
     enum CodingKeys: String, CodingKey {
         case wineName = "wine_name"
+        case wineId = "wine_id"
         case rating
         case confidence
         case bbox

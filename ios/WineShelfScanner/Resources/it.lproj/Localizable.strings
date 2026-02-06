@@ -56,6 +56,10 @@
 "processing.tip2" = "Le bottiglie più apprezzate hanno un'evidenziazione dorata";
 "processing.tip3" = "Basato su 21 milioni di recensioni aggregate";
 "processing.tip4" = "Copriamo oltre 181.000 vini in tutto il mondo";
+"processing.tip5" = "Le valutazioni combinano punteggi dalle principali piattaforme vinicole";
+"processing.tip6" = "Funziona meglio con foto nitide e ben illuminate di scaffali di vini";
+"processing.tip7" = "I punteggi di confidenza mostrano quanto è certa ogni corrispondenza";
+"processing.tip8" = "I vini con valutazioni più alte sono evidenziati per una selezione rapida";
 
 /* About */
 "about.title" = "Scanner Scaffale Vini";
@@ -80,3 +84,19 @@
 "bugReport.thanksImprove" = "Grazie per aiutarci a migliorare!";
 "bugReport.done" = "Fine";
 "bugReport.cancel" = "Annulla";
+
+/* Server Warmup */
+"warmup.checking" = "Connessione al server...";
+"warmup.title" = "Avvio del server in corso";
+"warmup.message" = "Il nostro server si sta avviando. Di solito impiega 15-30 secondi.";
+"warmup.timeout" = "Il server impiega troppo tempo ad avviarsi. Riprova più tardi.";
+"warmup.unavailableTitle" = "Server non disponibile";
+"warmup.retry" = "Riprova";
+"warmup.tip1" = "Il primo avvio della giornata può richiedere un momento";
+"warmup.tip2" = "La nostra IA sta caricando oltre 181.000 vini in memoria";
+"warmup.tip3" = "Le valutazioni dei vini provengono da 21 milioni di recensioni della community";
+"warmup.tip4" = "Ogni scansione usa l'IA Vision di Google per leggere le etichette";
+"warmup.tip5" = "Confrontiamo il testo OCR con il nostro database di vini";
+"warmup.tip6" = "Più algoritmi di corrispondenza garantiscono la precisione";
+"warmup.tip7" = "I risultati includono valutazioni dalle principali piattaforme vinicole";
+"warmup.tip8" = "Il server resta attivo per circa 15 minuti dopo l'uso";

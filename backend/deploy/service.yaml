@@ -19,7 +19,7 @@ spec:
         # Boost CPU allocation during startup to speed up cold starts
         run.googleapis.com/startup-cpu-boost: "true"
         # Scaling configuration
-        autoscaling.knative.dev/minScale: "1"
+        autoscaling.knative.dev/minScale: "0"
         autoscaling.knative.dev/maxScale: "10"
         # Allow up to 80 concurrent requests per instance
         autoscaling.knative.dev/maxConcurrentRequests: "80"

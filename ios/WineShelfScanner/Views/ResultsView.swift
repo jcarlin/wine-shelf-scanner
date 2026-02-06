@@ -89,7 +89,7 @@ struct ResultsView: View {
                             Text(NSLocalizedString("bugReport.report", comment: "Report button"))
                                 .font(.footnote)
                                 .fontWeight(.semibold)
-                                .foregroundColor(.yellow)
+                                .foregroundColor(.yellow.opacity(0.7))
                                 .underline()
                         }
                         .accessibilityIdentifier("partialDetectionReportButton")
@@ -253,7 +253,7 @@ struct ToastView: View {
             .cornerRadius(8)
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color.yellow.opacity(0.4), lineWidth: 1)
+                    .stroke(Color.yellow.opacity(0.25), lineWidth: 1)
             )
             .shadow(color: .black.opacity(0.3), radius: 8, y: 4)
             .padding(.top, 8)
@@ -290,7 +290,7 @@ struct FallbackListView: View {
                         } label: {
                             Label("Not what you expected? Report an issue", systemImage: "flag")
                                 .font(.caption)
-                                .foregroundColor(.white.opacity(0.5))
+                                .foregroundColor(.white.opacity(0.35))
                         }
                         .padding(.top, 8)
                         .accessibilityIdentifier("fallbackReportButton")

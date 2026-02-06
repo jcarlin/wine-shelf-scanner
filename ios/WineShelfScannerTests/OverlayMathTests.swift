@@ -31,21 +31,21 @@ final class OverlayMathTests: XCTestCase {
     // MARK: - Opacity Tests
 
     func testOpacityHighConfidence() {
-        XCTAssertEqual(OverlayMath.opacity(confidence: 1.0), 1.0)
-        XCTAssertEqual(OverlayMath.opacity(confidence: 0.90), 1.0)
-        XCTAssertEqual(OverlayMath.opacity(confidence: 0.85), 1.0)
+        XCTAssertEqual(OverlayMath.opacity(confidence: 1.0), 0.85)
+        XCTAssertEqual(OverlayMath.opacity(confidence: 0.90), 0.85)
+        XCTAssertEqual(OverlayMath.opacity(confidence: 0.85), 0.85)
     }
 
     func testOpacityMediumConfidence() {
-        XCTAssertEqual(OverlayMath.opacity(confidence: 0.84), 0.75)
-        XCTAssertEqual(OverlayMath.opacity(confidence: 0.75), 0.75)
-        XCTAssertEqual(OverlayMath.opacity(confidence: 0.65), 0.75)
+        XCTAssertEqual(OverlayMath.opacity(confidence: 0.84), 0.60)
+        XCTAssertEqual(OverlayMath.opacity(confidence: 0.75), 0.60)
+        XCTAssertEqual(OverlayMath.opacity(confidence: 0.65), 0.60)
     }
 
     func testOpacityLowConfidence() {
-        XCTAssertEqual(OverlayMath.opacity(confidence: 0.64), 0.5)
-        XCTAssertEqual(OverlayMath.opacity(confidence: 0.55), 0.5)
-        XCTAssertEqual(OverlayMath.opacity(confidence: 0.45), 0.5)
+        XCTAssertEqual(OverlayMath.opacity(confidence: 0.64), 0.35)
+        XCTAssertEqual(OverlayMath.opacity(confidence: 0.55), 0.35)
+        XCTAssertEqual(OverlayMath.opacity(confidence: 0.45), 0.35)
     }
 
     func testOpacityHidden() {

@@ -193,7 +193,7 @@ export function ResultsView({ response, imageUri, onReset }: ResultsViewProps) {
           {bugReportEnabled && (
             <button
               onClick={() => setShowBugReport(true)}
-              className="flex items-center gap-1.5 text-yellow-400 text-sm font-semibold hover:text-yellow-300 transition-colors whitespace-nowrap underline underline-offset-2"
+              className="flex items-center gap-1.5 text-yellow-400/70 text-sm font-semibold hover:text-yellow-300/80 transition-colors whitespace-nowrap underline underline-offset-2"
             >
               <Flag className="w-3.5 h-3.5" />
               {tBug('report')}

@@ -10,13 +10,13 @@ import { badgeSizes, bracketConfig, layout } from './theme';
 
 // MARK: - Confidence Thresholds
 
-/** Minimum confidence to show overlay (opacity 0.8) */
+/** Minimum confidence to show overlay (opacity 0.65) */
 export const VISIBILITY_THRESHOLD = 0.45;
 
-/** Minimum confidence for tappable overlays (opacity 0.9) */
+/** Minimum confidence for tappable overlays (opacity 0.75) */
 export const TAPPABLE_THRESHOLD = 0.65;
 
-/** Minimum confidence for "Widely rated" label (opacity 1.0) */
+/** Minimum confidence for "Widely rated" label (opacity 0.85) */
 export const HIGH_CONFIDENCE_THRESHOLD = 0.85;
 
 // MARK: - Badge Sizing (re-export from theme for backwards compatibility)
@@ -45,21 +45,21 @@ export function anchorPoint(bbox: BoundingBox, containerSize: Size): Point {
 // MARK: - Opacity
 
 /**
- * Confidence-based opacity for badges
+ * Confidence-based opacity for badges (dimmed base values)
  * | Confidence | Opacity |
  * |------------|---------|
- * | >= 0.85    | 1.0     |
- * | 0.65-0.85  | 0.9     |
- * | 0.45-0.65  | 0.8     |
+ * | >= 0.85    | 0.85    |
+ * | 0.65-0.85  | 0.75    |
+ * | 0.45-0.65  | 0.65    |
  * | < 0.45     | 0.0     |
  */
 export function opacity(confidence: number): number {
   if (confidence >= 0.85) {
-    return 1.0;
+    return 0.85;
   } else if (confidence >= 0.65) {
-    return 0.9;
+    return 0.75;
   } else if (confidence >= 0.45) {
-    return 0.8;
+    return 0.65;
   } else {
     return 0.0;
   }

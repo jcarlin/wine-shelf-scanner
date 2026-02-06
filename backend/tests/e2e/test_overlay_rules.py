@@ -2,10 +2,15 @@
 Tests for confidence-based overlay rules: opacity and tappability.
 
 Confidence thresholds (from OverlayMath):
-- >= 0.85: 1.0 opacity, tappable
-- 0.65-0.85: 0.75 opacity, tappable
-- 0.45-0.65: 0.5 opacity, NOT tappable
+- >= 0.85: 0.85 opacity, tappable
+- 0.65-0.85: 0.60 opacity, tappable
+- 0.45-0.65: 0.35 opacity, NOT tappable
 - < 0.45: hidden (0.0 opacity)
+
+Visual emphasis adjusts these:
+- Best pick (#1): base + 0.35 (max 1.0)
+- Top-3: base + 0.25 (max 1.0)
+- Non-top-3: base * 0.65
 """
 
 import pytest
@@ -16,7 +21,7 @@ class TestOverlayRules:
     """Tests for confidence-based overlay behavior."""
 
     def test_opacity_calculation_high_confidence(self, page: Page):
-        """Verify high confidence wines have full opacity."""
+        """Verify high confidence wines have 0.85 opacity."""
         # Note: Actual testing requires mocking the API response
         # These tests verify the JavaScript logic is correct
 
@@ -24,54 +29,54 @@ class TestOverlayRules:
             () => {
                 // Test the calculateOpacity function directly
                 const calculateOpacity = (confidence) => {
-                    if (confidence >= 0.85) return 1.0;
-                    if (confidence >= 0.65) return 0.75;
-                    if (confidence >= 0.45) return 0.5;
+                    if (confidence >= 0.85) return 0.85;
+                    if (confidence >= 0.65) return 0.60;
+                    if (confidence >= 0.45) return 0.35;
                     return 0;
                 };
                 return calculateOpacity(0.92);
             }
         """)
-        assert result == 1.0
+        assert result == 0.85
 
     def test_opacity_calculation_medium_confidence(self, page: Page):
-        """Verify medium confidence wines have 0.75 opacity."""
+        """Verify medium confidence wines have 0.60 opacity."""
         result = page.evaluate("""
             () => {
                 const calculateOpacity = (confidence) => {
-                    if (confidence >= 0.85) return 1.0;
-                    if (confidence >= 0.65) return 0.75;
-                    if (confidence >= 0.45) return 0.5;
+                    if (confidence >= 0.85) return 0.85;
+                    if (confidence >= 0.65) return 0.60;
+                    if (confidence >= 0.45) return 0.35;
                     return 0;
                 };
                 return calculateOpacity(0.72);
             }
         """)
-        assert result == 0.75
+        assert result == 0.60
 
     def test_opacity_calculation_low_confidence(self, page: Page):
-        """Verify low confidence wines have 0.5 opacity."""
+        """Verify low confidence wines have 0.35 opacity."""
         result = page.evaluate("""
             () => {
                 const calculateOpacity = (confidence) => {
-                    if (confidence >= 0.85) return 1.0;
-                    if (confidence >= 0.65) return 0.75;
-                    if (confidence >= 0.45) return 0.5;
+                    if (confidence >= 0.85) return 0.85;
+                    if (confidence >= 0.65) return 0.60;
+                    if (confidence >= 0.45) return 0.35;
                     return 0;
                 };
                 return calculateOpacity(0.55);
             }
         """)
-        assert result == 0.5
+        assert result == 0.35
 
     def test_opacity_calculation_very_low_confidence(self, page: Page):
         """Verify very low confidence wines are hidden."""
         result = page.evaluate("""
             () => {
                 const calculateOpacity = (confidence) => {
-                    if (confidence >= 0.85) return 1.0;
-                    if (confidence >= 0.65) return 0.75;
-                    if (confidence >= 0.45) return 0.5;
+                    if (confidence >= 0.85) return 0.85;
+                    if (confidence >= 0.65) return 0.60;
+                    if (confidence >= 0.45) return 0.35;
                     return 0;
                 };
                 return calculateOpacity(0.40);

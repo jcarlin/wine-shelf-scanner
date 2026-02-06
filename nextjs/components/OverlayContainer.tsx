@@ -5,6 +5,7 @@ import { WineResult, Size, Rect } from '@/lib/types';
 import { useFeatureFlags } from '@/lib/feature-flags';
 import { useWineMemory } from '@/hooks/useWineMemory';
 import { RatingBadge } from './RatingBadge';
+import { CornerBrackets } from './CornerBrackets';
 import {
   isVisible,
   anchorPoint,
@@ -19,7 +20,7 @@ interface OverlayContainerProps {
 }
 
 export function OverlayContainer({ wines, imageBounds, onWineSelect }: OverlayContainerProps) {
-  const { shelfRanking, safePick, wineMemory } = useFeatureFlags();
+  const { shelfRanking, safePick, wineMemory, cornerBrackets } = useFeatureFlags();
   const memory = useWineMemory();
 
   // Filter to visible wines only
@@ -81,8 +82,26 @@ export function OverlayContainer({ wines, imageBounds, onWineSelect }: OverlayCo
     });
   }, [visibleWines, topThreeIds, imageBounds]);
 
+  const containerSize: Size = {
+    width: imageBounds.width,
+    height: imageBounds.height,
+  };
+  const offset = { x: imageBounds.x, y: imageBounds.y };
+
   return (
     <>
+      {cornerBrackets &&
+        winePositions
+          .filter(({ isTopThree }) => isTopThree)
+          .map(({ wine }) => (
+            <CornerBrackets
+              key={`bracket-${wine.wine_name}-${wine.bbox.x.toFixed(3)}`}
+              bbox={wine.bbox}
+              containerSize={containerSize}
+              offset={offset}
+              isBestPick={topThreeIds[0] === wine.wine_name}
+            />
+          ))}
       {winePositions.map(({ wine, isTopThree, position }, index) => (
         <RatingBadge
           key={`${wine.wine_name}-${wine.bbox.x.toFixed(3)}-${wine.bbox.y.toFixed(3)}`}

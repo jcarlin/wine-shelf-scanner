@@ -84,6 +84,30 @@ export const colors = {
 
   /** Secondary button text (white) */
   buttonSecondaryText: '#FFFFFF',
+  /** Corner bracket color for top-3 wines */
+  cornerBracket: 'rgba(255, 204, 0, 0.7)',
+
+  /** Corner bracket color for best pick (#1) */
+  cornerBracketBestPick: 'rgba(255, 204, 0, 0.85)',
+} as const;
+
+// MARK: - Corner Bracket Config
+
+export const bracketConfig = {
+  /** Arm length as fraction of bbox edge */
+  armFraction: 0.18,
+
+  /** Minimum arm length in pixels */
+  minArm: 8,
+
+  /** Maximum arm length in pixels */
+  maxArm: 40,
+
+  /** Default line width */
+  lineWidth: 2,
+
+  /** Best pick line width */
+  bestPickLineWidth: 3,
 } as const;
 
 // MARK: - Spacing

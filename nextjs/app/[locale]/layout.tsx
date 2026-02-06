@@ -5,8 +5,9 @@ import { notFound } from 'next/navigation';
 import { locales, type Locale } from '@/i18n/config';
 import './globals.css';
 
-export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {
-  const t = await getTranslations({ locale: params.locale, namespace: 'app' });
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'app' });
   return {
     title: t('title'),
     description: t('description'),
@@ -28,16 +29,17 @@ export default async function RootLayout({
   params,
 }: {
   children: React.ReactNode;
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }) {
-  if (!locales.includes(params.locale as Locale)) {
+  const { locale } = await params;
+  if (!locales.includes(locale as Locale)) {
     notFound();
   }
 
   const messages = await getMessages();
 
   return (
-    <html lang={params.locale}>
+    <html lang={locale}>
       <body className="font-sans bg-app-bg min-h-screen">
         <NextIntlClientProvider messages={messages}>
           {children}

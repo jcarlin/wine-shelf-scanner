@@ -6,6 +6,7 @@ import {
   confidenceLabel,
   badgeSize,
   adjustedAnchorPoint,
+  cornerBrackets,
   VISIBILITY_THRESHOLD,
   TAPPABLE_THRESHOLD,
   HIGH_CONFIDENCE_THRESHOLD,
@@ -235,6 +236,89 @@ describe('overlay-math', () => {
       // y for partial bottle = 0.02 * 100 + 12 + 4 = 18, but clamped to min 16
       expect(result.x).toBe(26);
       expect(result.y).toBe(18);
+    });
+  });
+
+  describe('cornerBrackets', () => {
+    it('should return 8 line segments', () => {
+      const bbox = { x: 0.2, y: 0.2, width: 0.3, height: 0.5 };
+      const container = { width: 400, height: 600 };
+
+      const lines = cornerBrackets(bbox, container);
+
+      expect(lines).toHaveLength(8);
+    });
+
+    it('should clamp arm length to min (8px) for tiny bboxes', () => {
+      // Very small bbox: width=0.01, height=0.01
+      // armH = 0.01 * 400 * 0.18 = 0.72 → clamped to 8
+      // armV = 0.01 * 600 * 0.18 = 1.08 → clamped to 8
+      const bbox = { x: 0.5, y: 0.5, width: 0.01, height: 0.01 };
+      const container = { width: 400, height: 600 };
+
+      const lines = cornerBrackets(bbox, container);
+
+      // Top-left horizontal arm: x2 - x1 should be 8 (min arm)
+      const topLeftH = lines[0];
+      expect(Math.abs(topLeftH.x2 - topLeftH.x1)).toBe(8);
+
+      // Top-left vertical arm: y2 - y1 should be 8 (min arm)
+      const topLeftV = lines[1];
+      expect(Math.abs(topLeftV.y2 - topLeftV.y1)).toBe(8);
+    });
+
+    it('should clamp arm length to max (40px) for huge bboxes', () => {
+      // Large bbox: width=0.9, height=0.9
+      // armH = 0.9 * 1000 * 0.18 = 162 → clamped to 40
+      // armV = 0.9 * 1000 * 0.18 = 162 → clamped to 40
+      const bbox = { x: 0.05, y: 0.05, width: 0.9, height: 0.9 };
+      const container = { width: 1000, height: 1000 };
+
+      const lines = cornerBrackets(bbox, container);
+
+      // Top-left horizontal arm: x2 - x1 should be 40 (max arm)
+      const topLeftH = lines[0];
+      expect(Math.abs(topLeftH.x2 - topLeftH.x1)).toBe(40);
+
+      // Top-left vertical arm: y2 - y1 should be 40 (max arm)
+      const topLeftV = lines[1];
+      expect(Math.abs(topLeftV.y2 - topLeftV.y1)).toBe(40);
+    });
+
+    it('should match pixel conversion of bbox corners', () => {
+      const bbox = { x: 0.25, y: 0.40, width: 0.10, height: 0.30 };
+      const container = { width: 400, height: 600 };
+
+      const lines = cornerBrackets(bbox, container);
+
+      const expectedLeft = 0.25 * 400;   // 100
+      const expectedTop = 0.40 * 600;    // 240
+      const expectedRight = (0.25 + 0.10) * 400;  // 140
+      const expectedBottom = (0.40 + 0.30) * 600;  // 420
+
+      // Top-left corner: both lines start at (left, top)
+      expect(lines[0].x1).toBe(expectedLeft);
+      expect(lines[0].y1).toBe(expectedTop);
+      expect(lines[1].x1).toBe(expectedLeft);
+      expect(lines[1].y1).toBe(expectedTop);
+
+      // Top-right corner: both lines start at (right, top)
+      expect(lines[2].x1).toBe(expectedRight);
+      expect(lines[2].y1).toBe(expectedTop);
+      expect(lines[3].x1).toBe(expectedRight);
+      expect(lines[3].y1).toBe(expectedTop);
+
+      // Bottom-left corner: both lines start at (left, bottom)
+      expect(lines[4].x1).toBe(expectedLeft);
+      expect(lines[4].y1).toBe(expectedBottom);
+      expect(lines[5].x1).toBe(expectedLeft);
+      expect(lines[5].y1).toBe(expectedBottom);
+
+      // Bottom-right corner: both lines start at (right, bottom)
+      expect(lines[6].x1).toBe(expectedRight);
+      expect(lines[6].y1).toBe(expectedBottom);
+      expect(lines[7].x1).toBe(expectedRight);
+      expect(lines[7].y1).toBe(expectedBottom);
     });
   });
 });

@@ -24,6 +24,7 @@ struct FeatureFlags {
         "feature_share": true,
         "feature_background_processing": true,
         "feature_bug_report": true,
+        "feature_corner_brackets": true,
         "feature_subscription": false,
     ]
 
@@ -65,6 +66,10 @@ struct FeatureFlags {
 
     var bugReport: Bool {
         flagValue("feature_bug_report")
+    }
+
+    var cornerBrackets: Bool {
+        flagValue("feature_corner_brackets")
     }
 
     var subscription: Bool {

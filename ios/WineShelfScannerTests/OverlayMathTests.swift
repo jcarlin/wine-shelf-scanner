@@ -125,4 +125,75 @@ final class OverlayMathTests: XCTestCase {
         // Should anchor higher for partial bottles
         XCTAssertLessThan(adjusted.y, point.y)
     }
+
+    // MARK: - Corner Brackets Tests
+
+    func testCornerBracketsReturns8Lines() {
+        let bbox = CGRect(x: 0.2, y: 0.2, width: 0.3, height: 0.5)
+        let containerSize = CGSize(width: 400, height: 600)
+
+        let lines = OverlayMath.cornerBrackets(bbox: bbox, geo: containerSize)
+
+        XCTAssertEqual(lines.count, 8)
+    }
+
+    func testCornerBracketsArmClampsToMin() {
+        // Very small bbox: armH = 0.01 * 400 * 0.18 = 0.72 → clamped to 8
+        let bbox = CGRect(x: 0.5, y: 0.5, width: 0.01, height: 0.01)
+        let containerSize = CGSize(width: 400, height: 600)
+
+        let lines = OverlayMath.cornerBrackets(bbox: bbox, geo: containerSize)
+
+        // Top-left horizontal arm length should be 8 (min)
+        let armH = abs(lines[0].x2 - lines[0].x1)
+        XCTAssertEqual(armH, 8, accuracy: 0.001)
+
+        // Top-left vertical arm length should be 8 (min)
+        let armV = abs(lines[1].y2 - lines[1].y1)
+        XCTAssertEqual(armV, 8, accuracy: 0.001)
+    }
+
+    func testCornerBracketsArmClampsToMax() {
+        // Large bbox: armH = 0.9 * 1000 * 0.18 = 162 → clamped to 40
+        let bbox = CGRect(x: 0.05, y: 0.05, width: 0.9, height: 0.9)
+        let containerSize = CGSize(width: 1000, height: 1000)
+
+        let lines = OverlayMath.cornerBrackets(bbox: bbox, geo: containerSize)
+
+        let armH = abs(lines[0].x2 - lines[0].x1)
+        XCTAssertEqual(armH, 40, accuracy: 0.001)
+
+        let armV = abs(lines[1].y2 - lines[1].y1)
+        XCTAssertEqual(armV, 40, accuracy: 0.001)
+    }
+
+    func testCornerBracketsCornerPositions() {
+        let bbox = CGRect(x: 0.25, y: 0.40, width: 0.10, height: 0.30)
+        let containerSize = CGSize(width: 400, height: 600)
+
+        let lines = OverlayMath.cornerBrackets(bbox: bbox, geo: containerSize)
+
+        let expectedLeft: CGFloat = 0.25 * 400     // 100
+        let expectedTop: CGFloat = 0.40 * 600      // 240
+        let expectedRight: CGFloat = 0.35 * 400    // 140
+        let expectedBottom: CGFloat = 0.70 * 600   // 420
+
+        // Top-left corner
+        XCTAssertEqual(lines[0].x1, expectedLeft, accuracy: 0.001)
+        XCTAssertEqual(lines[0].y1, expectedTop, accuracy: 0.001)
+        XCTAssertEqual(lines[1].x1, expectedLeft, accuracy: 0.001)
+        XCTAssertEqual(lines[1].y1, expectedTop, accuracy: 0.001)
+
+        // Top-right corner
+        XCTAssertEqual(lines[2].x1, expectedRight, accuracy: 0.001)
+        XCTAssertEqual(lines[2].y1, expectedTop, accuracy: 0.001)
+
+        // Bottom-left corner
+        XCTAssertEqual(lines[4].x1, expectedLeft, accuracy: 0.001)
+        XCTAssertEqual(lines[4].y1, expectedBottom, accuracy: 0.001)
+
+        // Bottom-right corner
+        XCTAssertEqual(lines[6].x1, expectedRight, accuracy: 0.001)
+        XCTAssertEqual(lines[6].y1, expectedBottom, accuracy: 0.001)
+    }
 }

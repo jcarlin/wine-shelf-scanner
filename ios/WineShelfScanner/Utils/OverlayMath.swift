@@ -141,6 +141,57 @@ struct OverlayMath {
         return adjusted
     }
 
+    // MARK: - Corner Brackets
+
+    /// A single line segment for a corner bracket
+    struct CornerBracketLine {
+        let x1: CGFloat
+        let y1: CGFloat
+        let x2: CGFloat
+        let y2: CGFloat
+    }
+
+    /// Corner bracket configuration
+    private static let bracketArmFraction: CGFloat = 0.18
+    private static let bracketMinArm: CGFloat = 8
+    private static let bracketMaxArm: CGFloat = 40
+
+    /// Compute 8 line segments (2 per corner) forming "L"-shaped corner brackets
+    /// around a bounding box.
+    /// - Parameters:
+    ///   - bbox: Normalized bounding box (0-1)
+    ///   - geo: Container size in points
+    /// - Returns: Array of 8 line segments in point coordinates
+    static func cornerBrackets(bbox: CGRect, geo: CGSize) -> [CornerBracketLine] {
+        let left = bbox.origin.x * geo.width
+        let top = bbox.origin.y * geo.height
+        let right = (bbox.origin.x + bbox.size.width) * geo.width
+        let bottom = (bbox.origin.y + bbox.size.height) * geo.height
+
+        let armH = min(max(bbox.size.width * geo.width * bracketArmFraction, bracketMinArm), bracketMaxArm)
+        let armV = min(max(bbox.size.height * geo.height * bracketArmFraction, bracketMinArm), bracketMaxArm)
+
+        return [
+            // Top-left
+            CornerBracketLine(x1: left, y1: top, x2: left + armH, y2: top),
+            CornerBracketLine(x1: left, y1: top, x2: left, y2: top + armV),
+            // Top-right
+            CornerBracketLine(x1: right, y1: top, x2: right - armH, y2: top),
+            CornerBracketLine(x1: right, y1: top, x2: right, y2: top + armV),
+            // Bottom-left
+            CornerBracketLine(x1: left, y1: bottom, x2: left + armH, y2: bottom),
+            CornerBracketLine(x1: left, y1: bottom, x2: left, y2: bottom - armV),
+            // Bottom-right
+            CornerBracketLine(x1: right, y1: bottom, x2: right - armH, y2: bottom),
+            CornerBracketLine(x1: right, y1: bottom, x2: right, y2: bottom - armV),
+        ]
+    }
+
+    /// Compute corner brackets from BoundingBox model
+    static func cornerBrackets(bbox: BoundingBox, geo: CGSize) -> [CornerBracketLine] {
+        cornerBrackets(bbox: bbox.cgRect, geo: geo)
+    }
+
     // MARK: - Badge Sizing
 
     /// Base badge size

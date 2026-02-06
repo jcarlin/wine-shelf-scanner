@@ -1,4 +1,5 @@
 export { CameraCapture } from './CameraCapture';
+export { CornerBrackets } from './CornerBrackets';
 export { ProcessingSpinner } from './ProcessingSpinner';
 export { ScanningOverlay } from './ScanningOverlay';
 export { RatingBadge } from './RatingBadge';

@@ -6,7 +6,7 @@
  */
 
 import { BoundingBox, Point, Size } from './types';
-import { badgeSizes, layout } from './theme';
+import { badgeSizes, bracketConfig, layout } from './theme';
 
 // MARK: - Confidence Thresholds
 
@@ -134,4 +134,49 @@ export function adjustedAnchorPoint(
   );
 
   return { x: adjustedX, y: adjustedY };
+}
+
+// MARK: - Corner Brackets
+
+/** A single line segment for a corner bracket */
+export interface CornerBracketLine {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+
+/**
+ * Compute 8 line segments (2 per corner) forming "L"-shaped corner brackets
+ * around a bounding box.
+ *
+ * @param bbox - Normalized bounding box (0-1)
+ * @param containerSize - Container size in pixels
+ * @returns Array of 8 line segments in pixel coordinates
+ */
+export function cornerBrackets(bbox: BoundingBox, containerSize: Size): CornerBracketLine[] {
+  const left = bbox.x * containerSize.width;
+  const top = bbox.y * containerSize.height;
+  const right = (bbox.x + bbox.width) * containerSize.width;
+  const bottom = (bbox.y + bbox.height) * containerSize.height;
+
+  const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
+
+  const armH = clamp(bbox.width * containerSize.width * bracketConfig.armFraction, bracketConfig.minArm, bracketConfig.maxArm);
+  const armV = clamp(bbox.height * containerSize.height * bracketConfig.armFraction, bracketConfig.minArm, bracketConfig.maxArm);
+
+  return [
+    // Top-left: horizontal right, vertical down
+    { x1: left, y1: top, x2: left + armH, y2: top },
+    { x1: left, y1: top, x2: left, y2: top + armV },
+    // Top-right: horizontal left, vertical down
+    { x1: right, y1: top, x2: right - armH, y2: top },
+    { x1: right, y1: top, x2: right, y2: top + armV },
+    // Bottom-left: horizontal right, vertical up
+    { x1: left, y1: bottom, x2: left + armH, y2: bottom },
+    { x1: left, y1: bottom, x2: left, y2: bottom - armV },
+    // Bottom-right: horizontal left, vertical up
+    { x1: right, y1: bottom, x2: right - armH, y2: bottom },
+    { x1: right, y1: bottom, x2: right, y2: bottom - armV },
+  ];
 }

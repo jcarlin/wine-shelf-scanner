@@ -31,6 +31,16 @@ struct OverlayContainerView: View {
         let showMemory = FeatureFlags.shared.wineMemory
 
         ZStack {
+            if FeatureFlags.shared.cornerBrackets {
+                ForEach(response.visibleResults.filter { response.isTopThree($0) }) { wine in
+                    CornerBracketsView(
+                        bbox: wine.bbox,
+                        imageBounds: imageBounds,
+                        isBestPick: wine.id == response.topThree.first?.id
+                    )
+                }
+            }
+
             ForEach(response.visibleResults) { wine in
                 let isTopThree = response.isTopThree(wine)
                 let badgeSize = OverlayMath.badgeSize(isTopThree: isTopThree)

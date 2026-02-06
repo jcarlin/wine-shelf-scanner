@@ -24,6 +24,8 @@ class PipelineStats(BaseModel):
     vision_attempted: int = Field(..., description="Claude Vision calls made")
     vision_identified: int = Field(..., description="Wines identified by Claude Vision")
     vision_error: Optional[str] = Field(None, description="Error if Claude Vision failed")
+    llm_rescue_attempted: int = Field(0, description="Bottles/orphans sent to LLM batch rescue")
+    llm_rescue_identified: int = Field(0, description="Wines identified by LLM batch rescue")
     final_results: int = Field(..., description="Total wines in response results array")
 
 

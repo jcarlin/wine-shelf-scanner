@@ -207,6 +207,18 @@ class RecognitionPipeline:
             Tuple of (bottle_text, match, match_with_scores, bottle_idx, error_reason)
         """
         if not bt.normalized_name or len(bt.normalized_name) < 3:
+            # If raw combined_text has enough content, don't skip — let it
+            # reach the LLM which can handle messy/fragmented OCR text.
+            # The aggressive text normalization often strips valid wine names
+            # below 3 chars (e.g. French "de", "du", "la" removed).
+            raw_text = bt.combined_text or ""
+            if len(raw_text.strip()) >= 5:
+                logger.info(
+                    f"Bottle {bottle_idx}: normalized text too short "
+                    f"({bt.normalized_name!r}) but raw text available "
+                    f"({raw_text[:60]!r}), forwarding to LLM"
+                )
+                return (bt, None, None, bottle_idx, None)
             return (bt, None, None, bottle_idx, "text_too_short")
 
         if self._debug.enabled:

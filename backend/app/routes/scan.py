@@ -22,6 +22,7 @@ from ..models import BoundingBox, DebugData, FallbackWine, RatingSourceDetail, S
 from ..models.debug import PipelineStats
 from ..models.enums import RatingSource, WineSource
 from ..services.claude_vision import get_claude_vision_service, VisionIdentifiedWine
+from ..services.llm_rating_cache import get_llm_rating_cache
 from ..services.ocr_processor import BottleText, OCRProcessor, OCRProcessingResult, OrphanedText, extract_wine_names
 from ..services.pairing import PairingService
 from ..services.recognition_pipeline import RecognizedWine, RecognitionPipeline
@@ -475,6 +476,14 @@ async def process_image(
                 f"[{image_id}] Low-confidence match sent to Vision: "
                 f"{bottle_to_wine[bt_id].wine_name} (conf={bottle_to_wine[bt_id].confidence:.2f})"
             )
+        elif bottle_to_wine[bt_id].rating is None:
+            # Identified but no rating - send to Vision for rating estimation
+            bottles_for_vision.append(bt)
+            low_conf_bottle_ids.add(bt_id)
+            logger.info(
+                f"[{image_id}] No-rating match sent to Vision: "
+                f"{bottle_to_wine[bt_id].wine_name} (conf={bottle_to_wine[bt_id].confidence:.2f})"
+            )
 
     # Use vision fallback if enabled both via parameter and config
     stats_unmatched_count = len(bottles_for_vision)
@@ -515,6 +524,29 @@ async def process_image(
                             f"(conf={vision_wine.confidence:.2f}, rating={vision_wine.estimated_rating})"
                         )
                     stats_vision_identified += 1
+
+            # Cache Vision-identified wines for future lookups
+            llm_cache = get_llm_rating_cache()
+            for vision_wine in vision_results:
+                if vision_wine.wine_name and vision_wine.estimated_rating is not None and vision_wine.bottle_index < len(bottles_for_vision):
+                    capped_conf = min(vision_wine.confidence, Config.VISION_FALLBACK_CONFIDENCE_CAP)
+                    cache_kwargs = dict(
+                        estimated_rating=vision_wine.estimated_rating,
+                        confidence=capped_conf,
+                        llm_provider="claude_vision",
+                        wine_type=vision_wine.wine_type,
+                        region=vision_wine.region,
+                        varietal=vision_wine.varietal,
+                        brand=vision_wine.brand,
+                    )
+                    # Cache under the canonical wine name
+                    llm_cache.set(wine_name=vision_wine.wine_name, **cache_kwargs)
+                    # Also cache under the normalized OCR text so the pipeline
+                    # can find it on future scans without re-calling Vision
+                    bt = bottles_for_vision[vision_wine.bottle_index]
+                    if bt.normalized_name and bt.normalized_name.lower() != vision_wine.wine_name.lower():
+                        llm_cache.set(wine_name=bt.normalized_name, **cache_kwargs)
+                    logger.debug(f"[{image_id}] Cached Vision result: {vision_wine.wine_name} (rating={vision_wine.estimated_rating})")
 
             logger.info(f"[{image_id}] VISION RESULTS: {stats_vision_identified} of {stats_vision_attempted} identified")
         except Exception as e:

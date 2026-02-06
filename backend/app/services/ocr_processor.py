@@ -160,6 +160,14 @@ class OCRProcessor:
     PRICE_PATTERN = _PRICE_PATTERN
     ABV_PATTERN = _ABV_PATTERN
 
+    # Words that are part of producer/wine names — never strip these.
+    # Removing them destroys the wine identity and causes matching failures.
+    # e.g. "Château Margaux" → "Margaux" would match wrong or not at all.
+    WINE_IDENTITY_WORDS = {
+        'chateau', 'château', 'domaine', 'cuvee', 'cuvée',
+        'bodega', 'cantina', 'tenuta', 'casa', 'villa',
+    }
+
     # Marketing/filler words to remove
     FILLER_WORDS = {
         'reserve', 'special', 'edition', 'limited', 'select', 'premium',
@@ -190,18 +198,18 @@ class OCRProcessor:
         'mis', 'en', 'bouteille', 'par', 'a', 'au', 'negociant', 'négociant',
         'eleveur', 'éleveur', 'producteur', 'recoltant', 'récoltant', 'produit',
         'product', 'produce', 'produced', 'france', 'french', 'côte', 'cote', 'd',
-        'or', 'beaune', 'alsace', 'loire',
+        'or', 'beaune',
         # Generic wine terms that appear on many labels (not wine names)
-        'grand', 'vin', 'rouge', 'blanc', 'rose', 'rosé', 'sec', 'demi-sec', 'brut',
+        'vin', 'rouge', 'blanc', 'rose', 'rosé', 'sec', 'demi-sec', 'brut',
         'extra', 'methode', 'méthode', 'traditionnelle', 'traditionnel', 'naturel',
-        'millesime', 'millésime', 'millesimé', 'mis', 'bouteille', 'au', 'domaine',
+        'millesime', 'millésime', 'millesimé',
         'mousseux', 'petillant', 'pétillant', 'cremant', 'crémant', 'cava',
         'spumante', 'prosecco', 'franciacorta', 'sparkling',
         # French connectors
         'de', 'du', 'des', 'le', 'la', 'les', 'et', 'en', 'sur',
         # Additional generic terms
-        'qualité', 'qualite', 'quality', 'superieur', 'supérieur', 'cuvee', 'cuvée',
-        'chateau', 'château', 'vieilles', 'vignes', 'terroir', 'aoc', 'aop',
+        'qualité', 'qualite', 'quality', 'superieur', 'supérieur',
+        'vieilles', 'vignes', 'terroir', 'aoc', 'aop',
     }
 
     def __init__(

@@ -60,9 +60,12 @@ export function WineDetailModal({ wine, onClose, shelfRank, shelfTotal }: WineDe
       />
 
       {/* Modal */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 animate-slide-up max-h-[85vh]">
+      <div
+        className="fixed inset-0 z-50 animate-slide-up flex items-end justify-center"
+        onClick={onClose}
+      >
         <div
-          className="bg-white rounded-t-3xl px-6 pt-4 pb-8 max-w-lg mx-auto overflow-y-auto max-h-[85vh]"
+          className="bg-white rounded-t-3xl px-6 pt-4 pb-8 max-w-lg w-full overflow-y-auto max-h-[85vh]"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Handle bar */}

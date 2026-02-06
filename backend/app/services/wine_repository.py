@@ -282,6 +282,7 @@ class WineRepository(BaseRepository):
         winery: Optional[str] = None,
         country: Optional[str] = None,
         varietal: Optional[str] = None,
+        description: Optional[str] = None,
         aliases: list[str] = None,
         source_name: Optional[str] = None,
         original_rating: Optional[float] = None,
@@ -294,9 +295,9 @@ class WineRepository(BaseRepository):
         """
         with self._transaction() as cursor:
             cursor.execute("""
-                INSERT INTO wines (canonical_name, rating, wine_type, region, winery, country, varietal)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, (canonical_name, rating, wine_type, region, winery, country, varietal))
+                INSERT INTO wines (canonical_name, rating, wine_type, region, winery, country, varietal, description)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (canonical_name, rating, wine_type, region, winery, country, varietal, description))
 
             wine_id = cursor.lastrowid
 

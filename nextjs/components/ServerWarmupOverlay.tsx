@@ -4,6 +4,9 @@ import { useTranslations } from 'next-intl';
 import { Wine, RefreshCw } from 'lucide-react';
 import { colors } from '@/lib/theme';
 import { ServerHealthState } from '@/hooks/useServerHealth';
+import { useTipRotation } from '@/hooks/useTipRotation';
+
+const WARMUP_TIP_COUNT = 20;
 
 interface ServerWarmupOverlayProps {
   state: ServerHealthState;
@@ -12,6 +15,9 @@ interface ServerWarmupOverlayProps {
 
 export function ServerWarmupOverlay({ state, onRetry }: ServerWarmupOverlayProps) {
   const t = useTranslations('warmup');
+  const tipIndex = useTipRotation(WARMUP_TIP_COUNT, 4000);
+
+  const tips = Array.from({ length: WARMUP_TIP_COUNT }, (_, i) => t(`tip${i + 1}`));
 
   if (state.status === 'checking') {
     return (
@@ -44,17 +50,20 @@ export function ServerWarmupOverlay({ state, onRetry }: ServerWarmupOverlayProps
         </div>
 
         <h2 className="text-xl font-semibold text-white mb-2">{t('title')}</h2>
-        <p className="text-gray-400 text-center max-w-sm mb-4">{t('message')}</p>
+        <p className="text-gray-400 text-center max-w-sm mb-6">{t('message')}</p>
+
+        <p
+          key={tipIndex}
+          className="text-gray-500 text-sm text-center max-w-xs mb-6 italic animate-fade-in min-h-[40px] flex items-center"
+        >
+          {tips[tipIndex]}
+        </p>
 
         <div className="flex gap-2">
           <div className="w-2 h-2 rounded-full bg-star animate-bounce" style={{ animationDelay: '0ms' }} />
           <div className="w-2 h-2 rounded-full bg-star animate-bounce" style={{ animationDelay: '150ms' }} />
           <div className="w-2 h-2 rounded-full bg-star animate-bounce" style={{ animationDelay: '300ms' }} />
         </div>
-
-        <p className="text-gray-500 text-sm mt-6">
-          {t('attempt', { count: state.attempt })}
-        </p>
       </div>
     );
   }

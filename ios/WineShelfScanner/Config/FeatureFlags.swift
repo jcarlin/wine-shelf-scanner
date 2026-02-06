@@ -24,7 +24,7 @@ struct FeatureFlags {
         "feature_share": true,
         "feature_background_processing": true,
         "feature_bug_report": true,
-        "feature_corner_brackets": true,
+        "feature_corner_brackets": false,
         "feature_subscription": false,
     ]
 

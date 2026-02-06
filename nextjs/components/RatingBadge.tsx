@@ -28,13 +28,13 @@ export function RatingBadge({ wine, isTopThree, position, onClick, shelfRank, is
   // Don't render if opacity is 0
   if (baseOpacity === 0) return null;
 
-  // Apply visual emphasis: boost top-3 opacity, dim non-top-3
+  // Apply visual emphasis: boost top-3 opacity, slightly dim non-top-3
   let badgeOpacity = baseOpacity;
   if (visualEmphasis && baseOpacity > 0) {
     if (isTopThree) {
-      badgeOpacity = Math.min(baseOpacity + 0.15, 1.0);
+      badgeOpacity = Math.min(baseOpacity + 0.1, 1.0);
     } else {
-      badgeOpacity = baseOpacity * 0.65;
+      badgeOpacity = baseOpacity * 0.85;
     }
   }
 

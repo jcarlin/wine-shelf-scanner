@@ -185,17 +185,63 @@ function emptyResultsResponse(): ScanResponse {
 
 // Helper functions
 
+/** Metadata for mock wines keyed by name */
+const WINE_METADATA: Record<string, Partial<WineResult>> = {
+  'Caymus Cabernet Sauvignon': {
+    wine_type: 'Red', brand: 'Caymus Vineyards', region: 'Napa Valley',
+    varietal: 'Cabernet Sauvignon', review_count: 8200,
+    review_snippets: ['Rich and velvety with dark fruit', 'A Napa classic that never disappoints'],
+  },
+  'Opus One': {
+    wine_type: 'Red', brand: 'Opus One Winery', region: 'Napa Valley',
+    varietal: 'Cabernet Sauvignon Blend', review_count: 12500,
+    review_snippets: ['Exceptional balance and finesse', 'Worth every penny for a special occasion'],
+  },
+  'Silver Oak Alexander Valley': {
+    wine_type: 'Red', brand: 'Silver Oak', region: 'Alexander Valley',
+    varietal: 'Cabernet Sauvignon', review_count: 6400,
+    review_snippets: ['Smooth and approachable with great structure'],
+  },
+  'Jordan Cabernet Sauvignon': {
+    wine_type: 'Red', brand: 'Jordan Vineyard & Winery', region: 'Alexander Valley',
+    varietal: 'Cabernet Sauvignon', review_count: 4100,
+    review_snippets: ['Elegant and Bordeaux-inspired'],
+  },
+  "Kendall-Jackson Vintner's Reserve": {
+    wine_type: 'White', brand: 'Kendall-Jackson', region: 'California',
+    varietal: 'Chardonnay', review_count: 15000,
+    review_snippets: ['Great everyday wine', 'Tropical fruit with a hint of vanilla'],
+  },
+  'La Crema Sonoma Coast Pinot Noir': {
+    wine_type: 'Red', brand: 'La Crema', region: 'Sonoma Coast',
+    varietal: 'Pinot Noir', review_count: 5300,
+    review_snippets: ['Silky and bright with cherry notes'],
+  },
+  'Meiomi Pinot Noir': {
+    wine_type: 'Red', brand: 'Meiomi', region: 'California',
+    varietal: 'Pinot Noir', review_count: 9800,
+    review_snippets: ['Crowd-pleasing and easy to drink'],
+  },
+  'Bread & Butter Chardonnay': {
+    wine_type: 'White', brand: 'Bread & Butter', region: 'California',
+    varietal: 'Chardonnay', review_count: 7200,
+    review_snippets: ['Buttery and smooth, lives up to its name'],
+  },
+};
+
 function createWineResult(
   name: string,
   rating: number,
   confidence: number,
   bbox: { x: number; y: number; width: number; height: number }
 ): WineResult {
+  const metadata = WINE_METADATA[name] || {};
   return {
     wine_name: name,
     rating,
     confidence,
     bbox,
+    ...metadata,
   };
 }
 

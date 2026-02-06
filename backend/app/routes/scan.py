@@ -26,8 +26,9 @@ from ..services.llm_rating_cache import get_llm_rating_cache
 from ..services.ocr_processor import BottleText, OCRProcessor, OCRProcessingResult, OrphanedText, extract_wine_names
 from ..services.pairing import PairingService
 from ..services.recognition_pipeline import RecognizedWine, RecognitionPipeline
+from ..services.llm_normalizer import BatchValidationItem, get_normalizer
 from ..services.vision import MockVisionService, ReplayVisionService, VisionResult, VisionService
-from ..services.wine_matcher import WineMatcher
+from ..services.wine_matcher import WineMatcher, _is_llm_generic_response
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -583,6 +584,138 @@ async def process_image(
             stats_vision_error = str(e)
             logger.warning(f"[{image_id}] Claude Vision fallback failed: {e}")
 
+    # Step 6: LLM batch rescue for remaining unmatched bottles and orphaned text
+    # This is the final catch-all: sends ALL remaining raw OCR text to the LLM
+    # in a single batch for cross-referenced identification. Unlike earlier steps
+    # which process each bottle independently, this gives the LLM the full context
+    # of remaining shelf text, letting it piece together fragmented OCR.
+    stats_llm_rescue_attempted = 0
+    stats_llm_rescue_identified = 0
+    rescued_orphan_fallback: list[FallbackWine] = []
+
+    recognized_bt_ids = {id(w.bottle_text) for w in recognized}
+    rescue_bottles: list[BottleText] = []
+    for bt in bottle_texts:
+        if id(bt) not in recognized_bt_ids:
+            raw_text = bt.combined_text or ""
+            if len(raw_text.strip()) >= 5:
+                rescue_bottles.append(bt)
+
+    # Also collect orphaned texts not yet matched
+    rescue_orphans: list[OrphanedText] = []
+    existing_wine_names = {w.wine_name.lower() for w in recognized}
+    for orphan in orphaned_texts:
+        raw_text = orphan.text or ""
+        if len(raw_text.strip()) >= 5:
+            rescue_orphans.append(orphan)
+
+    if (rescue_bottles or rescue_orphans) and use_llm:
+        stats_llm_rescue_attempted = len(rescue_bottles) + len(rescue_orphans)
+        logger.info(
+            f"[{image_id}] LLM RESCUE: Attempting batch rescue for "
+            f"{len(rescue_bottles)} unmatched bottles + {len(rescue_orphans)} orphaned texts"
+        )
+
+        try:
+            normalizer = get_normalizer(use_mock=False)
+            rescue_items: list[BatchValidationItem] = []
+            # Track source: ('bottle', BottleText) or ('orphan', OrphanedText)
+            rescue_sources: list[tuple[str, object]] = []
+
+            for bt in rescue_bottles:
+                rescue_items.append(BatchValidationItem(
+                    ocr_text=bt.combined_text,
+                    db_candidate=None,
+                    db_rating=None,
+                ))
+                rescue_sources.append(('bottle', bt))
+
+            for orphan in rescue_orphans:
+                rescue_items.append(BatchValidationItem(
+                    ocr_text=orphan.text,  # Use raw text, not normalized
+                    db_candidate=None,
+                    db_rating=None,
+                ))
+                rescue_sources.append(('orphan', orphan))
+
+            rescue_results = await normalizer.validate_batch(rescue_items)
+
+            for (source_type, source), validation in zip(rescue_sources, rescue_results):
+                if not validation.wine_name or validation.confidence < 0.5:
+                    continue
+                if _is_llm_generic_response(validation.wine_name):
+                    continue
+
+                # Deduplicate against existing results
+                name_lower = validation.wine_name.lower()
+                if name_lower in existing_wine_names:
+                    continue
+
+                # Try to match LLM-identified wine against DB for a better rating
+                rating = validation.estimated_rating
+                rating_source = RatingSource.LLM_ESTIMATED if rating is not None else RatingSource.NONE
+                wine_name = validation.wine_name
+                wine_id = None
+
+                db_match = wine_matcher.match(validation.wine_name)
+                if db_match and db_match.confidence >= 0.90:
+                    wine_name = db_match.canonical_name
+                    if db_match.rating is not None:
+                        rating = db_match.rating
+                        rating_source = RatingSource.DATABASE
+                    wine_id = db_match.wine_id
+
+                if source_type == 'bottle':
+                    bt = source
+                    # Cap confidence: ensure tappable but not top-3 emphasis
+                    capped_conf = max(
+                        Config.VISION_CONFIDENCE_FLOOR,
+                        min(validation.confidence, Config.VISION_FALLBACK_CONFIDENCE_CAP)
+                    )
+
+                    result = RecognizedWine(
+                        wine_name=wine_name,
+                        rating=rating if rating is not None else Config.VISION_DEFAULT_RATING,
+                        confidence=capped_conf,
+                        source=WineSource.LLM,
+                        identified=True,
+                        bottle_text=bt,
+                        rating_source=rating_source if rating is not None else RatingSource.DEFAULT,
+                        wine_type=validation.wine_type,
+                        brand=validation.brand,
+                        region=validation.region,
+                        varietal=validation.varietal,
+                        wine_id=wine_id,
+                    )
+                    recognized.append(result)
+                    existing_wine_names.add(wine_name.lower())
+                    stats_llm_rescue_identified += 1
+                    logger.info(
+                        f"[{image_id}] LLM RESCUE identified bottle: {wine_name} "
+                        f"(conf={capped_conf:.2f}, rating={result.rating})"
+                    )
+
+                elif source_type == 'orphan':
+                    # Orphans have no bounding box — add to fallback list
+                    if rating is not None:
+                        rescued_orphan_fallback.append(FallbackWine(
+                            wine_name=wine_name,
+                            rating=rating,
+                        ))
+                        existing_wine_names.add(wine_name.lower())
+                        stats_llm_rescue_identified += 1
+                        logger.info(
+                            f"[{image_id}] LLM RESCUE identified orphan: {wine_name} "
+                            f"(rating={rating})"
+                        )
+
+            logger.info(
+                f"[{image_id}] LLM RESCUE RESULTS: {stats_llm_rescue_identified} "
+                f"of {stats_llm_rescue_attempted} identified"
+            )
+        except Exception as e:
+            logger.warning(f"[{image_id}] LLM batch rescue failed: {e}")
+
     # Enrich recognized wines with actual review data from wine_reviews table
     _enrich_with_reviews(recognized, wine_matcher)
 
@@ -601,7 +734,7 @@ async def process_image(
                 rating=wine.rating
             ))
 
-    # Step 6: Process orphaned text blocks into fallback list
+    # Step 7: Process orphaned text blocks into fallback list
     # These are OCR texts not near any detected bottle - may be from undetected bottles
     if orphaned_texts:
         orphan_matches = _process_orphaned_texts(orphaned_texts, wine_matcher)
@@ -614,6 +747,15 @@ async def process_image(
                 if match.wine_name.lower() not in existing_names:
                     fallback.append(match)
                     existing_names.add(match.wine_name.lower())
+
+    # Step 8: Add LLM-rescued orphan wines to fallback list
+    if rescued_orphan_fallback:
+        existing_names = {f.wine_name.lower() for f in fallback}
+        existing_names.update(r.wine_name.lower() for r in results)
+        for rescued in rescued_orphan_fallback:
+            if rescued.wine_name.lower() not in existing_names:
+                fallback.append(rescued)
+                existing_names.add(rescued.wine_name.lower())
 
     # Sort results by rating (wines with ratings first, then by rating value)
     results.sort(key=lambda x: (x.rating is not None, x.rating or 0), reverse=True)
@@ -637,7 +779,9 @@ async def process_image(
         f"  Claude Vision attempted: {stats_vision_attempted}\n"
         f"  Claude Vision identified: {stats_vision_identified}"
         + (f" (ERROR: {stats_vision_error})" if stats_vision_error else "") +
-        f"\n  Final results: {stats_final_results}"
+        f"\n  LLM rescue attempted: {stats_llm_rescue_attempted}\n"
+        f"  LLM rescue identified: {stats_llm_rescue_identified}\n"
+        f"  Final results: {stats_final_results}"
     )
 
     # Build pipeline stats
@@ -651,6 +795,8 @@ async def process_image(
         vision_attempted=stats_vision_attempted,
         vision_identified=stats_vision_identified,
         vision_error=stats_vision_error,
+        llm_rescue_attempted=stats_llm_rescue_attempted,
+        llm_rescue_identified=stats_llm_rescue_identified,
         final_results=stats_final_results
     )
 

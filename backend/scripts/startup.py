@@ -28,13 +28,16 @@ DB_DIR = BACKEND_DIR / "app" / "data"
 
 
 def download_db_from_gcs() -> bool:
-    """Download wines.db from GCS bucket.
+    """Download wines.db from GCS bucket (supports gzip-compressed files).
 
     Returns True if download succeeded or was skipped.
     Returns False if download failed.
     """
+    import gzip
+    import shutil
+
     bucket = os.getenv("GCS_DB_BUCKET", "")
-    gcs_path = os.getenv("GCS_DB_PATH", "data/wines.db")
+    gcs_path = os.getenv("GCS_DB_PATH", "data/wines.db.gz")
     db_path = os.getenv("DATABASE_PATH", str(DB_DIR / "wines.db"))
 
     if not bucket:
@@ -63,13 +66,34 @@ def download_db_from_gcs() -> bool:
         blob = bucket_obj.blob(gcs_path)
 
         if not blob.exists():
-            logger.error(f"GCS object gs://{bucket}/{gcs_path} does not exist")
-            return False
+            # Fall back to uncompressed path
+            fallback_path = gcs_path.replace(".gz", "")
+            logger.info(f"gz not found, trying uncompressed: {fallback_path}")
+            blob = bucket_obj.blob(fallback_path)
+            if not blob.exists():
+                logger.error(f"GCS object not found at {gcs_path} or {fallback_path}")
+                return False
+            # Download uncompressed directly
+            blob.download_to_filename(db_path)
+            elapsed = time.time() - start
+            size_mb = Path(db_path).stat().st_size / (1024 * 1024)
+            logger.info(f"Downloaded {size_mb:.1f} MB in {elapsed:.1f}s (uncompressed)")
+            return True
 
-        blob.download_to_filename(db_path)
+        # Download gzip to temp file, then decompress
+        gz_tmp = db_path + ".gz"
+        blob.download_to_filename(gz_tmp)
+        dl_time = time.time() - start
+        gz_mb = Path(gz_tmp).stat().st_size / (1024 * 1024)
+        logger.info(f"Downloaded {gz_mb:.1f} MB in {dl_time:.1f}s, decompressing...")
+
+        with gzip.open(gz_tmp, "rb") as f_in, open(db_path, "wb") as f_out:
+            shutil.copyfileobj(f_in, f_out)
+
+        os.unlink(gz_tmp)
         elapsed = time.time() - start
         size_mb = Path(db_path).stat().st_size / (1024 * 1024)
-        logger.info(f"Downloaded {size_mb:.1f} MB in {elapsed:.1f}s")
+        logger.info(f"Decompressed to {size_mb:.1f} MB, total time {elapsed:.1f}s")
         return True
 
     except Exception as e:

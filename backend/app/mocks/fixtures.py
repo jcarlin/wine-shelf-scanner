@@ -8,7 +8,7 @@ Scenarios:
 - empty_results: No detection, fallback list only
 """
 
-from ..models import ScanResponse, WineResult, FallbackWine, BoundingBox, DebugData, DebugPipelineStep, FuzzyMatchDebug, FuzzyMatchScores, LLMValidationDebug
+from ..models import ScanResponse, WineResult, FallbackWine, BoundingBox, DebugData, DebugPipelineStep, FuzzyMatchDebug, FuzzyMatchScores, LLMValidationDebug, NearMissCandidate, NormalizationTrace, LLMRawDebug
 
 
 MOCK_DEBUG_STEPS = [
@@ -140,6 +140,43 @@ MOCK_DEBUG_STEPS = [
         included_in_results=True
     ),
     DebugPipelineStep(
+        raw_text="WILLAMETTE JOURNAL BOWN IN OREGON PINOT NOIR 2021 750ml",
+        normalized_text="Willametter Journal Bown Pinot",
+        bottle_index=7,
+        fuzzy_match=FuzzyMatchDebug(
+            candidate=None,
+            scores=None,
+            rating=None,
+            near_misses=[
+                NearMissCandidate(wine_name="Willamette Valley Vineyards Pinot Noir", score=0.58, rejection_reason="below_threshold"),
+                NearMissCandidate(wine_name="William Hill Pinot Noir", score=0.52, rejection_reason="below_threshold"),
+            ],
+            fts_candidates_count=12,
+            rejection_reason="below_threshold",
+        ),
+        llm_validation=LLMValidationDebug(
+            is_valid_match=False,
+            wine_name=None,
+            confidence=0.0,
+            reasoning="No valid wine name found"
+        ),
+        normalization_trace=NormalizationTrace(
+            original_text="WILLAMETTE JOURNAL BOWN IN OREGON PINOT NOIR 2021 750ml",
+            after_pattern_removal="WILLAMETTE JOURNAL BOWN IN OREGON PINOT NOIR",
+            removed_patterns=["2021", "750ml"],
+            removed_filler_words=["in", "oregon"],
+            final_text="Willametter Journal Bown Pinot",
+        ),
+        llm_raw=LLMRawDebug(
+            prompt_text="You are a wine label validator...\n0. OCR: \"WILLAMETTE JOURNAL BOWN IN OREGON PINOT NOIR 2021 750ml\" → DB: null",
+            raw_response='[{"index": 0, "is_valid_match": false, "wine_name": null, "confidence": 0.0, "reasoning": "No valid wine name found"}]',
+            model_used="gemini/gemini-2.0-flash",
+        ),
+        final_result=None,
+        step_failed="llm_validation",
+        included_in_results=False
+    ),
+    DebugPipelineStep(
         raw_text="SHELF TAG $24.99",
         normalized_text="Shelf Tag",
         bottle_index=7,
@@ -153,7 +190,7 @@ MOCK_DEBUG_STEPS = [
 
 MOCK_DEBUG_DATA = DebugData(
     pipeline_steps=MOCK_DEBUG_STEPS,
-    total_ocr_texts=9,
+    total_ocr_texts=10,
     bottles_detected=8,
     texts_matched=8,
     llm_calls_made=3

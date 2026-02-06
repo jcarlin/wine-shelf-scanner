@@ -2,11 +2,115 @@
 
 import { useState } from 'react';
 import { ChevronDown, ChevronRight, FlaskConical } from 'lucide-react';
-import { DebugData, DebugPipelineStep } from '@/lib/types';
+import { DebugData, DebugPipelineStep, NearMissCandidate, NormalizationTrace, LLMRawDebug } from '@/lib/types';
 import { colors } from '@/lib/theme';
 
 interface DebugPanelProps {
   data: DebugData;
+}
+
+function NormalizationTraceSection({ trace }: { trace: NormalizationTrace }) {
+  return (
+    <div className="mt-1 p-2 rounded bg-white/5">
+      <div className="text-gray-400 font-semibold mb-1" style={{ color: '#8B5CF6' }}>
+        Normalization Trace
+      </div>
+      <div className="space-y-1 font-mono text-[10px]">
+        <div>
+          <span className="text-gray-500">Original: </span>
+          <span className="text-gray-300">{trace.original_text}</span>
+        </div>
+        {trace.removed_patterns.length > 0 && (
+          <div>
+            <span className="text-gray-500">Removed patterns: </span>
+            {trace.removed_patterns.map((p, i) => (
+              <span key={i} className="inline-block px-1 py-0.5 mx-0.5 rounded text-red-300 bg-red-900/30">{p}</span>
+            ))}
+          </div>
+        )}
+        <div>
+          <span className="text-gray-500">After patterns: </span>
+          <span className="text-gray-300">{trace.after_pattern_removal}</span>
+        </div>
+        {trace.removed_filler_words.length > 0 && (
+          <div>
+            <span className="text-gray-500">Removed fillers: </span>
+            {trace.removed_filler_words.map((w, i) => (
+              <span key={i} className="inline-block px-1 py-0.5 mx-0.5 rounded text-amber-300 bg-amber-900/30">{w}</span>
+            ))}
+          </div>
+        )}
+        <div>
+          <span className="text-gray-500">Final: </span>
+          <span className="text-white font-semibold">{trace.final_text || '(empty)'}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NearMissSection({ nearMisses }: { nearMisses: NearMissCandidate[] }) {
+  return (
+    <div className="mt-1.5 pt-1.5 border-t border-white/5">
+      <div className="text-amber-400 text-[10px] font-semibold mb-1">Near-Miss Candidates</div>
+      <div className="space-y-0.5">
+        {nearMisses.map((nm, i) => (
+          <div key={i} className="flex items-center gap-2 px-1.5 py-0.5 rounded bg-amber-900/15">
+            <span className="text-gray-300 flex-1 truncate">{nm.wine_name}</span>
+            <span className="text-amber-300 font-mono shrink-0">{nm.score.toFixed(2)}</span>
+            <span className="text-gray-500 text-[9px] shrink-0">{nm.rejection_reason}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LLMRawSection({ llmRaw }: { llmRaw: LLMRawDebug }) {
+  const [showRaw, setShowRaw] = useState(false);
+
+  if (llmRaw.was_heuristic_fallback) {
+    return (
+      <div className="mt-1 p-2 rounded bg-white/5">
+        <div className="text-gray-400 font-semibold mb-1">
+          LLM Raw
+          <span className="ml-2 text-[9px] px-1.5 py-0.5 rounded bg-amber-800/40 text-amber-300">heuristic fallback</span>
+        </div>
+        <div className="text-gray-500 text-[10px]">LLM not called — used heuristic validation</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-1 p-2 rounded bg-white/5">
+      <button
+        onClick={() => setShowRaw(!showRaw)}
+        className="flex items-center gap-1.5 text-gray-400 font-semibold hover:text-gray-300 transition-colors"
+      >
+        {showRaw ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+        <span>LLM Raw</span>
+        {llmRaw.model_used && (
+          <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-900/40 text-blue-300 font-normal">{llmRaw.model_used}</span>
+        )}
+      </button>
+      {showRaw && (
+        <div className="mt-1.5 space-y-1.5">
+          <div>
+            <div className="text-gray-500 text-[10px] mb-0.5">Prompt (truncated):</div>
+            <pre className="text-[10px] text-gray-400 bg-black/30 p-1.5 rounded overflow-x-auto whitespace-pre-wrap break-all max-h-32 overflow-y-auto">
+              {llmRaw.prompt_text}
+            </pre>
+          </div>
+          <div>
+            <div className="text-gray-500 text-[10px] mb-0.5">Response (truncated):</div>
+            <pre className="text-[10px] text-gray-400 bg-black/30 p-1.5 rounded overflow-x-auto whitespace-pre-wrap break-all max-h-32 overflow-y-auto">
+              {llmRaw.raw_response}
+            </pre>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function StepRow({ step, index }: { step: DebugPipelineStep; index: number }) {
@@ -79,25 +183,54 @@ function StepRow({ step, index }: { step: DebugPipelineStep; index: number }) {
             </div>
           )}
 
+          {/* Normalization Trace */}
+          {step.normalization_trace && (
+            <NormalizationTraceSection trace={step.normalization_trace} />
+          )}
+
           {step.fuzzy_match && (
             <div className="mt-1 p-2 rounded bg-white/5">
               <div className="text-gray-400 font-semibold mb-1">Fuzzy Match</div>
-              <div>
-                <span className="text-gray-500">Candidate: </span>
-                <span className="text-gray-300">{step.fuzzy_match.candidate}</span>
-              </div>
-              <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
-                <span className="text-gray-500">ratio: <span className="text-gray-300">{step.fuzzy_match.scores.ratio.toFixed(0)}</span></span>
-                <span className="text-gray-500">partial: <span className="text-gray-300">{step.fuzzy_match.scores.partial_ratio.toFixed(0)}</span></span>
-                <span className="text-gray-500">token_sort: <span className="text-gray-300">{step.fuzzy_match.scores.token_sort_ratio.toFixed(0)}</span></span>
-                <span className="text-gray-500">phonetic: <span className="text-gray-300">{step.fuzzy_match.scores.phonetic_bonus.toFixed(0)}</span></span>
-                <span className="text-gray-400 font-semibold">weighted: <span className="text-white">{step.fuzzy_match.scores.weighted_score.toFixed(1)}</span></span>
-              </div>
-              {step.fuzzy_match.rating !== null && (
-                <div className="mt-0.5">
-                  <span className="text-gray-500">DB rating: </span>
-                  <span className="text-gray-300">{step.fuzzy_match.rating.toFixed(1)}</span>
+              {step.fuzzy_match.candidate ? (
+                <>
+                  <div>
+                    <span className="text-gray-500">Candidate: </span>
+                    <span className="text-gray-300">{step.fuzzy_match.candidate}</span>
+                  </div>
+                  {step.fuzzy_match.scores && (
+                    <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
+                      <span className="text-gray-500">ratio: <span className="text-gray-300">{step.fuzzy_match.scores.ratio.toFixed(2)}</span></span>
+                      <span className="text-gray-500">partial: <span className="text-gray-300">{step.fuzzy_match.scores.partial_ratio.toFixed(2)}</span></span>
+                      <span className="text-gray-500">token_sort: <span className="text-gray-300">{step.fuzzy_match.scores.token_sort_ratio.toFixed(2)}</span></span>
+                      <span className="text-gray-500">phonetic: <span className="text-gray-300">{step.fuzzy_match.scores.phonetic_bonus.toFixed(2)}</span></span>
+                      <span className="text-gray-400 font-semibold">weighted: <span className="text-white">{step.fuzzy_match.scores.weighted_score.toFixed(2)}</span></span>
+                    </div>
+                  )}
+                  {step.fuzzy_match.rating !== null && (
+                    <div className="mt-0.5">
+                      <span className="text-gray-500">DB rating: </span>
+                      <span className="text-gray-300">{step.fuzzy_match.rating.toFixed(1)}</span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div>
+                  <span className="text-gray-500">No match found</span>
+                  {step.fuzzy_match.rejection_reason && (
+                    <span className="text-amber-400 ml-2">({step.fuzzy_match.rejection_reason})</span>
+                  )}
                 </div>
+              )}
+              {step.fuzzy_match.fts_candidates_count !== undefined && step.fuzzy_match.fts_candidates_count > 0 && (
+                <div className="mt-0.5">
+                  <span className="text-gray-500">FTS candidates searched: </span>
+                  <span className="text-gray-300">{step.fuzzy_match.fts_candidates_count}</span>
+                </div>
+              )}
+
+              {/* Near-Miss Candidates */}
+              {step.fuzzy_match.near_misses && step.fuzzy_match.near_misses.length > 0 && (
+                <NearMissSection nearMisses={step.fuzzy_match.near_misses} />
               )}
             </div>
           )}
@@ -132,6 +265,11 @@ function StepRow({ step, index }: { step: DebugPipelineStep; index: number }) {
                 </div>
               )}
             </div>
+          )}
+
+          {/* LLM Raw Prompt/Response */}
+          {step.llm_raw && (
+            <LLMRawSection llmRaw={step.llm_raw} />
           )}
 
           {step.final_result && (

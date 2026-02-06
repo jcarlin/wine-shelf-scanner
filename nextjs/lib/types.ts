@@ -113,10 +113,19 @@ export interface FuzzyMatchScores {
   weighted_score: number;
 }
 
+export interface NearMissCandidate {
+  wine_name: string;
+  score: number;
+  rejection_reason: string;
+}
+
 export interface FuzzyMatchDebug {
-  candidate: string;
-  scores: FuzzyMatchScores;
+  candidate: string | null;
+  scores: FuzzyMatchScores | null;
   rating: number | null;
+  near_misses?: NearMissCandidate[];
+  fts_candidates_count?: number;
+  rejection_reason?: string | null;
 }
 
 export interface LLMValidationDebug {
@@ -132,12 +141,29 @@ export interface DebugFinalResult {
   source: 'fuzzy' | 'llm' | 'none';
 }
 
+export interface NormalizationTrace {
+  original_text: string;
+  after_pattern_removal: string;
+  removed_patterns: string[];
+  removed_filler_words: string[];
+  final_text: string;
+}
+
+export interface LLMRawDebug {
+  prompt_text: string;
+  raw_response: string;
+  model_used: string | null;
+  was_heuristic_fallback: boolean;
+}
+
 export interface DebugPipelineStep {
   raw_text: string;
   normalized_text: string;
   bottle_index: number | null;
   fuzzy_match: FuzzyMatchDebug | null;
   llm_validation: LLMValidationDebug | null;
+  normalization_trace?: NormalizationTrace | null;
+  llm_raw?: LLMRawDebug | null;
   final_result: DebugFinalResult | null;
   step_failed: boolean;
   included_in_results: boolean;

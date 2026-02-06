@@ -38,11 +38,21 @@ class FuzzyMatchScores(BaseModel):
     weighted_score: float = Field(..., description="Final weighted score (0-1)")
 
 
+class NearMissCandidate(BaseModel):
+    """A near-miss candidate that was considered but rejected."""
+    wine_name: str
+    score: float
+    rejection_reason: str  # "below_threshold", "generic_query"
+
+
 class FuzzyMatchDebug(BaseModel):
     """Debug info for fuzzy match step."""
     candidate: Optional[str] = Field(None, description="Matched wine name from DB")
     scores: Optional[FuzzyMatchScores] = Field(None, description="Individual algorithm scores")
     rating: Optional[float] = Field(None, description="Rating of matched wine")
+    near_misses: list[NearMissCandidate] = Field(default_factory=list, description="Top candidates that didn't make the cut")
+    fts_candidates_count: int = Field(0, description="Number of FTS candidates found")
+    rejection_reason: Optional[str] = Field(None, description="Why matching failed: no_fts_candidates, below_threshold, generic_query, query_too_short")
 
 
 class LLMValidationDebug(BaseModel):
@@ -53,6 +63,23 @@ class LLMValidationDebug(BaseModel):
     reasoning: str = Field(..., description="LLM's explanation")
 
 
+class NormalizationTrace(BaseModel):
+    """Trace of text normalization showing what was removed at each step."""
+    original_text: str
+    after_pattern_removal: str
+    removed_patterns: list[str] = Field(default_factory=list)
+    removed_filler_words: list[str] = Field(default_factory=list)
+    final_text: str
+
+
+class LLMRawDebug(BaseModel):
+    """Raw LLM prompt and response for debugging."""
+    prompt_text: str = Field(..., description="Truncated prompt sent to LLM (max 500 chars)")
+    raw_response: str = Field(..., description="Truncated LLM response (max 500 chars)")
+    model_used: Optional[str] = None
+    was_heuristic_fallback: bool = False
+
+
 class DebugPipelineStep(BaseModel):
     """Debug info for a single OCR text through the pipeline."""
     raw_text: str = Field(..., description="Original OCR text")
@@ -60,6 +87,8 @@ class DebugPipelineStep(BaseModel):
     bottle_index: int = Field(..., description="Which bottle this belongs to")
     fuzzy_match: Optional[FuzzyMatchDebug] = Field(None, description="Fuzzy match results")
     llm_validation: Optional[LLMValidationDebug] = Field(None, description="LLM validation results")
+    normalization_trace: Optional[NormalizationTrace] = Field(None, description="What normalization removed")
+    llm_raw: Optional[LLMRawDebug] = Field(None, description="Raw LLM prompt/response")
     final_result: Optional[dict] = Field(None, description="Final result {wine_name, confidence, source}")
     step_failed: Optional[str] = Field(None, description="Step where processing failed")
     included_in_results: bool = Field(..., description="Whether this made it to results")

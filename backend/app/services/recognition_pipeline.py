@@ -28,6 +28,9 @@ from ..models.debug import (
     FuzzyMatchDebug,
     FuzzyMatchScores,
     LLMValidationDebug,
+    NearMissCandidate,
+    NormalizationTrace,
+    LLMRawDebug,
 )
 from .llm_normalizer import (
     NormalizerProtocol,
@@ -37,31 +40,98 @@ from .llm_normalizer import (
 )
 from .llm_rating_cache import get_llm_rating_cache, LLMRatingCache
 from .ocr_processor import BottleText
-from .wine_matcher import WineMatcher, WineMatch, WineMatchWithScores, _is_generic_query, _is_llm_generic_response
+from .wine_matcher import WineMatcher, WineMatch, WineMatchWithScores, FuzzyMatchDebugResult, _is_generic_query, _is_llm_generic_response
 
 
 class DebugCollector:
     """
     Collects debug information when enabled, no-ops when disabled.
 
-    This class extracts the debug concern from RecognitionPipeline,
-    providing a clean interface that handles the enabled/disabled
-    state internally.
+    All debug assembly logic lives here — pipeline methods stay clean.
     """
 
     def __init__(self, enabled: bool = False):
-        """
-        Initialize collector.
-
-        Args:
-            enabled: If True, collect debug info. If False, all methods are no-ops.
-        """
         self.enabled = enabled
         self.steps: list[DebugPipelineStep] = []
 
     def reset(self) -> None:
-        """Reset collected debug info for a new recognition run."""
         self.steps = []
+
+    # --- Builder helpers (keep debug assembly out of pipeline code) ---
+
+    def _build_fuzzy_debug(
+        self,
+        match_with_scores: Optional["WineMatchWithScores"],
+        debug_result: Optional["FuzzyMatchDebugResult"] = None,
+    ) -> Optional[FuzzyMatchDebug]:
+        """Build FuzzyMatchDebug from match scores and optional debug result."""
+        if debug_result is not None:
+            # Rich debug path — includes near-misses even when match is None
+            scores = None
+            candidate = None
+            rating = None
+            if debug_result.match:
+                m = debug_result.match
+                candidate = m.canonical_name
+                rating = m.rating
+                scores = FuzzyMatchScores(
+                    ratio=m.scores.ratio, partial_ratio=m.scores.partial_ratio,
+                    token_sort_ratio=m.scores.token_sort_ratio,
+                    phonetic_bonus=m.scores.phonetic_bonus,
+                    weighted_score=m.scores.weighted_score,
+                )
+            near_misses = [
+                NearMissCandidate(wine_name=nm.wine_name, score=nm.score, rejection_reason=nm.rejection_reason)
+                for nm in debug_result.near_misses
+            ]
+            return FuzzyMatchDebug(
+                candidate=candidate, scores=scores, rating=rating,
+                near_misses=near_misses,
+                fts_candidates_count=debug_result.fts_candidates_count,
+                rejection_reason=debug_result.rejection_reason,
+            )
+        if match_with_scores:
+            return FuzzyMatchDebug(
+                candidate=match_with_scores.canonical_name,
+                scores=FuzzyMatchScores(
+                    ratio=match_with_scores.scores.ratio,
+                    partial_ratio=match_with_scores.scores.partial_ratio,
+                    token_sort_ratio=match_with_scores.scores.token_sort_ratio,
+                    phonetic_bonus=match_with_scores.scores.phonetic_bonus,
+                    weighted_score=match_with_scores.scores.weighted_score,
+                ),
+                rating=match_with_scores.rating,
+            )
+        return None
+
+    def _build_normalization_trace(self, bottle_text: "BottleText") -> Optional[NormalizationTrace]:
+        """Build NormalizationTrace from BottleText if trace data exists."""
+        t = bottle_text.normalization_trace
+        if not t:
+            return None
+        return NormalizationTrace(
+            original_text=t["original_text"],
+            after_pattern_removal=t["after_pattern_removal"],
+            removed_patterns=t["removed_patterns"],
+            removed_filler_words=t["removed_filler_words"],
+            final_text=t["final_text"],
+        )
+
+    def _build_llm_raw(self, validation: Optional["BatchValidationResult"]) -> Optional[LLMRawDebug]:
+        """Build LLMRawDebug from validation result debug fields."""
+        if not validation:
+            return None
+        if validation._debug_heuristic:
+            return LLMRawDebug(prompt_text="", raw_response="", was_heuristic_fallback=True)
+        if validation._debug_prompt or validation._debug_response:
+            return LLMRawDebug(
+                prompt_text=validation._debug_prompt or "",
+                raw_response=validation._debug_response or "",
+                model_used=validation._debug_model,
+            )
+        return None
+
+    # --- Public interface ---
 
     def add_step(
         self,
@@ -71,32 +141,24 @@ class DebugCollector:
         llm_debug: Optional[LLMValidationDebug],
         result: Optional["RecognizedWine"],
         step_failed: Optional[str],
-        included: bool
+        included: bool,
+        debug_result: Optional["FuzzyMatchDebugResult"] = None,
+        validation: Optional["BatchValidationResult"] = None,
     ) -> None:
-        """Add a debug step to the collection. No-op if disabled."""
+        """Add a debug step. No-op if disabled."""
         if not self.enabled:
             return
 
-        fuzzy_debug = None
-        if match_with_scores:
-            fuzzy_debug = FuzzyMatchDebug(
-                candidate=match_with_scores.canonical_name,
-                scores=FuzzyMatchScores(
-                    ratio=match_with_scores.scores.ratio,
-                    partial_ratio=match_with_scores.scores.partial_ratio,
-                    token_sort_ratio=match_with_scores.scores.token_sort_ratio,
-                    phonetic_bonus=match_with_scores.scores.phonetic_bonus,
-                    weighted_score=match_with_scores.scores.weighted_score
-                ),
-                rating=match_with_scores.rating
-            )
+        fuzzy_debug = self._build_fuzzy_debug(match_with_scores, debug_result)
+        norm_trace = self._build_normalization_trace(bottle_text)
+        llm_raw = self._build_llm_raw(validation)
 
         final_result = None
         if result:
             final_result = {
                 "wine_name": result.wine_name,
                 "confidence": result.confidence,
-                "source": result.source
+                "source": result.source,
             }
 
         self.steps.append(DebugPipelineStep(
@@ -105,23 +167,25 @@ class DebugCollector:
             bottle_index=bottle_idx,
             fuzzy_match=fuzzy_debug,
             llm_validation=llm_debug,
+            normalization_trace=norm_trace,
+            llm_raw=llm_raw,
             final_result=final_result,
             step_failed=step_failed,
-            included_in_results=included
+            included_in_results=included,
         ))
 
     def create_llm_debug(
         self,
-        validation: "BatchValidationResult"
+        validation: "BatchValidationResult",
     ) -> Optional[LLMValidationDebug]:
-        """Create LLM debug info from validation result. Returns None if disabled."""
+        """Create LLM validation debug from result. Returns None if disabled."""
         if not self.enabled:
             return None
         return LLMValidationDebug(
             is_valid_match=validation.is_valid_match,
             wine_name=validation.wine_name,
             confidence=validation.confidence,
-            reasoning=validation.reasoning
+            reasoning=validation.reasoning,
         )
 
 
@@ -199,18 +263,14 @@ class RecognitionPipeline:
         self,
         bt: BottleText,
         bottle_idx: int
-    ) -> tuple[BottleText, Optional[WineMatch], Optional[WineMatchWithScores], int, Optional[str]]:
+    ) -> tuple[BottleText, Optional[WineMatch], Optional[WineMatchWithScores], int, Optional[str], Optional[FuzzyMatchDebugResult]]:
         """
         Match a single bottle (for parallel execution).
 
         Returns:
-            Tuple of (bottle_text, match, match_with_scores, bottle_idx, error_reason)
+            Tuple of (bottle_text, match, match_with_scores, bottle_idx, error_reason, debug_result)
         """
         if not bt.normalized_name or len(bt.normalized_name) < 3:
-            # If raw combined_text has enough content, don't skip — let it
-            # reach the LLM which can handle messy/fragmented OCR text.
-            # The aggressive text normalization often strips valid wine names
-            # below 3 chars (e.g. French "de", "du", "la" removed).
             raw_text = bt.combined_text or ""
             if len(raw_text.strip()) >= 5:
                 logger.info(
@@ -218,11 +278,12 @@ class RecognitionPipeline:
                     f"({bt.normalized_name!r}) but raw text available "
                     f"({raw_text[:60]!r}), forwarding to LLM"
                 )
-                return (bt, None, None, bottle_idx, None)
-            return (bt, None, None, bottle_idx, "text_too_short")
+                return (bt, None, None, bottle_idx, None, None)
+            return (bt, None, None, bottle_idx, "text_too_short", None)
 
         if self._debug.enabled:
-            match_with_scores = self.wine_matcher.match_with_scores(bt.normalized_name)
+            debug_result = self.wine_matcher.match_with_debug(bt.normalized_name)
+            match_with_scores = debug_result.match
             match = WineMatch(
                 canonical_name=match_with_scores.canonical_name,
                 rating=match_with_scores.rating,
@@ -234,10 +295,10 @@ class RecognitionPipeline:
                 varietal=match_with_scores.varietal,
                 description=match_with_scores.description,
             ) if match_with_scores else None
-            return (bt, match, match_with_scores, bottle_idx, None)
+            return (bt, match, match_with_scores, bottle_idx, None, debug_result)
         else:
             match = self.wine_matcher.match(bt.normalized_name)
-            return (bt, match, None, bottle_idx, None)
+            return (bt, match, None, bottle_idx, None, None)
 
     async def recognize(
         self,
@@ -265,66 +326,61 @@ class RecognitionPipeline:
             return []
 
         # Phase 1: Parallel fuzzy match (optimized with ThreadPoolExecutor)
-        # Use match_with_scores when in debug mode for detailed scoring info
-        matches: list[tuple[BottleText, Optional[WineMatch], Optional[WineMatchWithScores]]] = []
+        matches: list[tuple[BottleText, Optional[WineMatch], Optional[WineMatchWithScores], Optional[FuzzyMatchDebugResult]]] = []
 
-        # Submit all matching tasks in parallel
         futures = [
             self._executor.submit(self._match_bottle, bt, idx)
             for idx, bt in enumerate(bottle_texts)
         ]
 
-        # Collect results in order
         for idx, future in enumerate(futures):
             try:
-                bt, match, match_with_scores, bottle_idx, error_reason = future.result()
+                bt, match, match_with_scores, bottle_idx, error_reason, debug_result = future.result()
                 if error_reason:
                     self._debug.add_step(
                         bt, bottle_idx, None, None, None,
-                        step_failed=error_reason, included=False
+                        step_failed=error_reason, included=False,
+                        debug_result=debug_result,
                     )
                     continue
-                matches.append((bt, match, match_with_scores))
+                matches.append((bt, match, match_with_scores, debug_result))
             except Exception as e:
-                # Log the exception but continue processing other bottles
                 logger.error(f"Error matching bottle {idx}: {e}", exc_info=True)
-                # Get the bottle text for this failed future
                 bt = bottle_texts[idx]
                 self._debug.add_step(
                     bt, idx, None, None, None,
-                    step_failed=f"matching_exception: {type(e).__name__}", included=False
+                    step_failed=f"matching_exception: {type(e).__name__}", included=False,
                 )
 
         # Phase 2: Partition by confidence
         high_confidence_results: list[RecognizedWine] = []
-        needs_llm: list[tuple[BottleText, Optional[WineMatch], Optional[WineMatchWithScores], int]] = []
+        needs_llm: list[tuple[BottleText, Optional[WineMatch], Optional[WineMatchWithScores], int, Optional[FuzzyMatchDebugResult]]] = []
 
-        for idx, (bt, match, match_with_scores) in enumerate(matches):
+        for idx, (bt, match, match_with_scores, debug_result) in enumerate(matches):
             bottle_idx = bottle_texts.index(bt)
             if match and match.confidence >= Config.HIGH_CONFIDENCE_THRESHOLD:
-                # High confidence → skip LLM, return immediately
                 result = self._match_to_result(bt, match)
                 high_confidence_results.append(result)
                 self._debug.add_step(
                     bt, bottle_idx, match_with_scores, None, result,
-                    step_failed=None, included=True
+                    step_failed=None, included=True,
+                    debug_result=debug_result,
                 )
             elif self.use_llm:
-                # Uncertain → queue for LLM validation
-                needs_llm.append((bt, match, match_with_scores, bottle_idx))
+                needs_llm.append((bt, match, match_with_scores, bottle_idx, debug_result))
             elif match and match.confidence >= Config.FUZZY_CONFIDENCE_THRESHOLD:
-                # LLM disabled but acceptable confidence → use match
                 result = self._match_to_result(bt, match)
                 high_confidence_results.append(result)
                 self._debug.add_step(
                     bt, bottle_idx, match_with_scores, None, result,
-                    step_failed=None, included=True
+                    step_failed=None, included=True,
+                    debug_result=debug_result,
                 )
             else:
-                # No match or low confidence, LLM disabled
                 self._debug.add_step(
                     bt, bottle_idx, match_with_scores, None, None,
-                    step_failed="low_confidence_no_llm", included=False
+                    step_failed="low_confidence_no_llm", included=False,
+                    debug_result=debug_result,
                 )
 
         # Phase 3: Single batched LLM call for uncertain matches
@@ -394,37 +450,33 @@ class RecognitionPipeline:
 
     async def _validate_batch_with_debug(
         self,
-        items: list[tuple[BottleText, Optional[WineMatch], Optional[WineMatchWithScores], int]]
+        items: list[tuple[BottleText, Optional[WineMatch], Optional[WineMatchWithScores], int, Optional[FuzzyMatchDebugResult]]]
     ) -> list[RecognizedWine]:
         """
         Validate multiple bottles with debug info collection.
 
         Args:
-            items: List of (BottleText, WineMatch, WineMatchWithScores, bottle_idx) tuples
+            items: List of (BottleText, WineMatch, WineMatchWithScores, bottle_idx, debug_result) tuples
 
         Returns:
             List of RecognizedWine for successfully validated bottles
         """
         results: list[RecognizedWine] = []
-        items_needing_llm: list[tuple[BottleText, Optional[WineMatch], Optional[WineMatchWithScores], int]] = []
+        items_needing_llm: list[tuple[BottleText, Optional[WineMatch], Optional[WineMatchWithScores], int, Optional[FuzzyMatchDebugResult]]] = []
         cache_hit_indices: set[int] = set()
 
-        # Phase 1: Check cache for ALL items (not just those without DB match)
-        # Low-confidence DB matches may have been previously identified by Vision/LLM
-        # with a real rating — the cache provides that better result.
+        # Phase 1: Check cache for ALL items
         if self._llm_cache:
-            for idx, (bt, match, match_with_scores, bottle_idx) in enumerate(items):
+            for idx, (bt, match, match_with_scores, bottle_idx, debug_result) in enumerate(items):
                 ocr_text = bt.combined_text or bt.normalized_name
                 cached = self._llm_cache.get(ocr_text)
                 if cached and (len(cached.wine_name) > 80 or len(cached.wine_name.split()) > 10):
-                    cached = None  # Reject garbage cached entries
-                # Also try normalized name (Vision results are cached under wine names)
+                    cached = None
                 if not cached and bt.normalized_name and bt.normalized_name != ocr_text:
                     cached = self._llm_cache.get(bt.normalized_name)
                 if cached and (len(cached.wine_name) > 80 or len(cached.wine_name.split()) > 10):
-                    cached = None  # Reject garbage cached entries
+                    cached = None
                 if cached:
-                    # Create result from cached data
                     result = RecognizedWine(
                         wine_name=cached.wine_name,
                         rating=cached.estimated_rating,
@@ -441,7 +493,6 @@ class RecognitionPipeline:
                     results.append(result)
                     cache_hit_indices.add(idx)
 
-                    # Create debug info for cache hit
                     cache_debug = LLMValidationDebug(
                         is_valid_match=True,
                         wine_name=cached.wine_name,
@@ -450,7 +501,8 @@ class RecognitionPipeline:
                     )
                     self._debug.add_step(
                         bt, bottle_idx, match_with_scores, cache_debug, result,
-                        step_failed=None, included=True
+                        step_failed=None, included=True,
+                        debug_result=debug_result,
                     )
 
         # Collect items that still need LLM validation
@@ -460,9 +512,8 @@ class RecognitionPipeline:
 
         # Phase 2: Call LLM for remaining items
         if items_needing_llm:
-            # Build batch request
             batch_items: list[BatchValidationItem] = []
-            for bt, match, _, _ in items_needing_llm:
+            for bt, match, _, _, _ in items_needing_llm:
                 ocr_text = bt.combined_text or bt.normalized_name
                 batch_items.append(BatchValidationItem(
                     ocr_text=ocr_text,
@@ -470,25 +521,27 @@ class RecognitionPipeline:
                     db_rating=match.rating if match else None
                 ))
 
-            # Single LLM call for remaining items
             validations = await self.normalizer.validate_batch(batch_items)
             self.llm_call_count += 1
 
-            # Process results with debug info
-            for (bt, match, match_with_scores, bottle_idx), validation in zip(items_needing_llm, validations):
+            for (bt, match, match_with_scores, bottle_idx, debug_result), validation in zip(items_needing_llm, validations):
                 result = self._process_validation(bt, match, validation)
                 llm_debug = self._debug.create_llm_debug(validation)
 
                 if result:
                     self._debug.add_step(
                         bt, bottle_idx, match_with_scores, llm_debug, result,
-                        step_failed=None, included=True
+                        step_failed=None, included=True,
+                        debug_result=debug_result,
+                        validation=validation,
                     )
                     results.append(result)
                 else:
                     self._debug.add_step(
                         bt, bottle_idx, match_with_scores, llm_debug, None,
-                        step_failed="llm_validation", included=False
+                        step_failed="llm_validation", included=False,
+                        debug_result=debug_result,
+                        validation=validation,
                     )
 
         return results

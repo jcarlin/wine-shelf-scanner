@@ -455,7 +455,8 @@ async def process_image(
     ocr_processor = OCRProcessor()
     ocr_result = ocr_processor.process_with_orphans(
         vision_result.objects,
-        vision_result.text_blocks
+        vision_result.text_blocks,
+        debug=debug_mode,
     )
     bottle_texts = ocr_result.bottle_texts
     orphaned_texts = ocr_result.orphaned_texts

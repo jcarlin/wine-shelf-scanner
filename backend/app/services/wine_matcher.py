@@ -128,6 +128,23 @@ class WineMatch:
 
 
 @dataclass
+class NearMiss:
+    """A candidate that was considered but didn't make the final match."""
+    wine_name: str
+    score: float
+    rejection_reason: str  # "below_threshold", "generic_query"
+
+
+@dataclass
+class FuzzyMatchDebugResult:
+    """Result from match_with_debug() with diagnostic info."""
+    match: Optional["WineMatchWithScores"]
+    near_misses: list[NearMiss]
+    fts_candidates_count: int
+    rejection_reason: Optional[str]  # "no_fts_candidates", "below_threshold", "generic_query", "query_too_short"
+
+
+@dataclass
 class WineMatchWithScores:
     """A matched wine with detailed matching scores."""
     canonical_name: str
@@ -439,6 +456,120 @@ class WineMatcher:
             description=match.description,
             wine_id=match.wine_id,
         )
+
+    def match_with_debug(self, query: str) -> FuzzyMatchDebugResult:
+        """
+        Match with full debug diagnostics (near-misses, candidate counts, rejection reasons).
+
+        Only called when debug=True. The normal match/match_with_scores paths are untouched.
+        """
+        if not query:
+            return FuzzyMatchDebugResult(match=None, near_misses=[], fts_candidates_count=0, rejection_reason="query_too_short")
+
+        query_lower = query.lower().strip()
+
+        if len(query_lower) < 3:
+            return FuzzyMatchDebugResult(match=None, near_misses=[], fts_candidates_count=0, rejection_reason="query_too_short")
+
+        if _is_generic_query(query_lower):
+            return FuzzyMatchDebugResult(match=None, near_misses=[], fts_candidates_count=0, rejection_reason="generic_query")
+
+        if self._repository is None:
+            # JSON mode - fall back to simple match
+            match = self.match_with_scores(query)
+            return FuzzyMatchDebugResult(match=match, near_misses=[], fts_candidates_count=0, rejection_reason=None if match else "no_fts_candidates")
+
+        # Step 1: Exact match
+        result = self._repository.find_by_name(query_lower)
+        if result:
+            scores = FuzzyScores(ratio=1.0, partial_ratio=1.0, token_sort_ratio=1.0, phonetic_bonus=0.0, weighted_score=1.0)
+            match = WineMatchWithScores(
+                canonical_name=result.canonical_name, rating=result.rating, confidence=1.0,
+                source=WineSource.DATABASE, scores=scores, wine_type=result.wine_type,
+                brand=result.winery, region=result.region, varietal=result.varietal,
+                description=result.description, wine_id=result.id,
+            )
+            return FuzzyMatchDebugResult(match=match, near_misses=[], fts_candidates_count=0, rejection_reason=None)
+
+        all_near_misses: list[NearMiss] = []
+
+        # Step 2: FTS5 prefix match
+        fts_results = self._repository.search_fts(query_lower, limit=5)
+        fts_count = len(fts_results)
+        if fts_results:
+            best_match = None
+            best_score = 0.0
+            for fts_result in fts_results:
+                score = self._compute_fuzzy_score(query_lower, fts_result.canonical_name.lower())
+                if score > best_score:
+                    best_score = score
+                    best_match = fts_result
+                if score < Config.MIN_SIMILARITY:
+                    all_near_misses.append(NearMiss(wine_name=fts_result.canonical_name, score=score, rejection_reason="below_threshold"))
+
+            if best_match and best_score >= Config.MIN_SIMILARITY:
+                # Compute detailed scores for the best match
+                ratio = fuzz.ratio(query_lower, best_match.canonical_name.lower()) / 100.0
+                partial_ratio = fuzz.partial_ratio(query_lower, best_match.canonical_name.lower()) / 100.0
+                token_sort = fuzz.token_sort_ratio(query_lower, best_match.canonical_name.lower()) / 100.0
+                scores = FuzzyScores(ratio=ratio, partial_ratio=partial_ratio, token_sort_ratio=token_sort, phonetic_bonus=0.0, weighted_score=best_score)
+                match = WineMatchWithScores(
+                    canonical_name=best_match.canonical_name, rating=best_match.rating,
+                    confidence=min(0.95, best_score), source=WineSource.DATABASE, scores=scores,
+                    wine_type=best_match.wine_type, brand=best_match.winery, region=best_match.region,
+                    varietal=best_match.varietal, description=best_match.description, wine_id=best_match.id,
+                )
+                # Add non-winning FTS candidates as near-misses
+                for fts_result in fts_results:
+                    if fts_result.canonical_name != best_match.canonical_name:
+                        s = self._compute_fuzzy_score(query_lower, fts_result.canonical_name.lower())
+                        if NearMiss(wine_name=fts_result.canonical_name, score=s, rejection_reason="below_threshold") not in all_near_misses:
+                            all_near_misses.append(NearMiss(wine_name=fts_result.canonical_name, score=s, rejection_reason="not_best"))
+                all_near_misses.sort(key=lambda x: x.score, reverse=True)
+                return FuzzyMatchDebugResult(match=match, near_misses=all_near_misses[:5], fts_candidates_count=fts_count, rejection_reason=None)
+
+        # Step 3: Fuzzy match (OR-based FTS)
+        candidates = self._repository.search_fts_or(query_lower, limit=50)
+        or_fts_count = len(candidates) + fts_count
+
+        if not candidates:
+            all_near_misses.sort(key=lambda x: x.score, reverse=True)
+            return FuzzyMatchDebugResult(match=None, near_misses=all_near_misses[:5], fts_candidates_count=or_fts_count, rejection_reason="no_fts_candidates" if or_fts_count == 0 else "below_threshold")
+
+        best_match = None
+        best_score = 0.0
+        for wine in candidates:
+            score = self._compute_fuzzy_score(query_lower, wine.canonical_name.lower())
+            if score > best_score:
+                best_score = score
+                best_match = wine
+            # Track all candidates as potential near-misses
+            reason = "below_threshold" if score < Config.FUZZY_CONFIDENCE_THRESHOLD else "not_best"
+            all_near_misses.append(NearMiss(wine_name=wine.canonical_name, score=score, rejection_reason=reason))
+
+        if best_match and best_score >= Config.FUZZY_CONFIDENCE_THRESHOLD:
+            if _is_generic_query(best_match.canonical_name):
+                all_near_misses.sort(key=lambda x: x.score, reverse=True)
+                return FuzzyMatchDebugResult(match=None, near_misses=all_near_misses[:5], fts_candidates_count=or_fts_count, rejection_reason="generic_query")
+
+            ratio = fuzz.ratio(query_lower, best_match.canonical_name.lower()) / 100.0
+            partial_ratio = fuzz.partial_ratio(query_lower, best_match.canonical_name.lower()) / 100.0
+            token_sort = fuzz.token_sort_ratio(query_lower, best_match.canonical_name.lower()) / 100.0
+            phonetic = best_score - (Config.WEIGHT_RATIO * ratio + Config.WEIGHT_PARTIAL * partial_ratio + Config.WEIGHT_TOKEN_SORT * token_sort)
+            scores = FuzzyScores(ratio=ratio, partial_ratio=partial_ratio, token_sort_ratio=token_sort, phonetic_bonus=max(0, phonetic), weighted_score=best_score)
+            match = WineMatchWithScores(
+                canonical_name=best_match.canonical_name, rating=best_match.rating,
+                confidence=best_score, source=WineSource.DATABASE, scores=scores,
+                wine_type=best_match.wine_type, brand=best_match.winery, region=best_match.region,
+                varietal=best_match.varietal, description=best_match.description, wine_id=best_match.id,
+            )
+            # Remove the winning match from near-misses
+            all_near_misses = [nm for nm in all_near_misses if nm.wine_name != best_match.canonical_name]
+            all_near_misses.sort(key=lambda x: x.score, reverse=True)
+            return FuzzyMatchDebugResult(match=match, near_misses=all_near_misses[:5], fts_candidates_count=or_fts_count, rejection_reason=None)
+
+        all_near_misses.sort(key=lambda x: x.score, reverse=True)
+        return FuzzyMatchDebugResult(match=None, near_misses=all_near_misses[:5], fts_candidates_count=or_fts_count, rejection_reason="below_threshold")
 
     def match_many(self, queries: list[str]) -> list[Optional[WineMatch]]:
         """Match multiple queries."""

@@ -142,6 +142,11 @@ class BatchValidationResult:
     blurb: Optional[str] = None  # 1-2 sentence description
     review_count: Optional[int] = None  # Estimated review count
     review_snippets: Optional[list[str]] = None  # Sample review quotes
+    # Debug fields (only populated when debug is enabled)
+    _debug_prompt: Optional[str] = None
+    _debug_response: Optional[str] = None
+    _debug_model: Optional[str] = None
+    _debug_heuristic: bool = False
 
 
 class NormalizerProtocol(Protocol):
@@ -754,7 +759,10 @@ Return JSON: {"wine_name": "...", "confidence": 0.0-1.0, "is_wine": true/false, 
 
         if not LITELLM_AVAILABLE or not self.models:
             logger.debug("LiteLLM not available, using heuristic batch validation")
-            return self._heuristic_validate_batch(items)
+            results = self._heuristic_validate_batch(items)
+            for r in results:
+                r._debug_heuristic = True
+            return results
 
         items_text = self._format_batch_items(items)
         full_prompt = f"{self.BATCH_VALIDATION_PROMPT}\n\nItems to validate:\n{items_text}"
@@ -762,7 +770,10 @@ Return JSON: {"wine_name": "...", "confidence": 0.0-1.0, "is_wine": true/false, 
         try:
             litellm = _get_litellm()
             if not litellm:
-                return self._heuristic_validate_batch(items)
+                results = self._heuristic_validate_batch(items)
+                for r in results:
+                    r._debug_heuristic = True
+                return results
             response = await litellm.acompletion(
                 model=self.models[0],
                 messages=[{"role": "user", "content": full_prompt}],
@@ -772,14 +783,23 @@ Return JSON: {"wine_name": "...", "confidence": 0.0-1.0, "is_wine": true/false, 
                 max_tokens=min(300 * len(items), 4000),  # Cap at 4000 for Haiku compatibility
             )
 
-            return self._parse_batch_response(
-                response.choices[0].message.content,
-                items
-            )
+            raw_response = response.choices[0].message.content
+            results = self._parse_batch_response(raw_response, items)
+
+            # Attach debug info to each result
+            for r in results:
+                r._debug_prompt = full_prompt[:500]
+                r._debug_response = raw_response[:500] if raw_response else None
+                r._debug_model = self.models[0]
+
+            return results
 
         except Exception as e:
             logger.warning(f"LiteLLM batch validation error (all fallbacks failed): {e}")
-            return self._heuristic_validate_batch(items)
+            results = self._heuristic_validate_batch(items)
+            for r in results:
+                r._debug_heuristic = True
+            return results
 
 
 class MockNormalizer:

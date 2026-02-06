@@ -134,6 +134,7 @@ class BottleText:
     text_fragments: list[str]
     combined_text: str
     normalized_name: str
+    normalization_trace: dict | None = None  # Only populated in debug mode
 
 
 @dataclass
@@ -297,7 +298,8 @@ class OCRProcessor:
     def process_with_orphans(
         self,
         bottles: list[DetectedObject],
-        text_blocks: list[TextBlock]
+        text_blocks: list[TextBlock],
+        debug: bool = False,
     ) -> OCRProcessingResult:
         """
         Group text to bottles and track orphaned text not assigned to any bottle.
@@ -309,6 +311,7 @@ class OCRProcessor:
         Args:
             bottles: Detected bottle objects with bounding boxes
             text_blocks: OCR text blocks with positions
+            debug: If True, populate normalization_trace on each BottleText
 
         Returns:
             OCRProcessingResult with bottle_texts and orphaned_texts
@@ -358,13 +361,19 @@ class OCRProcessor:
         for i, bottle in enumerate(bottles):
             text_fragments = bottle_text_map[i]
             combined = ' '.join(text_fragments)
-            normalized = self._normalize_text(combined)
+
+            if debug:
+                normalized, trace = self._normalize_text_with_trace(combined)
+            else:
+                normalized = self._normalize_text(combined)
+                trace = None
 
             bottle_texts.append(BottleText(
                 bottle=bottle,
                 text_fragments=text_fragments,
                 combined_text=combined,
-                normalized_name=normalized
+                normalized_name=normalized,
+                normalization_trace=trace,
             ))
 
         # Step 3: Process orphaned text blocks
@@ -473,3 +482,72 @@ class OCRProcessor:
             result = ' '.join(word.capitalize() for word in result.split())
 
         return result
+
+    def _normalize_text_with_trace(self, text: str) -> tuple[str, dict]:
+        """
+        Normalize OCR text and return a trace of what was removed.
+
+        Returns:
+            Tuple of (normalized_text, trace_dict) where trace_dict contains:
+            - original_text, after_pattern_removal, removed_patterns,
+              removed_filler_words, final_text
+        """
+        original = text
+        result = text
+        removed_patterns = []
+
+        # Remove patterns and track what was removed
+        for pattern, label in [
+            (self.YEAR_PATTERN, "year"),
+            (self.SIZE_PATTERN, "size"),
+            (self.PRICE_PATTERN, "price"),
+            (self.ABV_PATTERN, "abv"),
+        ]:
+            matches = pattern.findall(result)
+            if matches:
+                for m in matches:
+                    removed_patterns.append(m if isinstance(m, str) else m[0] if m else "")
+                result = pattern.sub('', result)
+
+        after_pattern_removal = re.sub(r'\s+', ' ', result).strip()
+
+        # Remove filler words (case-insensitive) and track
+        words = result.split()
+        removed_filler = []
+        kept_words = []
+        for w in words:
+            if w.lower() in self.FILLER_WORDS:
+                removed_filler.append(w.lower())
+            else:
+                kept_words.append(w)
+        words = kept_words
+
+        # Deduplicate
+        seen = set()
+        deduped = []
+        for w in words:
+            w_lower = w.lower()
+            if len(w) <= 1 or w_lower in ('-', '--', "'", "d'or", "d'or") or w.isdigit():
+                continue
+            if w_lower not in seen:
+                seen.add(w_lower)
+                deduped.append(w)
+        words = deduped
+
+        result = ' '.join(words)
+        result = re.sub(r'\s+', ' ', result)
+        result = re.sub(r'[^\w\s\'-]', '', result)
+        result = result.strip()
+
+        if result:
+            result = ' '.join(word.capitalize() for word in result.split())
+
+        trace = {
+            "original_text": original,
+            "after_pattern_removal": after_pattern_removal,
+            "removed_patterns": [p for p in removed_patterns if p],
+            "removed_filler_words": removed_filler,
+            "final_text": result,
+        }
+
+        return result, trace

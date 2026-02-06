@@ -277,7 +277,8 @@ struct WineDetailSheet: View {
                                     .font(.caption)
                                     .italic()
                                     .foregroundColor(.secondary)
-                                    .fixedSize(horizontal: false, vertical: true)
+                                    .lineLimit(4)
+                                    .truncationMode(.tail)
                             }
                             .padding(.vertical, 4)
                             .padding(.horizontal, 8)

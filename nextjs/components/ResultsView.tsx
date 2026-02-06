@@ -13,6 +13,7 @@ import { getImageBounds } from '@/lib/image-bounds';
 import { isVisible } from '@/lib/overlay-math';
 import { useFeatureFlags } from '@/lib/feature-flags';
 import { computeShelfRankings, TOP_WINES_COUNT } from '@/lib/shelf-rankings';
+import { useWineReviews } from '@/hooks/useWineReviews';
 
 interface ResultsViewProps {
   response: ScanResponse;
@@ -33,6 +34,9 @@ export function ResultsView({ response, imageUri, onReset }: ResultsViewProps) {
   });
   const [showBugReport, setShowBugReport] = useState(false);
   const { shelfRanking, share: shareEnabled, bugReport: bugReportEnabled } = useFeatureFlags();
+
+  // Prefetch reviews for all DB-matched wines as soon as results arrive
+  const wineReviews = useWineReviews(response.results);
 
   // Check if we should show partial detection toast
   const visibleCount = response.results.filter((w) => isVisible(w.confidence)).length;
@@ -204,6 +208,7 @@ export function ResultsView({ response, imageUri, onReset }: ResultsViewProps) {
         onClose={() => setSelectedWine(null)}
         shelfRank={selectedWine ? shelfRankings.get(selectedWine.wine_name)?.rank : undefined}
         shelfTotal={selectedWine ? shelfRankings.get(selectedWine.wine_name)?.total : undefined}
+        fetchedReviews={selectedWine?.wine_id ? wineReviews.get(selectedWine.wine_id) : undefined}
       />
 
       {/* Bug Report Modal */}

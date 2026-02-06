@@ -44,7 +44,7 @@ export function RatingBadge({ wine, isTopThree, position, onClick, shelfRank, is
     }
   };
 
-  const rankColor = shelfRank === 1 ? '#FFD700' : shelfRank === 2 ? '#D9D9D9' : '#B3B3B3';
+  const rankColor = shelfRank === 1 ? colors.rankGold : shelfRank === 2 ? colors.rankSilver : colors.rankBronze;
 
   return (
     <div
@@ -63,7 +63,7 @@ export function RatingBadge({ wine, isTopThree, position, onClick, shelfRank, is
           className="font-black tracking-wide"
           style={{
             fontSize: 8,
-            color: '#FFD700',
+            color: colors.rankGold,
             textShadow: '0 1px 2px rgba(0,0,0,0.8)',
             marginBottom: 2,
           }}
@@ -110,16 +110,16 @@ export function RatingBadge({ wine, isTopThree, position, onClick, shelfRank, is
           </span>
           {isSafePick && (
             <ShieldCheck
-              style={{ color: '#4CAF50', width: 10, height: 10 }}
+              style={{ color: colors.safePick, width: 10, height: 10 }}
             />
           )}
         </div>
         {userSentiment && (
           <div className="absolute -top-1.5 -right-1.5" style={{ filter: 'drop-shadow(0 0 1px rgba(0,0,0,0.8))' }}>
             {userSentiment === 'disliked' ? (
-              <XCircle style={{ color: '#FF3B30', width: 12, height: 12 }} />
+              <XCircle style={{ color: colors.memoryDisliked, width: 12, height: 12 }} />
             ) : (
-              <Heart className="fill-current" style={{ color: '#34C759', width: 12, height: 12 }} />
+              <Heart className="fill-current" style={{ color: colors.memoryLiked, width: 12, height: 12 }} />
             )}
           </div>
         )}

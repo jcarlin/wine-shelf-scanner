@@ -160,6 +160,14 @@ class OCRProcessor:
     PRICE_PATTERN = _PRICE_PATTERN
     ABV_PATTERN = _ABV_PATTERN
 
+    # Words that are part of producer/wine names — never strip these.
+    # Removing them destroys the wine identity and causes matching failures.
+    # e.g. "Château Margaux" → "Margaux" would match wrong or not at all.
+    WINE_IDENTITY_WORDS = {
+        'chateau', 'château', 'domaine', 'cuvee', 'cuvée',
+        'bodega', 'cantina', 'tenuta', 'casa', 'villa',
+    }
+
     # Marketing/filler words to remove
     FILLER_WORDS = {
         'reserve', 'special', 'edition', 'limited', 'select', 'premium',
@@ -190,18 +198,18 @@ class OCRProcessor:
         'mis', 'en', 'bouteille', 'par', 'a', 'au', 'negociant', 'négociant',
         'eleveur', 'éleveur', 'producteur', 'recoltant', 'récoltant', 'produit',
         'product', 'produce', 'produced', 'france', 'french', 'côte', 'cote', 'd',
-        'or', 'beaune', 'alsace', 'loire',
+        'or', 'beaune',
         # Generic wine terms that appear on many labels (not wine names)
-        'grand', 'vin', 'rouge', 'blanc', 'rose', 'rosé', 'sec', 'demi-sec', 'brut',
+        'vin', 'rouge', 'blanc', 'rose', 'rosé', 'sec', 'demi-sec', 'brut',
         'extra', 'methode', 'méthode', 'traditionnelle', 'traditionnel', 'naturel',
-        'millesime', 'millésime', 'millesimé', 'mis', 'bouteille', 'au', 'domaine',
+        'millesime', 'millésime', 'millesimé',
         'mousseux', 'petillant', 'pétillant', 'cremant', 'crémant', 'cava',
         'spumante', 'prosecco', 'franciacorta', 'sparkling',
         # French connectors
         'de', 'du', 'des', 'le', 'la', 'les', 'et', 'en', 'sur',
         # Additional generic terms
-        'qualité', 'qualite', 'quality', 'superieur', 'supérieur', 'cuvee', 'cuvée',
-        'chateau', 'château', 'vieilles', 'vignes', 'terroir', 'aoc', 'aop',
+        'qualité', 'qualite', 'quality', 'superieur', 'supérieur',
+        'vieilles', 'vignes', 'terroir', 'aoc', 'aop',
     }
 
     def __init__(
@@ -372,28 +380,6 @@ class OCRProcessor:
             bottle_texts=bottle_texts,
             orphaned_texts=orphaned_texts
         )
-
-    def _find_nearby_text(
-        self,
-        bottle: DetectedObject,
-        text_blocks: list[TextBlock]
-    ) -> list[str]:
-        """Find text blocks spatially close to a bottle."""
-        nearby = []
-        bottle_center = bottle.bbox.center
-
-        for block in text_blocks:
-            # Normalize text bbox if needed (Vision API returns pixels)
-            text_center = self._get_normalized_center(block.bbox)
-
-            # Calculate distance
-            distance = self._distance(bottle_center, text_center)
-
-            # Check if text overlaps or is near bottle bbox
-            if distance < Config.PROXIMITY_THRESHOLD or self._overlaps(bottle.bbox, block.bbox):
-                nearby.append(block.text)
-
-        return nearby
 
     def _get_normalized_center(self, bbox: BoundingBox) -> tuple[float, float]:
         """Get center point, normalizing pixel coordinates if needed."""

@@ -13,10 +13,11 @@ class ScanViewModel: ObservableObject {
     }
 
     private let scanService: ScanServiceProtocol
+    private let networkMonitor: NetworkMonitor
     private let backgroundManager: BackgroundScanManager
     private var cancellables = Set<AnyCancellable>()
 
-    init(scanService: ScanServiceProtocol? = nil, backgroundManager: BackgroundScanManager? = nil) {
+    init(scanService: ScanServiceProtocol? = nil, networkMonitor: NetworkMonitor? = nil, backgroundManager: BackgroundScanManager? = nil) {
         // Use provided service, or create real API client using Config
         if let scanService = scanService {
             self.scanService = scanService
@@ -25,6 +26,7 @@ class ScanViewModel: ObservableObject {
             self.scanService = ScanAPIClient(baseURL: Config.apiBaseURL)
         }
 
+        self.networkMonitor = networkMonitor ?? NetworkMonitor.shared
         self.backgroundManager = backgroundManager ?? BackgroundScanManager.shared
 
         // Debug mode always enabled
@@ -36,6 +38,7 @@ class ScanViewModel: ObservableObject {
 
     /// Perform scan with given image.
     ///
+    /// Adapts compression to network conditions when offline cache is enabled.
     /// When the `backgroundProcessing` feature flag is enabled, uses a background
     /// URLSession so the upload continues even if the user leaves the app.
     /// Otherwise falls back to the foreground async/await path.
@@ -49,7 +52,7 @@ class ScanViewModel: ObservableObject {
 
     /// Whether there are cached scans available for offline viewing
     var hasCachedScans: Bool {
-        ScanCacheService.shared.hasCachedScans
+        FeatureFlags.shared.offlineCache && ScanCacheService.shared.hasCachedScans
     }
 
     /// Load cached scans for offline viewing
@@ -68,6 +71,18 @@ class ScanViewModel: ObservableObject {
         debugMode.toggle()
     }
 
+    /// Show the most recent cached scan
+    func showCachedScans() {
+        guard let cached = ScanCacheService.shared.loadAll().first else { return }
+        state = .cachedResults(cached.response, cached.image, cached.timestamp)
+    }
+
+    /// Show a specific cached scan by entry
+    func showCachedScan(_ entry: ScanCacheService.CachedScan) {
+        let image = ScanCacheService.shared.loadImage(for: entry)
+        state = .cachedResults(entry.response, image, entry.timestamp)
+    }
+
     /// Restore a completed background scan on app launch.
     /// Called from WineShelfScannerApp when the app starts.
     func restoreBackgroundScanIfNeeded() {
@@ -84,9 +99,17 @@ class ScanViewModel: ObservableObject {
     private func performForegroundScan(with image: UIImage) {
         state = .processing
 
+        let quality = FeatureFlags.shared.offlineCache
+            ? networkMonitor.compressionQuality
+            : 0.8
+
         Task {
             do {
-                let response = try await scanService.scan(image: image, debug: debugMode)
+                let response = try await scanService.scan(
+                    image: image,
+                    debug: debugMode,
+                    compressionQuality: quality
+                )
                 // Cache result for offline access
                 ScanCacheService.shared.save(response: response, image: image)
                 // Count successful scan for paywall (only when subscription feature is on)
@@ -95,7 +118,14 @@ class ScanViewModel: ObservableObject {
                 }
                 state = .results(response, image)
             } catch {
-                state = .error(error.localizedDescription)
+                // On network failure, fall back to cache if offline and cache is available
+                if FeatureFlags.shared.offlineCache,
+                   !networkMonitor.isConnected,
+                   let cached = ScanCacheService.shared.loadAll().first {
+                    state = .cachedResults(cached.response, cached.image, cached.timestamp)
+                } else {
+                    state = .error(error.localizedDescription)
+                }
             }
         }
     }

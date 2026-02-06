@@ -6,12 +6,8 @@ import { useFeatureFlags } from '@/lib/feature-flags';
 import { useWineMemory } from '@/hooks/useWineMemory';
 import { RatingBadge } from './RatingBadge';
 import { CornerBrackets } from './CornerBrackets';
-import {
-  isVisible,
-  anchorPoint,
-  adjustedAnchorPoint,
-  badgeSize
-} from '@/lib/overlay-math';
+import { isVisible, anchorPoint, adjustedAnchorPoint, badgeSize } from '@/lib/overlay-math';
+import { computeShelfRankings, getTopWineNames } from '@/lib/shelf-rankings';
 
 interface OverlayContainerProps {
   wines: WineResult[];
@@ -29,31 +25,13 @@ export function OverlayContainer({ wines, imageBounds, onWineSelect }: OverlayCo
   }, [wines]);
 
   // Determine top 3 by rating
-  const topThreeIds = useMemo(() => {
-    return [...visibleWines]
-      .filter((w) => w.rating !== null)
-      .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
-      .slice(0, 3)
-      .map((w) => w.wine_name);
-  }, [visibleWines]);
+  const topThreeIds = useMemo(() => getTopWineNames(wines), [wines]);
 
   // Compute shelf rankings
   const shelfRankings = useMemo(() => {
     if (!shelfRanking) return new Map<string, { rank: number; total: number }>();
-    const ranked = [...visibleWines]
-      .filter((w) => w.rating !== null)
-      .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
-    if (ranked.length < 3) return new Map<string, { rank: number; total: number }>();
-    const rankings = new Map<string, { rank: number; total: number }>();
-    let currentRank = 1;
-    ranked.forEach((wine, index) => {
-      if (index > 0 && wine.rating !== ranked[index - 1].rating) {
-        currentRank = index + 1;
-      }
-      rankings.set(wine.wine_name, { rank: currentRank, total: ranked.length });
-    });
-    return rankings;
-  }, [shelfRanking, visibleWines]);
+    return computeShelfRankings(wines);
+  }, [shelfRanking, wines]);
 
   // Calculate positions for each wine
   const winePositions = useMemo(() => {

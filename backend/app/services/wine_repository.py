@@ -9,11 +9,11 @@ Provides thread-safe access to wine database with:
 
 import sqlite3
 import threading
-from contextlib import contextmanager
 from dataclasses import dataclass
-from functools import lru_cache
-from typing import Optional, Iterator
+from typing import Optional
 import json
+
+from app.db import BaseRepository
 
 
 @dataclass
@@ -34,7 +34,7 @@ class WineRecord:
             self.aliases = []
 
 
-class WineRepository:
+class WineRepository(BaseRepository):
     """
     Thread-safe SQLite repository for wine data.
 
@@ -52,12 +52,7 @@ class WineRepository:
         Args:
             db_path: Path to SQLite database. Defaults to Config.database_path()
         """
-        if db_path is None:
-            from app.config import Config
-            db_path = Config.database_path()
-
-        self.db_path = str(db_path)
-        self._local = threading.local()
+        super().__init__(db_path, use_wal=True)
         self._schema_initialized = False
         self._cache_lock = threading.Lock()
 
@@ -67,30 +62,6 @@ class WineRepository:
 
         # Initialize schema
         self._init_schema()
-
-    def _get_connection(self) -> sqlite3.Connection:
-        """Get thread-local database connection."""
-        if not hasattr(self._local, 'connection') or self._local.connection is None:
-            conn = sqlite3.connect(self.db_path, check_same_thread=False)
-            conn.row_factory = sqlite3.Row
-            # Enable foreign keys
-            conn.execute("PRAGMA foreign_keys = ON")
-            # WAL mode for better concurrent access
-            conn.execute("PRAGMA journal_mode = WAL")
-            self._local.connection = conn
-        return self._local.connection
-
-    @contextmanager
-    def _transaction(self) -> Iterator[sqlite3.Cursor]:
-        """Context manager for transactions."""
-        conn = self._get_connection()
-        cursor = conn.cursor()
-        try:
-            yield cursor
-            conn.commit()
-        except Exception:
-            conn.rollback()
-            raise
 
     def _init_schema(self):
         """Initialize database schema via Alembic migrations."""
@@ -179,6 +150,46 @@ class WineRepository:
             results.append(record)
 
         return results
+
+    def search_fts_or(self, query: str, limit: int = 50) -> list[WineRecord]:
+        """
+        Full-text search using FTS5 with OR matching.
+
+        Unlike search_fts which requires all words to match (AND),
+        this returns wines matching ANY of the query words (OR).
+        Useful for fuzzy matching candidates.
+
+        Args:
+            query: Search query (words at least 3 chars are used)
+            limit: Maximum results to return
+
+        Returns:
+            List of WineRecord matching any query word
+        """
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        # Filter to words at least 3 chars
+        words = [w.replace('"', '""') for w in query.lower().split() if len(w) >= 3]
+        if not words:
+            return []
+
+        # Build OR query: "big smooth zin" -> "big"* OR "smooth"* OR "zin"*
+        fts_query = ' OR '.join(f'"{w}"*' for w in words[:5])  # Limit words
+
+        try:
+            cursor.execute("""
+                SELECT w.id, w.canonical_name, w.rating, w.wine_type, w.region, w.winery, w.country, w.varietal
+                FROM wines w
+                JOIN wine_fts ON w.id = wine_fts.rowid
+                WHERE wine_fts MATCH ?
+                ORDER BY rank
+                LIMIT ?
+            """, (fts_query, limit))
+
+            return [self._row_to_record_simple(row) for row in cursor.fetchall()]
+        except Exception:
+            return []
 
     def _row_to_record_simple(self, row: sqlite3.Row) -> WineRecord:
         """Convert database row to WineRecord without fetching aliases."""
@@ -557,12 +568,6 @@ class WineRepository:
         """Clear entire cache."""
         with self._cache_lock:
             self._wine_cache.clear()
-
-    def close(self):
-        """Close database connection."""
-        if hasattr(self._local, 'connection') and self._local.connection:
-            self._local.connection.close()
-            self._local.connection = None
 
     def migrate_from_json(self, json_path: str) -> tuple[int, int]:
         """

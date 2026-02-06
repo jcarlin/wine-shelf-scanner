@@ -400,6 +400,9 @@ class RecognitionPipeline:
                 if match is None:
                     ocr_text = bt.combined_text or bt.normalized_name
                     cached = self._llm_cache.get(ocr_text)
+                    # Also try normalized name (Vision results are cached under wine names)
+                    if not cached and bt.normalized_name and bt.normalized_name != ocr_text:
+                        cached = self._llm_cache.get(bt.normalized_name)
                     if cached:
                         # Create result from cached data
                         result = RecognizedWine(

@@ -137,8 +137,8 @@ class Config:
     # === LLM Rating Cache ===
     @staticmethod
     def use_llm_cache() -> bool:
-        """Enable LLM rating cache for discovered wines. Default: False."""
-        return os.getenv("USE_LLM_CACHE", "false").lower() == "true"
+        """Enable LLM rating cache for discovered wines. Default: True."""
+        return os.getenv("USE_LLM_CACHE", "true").lower() == "true"
 
     # === Vision Fallback ===
     # Max confidence for visual-only identification (never top-3 emphasis)

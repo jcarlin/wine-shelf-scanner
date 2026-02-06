@@ -3,8 +3,12 @@
  */
 
 import { Config } from './config';
-import { ScanResponse } from './types';
+import { ScanResponse, ApiError, ScanResult } from './types';
 import { getMockResponse } from './mock-service';
+import { fetchWithTimeout, isAbortError } from './fetch-utils';
+
+/** Timeout for health checks (ms) */
+const HEALTH_CHECK_TIMEOUT_MS = 10000;
 
 export type HealthStatus =
   | { status: 'healthy' }
@@ -22,19 +26,15 @@ export async function checkServerHealth(): Promise<HealthStatus> {
     return { status: 'healthy' };
   }
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout for health check
-
   try {
-    const response = await fetch(`${Config.API_BASE_URL}/health`, {
-      method: 'GET',
-      signal: controller.signal,
-      headers: {
-        Accept: 'application/json',
+    const response = await fetchWithTimeout(
+      `${Config.API_BASE_URL}/health`,
+      {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
       },
-    });
-
-    clearTimeout(timeoutId);
+      HEALTH_CHECK_TIMEOUT_MS
+    );
 
     if (response.ok) {
       return { status: 'healthy' };
@@ -54,9 +54,7 @@ export async function checkServerHealth(): Promise<HealthStatus> {
       message: `Server returned ${response.status}`,
     };
   } catch (error) {
-    clearTimeout(timeoutId);
-
-    if (error instanceof Error && error.name === 'AbortError') {
+    if (isAbortError(error)) {
       return {
         status: 'unavailable',
         message: 'Health check timed out',
@@ -71,15 +69,8 @@ export async function checkServerHealth(): Promise<HealthStatus> {
   }
 }
 
-export type ApiError =
-  | { type: 'NETWORK_ERROR'; message: string }
-  | { type: 'SERVER_ERROR'; message: string; status: number }
-  | { type: 'TIMEOUT'; message: string }
-  | { type: 'PARSE_ERROR'; message: string };
-
-export type ScanResult =
-  | { success: true; data: ScanResponse }
-  | { success: false; error: ApiError };
+// ApiError and ScanResult are re-exported from types.ts
+export type { ApiError, ScanResult } from './types';
 
 export interface ScanOptions {
   /** Enable debug mode to receive pipeline debug data */
@@ -113,33 +104,29 @@ export async function scanImage(
     }
   }
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), Config.REQUEST_TIMEOUT);
-
   // Use debug from options, fall back to config
   const debug = options.debug ?? Config.DEBUG_MODE;
 
+  // Create form data with image file
+  const formData = new FormData();
+  formData.append('image', file, file.name);
+
+  // Build URL with optional debug query param
+  const url = new URL(`${Config.API_BASE_URL}/scan`);
+  if (debug) {
+    url.searchParams.set('debug', 'true');
+  }
+
   try {
-    // Create form data with image file
-    const formData = new FormData();
-    formData.append('image', file, file.name);
-
-    // Build URL with optional debug query param
-    const url = new URL(`${Config.API_BASE_URL}/scan`);
-    if (debug) {
-      url.searchParams.set('debug', 'true');
-    }
-
-    const response = await fetch(url.toString(), {
-      method: 'POST',
-      body: formData,
-      signal: controller.signal,
-      headers: {
-        Accept: 'application/json',
+    const response = await fetchWithTimeout(
+      url.toString(),
+      {
+        method: 'POST',
+        body: formData,
+        headers: { Accept: 'application/json' },
       },
-    });
-
-    clearTimeout(timeoutId);
+      Config.REQUEST_TIMEOUT
+    );
 
     if (!response.ok) {
       return {
@@ -155,19 +142,17 @@ export async function scanImage(
     const data = await response.json();
     return { success: true, data: data as ScanResponse };
   } catch (error) {
-    clearTimeout(timeoutId);
+    if (isAbortError(error)) {
+      return {
+        success: false,
+        error: {
+          type: 'TIMEOUT',
+          message: 'Request timed out. Please try again.',
+        },
+      };
+    }
 
     if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        return {
-          success: false,
-          error: {
-            type: 'TIMEOUT',
-            message: 'Request timed out. Please try again.',
-          },
-        };
-      }
-
       // Network errors (no connection, DNS failure, etc.)
       return {
         success: false,

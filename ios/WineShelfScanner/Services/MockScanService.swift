@@ -20,7 +20,7 @@ class MockScanService: ScanServiceProtocol {
         case fullFailure = "full_failure"  // Alias for UI tests
     }
 
-    func scan(image: UIImage, debug: Bool = false) async throws -> ScanResponse {
+    func scan(image: UIImage, debug: Bool = false, compressionQuality: CGFloat = 0.8) async throws -> ScanResponse {
         // Simulate network delay
         try await Task.sleep(nanoseconds: UInt64(simulatedDelay * 1_000_000_000))
 

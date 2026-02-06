@@ -284,7 +284,7 @@ class MockScanServiceForTests: ScanServiceProtocol {
     var errorToThrow: Error?
     var delay: TimeInterval = 0
 
-    func scan(image: UIImage, debug: Bool) async throws -> ScanResponse {
+    func scan(image: UIImage, debug: Bool, compressionQuality: CGFloat = 0.8) async throws -> ScanResponse {
         scanCallCount += 1
         lastImage = image
         lastDebugFlag = debug

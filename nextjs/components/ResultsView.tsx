@@ -12,6 +12,7 @@ import { FallbackList } from './FallbackList';
 import { getImageBounds } from '@/lib/image-bounds';
 import { isVisible } from '@/lib/overlay-math';
 import { useFeatureFlags } from '@/lib/feature-flags';
+import { computeShelfRankings, TOP_WINES_COUNT } from '@/lib/shelf-rankings';
 
 interface ResultsViewProps {
   response: ScanResponse;
@@ -38,21 +39,16 @@ export function ResultsView({ response, imageUri, onReset }: ResultsViewProps) {
   // Compute shelf rankings for wine detail modal
   const shelfRankings = useMemo(() => {
     if (!shelfRanking) return new Map<string, { rank: number; total: number }>();
-    const visibleWines = response.results.filter((w) => isVisible(w.confidence));
-    const ranked = [...visibleWines]
-      .filter((w) => w.rating !== null)
-      .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
-    if (ranked.length < 3) return new Map<string, { rank: number; total: number }>();
-    const rankings = new Map<string, { rank: number; total: number }>();
-    let currentRank = 1;
-    ranked.forEach((wine, index) => {
-      if (index > 0 && wine.rating !== ranked[index - 1].rating) {
-        currentRank = index + 1;
-      }
-      rankings.set(wine.wine_name, { rank: currentRank, total: ranked.length });
-    });
-    return rankings;
+    return computeShelfRankings(response.results);
   }, [shelfRanking, response.results]);
+
+  // Get top wines (full objects) for header and sharing
+  const topWines = useMemo(() => {
+    return [...response.results]
+      .filter((w) => isVisible(w.confidence) && w.rating !== null)
+      .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
+      .slice(0, TOP_WINES_COUNT);
+  }, [response.results]);
 
   // Show toast on mount if partial detection
   useEffect(() => {
@@ -127,34 +123,22 @@ export function ResultsView({ response, imageUri, onReset }: ResultsViewProps) {
           <span>{t('newScan')}</span>
         </button>
         <div className="flex-1 text-center">
-          {(() => {
-            const topWine = [...response.results]
-              .filter((w) => isVisible(w.confidence) && w.rating !== null)
-              .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))[0];
-            if (topWine) {
-              return (
-                <span className="text-gray-300 text-sm flex items-center justify-center gap-1">
-                  <Star className="w-3.5 h-3.5 text-star fill-star" />
-                  <span className="font-medium text-white truncate max-w-[140px]">{topWine.wine_name}</span>
-                  <span className="text-gray-400">{t('more', { count: visibleCount - 1 })}</span>
-                </span>
-              );
-            }
-            return (
-              <span className="text-gray-400 text-sm">
-                {t('bottlesFound', { count: visibleCount })}
-              </span>
-            );
-          })()}
+          {topWines[0] ? (
+            <span className="text-gray-300 text-sm flex items-center justify-center gap-1">
+              <Star className="w-3.5 h-3.5 text-star fill-star" />
+              <span className="font-medium text-white truncate max-w-[140px]">{topWines[0].wine_name}</span>
+              <span className="text-gray-400">{t('more', { count: visibleCount - 1 })}</span>
+            </span>
+          ) : (
+            <span className="text-gray-400 text-sm">
+              {t('bottlesFound', { count: visibleCount })}
+            </span>
+          )}
         </div>
         <div className="w-20 flex justify-end">
           {shareEnabled && (
             <button
               onClick={() => {
-                const topWines = [...response.results]
-                  .filter((w) => isVisible(w.confidence) && w.rating !== null)
-                  .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
-                  .slice(0, 3);
                 const text = [
                   t('topPicks'),
                   ...topWines.map((w, i) => `${i + 1}. ${w.wine_name} - ${w.rating?.toFixed(1)} ${t('stars')}`),

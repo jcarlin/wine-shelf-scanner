@@ -346,35 +346,8 @@ class WineMatcher:
         2. Score only those candidates with fuzzy matching
         3. Skip full database scan (too slow for 192K wines)
         """
-        # Try broader FTS5 search first (any word match, not all)
-        conn = self._repository._get_connection()
-        cursor = conn.cursor()
-
-        # Build OR query: "big smooth zin" -> "big" OR "smooth" OR "zin"
-        words = [w for w in query_lower.split() if len(w) >= 3]
-        if not words:
-            return None
-
-        # Use FTS5 OR query for broader matching
-        fts_query = ' OR '.join(f'"{w}"*' for w in words[:5])  # Limit words
-        try:
-            cursor.execute("""
-                SELECT w.id, w.canonical_name, w.rating, w.wine_type, w.winery, w.region, w.varietal
-                FROM wines w
-                JOIN wine_fts ON w.id = wine_fts.rowid
-                WHERE wine_fts MATCH ?
-                ORDER BY rank
-                LIMIT 50
-            """, (fts_query,))
-
-            candidates = [
-                (row[1], row[0], row[2], row[3], row[4], row[5], row[6])
-                for row in cursor.fetchall()
-            ]
-        except Exception:
-            # FTS query failed, return None
-            return None
-
+        # Use repository's OR-based FTS search
+        candidates = self._repository.search_fts_or(query_lower, limit=50)
         if not candidates:
             return None
 
@@ -382,29 +355,27 @@ class WineMatcher:
         best_match = None
         best_score = 0.0
 
-        for name, wine_id, rating, wine_type, winery, region, varietal in candidates:
-            score = self._compute_fuzzy_score(query_lower, name.lower())
+        for wine in candidates:
+            score = self._compute_fuzzy_score(query_lower, wine.canonical_name.lower())
             if score > best_score:
                 best_score = score
-                best_match = (name, wine_id, rating, wine_type, winery, region, varietal)
+                best_match = wine
 
         if best_match and best_score >= Config.FUZZY_CONFIDENCE_THRESHOLD:
-            name, wine_id, rating, wine_type, winery, region, varietal = best_match
-
             # Avoid matching to wines that are mostly generic terms
             # (e.g., matching "Bordeaux Rouge" to a wine named "Bordeaux Rouge Michel Lynch")
-            if _is_generic_query(name):
+            if _is_generic_query(best_match.canonical_name):
                 return None
 
             return WineMatch(
-                canonical_name=name,
-                rating=rating,
+                canonical_name=best_match.canonical_name,
+                rating=best_match.rating,
                 confidence=best_score,
                 source=WineSource.DATABASE,
-                wine_type=wine_type,
-                brand=winery,
-                region=region,
-                varietal=varietal,
+                wine_type=best_match.wine_type,
+                brand=best_match.winery,
+                region=best_match.region,
+                varietal=best_match.varietal,
             )
 
         return None

@@ -49,10 +49,12 @@ class TestOCRProcessor:
         processor = OCRProcessor()
 
         result = processor._normalize_text("Reserve Special Edition Caymus Estate")
-        assert "reserve" not in result.lower()
+        # "special" and "edition" are marketing filler — removed
         assert "special" not in result.lower()
         assert "edition" not in result.lower()
-        assert "estate" not in result.lower()
+        # "reserve" and "estate" are wine-identity words — kept
+        assert "reserve" in result.lower()
+        assert "estate" in result.lower()
         assert "Caymus" in result
 
     def test_normalize_title_cases(self):

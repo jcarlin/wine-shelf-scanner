@@ -153,6 +153,12 @@ class Config:
         """Enable Claude Vision fallback for unmatched bottles. Default: True."""
         return os.getenv("USE_VISION_FALLBACK", "true").lower() == "true"
 
+    # === Pipeline Mode ===
+    @staticmethod
+    def pipeline_mode() -> str:
+        """Pipeline mode: legacy, turbo, hybrid, fast. Default: legacy."""
+        return os.getenv("PIPELINE_MODE", "legacy").lower()
+
     # === Fast Pipeline ===
     @staticmethod
     def use_fast_pipeline() -> bool:

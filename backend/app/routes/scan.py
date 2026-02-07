@@ -31,6 +31,7 @@ from ..services.llm_normalizer import BatchValidationItem, get_normalizer
 from ..services.vision import MockVisionService, ReplayVisionService, VisionResult, VisionService
 from ..services.wine_matcher import WineMatcher, _is_llm_generic_response
 from ..services.fast_pipeline import FastPipeline
+from ..services.flash_names_pipeline import FlashNamesPipeline
 from ..services.hybrid_pipeline import HybridPipeline
 from ..services.turbo_pipeline import TurboPipeline
 from ..services.wine_sync import sync_discovered_wines
@@ -643,6 +644,93 @@ async def _run_hybrid_pipeline(
     )
 
 
+async def _run_flash_names_pipeline(
+    image_id: str,
+    image_bytes: bytes,
+    debug_mode: bool,
+    wine_matcher: WineMatcher,
+    flags: Optional[FeatureFlags] = None,
+) -> Optional[ScanResponse]:
+    """Run flash names pipeline: names-only Gemini prompt + parallel Vision API + DB lookups.
+
+    Returns ScanResponse on success, or None if no results were found
+    (allowing fallback to legacy pipeline).
+    """
+    t0 = time.perf_counter()
+
+    pipeline = FlashNamesPipeline(
+        wine_matcher=wine_matcher,
+        model=f"gemini/{Config.fast_pipeline_model()}",
+    )
+    result = await pipeline.scan(image_bytes)
+    recognized = result.recognized_wines
+
+    if not recognized and not result.fallback:
+        elapsed = time.perf_counter() - t0
+        logger.info(f"[{image_id}] Flash names pipeline returned 0 results in {elapsed:.2f}s")
+        return None
+
+    # Enrich with review data
+    _enrich_with_reviews(recognized, wine_matcher)
+
+    # Deduplicate by wine name (keep highest confidence)
+    seen_wines: dict[str, RecognizedWine] = {}
+    for wine in recognized:
+        name_key = wine.wine_name.lower().strip()
+        if name_key not in seen_wines or wine.confidence > seen_wines[name_key].confidence:
+            seen_wines[name_key] = wine
+    recognized = list(seen_wines.values())
+
+    # Build results and fallback lists
+    results: list[WineResult] = []
+    fallback: list[FallbackWine] = []
+
+    for wine in recognized:
+        if wine.confidence >= Config.VISIBILITY_THRESHOLD:
+            results.append(_to_wine_result(wine))
+        elif wine.rating is not None:
+            fallback.append(FallbackWine(
+                wine_name=wine.wine_name,
+                rating=wine.rating,
+            ))
+
+    # Add pipeline-level fallback entries (LLM wines with no Vision bbox)
+    existing_names = {w.lower().strip() for w in seen_wines}
+    for fb_entry in result.fallback:
+        if isinstance(fb_entry, dict) and fb_entry.get('wine_name') and fb_entry.get('rating') is not None:
+            name_key = fb_entry['wine_name'].lower().strip()
+            if name_key not in existing_names:
+                fallback.append(FallbackWine(
+                    wine_name=fb_entry['wine_name'],
+                    rating=fb_entry['rating'],
+                ))
+                existing_names.add(name_key)
+
+    # Sort by rating descending
+    results.sort(key=lambda x: (x.rating is not None, x.rating or 0), reverse=True)
+    fallback.sort(key=lambda x: x.rating, reverse=True)
+
+    # Apply feature flags
+    if flags:
+        _apply_feature_flags(results, flags, wine_matcher=wine_matcher)
+
+    # Sync discovered wines back to DB
+    sync_discovered_wines(results, fallback)
+
+    elapsed = time.perf_counter() - t0
+    logger.info(
+        f"[{image_id}] Flash names pipeline completed in {elapsed:.2f}s: "
+        f"{len(results)} results, {len(fallback)} fallback "
+        f"(timings: {result.timings})"
+    )
+
+    return ScanResponse(
+        image_id=image_id,
+        results=results,
+        fallback_list=fallback,
+    )
+
+
 async def process_image(
     image_id: str,
     image_bytes: bytes,
@@ -675,6 +763,18 @@ async def process_image(
             logger.info(f"[{image_id}] Turbo pipeline returned no results, falling back to legacy")
         except Exception as e:
             logger.warning(f"[{image_id}] Turbo pipeline failed: {e}")
+            logger.info(f"[{image_id}] Falling back to legacy pipeline")
+
+    elif mode == "flash_names":
+        try:
+            flash_result = await _run_flash_names_pipeline(
+                image_id, image_bytes, debug_mode, wine_matcher, flags
+            )
+            if flash_result is not None:
+                return flash_result
+            logger.info(f"[{image_id}] Flash names pipeline returned no results, falling back to legacy")
+        except Exception as e:
+            logger.warning(f"[{image_id}] Flash names pipeline failed: {e}")
             logger.info(f"[{image_id}] Falling back to legacy pipeline")
 
     elif mode == "hybrid":

@@ -60,3 +60,6 @@ docs/*
 backend/app/data/wines.db
 backend/app/data/wines.db-*
 backend/app/data/wines.db.backup
+
+expo
+.DS_Store

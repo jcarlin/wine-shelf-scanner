@@ -7,6 +7,7 @@ Uses tiered recognition pipeline: fuzzy match → LLM fallback.
 
 import io
 import logging
+import time
 import uuid
 from functools import lru_cache
 from typing import Optional
@@ -29,6 +30,9 @@ from ..services.recognition_pipeline import RecognizedWine, RecognitionPipeline
 from ..services.llm_normalizer import BatchValidationItem, get_normalizer
 from ..services.vision import MockVisionService, ReplayVisionService, VisionResult, VisionService
 from ..services.wine_matcher import WineMatcher, _is_llm_generic_response
+from ..services.fast_pipeline import FastPipeline
+from ..services.hybrid_pipeline import HybridPipeline
+from ..services.turbo_pipeline import TurboPipeline
 from ..services.wine_sync import sync_discovered_wines
 
 logger = logging.getLogger(__name__)
@@ -390,6 +394,255 @@ async def scan_shelf(
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
+async def _run_fast_pipeline(
+    image_id: str,
+    image_bytes: bytes,
+    debug_mode: bool,
+    wine_matcher: WineMatcher,
+    flags: Optional[FeatureFlags] = None,
+) -> Optional[ScanResponse]:
+    """Run single-pass multimodal LLM pipeline.
+
+    Returns ScanResponse on success, or None if no results were found
+    (allowing fallback to legacy pipeline when Config.fast_pipeline_fallback() is True).
+    """
+    t0 = time.perf_counter()
+
+    pipeline = FastPipeline(
+        wine_matcher=wine_matcher,
+        model=f"gemini/{Config.fast_pipeline_model()}",
+    )
+    result = await pipeline.scan(image_bytes)
+    recognized = result.recognized_wines
+
+    if not recognized:
+        elapsed = time.perf_counter() - t0
+        logger.info(f"[{image_id}] Fast pipeline returned 0 results in {elapsed:.2f}s")
+        if Config.fast_pipeline_fallback():
+            return None
+        # No fallback — return empty response
+        return ScanResponse(image_id=image_id, results=[], fallback_list=[])
+
+    # Enrich with review data
+    _enrich_with_reviews(recognized, wine_matcher)
+
+    # Deduplicate by wine name (keep highest confidence)
+    seen_wines: dict[str, RecognizedWine] = {}
+    for wine in recognized:
+        name_key = wine.wine_name.lower().strip()
+        if name_key not in seen_wines or wine.confidence > seen_wines[name_key].confidence:
+            seen_wines[name_key] = wine
+    recognized = list(seen_wines.values())
+
+    # Build results and fallback lists
+    results: list[WineResult] = []
+    fallback: list[FallbackWine] = []
+
+    for wine in recognized:
+        if wine.confidence >= Config.VISIBILITY_THRESHOLD:
+            results.append(_to_wine_result(wine))
+        elif wine.rating is not None:
+            fallback.append(FallbackWine(
+                wine_name=wine.wine_name,
+                rating=wine.rating,
+            ))
+
+    # Sort by rating descending
+    results.sort(key=lambda x: (x.rating is not None, x.rating or 0), reverse=True)
+    fallback.sort(key=lambda x: x.rating, reverse=True)
+
+    # Apply feature flags
+    if flags:
+        _apply_feature_flags(results, flags, wine_matcher=wine_matcher)
+
+    # Sync discovered wines back to DB
+    sync_discovered_wines(results, fallback)
+
+    elapsed = time.perf_counter() - t0
+    logger.info(
+        f"[{image_id}] Fast pipeline completed in {elapsed:.2f}s: "
+        f"{len(results)} results, {len(fallback)} fallback"
+    )
+
+    return ScanResponse(
+        image_id=image_id,
+        results=results,
+        fallback_list=fallback,
+    )
+
+
+async def _run_turbo_pipeline(
+    image_id: str,
+    image_bytes: bytes,
+    use_llm: bool,
+    debug_mode: bool,
+    wine_matcher: WineMatcher,
+    flags: Optional[FeatureFlags] = None,
+) -> Optional[ScanResponse]:
+    """Run turbo pipeline: Vision API + OCR + Fuzzy/LLM match, no Vision fallback or rescue.
+
+    Returns ScanResponse on success, or None if no results were found.
+    """
+    t0 = time.perf_counter()
+
+    turbo = TurboPipeline(
+        image_bytes=image_bytes,
+        wine_matcher=wine_matcher,
+        use_llm=use_llm,
+        debug_mode=debug_mode,
+    )
+    turbo_result = await turbo.run()
+    recognized = turbo_result.recognized_wines
+
+    if not recognized and not turbo_result.orphaned_texts:
+        elapsed = time.perf_counter() - t0
+        logger.info(f"[{image_id}] Turbo pipeline returned 0 results in {elapsed:.2f}s")
+        return None
+
+    # Enrich with review data
+    _enrich_with_reviews(recognized, wine_matcher)
+
+    # Deduplicate by wine name (keep highest confidence)
+    seen_wines: dict[str, RecognizedWine] = {}
+    for wine in recognized:
+        name_key = wine.wine_name.lower().strip()
+        if name_key not in seen_wines or wine.confidence > seen_wines[name_key].confidence:
+            seen_wines[name_key] = wine
+    recognized = list(seen_wines.values())
+
+    # Build results and fallback lists
+    results: list[WineResult] = []
+    fallback: list[FallbackWine] = []
+
+    for wine in recognized:
+        if wine.confidence >= Config.VISIBILITY_THRESHOLD:
+            results.append(_to_wine_result(wine))
+        elif wine.rating is not None:
+            fallback.append(FallbackWine(
+                wine_name=wine.wine_name,
+                rating=wine.rating,
+            ))
+
+    # Process orphaned texts into fallback list
+    if turbo_result.orphaned_texts:
+        orphan_matches = _process_orphaned_texts(turbo_result.orphaned_texts, wine_matcher)
+        if orphan_matches:
+            existing_names = {f.wine_name.lower() for f in fallback}
+            existing_names.update(r.wine_name.lower() for r in results)
+            for match in orphan_matches:
+                if match.wine_name.lower() not in existing_names:
+                    fallback.append(match)
+                    existing_names.add(match.wine_name.lower())
+
+    # Sort by rating descending
+    results.sort(key=lambda x: (x.rating is not None, x.rating or 0), reverse=True)
+    fallback.sort(key=lambda x: x.rating, reverse=True)
+
+    # Apply feature flags
+    if flags:
+        _apply_feature_flags(results, flags, wine_matcher=wine_matcher)
+
+    # Sync discovered wines back to DB
+    sync_discovered_wines(results, fallback)
+
+    elapsed = time.perf_counter() - t0
+    logger.info(
+        f"[{image_id}] Turbo pipeline completed in {elapsed:.2f}s: "
+        f"{len(results)} results, {len(fallback)} fallback "
+        f"(timings: {turbo_result.timings})"
+    )
+
+    return ScanResponse(
+        image_id=image_id,
+        results=results,
+        fallback_list=fallback,
+    )
+
+
+async def _run_hybrid_pipeline(
+    image_id: str,
+    image_bytes: bytes,
+    debug_mode: bool,
+    wine_matcher: WineMatcher,
+    flags: Optional[FeatureFlags] = None,
+) -> Optional[ScanResponse]:
+    """Run hybrid pipeline: Vision API + Gemini Flash in parallel.
+
+    Returns ScanResponse on success, or None if no results were found
+    (allowing fallback to legacy pipeline).
+    """
+    t0 = time.perf_counter()
+
+    pipeline = HybridPipeline(
+        wine_matcher=wine_matcher,
+        model=f"gemini/{Config.fast_pipeline_model()}",
+    )
+    result = await pipeline.scan(image_bytes)
+    recognized = result.recognized_wines
+
+    if not recognized:
+        elapsed = time.perf_counter() - t0
+        logger.info(f"[{image_id}] Hybrid pipeline returned 0 results in {elapsed:.2f}s")
+        return None
+
+    # Enrich with review data
+    _enrich_with_reviews(recognized, wine_matcher)
+
+    # Deduplicate by wine name (keep highest confidence)
+    seen_wines: dict[str, RecognizedWine] = {}
+    for wine in recognized:
+        name_key = wine.wine_name.lower().strip()
+        if name_key not in seen_wines or wine.confidence > seen_wines[name_key].confidence:
+            seen_wines[name_key] = wine
+    recognized = list(seen_wines.values())
+
+    # Build results and fallback lists
+    results: list[WineResult] = []
+    fallback: list[FallbackWine] = []
+
+    for wine in recognized:
+        if wine.confidence >= Config.VISIBILITY_THRESHOLD:
+            results.append(_to_wine_result(wine))
+        elif wine.rating is not None:
+            fallback.append(FallbackWine(
+                wine_name=wine.wine_name,
+                rating=wine.rating,
+            ))
+
+    # Add pipeline-level fallback entries (Gemini wines with no Vision bbox)
+    for fb_entry in result.fallback:
+        if isinstance(fb_entry, dict) and fb_entry.get('wine_name') and fb_entry.get('rating') is not None:
+            name_key = fb_entry['wine_name'].lower().strip()
+            if name_key not in seen_wines:
+                fallback.append(FallbackWine(
+                    wine_name=fb_entry['wine_name'],
+                    rating=fb_entry['rating'],
+                ))
+
+    # Sort by rating descending
+    results.sort(key=lambda x: (x.rating is not None, x.rating or 0), reverse=True)
+    fallback.sort(key=lambda x: x.rating, reverse=True)
+
+    # Apply feature flags
+    if flags:
+        _apply_feature_flags(results, flags, wine_matcher=wine_matcher)
+
+    # Sync discovered wines back to DB
+    sync_discovered_wines(results, fallback)
+
+    elapsed = time.perf_counter() - t0
+    logger.info(
+        f"[{image_id}] Hybrid pipeline completed in {elapsed:.2f}s: "
+        f"{len(results)} results, {len(fallback)} fallback"
+    )
+
+    return ScanResponse(
+        image_id=image_id,
+        results=results,
+        fallback_list=fallback,
+    )
+
+
 async def process_image(
     image_id: str,
     image_bytes: bytes,
@@ -409,6 +662,47 @@ async def process_image(
     4. LLM fallback for low-confidence/unknown wines
     5. Response construction
     """
+    # === Pipeline Mode Routing ===
+    mode = Config.pipeline_mode()
+
+    if mode == "turbo":
+        try:
+            turbo_result = await _run_turbo_pipeline(
+                image_id, image_bytes, use_llm, debug_mode, wine_matcher, flags
+            )
+            if turbo_result is not None:
+                return turbo_result
+            logger.info(f"[{image_id}] Turbo pipeline returned no results, falling back to legacy")
+        except Exception as e:
+            logger.warning(f"[{image_id}] Turbo pipeline failed: {e}")
+            logger.info(f"[{image_id}] Falling back to legacy pipeline")
+
+    elif mode == "hybrid":
+        try:
+            hybrid_result = await _run_hybrid_pipeline(
+                image_id, image_bytes, debug_mode, wine_matcher, flags
+            )
+            if hybrid_result is not None:
+                return hybrid_result
+            logger.info(f"[{image_id}] Hybrid pipeline returned no results, falling back to legacy")
+        except Exception as e:
+            logger.warning(f"[{image_id}] Hybrid pipeline failed: {e}")
+            logger.info(f"[{image_id}] Falling back to legacy pipeline")
+
+    elif mode == "fast" or Config.use_fast_pipeline():
+        try:
+            fast_result = await _run_fast_pipeline(
+                image_id, image_bytes, debug_mode, wine_matcher, flags
+            )
+            if fast_result is not None:
+                return fast_result
+            logger.info(f"[{image_id}] Fast pipeline returned no results, falling back to legacy")
+        except Exception as e:
+            logger.warning(f"[{image_id}] Fast pipeline failed: {e}")
+            if not Config.fast_pipeline_fallback():
+                raise
+            logger.info(f"[{image_id}] Falling back to legacy pipeline")
+
     # Choose vision service
     if vision_fixture:
         # Use captured fixture for deterministic replay

@@ -186,44 +186,156 @@ Tap rating badge → modal sheet.
 
 ---
 
-## Backend Pipeline
+## Backend Pipeline — Detailed Scan Flow
 
-### Tiered Recognition Pipeline
+### Entry Point: `POST /scan` → `routes/scan.py:scan_shelf()`
 
-1. Receive image at `/scan`
-2. Google Vision API:
-   - `TEXT_DETECTION` (OCR)
-   - `OBJECT_LOCALIZATION` (bottles)
-3. Group OCR text by spatial proximity (15% threshold)
-4. Normalize text:
-   - Remove years (19xx, 20xx)
-   - Remove sizes (750ml, 1L)
-   - Remove prices and marketing text
-5. **Tiered Recognition:**
-   - **Step 1:** Enhanced fuzzy match (rapidfuzz + phonetic)
-   - **Step 2:** If confidence < 0.7 → LLM normalization (Claude Haiku or Gemini)
-   - **Step 3:** Re-match LLM-normalized result against database
-6. Filter by confidence:
-   - ≥ 0.45 → main results array
-   - < 0.45 → fallback list only
-7. Return response using schema above
+The scan endpoint receives an image and runs it through a multi-stage pipeline. Each stage has fallbacks for unmatched bottles, making the pipeline progressively more expensive but more thorough.
 
-### Key Implementation Details
+### Stage 1: Image Upload & Validation (~50ms)
+**File:** `routes/scan.py:326-376`
+- Validate content type (JPEG, PNG, HEIC/HEIF)
+- Generate UUID `image_id`
+- Read image bytes, convert HEIC→JPEG if needed (`convert_heic_to_jpeg()`)
+- Validate file size (≤10MB)
 
-- LLM normalizer is protocol-based (`NormalizerProtocol`) — swappable between Claude and Gemini
-- Fuzzy matching uses multi-algorithm scoring: ratio (45%), partial_ratio (30%), token_sort (25%)
-- Phonetic matching via jellyfish metaphone for pronunciation-based matches
-- N-gram indexing for performance optimization
+### Stage 2: Google Vision API (~2-3s) — BIGGEST SINGLE COST
+**Files:** `services/vision.py:91-120`, `services/vision_cache.py`
+- **Cache check first:** SHA256 hash of image bytes → lookup in `vision_cache` table
+  - Cache key: `image_hash` (SHA256 of raw bytes)
+  - Stores gzip-compressed JSON of `VisionResult`
+  - TTL: 7 days, max 500MB, LRU eviction
+  - **PRODUCTION: VISION_CACHE_ENABLED=false** (cache is disabled!)
+- **API call:** Single `annotate_image()` with two features:
+  - `OBJECT_LOCALIZATION` → detect bottles (filter for "bottle"/"wine"/"drink")
+  - `TEXT_DETECTION` → OCR all text on shelf
+- **Deduplication:** IoU-based overlap removal for duplicate bottle detections
+- **Output:** `VisionResult` with `objects[]`, `text_blocks[]`, `raw_text`
+
+### Stage 3: OCR Text Grouping (~10ms)
+**File:** `services/ocr_processor.py`
+- `OCRProcessor.process_with_orphans()` assigns text blocks to bottles by spatial proximity
+- Proximity threshold: 25% of image dimensions (`Config.PROXIMITY_THRESHOLD`)
+- Each `BottleText` gets: raw `combined_text` + `normalized_name` (years/sizes/noise removed)
+- **Orphaned texts:** Text blocks not near any bottle → saved for later fallback matching
+- Output: `bottle_texts[]` (one per bottle) + `orphaned_texts[]`
+
+### Stage 4: Tiered DB Matching (~100-500ms)
+**File:** `services/recognition_pipeline.py:303-391`
+
+**Phase 4a: Parallel Fuzzy Match** (ThreadPoolExecutor, 4 workers)
+For each bottle's `normalized_name`, runs `WineMatcher.match()`:
+1. **Exact match** → `find_by_name()` on `wines` + `wine_aliases` tables (confidence=1.0)
+2. **FTS5 prefix** → `search_fts()` on `wine_fts` table, limit=5 candidates (confidence≤0.95)
+3. **Fuzzy match** → `search_fts_or()` limit=50 candidates, scored with:
+   - `fuzz.ratio` (45%) + `fuzz.partial_ratio` (30%) + `fuzz.token_sort_ratio` (25%)
+   - +0.05 phonetic bonus via `jellyfish.metaphone`
+   - Threshold: 0.72 (`FUZZY_CONFIDENCE_THRESHOLD`)
+- **Module-level cache:** `_match_cache` dict (max 500 entries, LRU eviction)
+
+**Phase 4b: Confidence Partition**
+- ≥0.85 confidence → **high-confidence**, skip LLM entirely
+- <0.85 confidence → **needs LLM validation**
+
+### Stage 5: LLM Batch Validation (~1-3s per batch) — SECOND BIGGEST COST
+**Files:** `services/recognition_pipeline.py:451-547`, `services/llm_normalizer.py`
+
+**Cache check first:** For each item needing LLM, check `llm_ratings_cache` table:
+- Keys checked: `combined_text` (raw OCR) AND `normalized_name`
+- Lookup: `WHERE LOWER(wine_name) = ?` (case-insensitive)
+- **Cache hit:** Return cached wine name, rating, metadata → skip LLM call
+- **Cache miss:** Add to batch for LLM
+
+**LLM call:** Single batched call via LiteLLM (`validate_batch()`)
+- Provider: Gemini 2.0 Flash (production default, `LLM_PROVIDER=gemini`)
+- Sends all unmatched OCR texts + optional DB candidates in one prompt
+- Returns: wine name, confidence, estimated rating, metadata per item
+- **Cache write:** On success, caches under canonical name + raw OCR text + normalized name
+
+**Post-LLM processing:**
+- If LLM confirms DB match → use DB wine + rating
+- If LLM rejects → try re-matching LLM name against DB (≥0.95 threshold)
+- If not in DB → use LLM name + LLM-estimated rating (confidence capped at 0.75)
+
+### Stage 6: Claude Vision Fallback (~3-6s) — THIRD BIGGEST COST
+**File:** `services/claude_vision.py`, triggered from `routes/scan.py:487-606`
+
+Bottles sent to Vision if:
+- Unmatched by pipeline, OR
+- Matched but confidence < 0.65 (non-tappable), OR
+- Matched but rating is None
+
+**Process:**
+- Compress image to ≤5MB JPEG
+- Build prompt with bottle locations (bbox %) and OCR hints
+- Call Claude Haiku (`claude-3-haiku-20240307`) with base64 image
+- Sync call wrapped in `asyncio.run_in_executor`
+- Parse JSON response → `VisionIdentifiedWine` list
+- Confidence: floored at 0.65, capped at 0.70 (ensures tappable, never top-3)
+- **Cache write:** Results cached in `llm_ratings_cache` under wine name + OCR text
+
+### Stage 7: LLM Batch Rescue (~1-3s)
+**File:** `routes/scan.py:608-738`
+
+Final catch-all for remaining unmatched bottles AND orphaned texts:
+- Sends ALL remaining raw OCR text to LLM in single batch call
+- Cross-references fragments across the whole shelf
+- Results: bottles → added to `recognized[]`, orphans → added to `fallback[]`
+- DB re-match attempted for each LLM result
+
+### Stage 8: Post-Processing (~50-100ms)
+**File:** `routes/scan.py:740-850`
+- `_enrich_with_reviews()` → fetch review stats + snippets from `wine_reviews` table
+- Deduplicate by wine name (keep highest confidence)
+- Partition: ≥0.45 confidence → `results[]`, <0.45 → `fallback[]`
+- Process orphaned texts through `WineMatcher.match()` → add to fallback
+- Sort results by rating descending
+- Apply feature flags (pairings, safe pick, trust signals)
+- `sync_discovered_wines()` → write LLM/Vision results back to DB
+- Build `PipelineStats` and `DebugData`
+
+### Estimated Timing Breakdown (14s total on production)
+
+| Stage | Time | Notes |
+|-------|------|-------|
+| Upload + validation | ~50ms | Negligible |
+| Google Vision API | ~2-3s | No cache on production |
+| OCR grouping | ~10ms | CPU-only, fast |
+| DB matching (parallel) | ~100-500ms | FTS5 + fuzzy, 4 threads |
+| LLM batch validation | ~1-3s | Gemini Flash, depends on batch size |
+| Claude Vision fallback | ~3-6s | Only for unmatched bottles |
+| LLM batch rescue | ~1-3s | Only if bottles still unmatched |
+| Post-processing | ~50-100ms | DB queries for reviews |
+| **Cold start overhead** | **+2-5s** | **Cloud Run scale-from-zero** |
+
+### Caching Architecture
+
+| Cache | Storage | Key | Status on Prod | Impact |
+|-------|---------|-----|----------------|--------|
+| Vision API cache | `vision_cache` table | SHA256(image_bytes) | **DISABLED** | ~2-3s savings |
+| LLM rating cache | `llm_ratings_cache` table | `LOWER(wine_name)` | Enabled | ~1-3s savings per cache hit |
+| Wine matcher cache | In-memory dict | `query.lower()` | Enabled (per-instance) | ~ms savings, repeated names |
+| WineMatcher singleton | `@lru_cache(1)` | N/A | Enabled | Avoids re-creating matcher |
+
+### Known Caching Issues
+
+1. **Vision cache disabled on production** (`VISION_CACHE_ENABLED=false` in service.yaml). This means every scan pays the full 2-3s Vision API cost even for the same image.
+2. **LLM cache key mismatch risk:** Cache writes use `wine_name.strip()` (original case) but lookups use `LOWER(wine_name)`. The `ON CONFLICT(wine_name)` uses exact case. If the same wine is cached as "Caymus" and looked up as "caymus cabernet sauvignon NAPA VALLEY 2021" (the raw OCR text), it won't match. The cache also stores under raw OCR text, but OCR text varies by image angle/quality, so cache hits are uncommon for new images.
+3. **No index on `LOWER(wine_name)`** in `llm_ratings_cache` — lookups do a full table scan with `WHERE LOWER(wine_name) = ?`.
+4. **Per-instance in-memory cache:** The `_match_cache` dict in `wine_matcher.py` is not shared across Cloud Run instances. Each new instance starts cold.
 
 ### Debug Endpoint
 
-`GET /scan/debug` — Returns raw OCR text, extracted wine names, and bottle count for troubleshooting.
+`POST /scan/debug` — Returns raw OCR text, extracted wine names, and bottle count for troubleshooting.
 
 ### Query Parameters
 
 - `use_vision_api` — Toggle real vs mock Vision API
 - `use_llm` — Toggle LLM fallback (default: true)
+- `use_vision_fallback` — Toggle Claude Vision fallback (default: true)
+- `debug` — Include pipeline debug info in response
 - `mock_scenario` — Select fixture (full_shelf, partial_detection, etc.)
+- `use_vision_fixture` — Path to captured Vision API fixture for replay
 
 ### Bug Report Endpoint
 
@@ -390,13 +502,79 @@ Set these in the Vercel dashboard for production:
 | `LOG_LEVEL` | `INFO` | Logging level (DEBUG, INFO, WARNING, ERROR) |
 | `DEBUG_MODE` | `false` | Include debug info in scan responses and enable verbose logging |
 | `USE_LLM_CACHE` | `true` | Cache LLM/Vision-discovered wines for promotion to DB |
+| `USE_FAST_PIPELINE` | `false` | Enable single-pass multimodal LLM pipeline (replaces legacy 5-stage) |
+| `FAST_PIPELINE_MODEL` | `gemini-2.0-flash` | Multimodal model for fast pipeline |
+| `FAST_PIPELINE_TIMEOUT` | `15.0` | Timeout in seconds for fast pipeline LLM call |
+| `FAST_PIPELINE_FALLBACK` | `true` | Fall back to legacy pipeline if fast pipeline fails |
 
 ---
 
 ## Performance Targets
 
-- End-to-end scan: ≤ 4 seconds
+- End-to-end scan: ≤ 4 seconds (current: ~14s on production)
 - Battery friendly (single image processing)
+
+---
+
+## Performance Investigation (2026-02-06)
+
+### Current State: ~14s for test-images/wine1.jpg on production
+
+### Where Time Is Spent (worst case, all stages triggered)
+
+The pipeline is **sequential and additive** — every unmatched bottle adds more stages:
+1. Google Vision API: **2-3s** (no cache on prod)
+2. Fuzzy matching: **100-500ms** (fast, parallelized)
+3. LLM batch validation: **1-3s** (Gemini Flash)
+4. Claude Vision fallback: **3-6s** (Haiku with image)
+5. LLM batch rescue: **1-3s** (Gemini Flash, another call)
+6. Cold start: **+2-5s** (Cloud Run scale-from-zero)
+
+**Key insight:** The 14s is NOT a single slow step — it's the cascade of 3-4 external API calls that each take 1-6s.
+
+### Optimization Opportunities (Ranked by Impact)
+
+#### 1. Enable Vision Cache on Production (saves 2-3s on repeat scans)
+`VISION_CACHE_ENABLED=false` in service.yaml. Setting to `true` would eliminate the Vision API call for previously-scanned images. The cache table and logic already exist.
+- **Risk:** Cache grows with each unique image. But eviction logic (LRU, 500MB max) is already implemented.
+- **Caveat:** Only helps repeat scans of same image bytes. Different photo = different hash = cache miss.
+
+#### 2. Parallelize LLM Calls (saves 3-6s)
+Currently Vision API → matching → LLM validation → Claude Vision → LLM rescue run **strictly sequentially**. The Claude Vision call and LLM batch validation could potentially run in parallel since they operate on different bottle subsets.
+
+#### 3. Eliminate Claude Vision Stage for "Good Enough" Results
+The Vision fallback fires for ANY unmatched or low-confidence bottle. Consider:
+- Skip Vision fallback if ≥80% of bottles already matched with confidence ≥0.65
+- Only call Vision for bottles with zero match (not just low-confidence)
+- This would remove the entire 3-6s stage for most real-world shelves
+
+#### 4. Add Server-Side Timing Instrumentation
+There is NO timing instrumentation in the pipeline. Add `time.perf_counter()` measurements to each stage so we can measure actual production timing breakdown per stage.
+
+#### 5. Improve LLM Cache Hit Rate
+- Add index: `CREATE INDEX idx_llm_cache_lower_name ON llm_ratings_cache(wine_name COLLATE NOCASE)`
+- Cache under more normalized keys (strip common OCR noise before lookup)
+- The cache currently stores under 3 keys per wine (canonical, OCR, normalized), but lookups only check 2
+
+#### 6. Pre-warm Cloud Run (saves 2-5s cold start)
+`autoscaling.knative.dev/minScale: "0"` means instances scale to zero. Setting to `"1"` keeps one warm instance alive. Costs ~$10-20/month but eliminates cold start.
+
+#### 7. Reduce Unnecessary LLM Calls
+- `HIGH_CONFIDENCE_THRESHOLD=0.85` means wines with 0.72-0.84 confidence go to LLM even though they're already above `FUZZY_CONFIDENCE_THRESHOLD=0.72`. Consider raising the skip-LLM threshold or accepting more fuzzy matches without validation.
+
+#### 8. Will Having More DB Entries Help?
+**Partially yes.** More wines in the DB means more bottles get matched in Stage 4 (fast, ~100-500ms) instead of falling through to Stage 5-7 (slow, ~2-12s of LLM/Vision calls). The LLM stages exist specifically as fallback for wines NOT in the DB. However:
+- The DB already has 191K wines, covering most common wines
+- The `llm_ratings_cache` table acts as a growing supplementary DB
+- The `wine_sync.py` module already auto-promotes LLM-discovered wines back to the DB
+- **The bigger win is improving match quality** (better FTS/fuzzy scoring) so existing DB entries are found more reliably, rather than just adding more entries
+
+#### 9. Consider Single-Pass LLM Architecture (Radical Redesign)
+Instead of OCR → fuzzy match → LLM validate → Vision fallback → LLM rescue (4 serial stages), consider:
+- Send the image directly to a multimodal LLM (Gemini Flash with vision) to identify ALL wines in one call
+- Cross-reference LLM results against DB for ratings
+- This replaces stages 2-7 with a single ~2-3s LLM call + ~100ms DB lookups
+- Trade-off: Less accurate for DB-matched wines, but dramatically faster
 
 ---
 

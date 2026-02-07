@@ -50,6 +50,14 @@ def set_ready(ready: bool = True):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan context manager for startup/shutdown."""
+    # Warmup: pre-import heavy modules
+    try:
+        import litellm
+        litellm.set_verbose = False
+        logger.info("LiteLLM pre-imported during startup")
+    except ImportError:
+        logger.debug("LiteLLM not available for warmup")
+
     # Startup: mark as ready (DB download handled by startup.py before uvicorn)
     set_ready(True)
     logger.info("Service ready to handle requests")

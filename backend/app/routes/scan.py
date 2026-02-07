@@ -212,6 +212,16 @@ def _enrich_with_reviews(recognized: list[RecognizedWine], wine_matcher: WineMat
         if wine.wine_id is None:
             continue
 
+        # Enrich metadata from DB if missing (safety net for pipelines that don't populate it)
+        if not wine.wine_type or not wine.region or not wine.varietal:
+            record = repo.find_by_id(wine.wine_id)
+            if record:
+                wine.wine_type = wine.wine_type or record.wine_type
+                wine.brand = wine.brand or record.winery
+                wine.region = wine.region or record.region
+                wine.varietal = wine.varietal or record.varietal
+                wine.blurb = wine.blurb or record.description
+
         # Get review stats (total count)
         stats = repo.get_review_stats(wine.wine_id)
         if stats['total_reviews'] > 0:

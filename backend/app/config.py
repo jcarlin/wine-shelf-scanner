@@ -156,8 +156,8 @@ class Config:
     # === Pipeline Mode ===
     @staticmethod
     def pipeline_mode() -> str:
-        """Pipeline mode: legacy, turbo, hybrid, fast. Default: legacy."""
-        return os.getenv("PIPELINE_MODE", "legacy").lower()
+        """Pipeline mode: legacy, turbo, hybrid, fast. Default: turbo."""
+        return os.getenv("PIPELINE_MODE", "turbo").lower()
 
     # === Fast Pipeline ===
     @staticmethod

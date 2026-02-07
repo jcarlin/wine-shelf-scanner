@@ -63,7 +63,7 @@ spec:
               value: "gemini-2.0-flash"
             # Pipeline mode (legacy, turbo, hybrid, fast)
             - name: PIPELINE_MODE
-              value: "legacy"
+              value: "turbo"
             # Fast pipeline (superseded by PIPELINE_MODE, kept for backward compat)
             - name: USE_FAST_PIPELINE
               value: "false"

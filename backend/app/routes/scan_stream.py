@@ -23,7 +23,7 @@ from pillow_heif import register_heif_opener
 
 from ..config import Config
 from ..feature_flags import FeatureFlags, get_feature_flags
-from ..models import ScanResponse
+from ..models import DebugData, DebugPipelineStep, ScanResponse
 from ..services.flash_names_pipeline import FlashNamesPipeline
 from ..services.wine_matcher import WineMatcher
 from .scan import build_results_from_recognized, convert_heic_to_jpeg, get_wine_matcher
@@ -98,10 +98,45 @@ async def scan_stream(
                 flags=flags,
             )
 
+            debug_data = None
+            if debug:
+                pipeline_steps = []
+                for idx, rw in enumerate(partial.recognized_wines):
+                    bt = rw.bottle_text
+                    pipeline_steps.append(DebugPipelineStep(
+                        raw_text=(bt.combined_text or "") if bt else "",
+                        normalized_text=(bt.normalized_name or "") if bt else rw.wine_name,
+                        bottle_index=idx,
+                        final_result={
+                            "wine_name": rw.wine_name,
+                            "confidence": rw.confidence,
+                            "source": rw.source.value,
+                        },
+                        included_in_results=True,
+                    ))
+                for fw in partial.fallback:
+                    wine_name = fw.get("wine_name", "") if isinstance(fw, dict) else str(fw)
+                    pipeline_steps.append(DebugPipelineStep(
+                        raw_text=wine_name,
+                        normalized_text=wine_name,
+                        bottle_index=-1,
+                        final_result=None,
+                        included_in_results=False,
+                    ))
+                timings = partial.timings
+                debug_data = DebugData(
+                    pipeline_steps=pipeline_steps,
+                    total_ocr_texts=timings.get('ocr_texts_count', 0),
+                    bottles_detected=timings.get('vision_bottles', 0),
+                    texts_matched=len(partial.recognized_wines),
+                    llm_calls_made=1 if timings.get('llm_wines', 0) > 0 else 0,
+                )
+
             response = ScanResponse(
                 image_id=image_id,
                 results=results,
                 fallback_list=fallback,
+                debug=debug_data,
             )
 
             data = response.model_dump_json()

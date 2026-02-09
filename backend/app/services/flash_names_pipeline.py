@@ -141,7 +141,13 @@ class FlashNamesPipeline:
             yield FlashNamesResult(
                 recognized_wines=phase1_recognized,
                 fallback=[],
-                timings={'phase': 1, 'total_ms': phase1_ms},
+                timings={
+                    'phase': 1,
+                    'total_ms': phase1_ms,
+                    'vision_bottles': len(vision_result.objects) if vision_result else 0,
+                    'llm_wines': 0,
+                    'ocr_texts_count': 0,
+                },
             )
 
         # Phase 2: Wait for Gemini, merge everything
@@ -153,17 +159,24 @@ class FlashNamesPipeline:
 
         if not llm_wines:
             # Gemini failed — re-yield phase1 as final result if we have it
+            vision_bottles = len(vision_result.objects) if vision_result else 0
             if phase1_recognized:
                 phase2_ms = round((time.perf_counter() - total_start) * 1000)
                 yield FlashNamesResult(
                     recognized_wines=phase1_recognized,
                     fallback=[],
-                    timings={'phase': 2, 'total_ms': phase2_ms},
+                    timings={
+                        'phase': 2, 'total_ms': phase2_ms,
+                        'vision_bottles': vision_bottles, 'llm_wines': 0, 'ocr_texts_count': 0,
+                    },
                 )
             else:
                 yield FlashNamesResult(
                     recognized_wines=[], fallback=[],
-                    timings={'phase': 2, 'total_ms': round((time.perf_counter() - total_start) * 1000)},
+                    timings={
+                        'phase': 2, 'total_ms': round((time.perf_counter() - total_start) * 1000),
+                        'vision_bottles': vision_bottles, 'llm_wines': 0, 'ocr_texts_count': 0,
+                    },
                 )
             return
 
@@ -199,7 +212,13 @@ class FlashNamesPipeline:
         yield FlashNamesResult(
             recognized_wines=recognized,
             fallback=fallback,
-            timings={'phase': 2, 'total_ms': phase2_ms},
+            timings={
+                'phase': 2,
+                'total_ms': phase2_ms,
+                'vision_bottles': len(vision_result.objects) if vision_result else 0,
+                'llm_wines': len(llm_wines),
+                'ocr_texts_count': sum(1 for rw in recognized if rw.bottle_text is not None),
+            },
         )
 
     def _turbo_match_vision(
@@ -288,6 +307,9 @@ class FlashNamesPipeline:
 
         if not llm_wines:
             timings['total_ms'] = round((time.perf_counter() - total_start) * 1000)
+            timings['vision_bottles'] = len(vision_result.objects) if vision_result else 0
+            timings['llm_wines'] = 0
+            timings['ocr_texts_count'] = 0
             return FlashNamesResult(recognized_wines=[], fallback=[], timings=timings)
 
         # Extract names, ratings, and metadata for DB lookup
@@ -321,6 +343,9 @@ class FlashNamesPipeline:
         # Cache LLM-discovered wines
         self._cache_results(recognized, fallback)
 
+        timings['vision_bottles'] = len(vision_result.objects) if vision_result else 0
+        timings['llm_wines'] = len(llm_wines)
+        timings['ocr_texts_count'] = sum(1 for rw in recognized if rw.bottle_text is not None)
         timings['total_ms'] = round((time.perf_counter() - total_start) * 1000)
         logger.info(
             f"FlashNames: {len(recognized)} results, {len(fallback)} fallback "

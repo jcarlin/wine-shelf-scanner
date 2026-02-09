@@ -90,6 +90,7 @@ export function OverlayContainer({ wines, imageBounds, onWineSelect }: OverlayCo
           shelfRank={shelfRankings.get(wine.wine_name)?.rank}
           isSafePick={safePick && wine.is_safe_pick === true}
           userSentiment={wineMemory ? memory.get(wine.wine_name) : undefined}
+          entranceDelay={index * 80}
         />
       ))}
     </>

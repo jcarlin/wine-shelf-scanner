@@ -32,9 +32,10 @@ export function useScanState() {
     await scanImageStream(
       file,
       {
-        onPhase1: (data) => {
-          // Show turbo-quality results immediately
-          setState({ status: 'partial_results', response: data, imageUri: resolvedImageUri });
+        onPhase1: (_data) => {
+          // Store for fallback if Gemini fails, but don't render yet.
+          // The backend re-emits phase1 as phase2 if Gemini fails, so
+          // the user will still see results — just from the phase2 callback.
         },
         onPhase2: (data) => {
           // Replace with Gemini-enhanced results
@@ -54,7 +55,7 @@ export function useScanState() {
 
   const reset = useCallback(() => {
     if (
-      (state.status === 'results' || state.status === 'partial_results') &&
+      state.status === 'results' &&
       state.imageUri
     ) {
       URL.revokeObjectURL(state.imageUri);

@@ -20,11 +20,9 @@ interface ResultsViewProps {
   response: ScanResponse;
   imageUri: string;
   onReset: () => void;
-  /** True while streaming — phase1 results shown, waiting for Gemini enhancement */
-  isEnhancing?: boolean;
 }
 
-export function ResultsView({ response, imageUri, onReset, isEnhancing = false }: ResultsViewProps) {
+export function ResultsView({ response, imageUri, onReset }: ResultsViewProps) {
   const t = useTranslations('results');
   const tBug = useTranslations('bugReport');
   const containerRef = useRef<HTMLDivElement>(null);
@@ -161,14 +159,6 @@ export function ResultsView({ response, imageUri, onReset, isEnhancing = false }
           )}
         </div>
       </div>
-
-      {/* Enhancing indicator */}
-      {isEnhancing && (
-        <div className="flex items-center justify-center gap-2 py-1.5 bg-star/10 border-b border-star/20">
-          <div className="w-1.5 h-1.5 bg-star rounded-full animate-pulse" />
-          <span className="text-star/80 text-xs font-medium">Enhancing results...</span>
-        </div>
-      )}
 
       {/* Image Container */}
       <div

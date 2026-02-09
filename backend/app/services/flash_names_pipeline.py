@@ -201,6 +201,10 @@ class FlashNamesPipeline:
         else:
             recognized, fallback = self._names_only_results(llm_wines, llm_ratings, db_results)
 
+        # Carry forward phase 1 DB ratings that phase 2 may have lost
+        if phase1_recognized:
+            recognized = self._carry_forward_phase1_ratings(phase1_recognized, recognized)
+
         self._cache_results(recognized, fallback)
 
         phase2_ms = round((time.perf_counter() - total_start) * 1000)
@@ -602,6 +606,7 @@ class FlashNamesPipeline:
         pairs.sort()
         used_bottles: set[int] = set()
         used_llm: set[int] = set()
+        matched_pairs: list[tuple[int, int]] = []  # (llm_idx, bottle_idx)
 
         for dist, li, bi in pairs:
             if li in used_llm or bi in used_bottles:
@@ -610,6 +615,7 @@ class FlashNamesPipeline:
                 break  # All remaining pairs are further away
             used_llm.add(li)
             used_bottles.add(bi)
+            matched_pairs.append((li, bi))
 
             wine = llm_wines[li]
             llm_name = wine['name']
@@ -645,6 +651,7 @@ class FlashNamesPipeline:
             if best_score >= OCR_MATCH_THRESHOLD and best_bt_idx >= 0:
                 used_llm.add(li)
                 used_bottles.add(best_bt_idx)
+                matched_pairs.append((li, best_bt_idx))
                 bt = bottle_texts[best_bt_idx]
                 rw = self._build_recognized_wine(llm_name, llm_ratings, db_results, bt, best_score, llm_metadata or {})
                 recognized.append(rw)
@@ -657,23 +664,88 @@ class FlashNamesPipeline:
             f"{len(used_bottles)}/{len(bottle_texts)} Vision matched"
         )
 
-        # Unmatched LLM wines (no position or beyond threshold) → fallback
+        # Compute per-image calibration offset from matched pairs.
+        # Gemini positions can be systematically offset from Vision bottle
+        # centers; this corrects synthetic bboxes using the known error.
+        MAX_CALIBRATION = 0.08
+        offsets_x: list[float] = []
+        offsets_y: list[float] = []
+        for li, bi in matched_pairs:
+            wine = llm_wines[li]
+            lx, ly = wine.get('x'), wine.get('y')
+            if lx is not None and ly is not None:
+                bx, by = bottle_centers[bi]
+                offsets_x.append(bx - lx)
+                offsets_y.append(by - ly)
+
+        cal_x = sum(offsets_x) / len(offsets_x) if offsets_x else 0.0
+        cal_y = sum(offsets_y) / len(offsets_y) if offsets_y else 0.0
+        # Reject extreme corrections (> 8% of image) as noise
+        if abs(cal_x) > MAX_CALIBRATION:
+            cal_x = 0.0
+        if abs(cal_y) > MAX_CALIBRATION:
+            cal_y = 0.0
+        if cal_x != 0 or cal_y != 0:
+            logger.info(
+                f"FlashNames: Position calibration dx={cal_x:.3f}, dy={cal_y:.3f} "
+                f"from {len(offsets_x)} pairs"
+            )
+
+        # Unmatched LLM wines: create synthetic bboxes from Gemini positions
+        # (with calibration), or fall back to list if no position available.
+        DEFAULT_BOTTLE_WIDTH = 0.08
+        DEFAULT_BOTTLE_HEIGHT = 0.25
+        synthetic_count = 0
+
         for li, wine in enumerate(llm_wines):
             if li in used_llm:
                 continue
             llm_name = wine['name']
-            db_match = db_results.get(llm_name)
-            canonical = db_match.canonical_name if db_match else None
-            rating = db_match.rating if db_match else None
-            llm_est_rating = llm_ratings.get(llm_name)
-            if rating is None and llm_est_rating is not None:
-                rating = llm_est_rating
-            wine_name = canonical or llm_name
-            if rating is not None:
-                fallback.append({'wine_name': wine_name, 'rating': rating})
+            lx, ly = wine.get('x'), wine.get('y')
+
+            if lx is not None and ly is not None:
+                # Apply calibration offset from matched pairs
+                corrected_x = lx + cal_x
+                corrected_y = ly + cal_y
+                synthetic_bbox = VisionBBox(
+                    x=max(0.0, corrected_x - DEFAULT_BOTTLE_WIDTH / 2),
+                    y=max(0.0, corrected_y - DEFAULT_BOTTLE_HEIGHT / 2),
+                    width=DEFAULT_BOTTLE_WIDTH,
+                    height=DEFAULT_BOTTLE_HEIGHT,
+                )
+                synthetic_obj = DetectedObject(name="Bottle", confidence=0.70, bbox=synthetic_bbox)
+                synthetic_bt = BottleText(
+                    bottle=synthetic_obj,
+                    text_fragments=[],
+                    combined_text="",
+                    normalized_name="",
+                )
+                rw = self._build_recognized_wine(
+                    llm_name, llm_ratings, db_results, synthetic_bt, 0.0, llm_metadata or {}
+                )
+                # Cap confidence for synthetic-bbox wines (tappable but never BEST PICK)
+                rw.confidence = min(rw.confidence, 0.70)
+                recognized.append(rw)
+                synthetic_count += 1
+                logger.debug(
+                    f"FlashNames: Synthetic bbox for '{llm_name}' at "
+                    f"({corrected_x:.2f}, {corrected_y:.2f}) [raw: ({lx:.2f}, {ly:.2f})]"
+                )
+            else:
+                # No position at all → fallback (can't place overlay)
+                db_match = db_results.get(llm_name)
+                canonical = db_match.canonical_name if db_match else None
+                rating = db_match.rating if db_match else None
+                llm_est_rating = llm_ratings.get(llm_name)
+                if rating is None and llm_est_rating is not None:
+                    rating = llm_est_rating
+                wine_name = canonical or llm_name
+                if rating is not None:
+                    fallback.append({'wine_name': wine_name, 'rating': rating})
 
         logger.info(
-            f"FlashNames: Final: {len(recognized)} recognized, {len(fallback)} fallback"
+            f"FlashNames: Final: {len(recognized)} recognized ({synthetic_count} synthetic), "
+            f"{len(fallback)} fallback"
         )
 
         # Unmatched Vision bottles → try direct DB fuzzy match on OCR text
@@ -725,15 +797,40 @@ class FlashNamesPipeline:
                 rw = self._build_recognized_wine(llm_name, llm_ratings, db_results, bt, best_score, llm_metadata or {})
                 recognized.append(rw)
             else:
-                db_match = db_results.get(llm_name)
-                canonical = db_match.canonical_name if db_match else None
-                rating = db_match.rating if db_match else None
-                llm_est_rating = llm_ratings.get(llm_name)
-                if rating is None and llm_est_rating is not None:
-                    rating = llm_est_rating
-                wine_name = canonical or llm_name
-                if rating is not None:
-                    fallback.append({'wine_name': wine_name, 'rating': rating})
+                # Try synthetic bbox from Gemini position
+                DEFAULT_BOTTLE_WIDTH = 0.08
+                DEFAULT_BOTTLE_HEIGHT = 0.25
+                lx, ly = wine.get('x'), wine.get('y')
+
+                if lx is not None and ly is not None:
+                    synthetic_bbox = VisionBBox(
+                        x=max(0.0, lx - DEFAULT_BOTTLE_WIDTH / 2),
+                        y=max(0.0, ly - DEFAULT_BOTTLE_HEIGHT / 2),
+                        width=DEFAULT_BOTTLE_WIDTH,
+                        height=DEFAULT_BOTTLE_HEIGHT,
+                    )
+                    synthetic_obj = DetectedObject(name="Bottle", confidence=0.70, bbox=synthetic_bbox)
+                    synthetic_bt = BottleText(
+                        bottle=synthetic_obj,
+                        text_fragments=[],
+                        combined_text="",
+                        normalized_name="",
+                    )
+                    rw = self._build_recognized_wine(
+                        llm_name, llm_ratings, db_results, synthetic_bt, 0.0, llm_metadata or {}
+                    )
+                    rw.confidence = min(rw.confidence, 0.70)
+                    recognized.append(rw)
+                else:
+                    db_match = db_results.get(llm_name)
+                    canonical = db_match.canonical_name if db_match else None
+                    rating = db_match.rating if db_match else None
+                    llm_est_rating = llm_ratings.get(llm_name)
+                    if rating is None and llm_est_rating is not None:
+                        rating = llm_est_rating
+                    wine_name = canonical or llm_name
+                    if rating is not None:
+                        fallback.append({'wine_name': wine_name, 'rating': rating})
 
         # Unmatched Vision bottles → try direct DB fuzzy match
         self._match_unmatched_bottles(bottle_texts, used_bottles, recognized)
@@ -832,6 +929,94 @@ class FlashNamesPipeline:
             if rating is not None:
                 fallback.append({'wine_name': wine_name, 'rating': rating})
         return [], fallback
+
+    @staticmethod
+    def _carry_forward_phase1_ratings(
+        phase1_recognized: list[RecognizedWine],
+        phase2_recognized: list[RecognizedWine],
+    ) -> list[RecognizedWine]:
+        """Preserve phase 1 DB ratings that phase 2 may have lost.
+
+        Phase 1 finds DB ratings via OCR text fuzzy matching. Phase 2 re-does
+        DB lookups using Gemini's name strings, which may not match the same DB
+        entries. This causes ratings to jump (e.g. 4.5 → 4.2) between SSE phases.
+
+        Fix: for each phase 2 wine with an LLM-estimated rating, check if the
+        same bottle (by bbox) had a DB rating in phase 1. If so, carry forward
+        the DB rating and identity while keeping phase 2's richer metadata.
+        Also re-merge any phase 1 DB-matched wines that phase 2 dropped entirely.
+        """
+        # Build lookup: bbox tuple → phase 1 wine (DB-matched only)
+        p1_by_bbox: dict[tuple[float, float, float, float], RecognizedWine] = {}
+        for rw in phase1_recognized:
+            if rw.rating_source != RatingSource.DATABASE:
+                continue
+            if rw.bottle_text and rw.bottle_text.bottle and rw.bottle_text.bottle.bbox:
+                bbox = rw.bottle_text.bottle.bbox
+                key = (bbox.x, bbox.y, bbox.width, bbox.height)
+                p1_by_bbox[key] = rw
+
+        if not p1_by_bbox:
+            return phase2_recognized
+
+        # Track which phase 1 bboxes are covered by phase 2
+        covered_bboxes: set[tuple[float, float, float, float]] = set()
+        carried = 0
+
+        for rw in phase2_recognized:
+            if not rw.bottle_text or not rw.bottle_text.bottle or not rw.bottle_text.bottle.bbox:
+                continue
+            bbox = rw.bottle_text.bottle.bbox
+            key = (bbox.x, bbox.y, bbox.width, bbox.height)
+            covered_bboxes.add(key)
+
+            # Only override LLM-estimated ratings with phase 1 DB ratings
+            if rw.rating_source != RatingSource.LLM_ESTIMATED:
+                continue
+
+            p1_wine = p1_by_bbox.get(key)
+            if not p1_wine:
+                continue
+
+            # Carry forward DB identity from phase 1
+            rw.rating = p1_wine.rating
+            rw.rating_source = p1_wine.rating_source
+            rw.wine_name = p1_wine.wine_name
+            rw.wine_id = p1_wine.wine_id
+            rw.source = p1_wine.source
+
+            # Keep phase 2 metadata if present, backfill from phase 1 if missing
+            if not rw.wine_type and p1_wine.wine_type:
+                rw.wine_type = p1_wine.wine_type
+            if not rw.varietal and p1_wine.varietal:
+                rw.varietal = p1_wine.varietal
+            if not rw.region and p1_wine.region:
+                rw.region = p1_wine.region
+            if not rw.brand and p1_wine.brand:
+                rw.brand = p1_wine.brand
+            if not rw.blurb and p1_wine.blurb:
+                rw.blurb = p1_wine.blurb
+
+            carried += 1
+
+        # Re-merge phase 1 DB wines that phase 2 dropped entirely
+        remerged = 0
+        phase2_names = {rw.wine_name.lower() for rw in phase2_recognized}
+        for bbox_key, p1_wine in p1_by_bbox.items():
+            if bbox_key in covered_bboxes:
+                continue
+            if p1_wine.wine_name.lower() in phase2_names:
+                continue
+            phase2_recognized.append(p1_wine)
+            remerged += 1
+
+        if carried or remerged:
+            logger.info(
+                f"FlashNames: Carried forward {carried} DB ratings from phase1, "
+                f"re-merged {remerged} dropped wines"
+            )
+
+        return phase2_recognized
 
     def _cache_results(self, recognized: list[RecognizedWine], fallback: list) -> None:
         """Cache LLM-discovered wines not in DB."""

@@ -16,9 +16,11 @@ interface RatingBadgeProps {
   shelfRank?: number;
   isSafePick?: boolean;
   userSentiment?: WineSentiment;
+  /** Staggered entrance delay in ms — each badge pops in on its bottle */
+  entranceDelay?: number;
 }
 
-export function RatingBadge({ wine, isTopThree, position, onClick, shelfRank, isSafePick, userSentiment }: RatingBadgeProps) {
+export function RatingBadge({ wine, isTopThree, position, onClick, shelfRank, isSafePick, userSentiment, entranceDelay = 0 }: RatingBadgeProps) {
   const { visualEmphasis } = useFeatureFlags();
   const baseOpacity = getOpacity(wine.confidence);
   const canTap = isTappable(wine.confidence);
@@ -50,13 +52,14 @@ export function RatingBadge({ wine, isTopThree, position, onClick, shelfRank, is
 
   return (
     <div
-      className="absolute flex flex-col items-center transform -translate-x-1/2 -translate-y-1/2"
+      className="absolute flex flex-col items-center animate-badge-pop-in"
       style={{
         left: position.x,
         top: position.y,
-        opacity: badgeOpacity,
+        '--badge-opacity': 1, // badgeOpacity,
+        animationDelay: `${entranceDelay}ms`,
         zIndex: isBestPick ? 20 : 10,
-      }}
+      } as React.CSSProperties}
       onClick={handleClick}
     >
       {/* Best Pick label above #1 badge */}

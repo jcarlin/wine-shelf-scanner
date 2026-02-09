@@ -106,8 +106,8 @@ class TestSpatialMerge:
         assert wine_to_bottle['Bottom Left'].combined_text == "BOT LEFT WINE"
         assert wine_to_bottle['Bottom Right'].combined_text == "BOT RIGHT WINE"
 
-    def test_max_distance_threshold_rejects_far_wine(self):
-        """Wine beyond MAX_SPATIAL_DISTANCE goes to fallback."""
+    def test_max_distance_threshold_uses_synthetic_bbox(self):
+        """Wine beyond MAX_SPATIAL_DISTANCE gets synthetic bbox (not fallback)."""
         pipeline = _make_pipeline()
 
         bottles = [
@@ -126,10 +126,14 @@ class TestSpatialMerge:
             llm_wines, llm_ratings, db_results, bottles
         )
 
-        assert len(recognized) == 1
-        assert recognized[0].wine_name == 'Close Wine'
-        assert len(fallback) == 1
-        assert fallback[0]['wine_name'] == 'Far Wine'
+        # Close Wine matches b0 spatially, Far Wine gets synthetic bbox
+        assert len(recognized) == 2
+        assert len(fallback) == 0
+        close = next(r for r in recognized if r.wine_name == 'Close Wine')
+        far = next(r for r in recognized if r.wine_name == 'Far Wine')
+        assert close.bottle_text.combined_text == "SOME WINE"  # matched real bottle
+        assert far.bottle_text.combined_text == ""  # synthetic bbox has no OCR
+        assert far.confidence <= 0.70  # capped
 
     def test_greedy_conflict_resolution(self):
         """When 2 wines are closest to the same bottle, the closer one wins."""
@@ -181,6 +185,142 @@ class TestSpatialMerge:
         assert recognized[0].wine_name == 'Wine With Position'
         assert len(fallback) == 1
         assert fallback[0]['wine_name'] == 'Wine Without Position'
+
+    def test_unmatched_llm_wine_with_position_gets_synthetic_bbox(self):
+        """LLM wine with position but no Vision match gets synthetic bbox in recognized (not fallback)."""
+        pipeline = _make_pipeline()
+
+        # Only one Vision bottle at left side
+        bottles = [
+            _make_bottle_text("b0", BoundingBox(0.05, 0.30, 0.10, 0.40), "CAYMUS"),
+        ]
+
+        llm_wines = [
+            {'name': 'Caymus Cabernet', 'rating': None, 'x': 0.10, 'y': 0.50},  # matches b0
+            {'name': 'Opus One 2019', 'rating': None, 'x': 0.75, 'y': 0.50},    # no Vision bottle here
+        ]
+        llm_ratings = {w['name']: 3.5 for w in llm_wines}
+        db_results = {w['name']: None for w in llm_wines}
+
+        recognized, fallback = pipeline._spatial_merge(
+            llm_wines, llm_ratings, db_results, bottles
+        )
+
+        assert len(recognized) == 2
+        assert len(fallback) == 0
+
+        # Opus One should have a synthetic bbox centered at (0.75, 0.50)
+        opus = next(r for r in recognized if r.wine_name == 'Opus One 2019')
+        bbox = opus.bottle_text.bottle.bbox
+        assert abs(bbox.x - (0.75 - 0.04)) < 0.001  # x = center - width/2
+        assert abs(bbox.y - (0.50 - 0.125)) < 0.001  # y = center - height/2
+        assert abs(bbox.width - 0.08) < 0.001
+        assert abs(bbox.height - 0.25) < 0.001
+
+    def test_unmatched_llm_wine_without_position_goes_to_fallback(self):
+        """LLM wine without position and no Vision match still goes to fallback."""
+        pipeline = _make_pipeline()
+
+        bottles = [
+            _make_bottle_text("b0", BoundingBox(0.05, 0.30, 0.10, 0.40), "CAYMUS"),
+        ]
+
+        llm_wines = [
+            {'name': 'Caymus Cabernet', 'rating': None, 'x': 0.10, 'y': 0.50},  # matches b0
+            {'name': 'Mystery Wine', 'rating': None, 'x': None, 'y': None},       # no position
+        ]
+        llm_ratings = {w['name']: 3.5 for w in llm_wines}
+        db_results = {w['name']: None for w in llm_wines}
+
+        recognized, fallback = pipeline._spatial_merge(
+            llm_wines, llm_ratings, db_results, bottles
+        )
+
+        assert len(recognized) == 1
+        assert recognized[0].wine_name == 'Caymus Cabernet'
+        assert len(fallback) == 1
+        assert fallback[0]['wine_name'] == 'Mystery Wine'
+
+    def test_synthetic_bbox_confidence_capped_at_070(self):
+        """Synthetic-bbox wines have confidence capped at 0.70."""
+        pipeline = _make_pipeline()
+
+        bottles = []  # No Vision bottles at all
+
+        llm_wines = [
+            {'name': 'Opus One 2019', 'rating': None, 'x': 0.50, 'y': 0.50},
+        ]
+        llm_ratings = {'Opus One 2019': 4.5}
+        db_results = {'Opus One 2019': None}
+
+        recognized, fallback = pipeline._spatial_merge(
+            llm_wines, llm_ratings, db_results, bottles
+        )
+
+        assert len(recognized) == 1
+        assert recognized[0].confidence <= 0.70
+
+    def test_synthetic_bbox_dimensions_correct(self):
+        """Synthetic bbox is 0.08 x 0.25, centered on Gemini position, clamped to image bounds."""
+        pipeline = _make_pipeline()
+
+        bottles = []
+
+        # Wine near the top-left edge — bbox should be clamped to 0
+        llm_wines = [
+            {'name': 'Edge Wine', 'rating': None, 'x': 0.02, 'y': 0.05},
+        ]
+        llm_ratings = {'Edge Wine': 3.5}
+        db_results = {'Edge Wine': None}
+
+        recognized, fallback = pipeline._spatial_merge(
+            llm_wines, llm_ratings, db_results, bottles
+        )
+
+        assert len(recognized) == 1
+        bbox = recognized[0].bottle_text.bottle.bbox
+        # x = max(0.0, 0.02 - 0.04) = 0.0
+        assert bbox.x == 0.0
+        # y = max(0.0, 0.05 - 0.125) = 0.0
+        assert bbox.y == 0.0
+        assert abs(bbox.width - 0.08) < 0.001
+        assert abs(bbox.height - 0.25) < 0.001
+
+    def test_synthetic_bbox_calibrated_from_matched_pairs(self):
+        """Synthetic bbox position is corrected using offset from matched pairs."""
+        pipeline = _make_pipeline()
+
+        # Vision bottle center at (0.15, 0.50)
+        bottles = [
+            _make_bottle_text("b0", BoundingBox(0.10, 0.30, 0.10, 0.40), "CAYMUS"),
+        ]
+
+        # Gemini says Caymus is at (0.18, 0.52) — offset of +0.03 x, +0.02 y
+        # Gemini says Opus One is at (0.75, 0.50)
+        llm_wines = [
+            {'name': 'Caymus Cabernet', 'rating': None, 'x': 0.18, 'y': 0.52},
+            {'name': 'Opus One 2019', 'rating': None, 'x': 0.75, 'y': 0.50},
+        ]
+        llm_ratings = {w['name']: 3.5 for w in llm_wines}
+        db_results = {w['name']: None for w in llm_wines}
+
+        recognized, fallback = pipeline._spatial_merge(
+            llm_wines, llm_ratings, db_results, bottles
+        )
+
+        assert len(recognized) == 2
+        opus = next(r for r in recognized if r.wine_name == 'Opus One 2019')
+        bbox = opus.bottle_text.bottle.bbox
+
+        # Calibration: Vision center (0.15, 0.50) - Gemini pos (0.18, 0.52) = (-0.03, -0.02)
+        # Corrected Opus position: (0.75 + (-0.03), 0.50 + (-0.02)) = (0.72, 0.48)
+        # bbox.x = 0.72 - 0.04 = 0.68
+        expected_center_x = 0.75 - 0.03  # = 0.72
+        expected_center_y = 0.50 - 0.02  # = 0.48
+        actual_center_x = bbox.x + bbox.width / 2
+        actual_center_y = bbox.y + bbox.height / 2
+        assert abs(actual_center_x - expected_center_x) < 0.01
+        assert abs(actual_center_y - expected_center_y) < 0.01
 
     def test_db_match_uses_canonical_name_and_rating(self):
         """When DB has a match, recognized wine uses canonical name and DB rating."""
@@ -379,3 +519,223 @@ class TestGeminiResponseParsing:
         assert len(wines) == 1
         assert wines[0]['x'] == 0.0
         assert wines[0]['y'] == 1.0
+
+
+class TestCarryForwardPhase1Ratings:
+    """Test that phase 1 DB ratings are preserved when phase 2 replaces them with LLM estimates."""
+
+    @staticmethod
+    def _make_recognized(
+        wine_name: str,
+        rating: float,
+        rating_source: RatingSource,
+        source: WineSource,
+        bbox: BoundingBox,
+        wine_id: int = None,
+        wine_type: str = None,
+        varietal: str = None,
+        region: str = None,
+        brand: str = None,
+        blurb: str = None,
+    ) -> RecognizedWine:
+        bt = _make_bottle_text(wine_name, bbox, wine_name.upper())
+        return RecognizedWine(
+            wine_name=wine_name,
+            rating=rating,
+            confidence=0.80,
+            source=source,
+            identified=True,
+            bottle_text=bt,
+            rating_source=rating_source,
+            wine_id=wine_id,
+            wine_type=wine_type,
+            varietal=varietal,
+            region=region,
+            brand=brand,
+            blurb=blurb,
+        )
+
+    def test_phase2_llm_rating_replaced_by_phase1_db_rating(self):
+        """Phase 2 LLM-estimated rating is replaced by phase 1 DB rating for the same bottle."""
+        bbox = BoundingBox(0.10, 0.30, 0.10, 0.40)
+
+        phase1 = [self._make_recognized(
+            "Caymus Cabernet Sauvignon 2020", 4.5, RatingSource.DATABASE, WineSource.DATABASE,
+            bbox, wine_id=42,
+        )]
+        phase2 = [self._make_recognized(
+            "Caymus Cabernet Sauvignon Napa Valley", 4.2, RatingSource.LLM_ESTIMATED, WineSource.LLM,
+            bbox,
+        )]
+
+        result = FlashNamesPipeline._carry_forward_phase1_ratings(phase1, phase2)
+
+        assert len(result) == 1
+        assert result[0].rating == 4.5
+        assert result[0].rating_source == RatingSource.DATABASE
+        assert result[0].source == WineSource.DATABASE
+        assert result[0].wine_name == "Caymus Cabernet Sauvignon 2020"
+        assert result[0].wine_id == 42
+
+    def test_phase2_db_rating_not_overridden(self):
+        """Phase 2 wine with its own DB rating is NOT overridden by phase 1."""
+        bbox = BoundingBox(0.10, 0.30, 0.10, 0.40)
+
+        phase1 = [self._make_recognized(
+            "Caymus Cab Sauv 2020", 4.5, RatingSource.DATABASE, WineSource.DATABASE,
+            bbox, wine_id=42,
+        )]
+        phase2 = [self._make_recognized(
+            "Caymus Cabernet Sauvignon Napa Valley 2020", 4.6, RatingSource.DATABASE, WineSource.DATABASE,
+            bbox, wine_id=99,
+        )]
+
+        result = FlashNamesPipeline._carry_forward_phase1_ratings(phase1, phase2)
+
+        assert len(result) == 1
+        # Phase 2's own DB match is preserved
+        assert result[0].rating == 4.6
+        assert result[0].wine_id == 99
+        assert result[0].wine_name == "Caymus Cabernet Sauvignon Napa Valley 2020"
+
+    def test_phase2_metadata_preserved_when_rating_carried(self):
+        """Phase 2 metadata (wine_type, varietal, region, brand) is kept even when rating is from phase 1."""
+        bbox = BoundingBox(0.10, 0.30, 0.10, 0.40)
+
+        phase1 = [self._make_recognized(
+            "Caymus Cabernet Sauvignon", 4.5, RatingSource.DATABASE, WineSource.DATABASE,
+            bbox, wine_id=42,
+        )]
+        phase2 = [self._make_recognized(
+            "Caymus Cab Sauv Napa", 4.2, RatingSource.LLM_ESTIMATED, WineSource.LLM,
+            bbox, wine_type="Red", varietal="Cabernet Sauvignon", region="Napa Valley", brand="Caymus Vineyards",
+        )]
+
+        result = FlashNamesPipeline._carry_forward_phase1_ratings(phase1, phase2)
+
+        assert len(result) == 1
+        # Rating carried from phase 1
+        assert result[0].rating == 4.5
+        assert result[0].rating_source == RatingSource.DATABASE
+        # Metadata kept from phase 2
+        assert result[0].wine_type == "Red"
+        assert result[0].varietal == "Cabernet Sauvignon"
+        assert result[0].region == "Napa Valley"
+        assert result[0].brand == "Caymus Vineyards"
+
+    def test_phase1_db_wine_missing_from_phase2_remerged(self):
+        """Phase 1 DB-matched wine absent from phase 2 is re-merged into results."""
+        bbox1 = BoundingBox(0.10, 0.30, 0.10, 0.40)
+        bbox2 = BoundingBox(0.40, 0.30, 0.10, 0.40)
+
+        phase1 = [
+            self._make_recognized(
+                "Caymus Cabernet", 4.5, RatingSource.DATABASE, WineSource.DATABASE,
+                bbox1, wine_id=42,
+            ),
+            self._make_recognized(
+                "Opus One 2019", 4.8, RatingSource.DATABASE, WineSource.DATABASE,
+                bbox2, wine_id=99,
+            ),
+        ]
+        # Phase 2 only found Caymus (different bbox2 bottle was missed by Gemini)
+        phase2 = [self._make_recognized(
+            "Caymus Cabernet Sauvignon", 4.2, RatingSource.LLM_ESTIMATED, WineSource.LLM,
+            bbox1,
+        )]
+
+        result = FlashNamesPipeline._carry_forward_phase1_ratings(phase1, phase2)
+
+        assert len(result) == 2
+        names = {rw.wine_name for rw in result}
+        assert "Caymus Cabernet" in names  # carried forward rating + name
+        assert "Opus One 2019" in names    # re-merged
+
+    def test_phase1_llm_cache_wine_not_remerged(self):
+        """Phase 1 LLM-cache wine missing from phase 2 is NOT re-merged (only DB wines)."""
+        bbox1 = BoundingBox(0.10, 0.30, 0.10, 0.40)
+        bbox2 = BoundingBox(0.40, 0.30, 0.10, 0.40)
+
+        phase1 = [
+            self._make_recognized(
+                "Caymus Cabernet", 4.5, RatingSource.DATABASE, WineSource.DATABASE,
+                bbox1, wine_id=42,
+            ),
+            self._make_recognized(
+                "Some Obscure Wine", 3.8, RatingSource.LLM_ESTIMATED, WineSource.LLM,
+                bbox2,
+            ),
+        ]
+        # Phase 2 only found Caymus
+        phase2 = [self._make_recognized(
+            "Caymus Cabernet Sauvignon", 4.2, RatingSource.LLM_ESTIMATED, WineSource.LLM,
+            bbox1,
+        )]
+
+        result = FlashNamesPipeline._carry_forward_phase1_ratings(phase1, phase2)
+
+        assert len(result) == 1
+        assert result[0].wine_name == "Caymus Cabernet"  # carried forward
+        # The LLM-cache wine was NOT re-merged
+        names = {rw.wine_name for rw in result}
+        assert "Some Obscure Wine" not in names
+
+    def test_empty_phase1_is_noop(self):
+        """Empty phase 1 list returns phase 2 unchanged."""
+        bbox = BoundingBox(0.10, 0.30, 0.10, 0.40)
+
+        phase2 = [self._make_recognized(
+            "Caymus Cabernet", 4.2, RatingSource.LLM_ESTIMATED, WineSource.LLM,
+            bbox,
+        )]
+
+        result = FlashNamesPipeline._carry_forward_phase1_ratings([], phase2)
+
+        assert len(result) == 1
+        assert result[0].rating == 4.2
+        assert result[0].rating_source == RatingSource.LLM_ESTIMATED
+
+    def test_metadata_backfilled_from_phase1_when_phase2_lacks_it(self):
+        """Phase 2 missing metadata fields are backfilled from phase 1."""
+        bbox = BoundingBox(0.10, 0.30, 0.10, 0.40)
+
+        phase1 = [self._make_recognized(
+            "Caymus Cabernet Sauvignon", 4.5, RatingSource.DATABASE, WineSource.DATABASE,
+            bbox, wine_id=42, wine_type="Red", region="Napa Valley", brand="Caymus",
+        )]
+        # Phase 2 has varietal but lacks other metadata
+        phase2 = [self._make_recognized(
+            "Caymus Cab Sauv", 4.2, RatingSource.LLM_ESTIMATED, WineSource.LLM,
+            bbox, varietal="Cabernet Sauvignon",
+        )]
+
+        result = FlashNamesPipeline._carry_forward_phase1_ratings(phase1, phase2)
+
+        assert len(result) == 1
+        # Backfilled from phase 1
+        assert result[0].wine_type == "Red"
+        assert result[0].region == "Napa Valley"
+        assert result[0].brand == "Caymus"
+        # Kept from phase 2
+        assert result[0].varietal == "Cabernet Sauvignon"
+
+    def test_duplicate_name_not_remerged(self):
+        """Phase 1 wine with same name as phase 2 wine is not re-merged (avoids duplicates)."""
+        bbox1 = BoundingBox(0.10, 0.30, 0.10, 0.40)
+        bbox2 = BoundingBox(0.40, 0.30, 0.10, 0.40)
+
+        phase1 = [self._make_recognized(
+            "Caymus Cabernet", 4.5, RatingSource.DATABASE, WineSource.DATABASE,
+            bbox1, wine_id=42,
+        )]
+        # Phase 2 has the same wine name but from a different bbox
+        phase2 = [self._make_recognized(
+            "Caymus Cabernet", 4.6, RatingSource.DATABASE, WineSource.DATABASE,
+            bbox2, wine_id=42,
+        )]
+
+        result = FlashNamesPipeline._carry_forward_phase1_ratings(phase1, phase2)
+
+        # bbox1 is not covered by phase 2, but the name already exists — don't re-merge
+        assert len(result) == 1
+        assert result[0].wine_name == "Caymus Cabernet"

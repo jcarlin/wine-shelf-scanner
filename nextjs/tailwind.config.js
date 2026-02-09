@@ -25,6 +25,7 @@ module.exports = {
         'fade-out': 'fadeOut 0.3s ease-in-out',
         'slide-up': 'slideUp 0.3s ease-out',
         'scan-line': 'scanLine 2s ease-in-out infinite',
+        'badge-pop-in': 'badgePopIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both',
       },
       keyframes: {
         fadeIn: {
@@ -42,6 +43,10 @@ module.exports = {
         scanLine: {
           '0%, 100%': { top: '0%' },
           '50%': { top: '100%' },
+        },
+        badgePopIn: {
+          '0%': { opacity: '0', transform: 'translate(-50%, -50%) scale(0.4)' },
+          '100%': { opacity: 'var(--badge-opacity, 1)', transform: 'translate(-50%, -50%) scale(1)' },
         },
       },
     },

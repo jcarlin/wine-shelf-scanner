@@ -83,6 +83,7 @@ export interface ScanResponse {
 export type ScanState =
   | { status: 'idle' }
   | { status: 'processing'; imageUri: string | null }
+  | { status: 'partial_results'; response: ScanResponse; imageUri: string }
   | { status: 'results'; response: ScanResponse; imageUri: string }
   | { status: 'error'; message: string };
 

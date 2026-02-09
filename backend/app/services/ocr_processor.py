@@ -4,6 +4,7 @@ OCR text processing: grouping text to bottles and normalization.
 
 import re
 from dataclasses import dataclass
+from typing import Optional
 
 from ..config import Config
 from .vision import BoundingBox, DetectedObject, TextBlock
@@ -134,7 +135,7 @@ class BottleText:
     text_fragments: list[str]
     combined_text: str
     normalized_name: str
-    normalization_trace: dict | None = None  # Only populated in debug mode
+    normalization_trace: Optional[dict] = None  # Only populated in debug mode
 
 
 @dataclass

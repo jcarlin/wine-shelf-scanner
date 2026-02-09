@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { ScanState } from '@/lib/types';
-import { scanImage } from '@/lib/api-client';
+import { scanImageStream } from '@/lib/api-client';
 import { getDisplayableImageUrl } from '@/lib/image-converter';
 import { useScanCache } from './useScanCache';
 import { featureFlags } from '@/lib/feature-flags';
@@ -27,22 +27,36 @@ export function useScanState() {
     // Set processing state - imageUri may be null if HEIC conversion failed
     setState({ status: 'processing', imageUri });
 
-    const result = await scanImage(file, { debug: debugMode });
+    const resolvedImageUri = imageUri || '';
 
-    if (result.success) {
-      // Cache result for offline access
-      if (featureFlags.offlineCache && imageUri) {
-        scanCache.save(result.data, imageUri);
-      }
-      setState({ status: 'results', response: result.data, imageUri: imageUri || '' });
-    } else {
-      if (imageUri) URL.revokeObjectURL(imageUri);
-      setState({ status: 'error', message: result.error.message });
-    }
+    await scanImageStream(
+      file,
+      {
+        onPhase1: (data) => {
+          // Show turbo-quality results immediately
+          setState({ status: 'partial_results', response: data, imageUri: resolvedImageUri });
+        },
+        onPhase2: (data) => {
+          // Replace with Gemini-enhanced results
+          if (featureFlags.offlineCache && resolvedImageUri) {
+            scanCache.save(data, resolvedImageUri);
+          }
+          setState({ status: 'results', response: data, imageUri: resolvedImageUri });
+        },
+        onError: (error) => {
+          if (imageUri) URL.revokeObjectURL(imageUri);
+          setState({ status: 'error', message: error.message });
+        },
+      },
+      { debug: debugMode }
+    );
   }, [debugMode, scanCache]);
 
   const reset = useCallback(() => {
-    if (state.status === 'results' && state.imageUri) {
+    if (
+      (state.status === 'results' || state.status === 'partial_results') &&
+      state.imageUri
+    ) {
       URL.revokeObjectURL(state.imageUri);
     } else if (state.status === 'processing' && state.imageUri) {
       URL.revokeObjectURL(state.imageUri);

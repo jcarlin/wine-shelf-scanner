@@ -1,12 +1,12 @@
 """
-Flash Names pipeline: minimal-prompt LLM + parallel Vision API.
+Flash Names pipeline: single-prompt LLM + parallel Vision API.
 
 Strategy:
-1. Fire Gemini Flash (names+ratings prompt) and Vision API concurrently
-2. LLM returns wine names + estimated ratings (~2-3s, minimal output tokens)
+1. Fire Gemini Flash (names + positions + ratings + metadata) and Vision API concurrently
+2. LLM returns wine names, estimated ratings, and full metadata (~2-3s)
 3. Vision API returns bboxes + OCR (~2-3s)
-4. Merge: assign LLM names to Vision bboxes via OCR text similarity
-5. Parallel DB lookups for authoritative ratings (DB rating overrides LLM estimate)
+4. Merge: assign LLM names to Vision bboxes via spatial matching or OCR similarity
+5. Parallel DB lookups for authoritative data (DB overrides LLM estimates)
 
 Expected latency: 3-5s total (dominated by the slower of LLM/Vision).
 """
@@ -16,6 +16,7 @@ import base64
 import io
 import json
 import logging
+import math
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
@@ -27,7 +28,7 @@ from .llm_rating_cache import get_llm_rating_cache, LLMRatingCache
 from .ocr_processor import BottleText, OCRProcessor
 from .recognition_pipeline import RecognizedWine
 from .vision import BoundingBox as VisionBBox, DetectedObject, VisionResult, VisionService
-from .wine_matcher import WineMatcher
+from .wine_matcher import WineMatcher, WineMatch
 
 logger = logging.getLogger(__name__)
 
@@ -49,17 +50,25 @@ def _get_litellm():
     return _litellm
 
 
-NAMES_ONLY_PROMPT = """List every wine bottle visible in this photo. Return ONLY a JSON array of wine names. No ratings, no metadata. Just names.
+NAMES_ONLY_PROMPT = """List every wine bottle visible in this photo. For each bottle, return a JSON object with:
+- name: full wine name (producer + wine + vintage if visible)
+- x, y: approximate center position as fractions (0.0-1.0, top-left origin)
+- rating: estimated Vivino community rating (1.0-5.0). Most wines 3.5-4.3, premium 4.3-4.7, iconic 4.7+
+- type: wine type (Red, White, Rosé, Sparkling, Dessert)
+- varietal: grape variety (e.g. Cabernet Sauvignon, Pinot Noir, Chardonnay)
+- region: wine region (e.g. Napa Valley, Burgundy, Barossa Valley)
+- brand: winery/producer name
 
-Example: ["Caymus Cabernet Sauvignon", "Opus One 2019"]
+Return ONLY a JSON array:
+[{"name": "Caymus Cabernet Sauvignon Napa Valley", "x": 0.15, "y": 0.45, "rating": 4.4, "type": "Red", "varietal": "Cabernet Sauvignon", "region": "Napa Valley", "brand": "Caymus Vineyards"}]
 
 Include the producer/winery and grape variety when readable. For partial text, give your best guess. Return ONLY the JSON array."""
 
-RATING_PROMPT_TEMPLATE = """Estimate a Vivino-style rating (1.0-5.0) for each of these wines. Return ONLY a JSON object mapping wine name to rating.
+RATING_PROMPT_TEMPLATE = """Estimate the Vivino community rating (1.0-5.0) for each wine. Use ratings that match what you'd find on Vivino — most wines fall between 3.5-4.3, well-known premium wines are 4.3-4.7, and iconic wines are 4.7+. Be specific, not generic.
 
 Wines: {wines}
 
-Example: {{"Caymus Cabernet Sauvignon": 4.6, "Opus One 2019": 4.8}}"""
+Return ONLY a JSON object: {{"Wine Name": 4.2, "Other Wine": 3.8}}"""
 
 
 @dataclass
@@ -72,13 +81,13 @@ class FlashNamesResult:
 
 class FlashNamesPipeline:
     """
-    Minimal-prompt LLM pipeline with parallel Vision API for bboxes.
+    Single-prompt LLM pipeline with parallel Vision API for bboxes.
 
     Flow:
-    1. [Parallel] Gemini Flash names+ratings + Vision API
+    1. [Parallel] Gemini Flash (names + ratings + metadata) + Vision API
     2. OCR grouping from Vision results
-    3. Match LLM names to Vision bottles by OCR text similarity
-    4. DB lookups for authoritative ratings (overrides LLM estimates)
+    3. Spatial or OCR-text merge of LLM names to Vision bottles
+    4. DB lookups for authoritative data (overrides LLM estimates)
     5. Unmatched LLM names -> fallback list with LLM-estimated ratings
     """
 
@@ -93,6 +102,163 @@ class FlashNamesPipeline:
         self._executor = ThreadPoolExecutor(max_workers=8)
         cache_enabled = use_llm_cache if use_llm_cache is not None else Config.use_llm_cache()
         self._llm_cache: Optional[LLMRatingCache] = get_llm_rating_cache() if cache_enabled else None
+
+    async def scan_progressive(self, image_bytes: bytes):
+        """Yield turbo results first, then Gemini-enhanced results.
+
+        Async generator that yields FlashNamesResult twice:
+        - Phase 1: Vision API + OCR grouping + DB fuzzy matching (turbo-quality, ~3.5s)
+        - Phase 2: Gemini merge + full metadata (enhanced, ~6-8s)
+
+        Both phases yield complete FlashNamesResult objects. Phase 2 is a full
+        replacement — the consumer should swap its entire state.
+        """
+        total_start = time.perf_counter()
+
+        # Fire both concurrently
+        gemini_task = asyncio.create_task(self._run_gemini_names(image_bytes))
+        vision_coro = asyncio.get_event_loop().run_in_executor(
+            None, self._run_vision, image_bytes
+        )
+
+        # Wait for Vision first (typically faster at ~2.5s vs Gemini ~6-8s)
+        try:
+            vision_result = await vision_coro
+        except Exception as e:
+            logger.warning(f"FlashNames progressive: Vision API failed: {e}")
+            vision_result = None
+
+        # Phase 1: Process Vision results immediately (turbo-style)
+        phase1_recognized = []
+        if vision_result and vision_result.objects:
+            phase1_recognized = self._turbo_match_vision(vision_result, image_bytes)
+
+        if phase1_recognized:
+            phase1_ms = round((time.perf_counter() - total_start) * 1000)
+            logger.info(
+                f"FlashNames progressive phase1: {len(phase1_recognized)} results in {phase1_ms}ms"
+            )
+            yield FlashNamesResult(
+                recognized_wines=phase1_recognized,
+                fallback=[],
+                timings={'phase': 1, 'total_ms': phase1_ms},
+            )
+
+        # Phase 2: Wait for Gemini, merge everything
+        try:
+            llm_wines = await gemini_task
+        except Exception as e:
+            logger.warning(f"FlashNames progressive: Gemini failed: {e}")
+            llm_wines = []
+
+        if not llm_wines:
+            # Gemini failed — re-yield phase1 as final result if we have it
+            if phase1_recognized:
+                phase2_ms = round((time.perf_counter() - total_start) * 1000)
+                yield FlashNamesResult(
+                    recognized_wines=phase1_recognized,
+                    fallback=[],
+                    timings={'phase': 2, 'total_ms': phase2_ms},
+                )
+            else:
+                yield FlashNamesResult(
+                    recognized_wines=[], fallback=[],
+                    timings={'phase': 2, 'total_ms': round((time.perf_counter() - total_start) * 1000)},
+                )
+            return
+
+        # Full merge logic (same as scan())
+        llm_names = [w['name'] for w in llm_wines]
+        llm_ratings = {w['name']: w.get('rating') for w in llm_wines}
+        llm_metadata = {w['name']: w for w in llm_wines}
+
+        db_results = self._batch_db_lookup(llm_names)
+
+        for name in llm_names:
+            db_match = db_results.get(name)
+            db_rating = db_match.rating if db_match else None
+            if db_rating is None and llm_ratings.get(name) is None:
+                llm_ratings[name] = 3.5
+
+        if vision_result and vision_result.objects:
+            recognized, fallback = self._merge_with_vision(
+                llm_wines, llm_ratings, db_results, vision_result, image_bytes,
+                llm_metadata=llm_metadata,
+            )
+        else:
+            recognized, fallback = self._names_only_results(llm_wines, llm_ratings, db_results)
+
+        self._cache_results(recognized, fallback)
+
+        phase2_ms = round((time.perf_counter() - total_start) * 1000)
+        logger.info(
+            f"FlashNames progressive phase2: {len(recognized)} results, "
+            f"{len(fallback)} fallback in {phase2_ms}ms"
+        )
+
+        yield FlashNamesResult(
+            recognized_wines=recognized,
+            fallback=fallback,
+            timings={'phase': 2, 'total_ms': phase2_ms},
+        )
+
+    def _turbo_match_vision(
+        self,
+        vision_result: VisionResult,
+        image_bytes: bytes,
+    ) -> list[RecognizedWine]:
+        """Process Vision results with OCR grouping + parallel DB fuzzy matching.
+
+        This is the turbo-quality path: no LLM, just Vision API + DB.
+        Returns recognized wines with bboxes for immediate display.
+        """
+        ocr_processor = OCRProcessor()
+        ocr_result = ocr_processor.process_with_orphans(
+            vision_result.objects, vision_result.text_blocks
+        )
+        bottle_texts = ocr_result.bottle_texts
+
+        recognized: list[RecognizedWine] = []
+        for bt in bottle_texts:
+            if not bt.normalized_name or len(bt.normalized_name) < 3:
+                continue
+            match = self.wine_matcher.match(bt.normalized_name)
+            if match and match.confidence >= Config.FUZZY_CONFIDENCE_THRESHOLD:
+                recognized.append(RecognizedWine(
+                    wine_name=match.canonical_name,
+                    rating=match.rating,
+                    confidence=min(bt.bottle.confidence, match.confidence),
+                    source=WineSource.DATABASE,
+                    identified=True,
+                    bottle_text=bt,
+                    rating_source=RatingSource.DATABASE,
+                    wine_id=match.wine_id,
+                    wine_type=match.wine_type,
+                    brand=match.brand,
+                    region=match.region,
+                    varietal=match.varietal,
+                    blurb=match.description,
+                ))
+
+            # Also check LLM cache for non-DB matches
+            elif self._llm_cache:
+                cached = self._llm_cache.get(bt.normalized_name)
+                if cached:
+                    recognized.append(RecognizedWine(
+                        wine_name=cached.wine_name,
+                        rating=cached.estimated_rating,
+                        confidence=min(bt.bottle.confidence, cached.confidence),
+                        source=WineSource.LLM,
+                        identified=True,
+                        bottle_text=bt,
+                        rating_source=RatingSource.LLM_ESTIMATED,
+                        wine_type=cached.wine_type,
+                        brand=cached.brand,
+                        region=cached.region,
+                        varietal=cached.varietal,
+                    ))
+
+        return recognized
 
     async def scan(self, image_bytes: bytes) -> FlashNamesResult:
         """Run flash names pipeline."""
@@ -124,29 +290,32 @@ class FlashNamesPipeline:
             timings['total_ms'] = round((time.perf_counter() - total_start) * 1000)
             return FlashNamesResult(recognized_wines=[], fallback=[], timings=timings)
 
-        # Extract names for DB lookup
+        # Extract names, ratings, and metadata for DB lookup
         llm_names = [w['name'] for w in llm_wines]
         llm_ratings = {w['name']: w.get('rating') for w in llm_wines}
+        llm_metadata = {w['name']: w for w in llm_wines}
 
         # DB lookups (parallel)
         t_db = time.perf_counter()
         db_results = self._batch_db_lookup(llm_names)
         timings['db_ms'] = round((time.perf_counter() - t_db) * 1000)
 
-        # For wines not in DB, use a default estimated rating
+        # Last-resort default for any unrated wines not in DB
         for name in llm_names:
-            canonical, rating, conf, wine_id = db_results.get(name, (None, None, 0, None))
-            if rating is None and llm_ratings.get(name) is None:
-                llm_ratings[name] = 3.5  # Default estimate for unknown wines
+            db_match = db_results.get(name)
+            db_rating = db_match.rating if db_match else None
+            if db_rating is None and llm_ratings.get(name) is None:
+                llm_ratings[name] = 3.5
 
         # Merge with Vision bboxes if available
         t_merge = time.perf_counter()
         if vision_result and vision_result.objects:
             recognized, fallback = self._merge_with_vision(
-                llm_names, llm_ratings, db_results, vision_result, image_bytes
+                llm_wines, llm_ratings, db_results, vision_result, image_bytes,
+                llm_metadata=llm_metadata,
             )
         else:
-            recognized, fallback = self._names_only_results(llm_names, llm_ratings, db_results)
+            recognized, fallback = self._names_only_results(llm_wines, llm_ratings, db_results)
         timings['merge_ms'] = round((time.perf_counter() - t_merge) * 1000)
 
         # Cache LLM-discovered wines
@@ -185,7 +354,7 @@ class FlashNamesPipeline:
         return buf.getvalue()
 
     async def _run_gemini_names(self, image_bytes: bytes) -> list[dict]:
-        """Call Gemini Flash with names-only prompt. Returns list of {name, rating} dicts."""
+        """Call Gemini Flash with names+metadata prompt. Returns list of wine dicts with name, rating, position, and metadata."""
         litellm = _get_litellm()
         if not litellm:
             logger.error("FlashNames: litellm not available")
@@ -205,7 +374,7 @@ class FlashNamesPipeline:
                         {"type": "text", "text": NAMES_ONLY_PROMPT},
                     ],
                 }],
-                max_tokens=500,
+                max_tokens=1500,
                 temperature=0.1,
             )
             elapsed = round((time.perf_counter() - t0) * 1000)
@@ -223,13 +392,51 @@ class FlashNamesPipeline:
             seen = set()
             wines = []
             for item in parsed:
-                name = item if isinstance(item, str) else (item.get('name') if isinstance(item, dict) else None)
+                if isinstance(item, str):
+                    name = item
+                    x, y = None, None
+                elif isinstance(item, dict):
+                    name = item.get('name')
+                    x = item.get('x')
+                    y = item.get('y')
+                else:
+                    continue
                 if not name:
                     continue
+                # Clamp x,y to 0-1 range
+                if x is not None and y is not None:
+                    try:
+                        x = max(0.0, min(1.0, float(x)))
+                        y = max(0.0, min(1.0, float(y)))
+                    except (ValueError, TypeError):
+                        x, y = None, None
+                else:
+                    x, y = None, None
+                # Parse rating
+                rating = item.get('rating') if isinstance(item, dict) else None
+                if rating is not None:
+                    try:
+                        rating = round(max(1.0, min(5.0, float(rating))), 2)
+                    except (ValueError, TypeError):
+                        rating = None
+
+                # Parse metadata fields
+                if isinstance(item, dict):
+                    wine_type = item.get('type')
+                    varietal = item.get('varietal')
+                    region = item.get('region')
+                    brand = item.get('brand')
+                else:
+                    wine_type = varietal = region = brand = None
+
                 key = name.lower().strip()
                 if key not in seen:
                     seen.add(key)
-                    wines.append({'name': name, 'rating': None})
+                    wines.append({
+                        'name': name, 'rating': rating, 'x': x, 'y': y,
+                        'wine_type': wine_type, 'varietal': varietal,
+                        'region': region, 'brand': brand,
+                    })
 
             logger.info(f"FlashNames: Gemini identified {len(wines)} wines in {elapsed}ms")
             return wines
@@ -267,21 +474,32 @@ class FlashNamesPipeline:
 
     def _batch_db_lookup(
         self, names: list[str]
-    ) -> dict[str, tuple[Optional[str], Optional[float], float, Optional[int]]]:
+    ) -> dict[str, Optional[WineMatch]]:
         """Parallel DB lookups for all wine names.
 
-        Returns: {llm_name: (canonical_name, rating, confidence, wine_id)}
+        Returns: {llm_name: WineMatch or None}
         """
         def lookup(name: str):
             match = self.wine_matcher.match(name)
             if match and match.confidence >= 0.72:
-                return (name, (match.canonical_name, match.rating, match.confidence, match.wine_id))
+                return (name, match)
             # Try LLM cache
             if self._llm_cache:
                 cached = self._llm_cache.get(name)
                 if cached:
-                    return (name, (cached.wine_name, cached.estimated_rating, cached.confidence, None))
-            return (name, (None, None, 0.0, None))
+                    return (name, WineMatch(
+                        canonical_name=cached.wine_name,
+                        rating=cached.estimated_rating,
+                        confidence=cached.confidence,
+                        source=WineSource.LLM,
+                        wine_type=cached.wine_type,
+                        brand=cached.brand,
+                        region=cached.region,
+                        varietal=cached.varietal,
+                        description=getattr(cached, 'blurb', None),
+                        wine_id=None,
+                    ))
+            return (name, None)
 
         futures = [self._executor.submit(lookup, name) for name in names]
         results = {}
@@ -293,16 +511,26 @@ class FlashNamesPipeline:
                 logger.error(f"FlashNames: DB lookup error: {e}")
         return results
 
+    # Maximum Euclidean distance (in 0-1 space) for spatial matching
+    MAX_SPATIAL_DISTANCE = 0.20
+
     def _merge_with_vision(
         self,
-        llm_names: list[str],
+        llm_wines: list[dict],
         llm_ratings: dict[str, Optional[float]],
         db_results: dict,
         vision_result: VisionResult,
         image_bytes: bytes,
+        llm_metadata: Optional[dict] = None,
     ) -> tuple[list[RecognizedWine], list]:
-        """Merge LLM names with Vision bboxes using OCR text similarity."""
-        from rapidfuzz import fuzz
+        """Merge LLM names with Vision bboxes using spatial nearest-neighbor matching.
+
+        If Gemini returned x,y positions, uses Euclidean distance to match each
+        LLM wine to the nearest Vision bottle. Falls back to OCR text matching
+        if positions are unavailable.
+        """
+        if llm_metadata is None:
+            llm_metadata = {}
 
         # Process Vision OCR
         ocr_processor = OCRProcessor()
@@ -311,13 +539,100 @@ class FlashNamesPipeline:
         )
         bottle_texts = ocr_result.bottle_texts
 
+        # Check if we have spatial positions from Gemini
+        has_positions = any(w.get('x') is not None and w.get('y') is not None for w in llm_wines)
+
+        if has_positions:
+            return self._spatial_merge(llm_wines, llm_ratings, db_results, bottle_texts, llm_metadata)
+        else:
+            logger.info("FlashNames: No positions from Gemini, falling back to OCR text matching")
+            return self._ocr_text_merge(llm_wines, llm_ratings, db_results, bottle_texts, llm_metadata)
+
+    def _spatial_merge(
+        self,
+        llm_wines: list[dict],
+        llm_ratings: dict[str, Optional[float]],
+        db_results: dict,
+        bottle_texts: list[BottleText],
+        llm_metadata: Optional[dict] = None,
+    ) -> tuple[list[RecognizedWine], list]:
+        """Match LLM wines to Vision bottles by spatial nearest-neighbor."""
+        recognized: list[RecognizedWine] = []
+        fallback = []
+
+        # Compute Vision bottle centers from bboxes
+        bottle_centers = [bt.bottle.bbox.center for bt in bottle_texts]
+
+        # Build all (distance, llm_idx, bottle_idx) pairs
+        pairs = []
+        for li, wine in enumerate(llm_wines):
+            lx, ly = wine.get('x'), wine.get('y')
+            if lx is None or ly is None:
+                continue
+            for bi, (bx, by) in enumerate(bottle_centers):
+                dist = math.sqrt((lx - bx) ** 2 + (ly - by) ** 2)
+                pairs.append((dist, li, bi))
+
+        # Greedy assignment: sort by distance, assign closest first
+        pairs.sort()
+        used_bottles: set[int] = set()
+        used_llm: set[int] = set()
+
+        for dist, li, bi in pairs:
+            if li in used_llm or bi in used_bottles:
+                continue
+            if dist > self.MAX_SPATIAL_DISTANCE:
+                break  # All remaining pairs are further away
+            used_llm.add(li)
+            used_bottles.add(bi)
+
+            wine = llm_wines[li]
+            llm_name = wine['name']
+            bt = bottle_texts[bi]
+
+            rw = self._build_recognized_wine(llm_name, llm_ratings, db_results, bt, dist, llm_metadata or {})
+            recognized.append(rw)
+            logger.debug(f"FlashNames: Spatial match '{llm_name}' → bottle {bi} (dist={dist:.3f})")
+
+        # Unmatched LLM wines (no position or beyond threshold) → fallback
+        for li, wine in enumerate(llm_wines):
+            if li in used_llm:
+                continue
+            llm_name = wine['name']
+            db_match = db_results.get(llm_name)
+            canonical = db_match.canonical_name if db_match else None
+            rating = db_match.rating if db_match else None
+            llm_est_rating = llm_ratings.get(llm_name)
+            if rating is None and llm_est_rating is not None:
+                rating = llm_est_rating
+            wine_name = canonical or llm_name
+            if rating is not None:
+                fallback.append({'wine_name': wine_name, 'rating': rating})
+
+        # Unmatched Vision bottles → try direct DB fuzzy match on OCR text
+        self._match_unmatched_bottles(bottle_texts, used_bottles, recognized)
+
+        return recognized, fallback
+
+    def _ocr_text_merge(
+        self,
+        llm_wines: list[dict],
+        llm_ratings: dict[str, Optional[float]],
+        db_results: dict,
+        bottle_texts: list[BottleText],
+        llm_metadata: Optional[dict] = None,
+    ) -> tuple[list[RecognizedWine], list]:
+        """Fallback: match LLM names to Vision bottles by OCR text similarity."""
+        from rapidfuzz import fuzz
+
         recognized: list[RecognizedWine] = []
         fallback = []
         used_bottles: set[int] = set()
-        used_names: set[int] = set()
 
-        # Match each LLM name to the best Vision bottle by OCR text similarity
-        for name_idx, llm_name in enumerate(llm_names):
+        OCR_MATCH_THRESHOLD = 0.55  # Raised from 0.40
+
+        for wine in llm_wines:
+            llm_name = wine['name']
             best_score = 0
             best_bt_idx = -1
             llm_name_lower = llm_name.lower()
@@ -329,9 +644,7 @@ class FlashNamesPipeline:
                 if not ocr_text:
                     continue
 
-                # Use token_sort_ratio for best matching despite word order differences
                 score = fuzz.token_sort_ratio(llm_name_lower, ocr_text) / 100.0
-                # Also check partial ratio for substring matches
                 partial = fuzz.partial_ratio(llm_name_lower, ocr_text) / 100.0
                 combined = max(score, partial * 0.9)
 
@@ -339,47 +652,86 @@ class FlashNamesPipeline:
                     best_score = combined
                     best_bt_idx = bt_idx
 
-            canonical, rating, conf, wine_id = db_results.get(llm_name, (None, None, 0, None))
-            # Use DB rating if available, otherwise use LLM-estimated rating
-            llm_est_rating = llm_ratings.get(llm_name)
-            if rating is None and llm_est_rating is not None:
-                rating = llm_est_rating
-            wine_name = canonical or llm_name
-            rating_source = RatingSource.DATABASE if canonical else RatingSource.LLM_ESTIMATED
-            source = WineSource.DATABASE if canonical else WineSource.LLM
-
-            if best_score >= 0.40 and best_bt_idx >= 0:
-                # Matched to a Vision bottle — get bbox
+            if best_score >= OCR_MATCH_THRESHOLD and best_bt_idx >= 0:
                 used_bottles.add(best_bt_idx)
-                used_names.add(name_idx)
                 bt = bottle_texts[best_bt_idx]
-
-                recognized.append(RecognizedWine(
-                    wine_name=wine_name,
-                    rating=rating,
-                    confidence=min(0.85, max(0.65, best_score)) if canonical else min(0.75, max(0.65, best_score)),
-                    source=source,
-                    identified=True,
-                    bottle_text=bt,
-                    rating_source=rating_source,
-                    wine_id=wine_id,
-                ))
+                rw = self._build_recognized_wine(llm_name, llm_ratings, db_results, bt, best_score, llm_metadata or {})
+                recognized.append(rw)
             else:
-                # No matching Vision bottle — add as fallback
+                db_match = db_results.get(llm_name)
+                canonical = db_match.canonical_name if db_match else None
+                rating = db_match.rating if db_match else None
+                llm_est_rating = llm_ratings.get(llm_name)
+                if rating is None and llm_est_rating is not None:
+                    rating = llm_est_rating
+                wine_name = canonical or llm_name
                 if rating is not None:
-                    fallback.append({
-                        'wine_name': wine_name,
-                        'rating': rating,
-                    })
+                    fallback.append({'wine_name': wine_name, 'rating': rating})
 
-        # Also try to match unmatched Vision bottles directly via fuzzy DB match
+        # Unmatched Vision bottles → try direct DB fuzzy match
+        self._match_unmatched_bottles(bottle_texts, used_bottles, recognized)
+
+        return recognized, fallback
+
+    def _build_recognized_wine(
+        self,
+        llm_name: str,
+        llm_ratings: dict[str, Optional[float]],
+        db_results: dict[str, Optional[WineMatch]],
+        bt: BottleText,
+        match_quality: float,
+        llm_metadata: Optional[dict] = None,
+    ) -> RecognizedWine:
+        """Build a RecognizedWine from an LLM name matched to a Vision bottle."""
+        db_match = db_results.get(llm_name)
+        canonical = db_match.canonical_name if db_match else None
+        rating = db_match.rating if db_match else None
+        conf = db_match.confidence if db_match else 0
+        llm_est_rating = llm_ratings.get(llm_name)
+        if rating is None and llm_est_rating is not None:
+            rating = llm_est_rating
+        wine_name = canonical or llm_name
+        rating_source = RatingSource.DATABASE if canonical else RatingSource.LLM_ESTIMATED
+        source = WineSource.DATABASE if canonical else WineSource.LLM
+
+        if canonical:
+            confidence = min(0.85, max(0.65, conf if conf > 0 else 0.75))
+        else:
+            confidence = min(0.75, max(0.65, match_quality if match_quality <= 1.0 else 0.70))
+
+        # For non-DB wines, use LLM metadata
+        meta = (llm_metadata or {}).get(llm_name, {})
+
+        return RecognizedWine(
+            wine_name=wine_name,
+            rating=rating,
+            confidence=confidence,
+            source=source,
+            identified=True,
+            bottle_text=bt,
+            rating_source=rating_source,
+            wine_id=db_match.wine_id if db_match else None,
+            wine_type=db_match.wine_type if db_match else meta.get('wine_type'),
+            brand=db_match.brand if db_match else meta.get('brand'),
+            region=db_match.region if db_match else meta.get('region'),
+            varietal=db_match.varietal if db_match else meta.get('varietal'),
+            blurb=db_match.description if db_match else None,
+            review_snippets=None,
+        )
+
+    def _match_unmatched_bottles(
+        self,
+        bottle_texts: list[BottleText],
+        used_bottles: set[int],
+        recognized: list[RecognizedWine],
+    ) -> None:
+        """Try to match unmatched Vision bottles directly via fuzzy DB match on OCR text."""
         for bt_idx, bt in enumerate(bottle_texts):
             if bt_idx in used_bottles:
                 continue
             if bt.normalized_name and len(bt.normalized_name) >= 3:
                 match = self.wine_matcher.match(bt.normalized_name)
                 if match and match.confidence >= Config.FUZZY_CONFIDENCE_THRESHOLD:
-                    # Check not duplicate of an existing result
                     existing_names = {r.wine_name.lower() for r in recognized}
                     if match.canonical_name.lower() not in existing_names:
                         recognized.append(RecognizedWine(
@@ -393,19 +745,19 @@ class FlashNamesPipeline:
                             wine_id=match.wine_id,
                         ))
 
-        return recognized, fallback
-
     def _names_only_results(
         self,
-        llm_names: list[str],
+        llm_wines: list[dict],
         llm_ratings: dict[str, Optional[float]],
-        db_results: dict,
+        db_results: dict[str, Optional[WineMatch]],
     ) -> tuple[list[RecognizedWine], list]:
         """No Vision data — return all as fallback-style results."""
         fallback = []
-        for name in llm_names:
-            canonical, rating, conf, wine_id = db_results.get(name, (None, None, 0, None))
-            # Use DB rating if available, otherwise LLM-estimated rating
+        for wine in llm_wines:
+            name = wine['name']
+            db_match = db_results.get(name)
+            canonical = db_match.canonical_name if db_match else None
+            rating = db_match.rating if db_match else None
             llm_est_rating = llm_ratings.get(name)
             if rating is None and llm_est_rating is not None:
                 rating = llm_est_rating
@@ -428,4 +780,8 @@ class FlashNamesPipeline:
                 estimated_rating=wine.rating,
                 confidence=wine.confidence,
                 llm_provider=self.model,
+                wine_type=wine.wine_type,
+                region=wine.region,
+                varietal=wine.varietal,
+                brand=wine.brand,
             )

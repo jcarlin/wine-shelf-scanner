@@ -40,6 +40,78 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+# === Shared post-processing helpers ===
+# Used by both /scan and /scan/stream endpoints
+
+
+def build_results_from_recognized(
+    recognized: list[RecognizedWine],
+    wine_matcher: WineMatcher,
+    pipeline_fallback: Optional[list] = None,
+    flags: Optional['FeatureFlags'] = None,
+) -> tuple[list[WineResult], list[FallbackWine]]:
+    """Common post-processing: enrich, dedup, split into results/fallback, sort, apply flags.
+
+    Args:
+        recognized: List of RecognizedWine from any pipeline.
+        wine_matcher: WineMatcher for enrichment and feature flags.
+        pipeline_fallback: Optional fallback entries from the pipeline (LLM wines without bboxes).
+        flags: Optional feature flags to apply.
+
+    Returns:
+        (results, fallback) tuple ready for ScanResponse.
+    """
+    # Enrich with review data
+    _enrich_with_reviews(recognized, wine_matcher)
+
+    # Deduplicate by wine name (keep highest confidence)
+    seen_wines: dict[str, RecognizedWine] = {}
+    for wine in recognized:
+        name_key = wine.wine_name.lower().strip()
+        if name_key not in seen_wines or wine.confidence > seen_wines[name_key].confidence:
+            seen_wines[name_key] = wine
+    recognized = list(seen_wines.values())
+
+    # Build results and fallback lists
+    results: list[WineResult] = []
+    fallback: list[FallbackWine] = []
+
+    for wine in recognized:
+        if wine.confidence >= Config.VISIBILITY_THRESHOLD:
+            results.append(_to_wine_result(wine))
+        elif wine.rating is not None:
+            fallback.append(FallbackWine(
+                wine_name=wine.wine_name,
+                rating=wine.rating,
+            ))
+
+    # Add pipeline-level fallback entries (LLM wines with no Vision bbox)
+    if pipeline_fallback:
+        existing_names = {w.lower().strip() for w in seen_wines}
+        for fb_entry in pipeline_fallback:
+            if isinstance(fb_entry, dict) and fb_entry.get('wine_name') and fb_entry.get('rating') is not None:
+                name_key = fb_entry['wine_name'].lower().strip()
+                if name_key not in existing_names:
+                    fallback.append(FallbackWine(
+                        wine_name=fb_entry['wine_name'],
+                        rating=fb_entry['rating'],
+                    ))
+                    existing_names.add(name_key)
+
+    # Sort by rating descending
+    results.sort(key=lambda x: (x.rating is not None, x.rating or 0), reverse=True)
+    fallback.sort(key=lambda x: x.rating, reverse=True)
+
+    # Apply feature flags
+    if flags:
+        _apply_feature_flags(results, flags, wine_matcher=wine_matcher)
+
+    # Sync discovered wines back to DB
+    sync_discovered_wines(results, fallback)
+
+    return results, fallback
+
+
 def _vision_to_recognized(
     vision_wine: VisionIdentifiedWine,
     bottle_text: BottleText
@@ -211,6 +283,16 @@ def _enrich_with_reviews(recognized: list[RecognizedWine], wine_matcher: WineMat
     for wine in recognized:
         if wine.wine_id is None:
             continue
+
+        # Enrich metadata from DB if missing (safety net for pipelines that don't populate it)
+        if not wine.wine_type or not wine.region or not wine.varietal:
+            record = repo.find_by_id(wine.wine_id)
+            if record:
+                wine.wine_type = wine.wine_type or record.wine_type
+                wine.brand = wine.brand or record.winery
+                wine.region = wine.region or record.region
+                wine.varietal = wine.varietal or record.varietal
+                wine.blurb = wine.blurb or record.description
 
         # Get review stats (total count)
         stats = repo.get_review_stats(wine.wine_id)
@@ -663,59 +745,16 @@ async def _run_flash_names_pipeline(
         model=f"gemini/{Config.fast_pipeline_model()}",
     )
     result = await pipeline.scan(image_bytes)
-    recognized = result.recognized_wines
 
-    if not recognized and not result.fallback:
+    if not result.recognized_wines and not result.fallback:
         elapsed = time.perf_counter() - t0
         logger.info(f"[{image_id}] Flash names pipeline returned 0 results in {elapsed:.2f}s")
         return None
 
-    # Enrich with review data
-    _enrich_with_reviews(recognized, wine_matcher)
-
-    # Deduplicate by wine name (keep highest confidence)
-    seen_wines: dict[str, RecognizedWine] = {}
-    for wine in recognized:
-        name_key = wine.wine_name.lower().strip()
-        if name_key not in seen_wines or wine.confidence > seen_wines[name_key].confidence:
-            seen_wines[name_key] = wine
-    recognized = list(seen_wines.values())
-
-    # Build results and fallback lists
-    results: list[WineResult] = []
-    fallback: list[FallbackWine] = []
-
-    for wine in recognized:
-        if wine.confidence >= Config.VISIBILITY_THRESHOLD:
-            results.append(_to_wine_result(wine))
-        elif wine.rating is not None:
-            fallback.append(FallbackWine(
-                wine_name=wine.wine_name,
-                rating=wine.rating,
-            ))
-
-    # Add pipeline-level fallback entries (LLM wines with no Vision bbox)
-    existing_names = {w.lower().strip() for w in seen_wines}
-    for fb_entry in result.fallback:
-        if isinstance(fb_entry, dict) and fb_entry.get('wine_name') and fb_entry.get('rating') is not None:
-            name_key = fb_entry['wine_name'].lower().strip()
-            if name_key not in existing_names:
-                fallback.append(FallbackWine(
-                    wine_name=fb_entry['wine_name'],
-                    rating=fb_entry['rating'],
-                ))
-                existing_names.add(name_key)
-
-    # Sort by rating descending
-    results.sort(key=lambda x: (x.rating is not None, x.rating or 0), reverse=True)
-    fallback.sort(key=lambda x: x.rating, reverse=True)
-
-    # Apply feature flags
-    if flags:
-        _apply_feature_flags(results, flags, wine_matcher=wine_matcher)
-
-    # Sync discovered wines back to DB
-    sync_discovered_wines(results, fallback)
+    results, fallback = build_results_from_recognized(
+        result.recognized_wines, wine_matcher,
+        pipeline_fallback=result.fallback, flags=flags,
+    )
 
     elapsed = time.perf_counter() - t0
     logger.info(

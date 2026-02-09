@@ -337,6 +337,26 @@ Final catch-all for remaining unmatched bottles AND orphaned texts:
 - `mock_scenario` — Select fixture (full_shelf, partial_detection, etc.)
 - `use_vision_fixture` — Path to captured Vision API fixture for replay
 
+### SSE Streaming Endpoint
+
+`POST /scan/stream` — Progressive scan via Server-Sent Events. Streams results in two phases:
+
+- **event: phase1** — Turbo-quality results from Vision API + DB matching (~3.5s). Subset of bottles that matched the DB.
+- **event: phase2** — Gemini-enhanced results with full metadata (~6-8s). Complete replacement of phase1.
+- **event: done** — Stream complete.
+
+Both phase1 and phase2 data are complete `ScanResponse` JSON objects (same schema as `POST /scan`). Phase2 is a full replacement — the frontend swaps its entire state.
+
+**File:** `backend/app/routes/scan_stream.py`
+**Pipeline method:** `FlashNamesPipeline.scan_progressive()` in `backend/app/services/flash_names_pipeline.py`
+
+**Graceful degradation:**
+- If SSE connection drops after phase1, client still has turbo-quality results.
+- If Gemini fails, phase2 emits with turbo-only data.
+- `POST /scan` is unchanged — iOS and other clients keep working.
+
+**Frontend:** Next.js uses `scanImageStream()` in `nextjs/lib/api-client.ts` with `partial_results` state in `useScanState.ts`.
+
 ### Bug Report Endpoint
 
 `POST /report` — Receives bug reports from clients.
@@ -506,6 +526,7 @@ Set these in the Vercel dashboard for production:
 | `FAST_PIPELINE_MODEL` | `gemini-2.0-flash` | Multimodal model for fast pipeline |
 | `FAST_PIPELINE_TIMEOUT` | `15.0` | Timeout in seconds for fast pipeline LLM call |
 | `FAST_PIPELINE_FALLBACK` | `true` | Fall back to legacy pipeline if fast pipeline fails |
+| `PIPELINE_MODE` | `turbo` | Scan pipeline mode: `legacy`, `turbo`, `flash_names`, `hybrid`, `fast` |
 
 ---
 
@@ -575,6 +596,75 @@ Instead of OCR → fuzzy match → LLM validate → Vision fallback → LLM resc
 - Cross-reference LLM results against DB for ratings
 - This replaces stages 2-7 with a single ~2-3s LLM call + ~100ms DB lookups
 - Trade-off: Less accurate for DB-matched wines, but dramatically faster
+
+---
+
+## Pipeline Modes
+
+The backend supports multiple scan pipeline modes, selected via `PIPELINE_MODE` env var. Production runs `flash_names`.
+
+### `flash_names` (Production Default)
+
+**File:** `backend/app/services/flash_names_pipeline.py`
+
+| Step | Parallel? | External Call | Time |
+|------|-----------|---------------|------|
+| 1. Gemini Flash (names + positions + ratings + metadata) | Yes (with step 2) | 1 LLM call (Gemini 2.0 Flash) | ~2-3s |
+| 2. Google Vision API (bboxes + OCR) | Yes (with step 1) | 1 Vision API call | ~2-3s |
+| 3. OCR text grouping | Sequential | None (CPU) | ~10ms |
+| 4. DB fuzzy matching (parallel threads) | Sequential | None (SQLite) | ~100-500ms |
+| 5. Spatial merge (LLM names → Vision bottles) | Sequential | None (CPU) | ~10ms |
+
+**Total external calls:** 1 LLM + 1 Vision API (in parallel)
+**Estimated latency:** 3-5s (dominated by slower of Gemini/Vision)
+**Estimated cost per scan:** ~$0.001-0.003 (Gemini Flash input image + text output)
+
+**Rating strategy:** Gemini estimates Vivino-style ratings in step 1. DB ratings override LLM estimates for matched wines. Unmatched wines use LLM-estimated ratings. Fallback: 3.5 if both fail.
+
+**Metadata strategy:** Gemini returns wine_type, varietal, region, and brand. Blurb and review snippets come from DB enrichment only (requesting creative text from the LLM would triple latency). DB metadata overrides LLM for matched wines. Non-DB wines use LLM metadata directly.
+
+### `turbo`
+
+**File:** `backend/app/services/turbo_pipeline.py`
+
+Vision API → OCR grouping → parallel fuzzy DB match → single LLM batch validation for low-confidence matches. No Claude Vision fallback or LLM rescue stages.
+
+**Total external calls:** 1 Vision API + 0-1 LLM calls
+**Estimated latency:** 3-6s
+
+### `legacy` (default when no mode set)
+
+**File:** `backend/app/routes/scan.py` (main pipeline code)
+
+Full 5-stage pipeline documented in "Backend Pipeline — Detailed Scan Flow" above.
+
+**Total external calls:** 1 Vision API + 1-3 LLM calls + 0-1 Claude Vision calls
+**Estimated latency:** 8-14s (sequential cascade)
+
+### `fast`
+
+**File:** `backend/app/services/fast_pipeline.py`
+
+Single multimodal LLM call with the shelf image. LLM returns wine names + ratings directly.
+
+**Total external calls:** 1 LLM call (multimodal)
+**Estimated latency:** 3-6s
+
+### `hybrid`
+
+Combines flash_names approach with additional validation. Experimental.
+
+### Pipeline Mode Selection
+
+Set `PIPELINE_MODE` env var. All modes fall back to legacy pipeline on failure.
+
+| Mode | Env Value | Prod? | LLM Calls | Vision API Calls |
+|------|-----------|-------|-----------|------------------|
+| Flash Names | `flash_names` | **Yes** | 1 | 1 |
+| Turbo | `turbo` | No | 0-1 | 1 |
+| Legacy | `legacy` | No | 1-3 | 1 (+0-1 Claude) |
+| Fast | `fast` | No | 1 | 0 |
+| Hybrid | `hybrid` | No | 1-2 | 1 |
 
 ---
 

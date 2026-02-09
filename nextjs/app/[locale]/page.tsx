@@ -50,6 +50,15 @@ export default function Home() {
         )
       )}
 
+      {state.status === 'partial_results' && (
+        <ResultsView
+          response={state.response}
+          imageUri={state.imageUri}
+          onReset={reset}
+          isEnhancing
+        />
+      )}
+
       {state.status === 'results' && (
         <ResultsView
           response={state.response}

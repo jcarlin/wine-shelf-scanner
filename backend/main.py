@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 logger.info(f"Starting with LOG_LEVEL={Config.log_level()}, DEBUG_MODE={Config.debug_mode()}")
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routes import scan_router, feedback_router, report_router, reviews_router
+from app.routes import scan_router, scan_stream_router, feedback_router, report_router, reviews_router
 
 # Startup state - set to True once DB is ready
 _is_ready = False
@@ -114,6 +114,7 @@ if static_dir.exists():
 
 # Include routers
 app.include_router(scan_router, tags=["scan"])
+app.include_router(scan_stream_router, tags=["scan"])
 app.include_router(feedback_router, tags=["feedback"])
 app.include_router(report_router, tags=["report"])
 app.include_router(reviews_router, tags=["reviews"])

@@ -173,6 +173,133 @@ export async function scanImage(
   }
 }
 
+/**
+ * Scan a wine shelf image via SSE streaming for progressive results.
+ *
+ * Sends a POST to /scan/stream and parses SSE events.
+ * Calls onPhase1 when turbo-quality results arrive (~3.5s),
+ * then onPhase2 when Gemini-enhanced results arrive (~6-8s).
+ *
+ * If streaming fails or is unavailable, falls back to regular scanImage().
+ */
+export async function scanImageStream(
+  file: File,
+  callbacks: {
+    onPhase1: (data: ScanResponse) => void;
+    onPhase2: (data: ScanResponse) => void;
+    onError: (error: ApiError) => void;
+  },
+  options: ScanOptions = {}
+): Promise<void> {
+  // Use mock service if configured — no streaming for mocks
+  if (Config.USE_MOCKS) {
+    const result = await scanImage(file, options);
+    if (result.success) {
+      callbacks.onPhase2(result.data);
+    } else {
+      callbacks.onError(result.error);
+    }
+    return;
+  }
+
+  const debug = options.debug ?? Config.DEBUG_MODE;
+  const formData = new FormData();
+  formData.append('image', file, file.name);
+
+  const url = new URL(`${Config.API_BASE_URL}/scan/stream`);
+  if (debug) {
+    url.searchParams.set('debug', 'true');
+  }
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: 'POST',
+      body: formData,
+      headers: { Accept: 'text/event-stream' },
+    });
+
+    if (!response.ok) {
+      callbacks.onError({
+        type: 'SERVER_ERROR',
+        message: `Server returned ${response.status}`,
+        status: response.status,
+      });
+      return;
+    }
+
+    if (!response.body) {
+      // No streaming support — fall back to regular scan
+      const result = await scanImage(file, options);
+      if (result.success) {
+        callbacks.onPhase2(result.data);
+      } else {
+        callbacks.onError(result.error);
+      }
+      return;
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+
+      // Parse SSE events from buffer
+      const events = buffer.split('\n\n');
+      // Keep the last incomplete chunk in the buffer
+      buffer = events.pop() || '';
+
+      for (const event of events) {
+        if (!event.trim()) continue;
+
+        let eventType = '';
+        let eventData = '';
+
+        for (const line of event.split('\n')) {
+          if (line.startsWith('event: ')) {
+            eventType = line.slice(7).trim();
+          } else if (line.startsWith('data: ')) {
+            eventData = line.slice(6);
+          }
+        }
+
+        if (eventType === 'done') {
+          return;
+        }
+
+        if (eventData && (eventType === 'phase1' || eventType === 'phase2')) {
+          try {
+            const data = JSON.parse(eventData) as ScanResponse;
+            if (eventType === 'phase1') {
+              callbacks.onPhase1(data);
+            } else {
+              callbacks.onPhase2(data);
+            }
+          } catch {
+            // Skip malformed JSON
+          }
+        }
+      }
+    }
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      callbacks.onError({
+        type: 'TIMEOUT',
+        message: 'Request timed out. Please try again.',
+      });
+    } else {
+      callbacks.onError({
+        type: 'NETWORK_ERROR',
+        message: 'Unable to connect. Please check your internet connection.',
+      });
+    }
+  }
+}
+
 /** Timeout for review fetches (ms) */
 const REVIEWS_TIMEOUT_MS = 10000;
 

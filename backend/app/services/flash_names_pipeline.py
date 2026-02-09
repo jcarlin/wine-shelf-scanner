@@ -512,7 +512,7 @@ class FlashNamesPipeline:
         return results
 
     # Maximum Euclidean distance (in 0-1 space) for spatial matching
-    MAX_SPATIAL_DISTANCE = 0.20
+    MAX_SPATIAL_DISTANCE = 0.25
 
     def _merge_with_vision(
         self,
@@ -594,6 +594,44 @@ class FlashNamesPipeline:
             recognized.append(rw)
             logger.debug(f"FlashNames: Spatial match '{llm_name}' → bottle {bi} (dist={dist:.3f})")
 
+        # Second-chance: try OCR text matching for spatially unmatched LLM wines
+        spatial_matched = len(used_llm)
+        from rapidfuzz import fuzz
+        OCR_MATCH_THRESHOLD = 0.55
+        for li, wine in enumerate(llm_wines):
+            if li in used_llm:
+                continue
+            llm_name = wine['name']
+            llm_name_lower = llm_name.lower()
+            best_score = 0
+            best_bt_idx = -1
+            for bt_idx, bt in enumerate(bottle_texts):
+                if bt_idx in used_bottles:
+                    continue
+                ocr_text = (bt.combined_text or "").lower()
+                if not ocr_text:
+                    continue
+                score = fuzz.token_sort_ratio(llm_name_lower, ocr_text) / 100.0
+                partial = fuzz.partial_ratio(llm_name_lower, ocr_text) / 100.0
+                combined = max(score, partial * 0.9)
+                if combined > best_score:
+                    best_score = combined
+                    best_bt_idx = bt_idx
+            if best_score >= OCR_MATCH_THRESHOLD and best_bt_idx >= 0:
+                used_llm.add(li)
+                used_bottles.add(best_bt_idx)
+                bt = bottle_texts[best_bt_idx]
+                rw = self._build_recognized_wine(llm_name, llm_ratings, db_results, bt, best_score, llm_metadata or {})
+                recognized.append(rw)
+                logger.debug(f"FlashNames: OCR fallback match '{llm_name}' → bottle {best_bt_idx} (score={best_score:.3f})")
+
+        ocr_matched = len(used_llm) - spatial_matched
+        logger.info(
+            f"FlashNames: Spatial merge: {spatial_matched}/{len(llm_wines)} spatial, "
+            f"{ocr_matched} OCR fallback, "
+            f"{len(used_bottles)}/{len(bottle_texts)} Vision matched"
+        )
+
         # Unmatched LLM wines (no position or beyond threshold) → fallback
         for li, wine in enumerate(llm_wines):
             if li in used_llm:
@@ -608,6 +646,10 @@ class FlashNamesPipeline:
             wine_name = canonical or llm_name
             if rating is not None:
                 fallback.append({'wine_name': wine_name, 'rating': rating})
+
+        logger.info(
+            f"FlashNames: Final: {len(recognized)} recognized, {len(fallback)} fallback"
+        )
 
         # Unmatched Vision bottles → try direct DB fuzzy match on OCR text
         self._match_unmatched_bottles(bottle_texts, used_bottles, recognized)

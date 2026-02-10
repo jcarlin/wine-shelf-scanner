@@ -50,23 +50,31 @@ def _get_litellm():
     return _litellm
 
 
-FAST_SCAN_PROMPT = """List every wine bottle visible in this photo.
-For each bottle return: name (producer + wine + vintage), x and y center position (0.0-1.0 fractions, top-left origin), and estimated Vivino rating (1.0-5.0).
+FAST_SCAN_PROMPT = """Carefully examine this photo of a wine shelf. Count EVERY wine bottle visible, including partially obscured ones and bottles in back rows.
+
+For each bottle return: name (producer + wine + vintage if visible), bounding box as x, y (top-left corner), w, h (width, height) — all as fractions 0.0-1.0 of image dimensions — and estimated Vivino community rating (1.0-5.0).
+
+Be thorough: a typical shelf photo contains 8-20 bottles. Do NOT stop early. List every bottle you can identify, even if the label is only partially readable.
 
 Return ONLY a JSON array:
-[{"name": "Caymus Cabernet Sauvignon Napa Valley 2021", "x": 0.15, "y": 0.45, "rating": 4.4}]"""
+[{"name": "Caymus Cabernet Sauvignon Napa Valley 2021", "x": 0.10, "y": 0.30, "w": 0.08, "h": 0.25, "rating": 4.4}]"""
 
-FULL_METADATA_PROMPT = """List every wine bottle visible in this photo. For each bottle, return a JSON object with:
+FULL_METADATA_PROMPT = """Carefully examine this photo of a wine shelf. Count EVERY wine bottle visible, including partially obscured ones and bottles in back rows.
+
+For each bottle, return a JSON object with:
 - name: full wine name (producer + wine + vintage if visible)
-- x, y: approximate center position as fractions (0.0-1.0, top-left origin)
+- x, y: top-left corner of the bottle as fractions (0.0-1.0, top-left origin)
+- w, h: width and height of the bottle as fractions (0.0-1.0)
 - rating: estimated Vivino community rating (1.0-5.0). Most wines 3.5-4.3, premium 4.3-4.7, iconic 4.7+
 - type: wine type (Red, White, Rosé, Sparkling, Dessert)
 - varietal: grape variety (e.g. Cabernet Sauvignon, Pinot Noir, Chardonnay)
 - region: wine region (e.g. Napa Valley, Burgundy, Barossa Valley)
 - brand: winery/producer name
 
+Be thorough: a typical shelf photo contains 8-20 bottles. Do NOT stop early. List every bottle you can identify.
+
 Return ONLY a JSON array:
-[{"name": "Caymus Cabernet Sauvignon Napa Valley", "x": 0.15, "y": 0.45, "rating": 4.4, "type": "Red", "varietal": "Cabernet Sauvignon", "region": "Napa Valley", "brand": "Caymus Vineyards"}]
+[{"name": "Caymus Cabernet Sauvignon Napa Valley", "x": 0.10, "y": 0.30, "w": 0.08, "h": 0.25, "rating": 4.4, "type": "Red", "varietal": "Cabernet Sauvignon", "region": "Napa Valley", "brand": "Caymus Vineyards"}]
 
 Include the producer/winery and grape variety when readable. For partial text, give your best guess. Return ONLY the JSON array."""
 
@@ -104,7 +112,8 @@ class FlashNamesPipeline:
         use_llm_cache: Optional[bool] = None,
     ):
         self.wine_matcher = wine_matcher or WineMatcher()
-        self.model = model or f"gemini/{Config.fast_pipeline_model()}"
+        override = Config.flash_names_model()
+        self.model = model or (override if override else f"gemini/{Config.fast_pipeline_model()}")
         self._executor = ThreadPoolExecutor(max_workers=8)
         cache_enabled = use_llm_cache if use_llm_cache is not None else Config.use_llm_cache()
         self._llm_cache: Optional[LLMRatingCache] = get_llm_rating_cache() if cache_enabled else None
@@ -378,9 +387,13 @@ class FlashNamesPipeline:
         return result
 
     @staticmethod
-    def _compress_for_llm(image_bytes: bytes, max_dim: int = 1600, quality: int = 75) -> bytes:
+    def _compress_for_llm(image_bytes: bytes, max_dim: int = 0, quality: int = 0) -> bytes:
         """Compress image for LLM call — smaller than Vision API needs."""
         from PIL import Image as PILImage
+        if max_dim <= 0:
+            max_dim = Config.llm_image_max_dim()
+        if quality <= 0:
+            quality = Config.llm_image_quality()
         img = PILImage.open(io.BytesIO(image_bytes))
         if max(img.size) > max_dim:
             img.thumbnail((max_dim, max_dim))
@@ -409,7 +422,7 @@ class FlashNamesPipeline:
                         {"type": "text", "text": FAST_SCAN_PROMPT},
                     ],
                 }],
-                max_tokens=800,
+                max_tokens=Config.flash_names_max_tokens(),
                 temperature=0.1,
             )
             elapsed = round((time.perf_counter() - t0) * 1000)
@@ -429,11 +442,13 @@ class FlashNamesPipeline:
             for item in parsed:
                 if isinstance(item, str):
                     name = item
-                    x, y = None, None
+                    x, y, w, h = None, None, None, None
                 elif isinstance(item, dict):
                     name = item.get('name')
                     x = item.get('x')
                     y = item.get('y')
+                    w = item.get('w')
+                    h = item.get('h')
                 else:
                     continue
                 if not name:
@@ -447,6 +462,15 @@ class FlashNamesPipeline:
                         x, y = None, None
                 else:
                     x, y = None, None
+                # Parse w,h with reasonable clamping
+                if w is not None and h is not None:
+                    try:
+                        w = max(0.02, min(0.5, float(w)))
+                        h = max(0.05, min(0.8, float(h)))
+                    except (ValueError, TypeError):
+                        w, h = None, None
+                else:
+                    w, h = None, None
                 # Parse rating
                 rating = item.get('rating') if isinstance(item, dict) else None
                 if rating is not None:
@@ -469,6 +493,7 @@ class FlashNamesPipeline:
                     seen.add(key)
                     wines.append({
                         'name': name, 'rating': rating, 'x': x, 'y': y,
+                        'w': w, 'h': h,
                         'wine_type': wine_type, 'varietal': varietal,
                         'region': region, 'brand': brand,
                     })
@@ -604,8 +629,15 @@ class FlashNamesPipeline:
             lx, ly = wine.get('x'), wine.get('y')
             if lx is None or ly is None:
                 continue
+            # Compute center from top-left + dimensions if available
+            lw, lh = wine.get('w'), wine.get('h')
+            if lw is not None and lh is not None:
+                cx = lx + lw / 2
+                cy = ly + lh / 2
+            else:
+                cx, cy = lx, ly
             for bi, (bx, by) in enumerate(bottle_centers):
-                dist = math.sqrt((lx - bx) ** 2 + (ly - by) ** 2)
+                dist = math.sqrt((cx - bx) ** 2 + (cy - by) ** 2)
                 pairs.append((dist, li, bi))
 
         # Greedy assignment: sort by distance, assign closest first
@@ -680,9 +712,15 @@ class FlashNamesPipeline:
             wine = llm_wines[li]
             lx, ly = wine.get('x'), wine.get('y')
             if lx is not None and ly is not None:
+                lw, lh = wine.get('w'), wine.get('h')
+                if lw is not None and lh is not None:
+                    cx = lx + lw / 2
+                    cy = ly + lh / 2
+                else:
+                    cx, cy = lx, ly
                 bx, by = bottle_centers[bi]
-                offsets_x.append(bx - lx)
-                offsets_y.append(by - ly)
+                offsets_x.append(bx - cx)
+                offsets_y.append(by - cy)
 
         cal_x = sum(offsets_x) / len(offsets_x) if offsets_x else 0.0
         cal_y = sum(offsets_y) / len(offsets_y) if offsets_y else 0.0
@@ -710,14 +748,26 @@ class FlashNamesPipeline:
             lx, ly = wine.get('x'), wine.get('y')
 
             if lx is not None and ly is not None:
-                # Apply calibration offset from matched pairs
-                corrected_x = lx + cal_x
-                corrected_y = ly + cal_y
+                # Use Gemini-provided dimensions if available, else defaults
+                lw = wine.get('w')
+                lh = wine.get('h')
+                has_gemini_bbox = lw is not None and lh is not None
+                bbox_w = lw if has_gemini_bbox else DEFAULT_BOTTLE_WIDTH
+                bbox_h = lh if has_gemini_bbox else DEFAULT_BOTTLE_HEIGHT
+
+                # Compute center from top-left + dimensions, then apply calibration
+                if has_gemini_bbox:
+                    center_x = lx + lw / 2 + cal_x
+                    center_y = ly + lh / 2 + cal_y
+                else:
+                    center_x = lx + cal_x
+                    center_y = ly + cal_y
+
                 synthetic_bbox = VisionBBox(
-                    x=max(0.0, corrected_x - DEFAULT_BOTTLE_WIDTH / 2),
-                    y=max(0.0, corrected_y - DEFAULT_BOTTLE_HEIGHT / 2),
-                    width=DEFAULT_BOTTLE_WIDTH,
-                    height=DEFAULT_BOTTLE_HEIGHT,
+                    x=max(0.0, center_x - bbox_w / 2),
+                    y=max(0.0, center_y - bbox_h / 2),
+                    width=bbox_w,
+                    height=bbox_h,
                 )
                 synthetic_obj = DetectedObject(name="Bottle", confidence=0.70, bbox=synthetic_bbox)
                 synthetic_bt = BottleText(
@@ -729,13 +779,15 @@ class FlashNamesPipeline:
                 rw = self._build_recognized_wine(
                     llm_name, llm_ratings, db_results, synthetic_bt, 0.0, llm_metadata or {}
                 )
-                # Cap confidence for synthetic-bbox wines (tappable but never BEST PICK)
-                rw.confidence = min(rw.confidence, 0.70)
+                # Higher confidence cap when Gemini provides bbox dimensions
+                conf_cap = 0.80 if has_gemini_bbox else 0.70
+                rw.confidence = min(rw.confidence, conf_cap)
                 recognized.append(rw)
                 synthetic_count += 1
                 logger.debug(
                     f"FlashNames: Synthetic bbox for '{llm_name}' at "
-                    f"({corrected_x:.2f}, {corrected_y:.2f}) [raw: ({lx:.2f}, {ly:.2f})]"
+                    f"({center_x:.2f}, {center_y:.2f}) size=({bbox_w:.2f}x{bbox_h:.2f}) "
+                    f"[raw: ({lx:.2f}, {ly:.2f})] gemini_bbox={has_gemini_bbox}"
                 )
             else:
                 # No position at all → fallback (can't place overlay)
@@ -809,11 +861,23 @@ class FlashNamesPipeline:
                 lx, ly = wine.get('x'), wine.get('y')
 
                 if lx is not None and ly is not None:
+                    lw = wine.get('w')
+                    lh = wine.get('h')
+                    has_gemini_bbox = lw is not None and lh is not None
+                    bbox_w = lw if has_gemini_bbox else DEFAULT_BOTTLE_WIDTH
+                    bbox_h = lh if has_gemini_bbox else DEFAULT_BOTTLE_HEIGHT
+
+                    if has_gemini_bbox:
+                        center_x = lx + lw / 2
+                        center_y = ly + lh / 2
+                    else:
+                        center_x, center_y = lx, ly
+
                     synthetic_bbox = VisionBBox(
-                        x=max(0.0, lx - DEFAULT_BOTTLE_WIDTH / 2),
-                        y=max(0.0, ly - DEFAULT_BOTTLE_HEIGHT / 2),
-                        width=DEFAULT_BOTTLE_WIDTH,
-                        height=DEFAULT_BOTTLE_HEIGHT,
+                        x=max(0.0, center_x - bbox_w / 2),
+                        y=max(0.0, center_y - bbox_h / 2),
+                        width=bbox_w,
+                        height=bbox_h,
                     )
                     synthetic_obj = DetectedObject(name="Bottle", confidence=0.70, bbox=synthetic_bbox)
                     synthetic_bt = BottleText(
@@ -825,7 +889,8 @@ class FlashNamesPipeline:
                     rw = self._build_recognized_wine(
                         llm_name, llm_ratings, db_results, synthetic_bt, 0.0, llm_metadata or {}
                     )
-                    rw.confidence = min(rw.confidence, 0.70)
+                    conf_cap = 0.80 if has_gemini_bbox else 0.70
+                    rw.confidence = min(rw.confidence, conf_cap)
                     recognized.append(rw)
                 else:
                     db_match = db_results.get(llm_name)

@@ -183,6 +183,36 @@ class Config:
         """Fall back to legacy pipeline if fast pipeline fails. Default: True."""
         return os.getenv("FAST_PIPELINE_FALLBACK", "true").lower() == "true"
 
+    # === Flash Names Pipeline ===
+    @staticmethod
+    def flash_names_max_tokens() -> int:
+        """Max tokens for Flash Names Gemini call. Default: 2000."""
+        try:
+            return int(os.getenv("FLASH_NAMES_MAX_TOKENS", "2000"))
+        except ValueError:
+            return 2000
+
+    @staticmethod
+    def flash_names_model() -> str:
+        """Model override for Flash Names pipeline. Empty string = use fast_pipeline_model()."""
+        return os.getenv("FLASH_NAMES_MODEL", "")
+
+    @staticmethod
+    def llm_image_max_dim() -> int:
+        """Max image dimension for LLM calls. Default: 2048."""
+        try:
+            return int(os.getenv("LLM_IMAGE_MAX_DIM", "2048"))
+        except ValueError:
+            return 2048
+
+    @staticmethod
+    def llm_image_quality() -> int:
+        """JPEG quality for LLM image compression. Default: 85."""
+        try:
+            return int(os.getenv("LLM_IMAGE_QUALITY", "85"))
+        except ValueError:
+            return 85
+
     # === Security ===
     MAX_IMAGE_SIZE_MB = 10
     MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024

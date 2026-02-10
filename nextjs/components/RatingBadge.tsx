@@ -52,6 +52,8 @@ export function RatingBadge({ wine, isTopThree, position, onClick, shelfRank, is
 
   return (
     <div
+      data-testid="rating-badge"
+      data-wine-name={wine.wine_name}
       className="absolute flex flex-col items-center animate-badge-pop-in"
       style={{
         left: position.x,
@@ -108,6 +110,7 @@ export function RatingBadge({ wine, isTopThree, position, onClick, shelfRank, is
             }}
           />
           <span
+            data-testid="rating-value"
             className="text-white font-bold"
             style={{ fontSize: isTopThree ? 14 : 12 }}
           >

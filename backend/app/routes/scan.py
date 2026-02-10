@@ -49,6 +49,7 @@ def build_results_from_recognized(
     wine_matcher: WineMatcher,
     pipeline_fallback: Optional[list] = None,
     flags: Optional['FeatureFlags'] = None,
+    skip_enrichment: bool = False,
 ) -> tuple[list[WineResult], list[FallbackWine]]:
     """Common post-processing: enrich, dedup, split into results/fallback, sort, apply flags.
 
@@ -62,7 +63,8 @@ def build_results_from_recognized(
         (results, fallback) tuple ready for ScanResponse.
     """
     # Enrich with review data
-    _enrich_with_reviews(recognized, wine_matcher)
+    if not skip_enrichment:
+        _enrich_with_reviews(recognized, wine_matcher)
 
     # Deduplicate by wine name (keep highest confidence)
     seen_wines: dict[str, RecognizedWine] = {}
@@ -107,7 +109,8 @@ def build_results_from_recognized(
         _apply_feature_flags(results, flags, wine_matcher=wine_matcher)
 
     # Sync discovered wines back to DB
-    sync_discovered_wines(results, fallback)
+    if not skip_enrichment:
+        sync_discovered_wines(results, fallback)
 
     return results, fallback
 

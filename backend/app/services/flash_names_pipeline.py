@@ -50,7 +50,13 @@ def _get_litellm():
     return _litellm
 
 
-NAMES_ONLY_PROMPT = """List every wine bottle visible in this photo. For each bottle, return a JSON object with:
+FAST_SCAN_PROMPT = """List every wine bottle visible in this photo.
+For each bottle return: name (producer + wine + vintage), x and y center position (0.0-1.0 fractions, top-left origin), and estimated Vivino rating (1.0-5.0).
+
+Return ONLY a JSON array:
+[{"name": "Caymus Cabernet Sauvignon Napa Valley 2021", "x": 0.15, "y": 0.45, "rating": 4.4}]"""
+
+FULL_METADATA_PROMPT = """List every wine bottle visible in this photo. For each bottle, return a JSON object with:
 - name: full wine name (producer + wine + vintage if visible)
 - x, y: approximate center position as fractions (0.0-1.0, top-left origin)
 - rating: estimated Vivino community rating (1.0-5.0). Most wines 3.5-4.3, premium 4.3-4.7, iconic 4.7+
@@ -400,10 +406,10 @@ class FlashNamesPipeline:
                     "role": "user",
                     "content": [
                         {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_b64}"}},
-                        {"type": "text", "text": NAMES_ONLY_PROMPT},
+                        {"type": "text", "text": FAST_SCAN_PROMPT},
                     ],
                 }],
-                max_tokens=1500,
+                max_tokens=800,
                 temperature=0.1,
             )
             elapsed = round((time.perf_counter() - t0) * 1000)

@@ -187,6 +187,7 @@ export async function scanImageStream(
   callbacks: {
     onPhase1: (data: ScanResponse) => void;
     onPhase2: (data: ScanResponse) => void;
+    onMetadata?: (data: Record<string, Record<string, unknown>>) => void;
     onError: (error: ApiError) => void;
   },
   options: ScanOptions = {}
@@ -279,6 +280,15 @@ export async function scanImageStream(
             } else {
               callbacks.onPhase2(data);
             }
+          } catch {
+            // Skip malformed JSON
+          }
+        }
+
+        if (eventData && eventType === 'metadata' && callbacks.onMetadata) {
+          try {
+            const data = JSON.parse(eventData) as Record<string, Record<string, unknown>>;
+            callbacks.onMetadata(data);
           } catch {
             // Skip malformed JSON
           }

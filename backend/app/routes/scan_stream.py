@@ -88,15 +88,34 @@ async def scan_stream(
             model=f"gemini/{Config.fast_pipeline_model()}",
         )
 
+        locked_ratings: dict[str, float] = {}
+        all_recognized = []
+        last_fallback = []
+
         async for partial in pipeline.scan_progressive(image_bytes):
             phase = partial.timings.get('phase', 1)
+            all_recognized = partial.recognized_wines
+            last_fallback = partial.fallback
 
             results, fallback = build_results_from_recognized(
                 partial.recognized_wines,
                 wine_matcher,
                 pipeline_fallback=partial.fallback,
                 flags=flags,
+                skip_enrichment=True,
             )
+
+            # IMMUTABILITY: restore locked ratings for wines already sent
+            for r in results:
+                key = r.wine_name.lower().strip()
+                if key in locked_ratings:
+                    r.rating = locked_ratings[key]
+
+            # Lock all new ratings
+            for r in results:
+                key = r.wine_name.lower().strip()
+                if key not in locked_ratings and r.rating is not None:
+                    locked_ratings[key] = r.rating
 
             debug_data = None
             if debug:
@@ -147,6 +166,35 @@ async def scan_stream(
                 f"{len(results)} results, {len(fallback)} fallback "
                 f"({partial.timings.get('total_ms', 0)}ms)"
             )
+
+        # Async metadata enrichment: run enrichment and emit metadata event
+        try:
+            enriched_results, enriched_fallback = build_results_from_recognized(
+                all_recognized,
+                wine_matcher,
+                pipeline_fallback=last_fallback,
+                flags=flags,
+                skip_enrichment=False,
+            )
+
+            metadata: dict[str, dict] = {}
+            for r in enriched_results:
+                metadata[r.wine_name] = {
+                    "wine_type": r.wine_type,
+                    "brand": r.brand,
+                    "region": r.region,
+                    "varietal": r.varietal,
+                    "blurb": r.blurb,
+                    "review_count": r.review_count,
+                    "review_snippets": r.review_snippets,
+                    "wine_id": r.wine_id,
+                    "pairing": r.pairing,
+                    "is_safe_pick": r.is_safe_pick,
+                }
+
+            yield f"event: metadata\ndata: {json.dumps(metadata)}\n\n"
+        except Exception as e:
+            logger.warning(f"[{image_id}] Metadata enrichment failed: {e}")
 
         yield f"event: done\ndata: {{}}\n\n"
 

@@ -26,7 +26,7 @@ from ..feature_flags import FeatureFlags, get_feature_flags
 from ..models import DebugData, DebugPipelineStep, ScanResponse
 from ..services.flash_names_pipeline import FlashNamesPipeline
 from ..services.wine_matcher import WineMatcher
-from .scan import build_results_from_recognized, convert_heic_to_jpeg, get_wine_matcher
+from .scan import build_results_from_recognized, convert_heic_to_jpeg, get_wine_matcher, is_valid_image_content_type
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -57,10 +57,10 @@ async def scan_stream(
     If Gemini fails, phase2 still emits with turbo-only data (graceful degradation).
     """
     # Validate content type
-    if image.content_type not in Config.ALLOWED_CONTENT_TYPES:
+    if not is_valid_image_content_type(image.content_type):
         raise HTTPException(
             status_code=400,
-            detail="Invalid image type. Only JPEG and PNG are supported."
+            detail="Invalid image type. Supported formats: JPEG, PNG, HEIC, WebP."
         )
 
     # Read image

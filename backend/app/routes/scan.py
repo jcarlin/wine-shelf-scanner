@@ -352,21 +352,47 @@ def _compute_safe_pick(wine: WineResult) -> bool:
 register_heif_opener()
 
 
+# === Content Type Validation ===
+
+
+def is_valid_image_content_type(content_type: str | None) -> bool:
+    """
+    Check if the content type is a valid image type.
+
+    Accepts all types in ALLOWED_CONTENT_TYPES, plus handles edge cases
+    from iOS Safari where the content type may be empty, None, or
+    'application/octet-stream' when uploading from the photo library.
+    """
+    if not content_type:
+        # iOS Safari sometimes sends empty content type for photo library uploads
+        return True
+    ct = content_type.lower().strip()
+    if ct in Config.ALLOWED_CONTENT_TYPES:
+        return True
+    # Accept any image/* type — Pillow will reject unsupported formats downstream
+    if ct.startswith("image/"):
+        return True
+    # iOS Files app may send generic binary type for HEIC files
+    if ct == "application/octet-stream":
+        return True
+    return False
+
+
 # === Image Conversion ===
 
 
-def convert_heic_to_jpeg(image_bytes: bytes, content_type: str) -> bytes:
+def convert_heic_to_jpeg(image_bytes: bytes, content_type: str | None) -> bytes:
     """
     Convert HEIC/HEIF images to JPEG. Pass through other formats unchanged.
 
     Args:
         image_bytes: Raw image bytes
-        content_type: MIME type of the image
+        content_type: MIME type of the image (may be None for iOS uploads)
 
     Returns:
         JPEG bytes if HEIC/HEIF, otherwise original bytes
     """
-    if content_type not in ("image/heic", "image/heif"):
+    if not content_type or content_type not in ("image/heic", "image/heif"):
         return image_bytes
 
     img = Image.open(io.BytesIO(image_bytes))
@@ -427,10 +453,10 @@ async def scan_shelf(
         ScanResponse with detected wines and fallback list
     """
     # Validate content type
-    if image.content_type not in Config.ALLOWED_CONTENT_TYPES:
+    if not is_valid_image_content_type(image.content_type):
         raise HTTPException(
             status_code=400,
-            detail="Invalid image type. Only JPEG and PNG are supported."
+            detail="Invalid image type. Supported formats: JPEG, PNG, HEIC, WebP."
         )
 
     # Generate unique image ID
@@ -1412,10 +1438,10 @@ async def scan_debug(
     Use this to test OCR quality before full pipeline processing.
     """
     # Validate content type
-    if image.content_type not in Config.ALLOWED_CONTENT_TYPES:
+    if not is_valid_image_content_type(image.content_type):
         raise HTTPException(
             status_code=400,
-            detail="Invalid image type. Only JPEG and PNG are supported."
+            detail="Invalid image type. Supported formats: JPEG, PNG, HEIC, WebP."
         )
 
     try:
@@ -1472,10 +1498,10 @@ async def preview_image(
     Returns the image as JPEG bytes with appropriate content type.
     """
     # Validate content type
-    if image.content_type not in Config.ALLOWED_CONTENT_TYPES:
+    if not is_valid_image_content_type(image.content_type):
         raise HTTPException(
             status_code=400,
-            detail="Invalid image type."
+            detail="Invalid image type. Supported formats: JPEG, PNG, HEIC, WebP."
         )
 
     try:

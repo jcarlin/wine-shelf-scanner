@@ -58,6 +58,7 @@ export function RatingBadge({ wine, isTopThree, position, onClick, shelfRank, is
       style={{
         left: position.x,
         top: position.y,
+        transform: 'translate(-50%, -50%)',
         '--badge-opacity': 1, // badgeOpacity,
         animationDelay: `${entranceDelay}ms`,
         zIndex: isBestPick ? 20 : 10,

@@ -151,7 +151,8 @@ def run_migrations() -> bool:
 def exec_uvicorn():
     """Replace this process with uvicorn."""
     port = os.getenv("PORT", "8080")
-    logger.info(f"Starting uvicorn on port {port}")
+    log_level = os.getenv("LOG_LEVEL", "info").lower()
+    logger.info(f"Starting uvicorn on port {port} (log_level={log_level})")
 
     os.execvp(
         sys.executable,
@@ -164,6 +165,8 @@ def exec_uvicorn():
             "0.0.0.0",
             "--port",
             port,
+            "--log-level",
+            log_level,
         ],
     )
 

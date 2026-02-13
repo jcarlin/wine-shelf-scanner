@@ -21,11 +21,13 @@ from fastapi.responses import FileResponse, JSONResponse
 
 from app.config import Config
 
-# Configure logging from environment
-logging.basicConfig(
-    level=getattr(logging, Config.log_level(), logging.INFO),
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+# Configure logging — must set root logger level and add handler explicitly
+# so app loggers work even after uvicorn replaces basicConfig handlers.
+_log_level = getattr(logging, Config.log_level(), logging.INFO)
+_handler = logging.StreamHandler()
+_handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+logging.root.setLevel(_log_level)
+logging.root.addHandler(_handler)
 logger = logging.getLogger(__name__)
 logger.info(f"Starting with LOG_LEVEL={Config.log_level()}, DEBUG_MODE={Config.debug_mode()}")
 from fastapi.middleware.cors import CORSMiddleware

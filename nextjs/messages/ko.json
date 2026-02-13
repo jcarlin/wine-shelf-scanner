@@ -30,7 +30,7 @@
   },
   "fallback": {
     "couldNotIdentify": "병을 식별할 수 없습니다",
-    "popularWines": "찾고 계실 수 있는 인기 와인입니다",
+    "tryDifferentAngle": "더 가까이에서 찍거나 다른 각도로 시도해 보세요",
     "tryAnother": "다른 사진 시도",
     "winesFound": "발견된 와인"
   },

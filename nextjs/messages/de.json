@@ -30,7 +30,7 @@
   },
   "fallback": {
     "couldNotIdentify": "Flaschen konnten nicht identifiziert werden",
-    "popularWines": "Hier sind einige beliebte Weine, die Sie suchen könnten",
+    "tryDifferentAngle": "Versuchen Sie ein näheres Foto oder einen anderen Winkel",
     "tryAnother": "Anderes Foto versuchen",
     "winesFound": "Weine gefunden"
   },

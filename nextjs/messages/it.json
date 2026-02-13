@@ -30,7 +30,7 @@
   },
   "fallback": {
     "couldNotIdentify": "Impossibile identificare le bottiglie",
-    "popularWines": "Ecco alcuni vini popolari che potresti cercare",
+    "tryDifferentAngle": "Prova una foto più ravvicinata o un'angolazione diversa",
     "tryAnother": "Prova un'Altra Foto",
     "winesFound": "Vini Trovati"
   },

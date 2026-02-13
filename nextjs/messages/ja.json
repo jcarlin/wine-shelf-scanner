@@ -30,7 +30,7 @@
   },
   "fallback": {
     "couldNotIdentify": "ボトルを識別できませんでした",
-    "popularWines": "お探しの人気ワインをご紹介します",
+    "tryDifferentAngle": "もっと近くから撮影するか、別の角度で試してください",
     "tryAnother": "別の写真を試す",
     "winesFound": "見つかったワイン"
   },

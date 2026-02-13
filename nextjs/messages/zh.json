@@ -30,7 +30,7 @@
   },
   "fallback": {
     "couldNotIdentify": "无法识别酒瓶",
-    "popularWines": "以下是一些您可能正在寻找的热门葡萄酒",
+    "tryDifferentAngle": "尝试拍摄更近的照片或换个角度",
     "tryAnother": "尝试另一张照片",
     "winesFound": "找到的葡萄酒"
   },

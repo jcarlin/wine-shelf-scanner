@@ -34,7 +34,7 @@
   },
   "fallback": {
     "couldNotIdentify": "Could not identify bottles",
-    "popularWines": "Here are some popular wines you might be looking for",
+    "tryDifferentAngle": "Try a closer photo or a different angle",
     "tryAnother": "Try Another Photo",
     "winesFound": "Wines Found"
   },

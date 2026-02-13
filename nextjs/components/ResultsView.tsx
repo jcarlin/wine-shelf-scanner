@@ -114,7 +114,7 @@ export function ResultsView({ response, imageUri, onReset, isPartial = false }: 
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-dvh">
       {/* Header */}
       <div className="flex items-center px-4 py-3 border-b border-gray-700">
         <button

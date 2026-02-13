@@ -218,7 +218,9 @@ class Config:
     MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024
     ALLOWED_CONTENT_TYPES: List[str] = [
         "image/jpeg",
+        "image/jpg",
         "image/png",
         "image/heic",
         "image/heif",
+        "image/webp",
     ]

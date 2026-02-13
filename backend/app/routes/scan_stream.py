@@ -92,80 +92,85 @@ async def scan_stream(
         all_recognized = []
         last_fallback = []
 
-        async for partial in pipeline.scan_progressive(image_bytes):
-            phase = partial.timings.get('phase', 1)
-            all_recognized = partial.recognized_wines
-            last_fallback = partial.fallback
+        try:
+            async for partial in pipeline.scan_progressive(image_bytes):
+                phase = partial.timings.get('phase', 1)
+                all_recognized = partial.recognized_wines
+                last_fallback = partial.fallback
 
-            results, fallback = build_results_from_recognized(
-                partial.recognized_wines,
-                wine_matcher,
-                pipeline_fallback=partial.fallback,
-                flags=flags,
-                skip_enrichment=True,
-            )
-
-            # IMMUTABILITY: restore locked ratings for wines already sent
-            for r in results:
-                key = r.wine_name.lower().strip()
-                if key in locked_ratings:
-                    r.rating = locked_ratings[key]
-
-            # Lock all new ratings
-            for r in results:
-                key = r.wine_name.lower().strip()
-                if key not in locked_ratings and r.rating is not None:
-                    locked_ratings[key] = r.rating
-
-            debug_data = None
-            if debug:
-                pipeline_steps = []
-                for idx, rw in enumerate(partial.recognized_wines):
-                    bt = rw.bottle_text
-                    pipeline_steps.append(DebugPipelineStep(
-                        raw_text=(bt.combined_text or "") if bt else "",
-                        normalized_text=(bt.normalized_name or "") if bt else rw.wine_name,
-                        bottle_index=idx,
-                        final_result={
-                            "wine_name": rw.wine_name,
-                            "confidence": rw.confidence,
-                            "source": rw.source.value,
-                        },
-                        included_in_results=True,
-                    ))
-                for fw in partial.fallback:
-                    wine_name = fw.get("wine_name", "") if isinstance(fw, dict) else str(fw)
-                    pipeline_steps.append(DebugPipelineStep(
-                        raw_text=wine_name,
-                        normalized_text=wine_name,
-                        bottle_index=-1,
-                        final_result=None,
-                        included_in_results=False,
-                    ))
-                timings = partial.timings
-                debug_data = DebugData(
-                    pipeline_steps=pipeline_steps,
-                    total_ocr_texts=timings.get('ocr_texts_count', 0),
-                    bottles_detected=timings.get('vision_bottles', 0),
-                    texts_matched=len(partial.recognized_wines),
-                    llm_calls_made=1 if timings.get('llm_wines', 0) > 0 else 0,
+                results, fallback = build_results_from_recognized(
+                    partial.recognized_wines,
+                    wine_matcher,
+                    pipeline_fallback=partial.fallback,
+                    flags=flags,
+                    skip_enrichment=True,
                 )
 
-            response = ScanResponse(
-                image_id=image_id,
-                results=results,
-                fallback_list=fallback,
-                debug=debug_data,
-            )
+                # IMMUTABILITY: restore locked ratings for wines already sent
+                for r in results:
+                    key = r.wine_name.lower().strip()
+                    if key in locked_ratings:
+                        r.rating = locked_ratings[key]
 
-            data = response.model_dump_json()
-            yield f"event: phase{phase}\ndata: {data}\n\n"
+                # Lock all new ratings
+                for r in results:
+                    key = r.wine_name.lower().strip()
+                    if key not in locked_ratings and r.rating is not None:
+                        locked_ratings[key] = r.rating
 
-            logger.info(
-                f"[{image_id}] SSE phase{phase}: "
-                f"{len(results)} results, {len(fallback)} fallback "
-                f"({partial.timings.get('total_ms', 0)}ms)"
-            )
+                debug_data = None
+                if debug:
+                    pipeline_steps = []
+                    for idx, rw in enumerate(partial.recognized_wines):
+                        bt = rw.bottle_text
+                        pipeline_steps.append(DebugPipelineStep(
+                            raw_text=(bt.combined_text or "") if bt else "",
+                            normalized_text=(bt.normalized_name or "") if bt else rw.wine_name,
+                            bottle_index=idx,
+                            final_result={
+                                "wine_name": rw.wine_name,
+                                "confidence": rw.confidence,
+                                "source": rw.source.value,
+                            },
+                            included_in_results=True,
+                        ))
+                    for fw in partial.fallback:
+                        wine_name = fw.get("wine_name", "") if isinstance(fw, dict) else str(fw)
+                        pipeline_steps.append(DebugPipelineStep(
+                            raw_text=wine_name,
+                            normalized_text=wine_name,
+                            bottle_index=-1,
+                            final_result=None,
+                            included_in_results=False,
+                        ))
+                    timings = partial.timings
+                    debug_data = DebugData(
+                        pipeline_steps=pipeline_steps,
+                        total_ocr_texts=timings.get('ocr_texts_count', 0),
+                        bottles_detected=timings.get('vision_bottles', 0),
+                        texts_matched=len(partial.recognized_wines),
+                        llm_calls_made=1 if timings.get('llm_wines', 0) > 0 else 0,
+                    )
+
+                response = ScanResponse(
+                    image_id=image_id,
+                    results=results,
+                    fallback_list=fallback,
+                    debug=debug_data,
+                )
+
+                data = response.model_dump_json()
+                yield f"event: phase{phase}\ndata: {data}\n\n"
+
+                logger.info(
+                    f"[{image_id}] SSE phase{phase}: "
+                    f"{len(results)} results, {len(fallback)} fallback "
+                    f"({partial.timings.get('total_ms', 0)}ms)"
+                )
+        except Exception as e:
+            logger.error(f"[{image_id}] SSE pipeline error: {e}", exc_info=True)
+            error_data = json.dumps({"error": str(e)})
+            yield f"event: error\ndata: {error_data}\n\n"
 
         # Async metadata enrichment: run enrichment and emit metadata event
         try:

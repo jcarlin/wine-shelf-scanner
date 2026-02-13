@@ -80,7 +80,12 @@ def build_results_from_recognized(
 
     for wine in recognized:
         if wine.confidence >= Config.VISIBILITY_THRESHOLD:
-            results.append(_to_wine_result(wine))
+            try:
+                results.append(_to_wine_result(wine))
+            except (AttributeError, TypeError) as e:
+                logger.warning(f"Skipping wine '{wine.wine_name}': missing bbox data: {e}")
+                if wine.rating is not None:
+                    fallback.append(FallbackWine(wine_name=wine.wine_name, rating=wine.rating))
         elif wine.rating is not None:
             fallback.append(FallbackWine(
                 wine_name=wine.wine_name,

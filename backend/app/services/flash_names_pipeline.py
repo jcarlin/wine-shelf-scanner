@@ -426,13 +426,32 @@ class FlashNamesPipeline:
                 temperature=0.1,
             )
             elapsed = round((time.perf_counter() - t0) * 1000)
+            finish_reason = response.choices[0].finish_reason
             text = response.choices[0].message.content.strip()
 
             # Strip markdown code blocks
             if text.startswith("```"):
                 text = text.split("\n", 1)[1].rsplit("```", 1)[0].strip()
 
-            parsed = json.loads(text)
+            try:
+                parsed = json.loads(text)
+            except json.JSONDecodeError:
+                if finish_reason == "length":
+                    # Response was truncated by token limit — salvage complete entries
+                    logger.warning(f"FlashNames: Gemini response truncated (finish_reason=length), attempting partial parse")
+                    last_brace = text.rfind("}")
+                    if last_brace > 0:
+                        truncated = text[:last_brace + 1] + "]"
+                        try:
+                            parsed = json.loads(truncated)
+                        except json.JSONDecodeError:
+                            logger.error(f"FlashNames: partial JSON parse also failed")
+                            return []
+                    else:
+                        return []
+                else:
+                    logger.error(f"FlashNames: JSON parse failed (finish_reason={finish_reason})")
+                    return []
             if not isinstance(parsed, list):
                 return []
 

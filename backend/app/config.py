@@ -186,11 +186,11 @@ class Config:
     # === Flash Names Pipeline ===
     @staticmethod
     def flash_names_max_tokens() -> int:
-        """Max tokens for Flash Names Gemini call. Default: 2000."""
+        """Max tokens for Flash Names Gemini call. Default: 4096."""
         try:
-            return int(os.getenv("FLASH_NAMES_MAX_TOKENS", "2000"))
+            return int(os.getenv("FLASH_NAMES_MAX_TOKENS", "4096"))
         except ValueError:
-            return 2000
+            return 4096
 
     @staticmethod
     def flash_names_model() -> str:

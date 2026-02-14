@@ -58,6 +58,16 @@ export function ResultsView({ response, imageUri, onReset, isPartial = false }: 
       .slice(0, TOP_WINES_COUNT);
   }, [response.results]);
 
+  // Sync selectedWine when metadata enrichment updates response.results
+  useEffect(() => {
+    if (!selectedWine) return;
+    const updated = response.results.find(
+      (w) => w.wine_name === selectedWine.wine_name
+    );
+    if (updated && updated !== selectedWine) {
+      setSelectedWine(updated);
+    }
+  }, [response.results, selectedWine]);
 
   // Calculate image bounds when image loads or container resizes
   const calculateBounds = useCallback(() => {

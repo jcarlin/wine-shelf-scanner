@@ -49,6 +49,9 @@ export const Config = {
   /** Request timeout in milliseconds (Vision API can take 10-40s) */
   REQUEST_TIMEOUT: 45000,
 
+  /** SSE stream timeout in milliseconds (cold start + full pipeline can take 30-40s) */
+  STREAM_TIMEOUT: 600000,
+
   /** Image quality for compression (0-1) */
   IMAGE_QUALITY: 0.8,
 

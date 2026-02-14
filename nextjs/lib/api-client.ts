@@ -212,11 +212,15 @@ export async function scanImageStream(
     url.searchParams.set('debug', 'true');
   }
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), Config.STREAM_TIMEOUT);
+
   try {
     const response = await fetch(url.toString(), {
       method: 'POST',
       body: formData,
       headers: { Accept: 'text/event-stream' },
+      signal: controller.signal,
     });
 
     if (!response.ok) {
@@ -272,6 +276,25 @@ export async function scanImageStream(
           return;
         }
 
+        // Handle backend error events
+        if (eventType === 'error' && eventData) {
+          try {
+            const errPayload = JSON.parse(eventData);
+            callbacks.onError({
+              type: 'SERVER_ERROR',
+              message: errPayload.error || 'Pipeline error',
+              status: 500,
+            });
+          } catch {
+            callbacks.onError({
+              type: 'SERVER_ERROR',
+              message: 'Pipeline error',
+              status: 500,
+            });
+          }
+          // Don't return — backend sends 'done' next, let the loop exit naturally
+        }
+
         if (eventData && (eventType === 'phase1' || eventType === 'phase2')) {
           try {
             const data = JSON.parse(eventData) as ScanResponse;
@@ -307,6 +330,8 @@ export async function scanImageStream(
         message: 'Unable to connect. Please check your internet connection.',
       });
     }
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 

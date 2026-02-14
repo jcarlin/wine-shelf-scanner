@@ -85,6 +85,7 @@ class DebugPipelineStep(BaseModel):
     raw_text: str = Field(..., description="Original OCR text")
     normalized_text: str = Field(..., description="Text after cleanup")
     bottle_index: int = Field(..., description="Which bottle this belongs to")
+    identification_source: Optional[str] = Field(None, description="How the wine was identified: 'ocr', 'gemini', 'vision'")
     fuzzy_match: Optional[FuzzyMatchDebug] = Field(None, description="Fuzzy match results")
     llm_validation: Optional[LLMValidationDebug] = Field(None, description="LLM validation results")
     normalization_trace: Optional[NormalizationTrace] = Field(None, description="What normalization removed")

@@ -24,6 +24,7 @@ from pillow_heif import register_heif_opener
 from ..config import Config
 from ..feature_flags import FeatureFlags, get_feature_flags
 from ..models import DebugData, DebugPipelineStep, ScanResponse
+from ..models.enums import WineSource
 from ..services.flash_names_pipeline import FlashNamesPipeline
 from ..services.wine_matcher import WineMatcher
 from .scan import build_results_from_recognized, convert_heic_to_jpeg, get_wine_matcher, is_valid_image_content_type
@@ -81,6 +82,7 @@ async def scan_stream(
         )
 
     image_id = str(uuid.uuid4())
+    logger.info(f"[{image_id}] SSE scan request received ({len(image_bytes)} bytes)")
 
     async def event_generator():
         pipeline = FlashNamesPipeline(
@@ -123,10 +125,18 @@ async def scan_stream(
                     pipeline_steps = []
                     for idx, rw in enumerate(partial.recognized_wines):
                         bt = rw.bottle_text
+                        # Determine how this wine was identified
+                        if bt and bt.combined_text:
+                            id_source = "ocr"
+                        elif rw.source == WineSource.VISION:
+                            id_source = "vision"
+                        else:
+                            id_source = "gemini"
                         pipeline_steps.append(DebugPipelineStep(
                             raw_text=(bt.combined_text or "") if bt else "",
                             normalized_text=(bt.normalized_name or "") if bt else rw.wine_name,
                             bottle_index=idx,
+                            identification_source=id_source,
                             final_result={
                                 "wine_name": rw.wine_name,
                                 "confidence": rw.confidence,

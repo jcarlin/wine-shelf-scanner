@@ -76,8 +76,16 @@ export function WineDetailModal({ wine, onClose, shelfRank, shelfTotal, fetchedR
   if (reviewTexts.length === 0 && wine.review_snippets && wine.review_snippets.length > 0) {
     reviewTexts.push(...wine.review_snippets);
   }
+  // Fall back to blurb/description if no actual reviews
+  if (reviewTexts.length === 0 && wine.blurb) {
+    reviewTexts.push(wine.blurb);
+  }
 
-  const hasReviews = wine.review_count || reviewTexts.length > 0;
+  // Derive review count from fetched data when metadata hasn't arrived yet
+  const displayReviewCount = wine.review_count
+    ?? (fetchedReviews && fetchedReviews.length > 0 ? fetchedReviews.length : undefined);
+
+  const hasReviews = displayReviewCount || reviewTexts.length > 0;
 
   return (
     <div
@@ -149,11 +157,11 @@ export function WineDetailModal({ wine, onClose, shelfRank, shelfTotal, fetchedR
             </div>
 
             {/* Review Count */}
-            {wine.review_count && wine.review_count > 0 && (
+            {displayReviewCount && displayReviewCount > 0 && (
               <p className="text-sm text-gray-500 mb-2">
-                {wine.review_count >= 1000
-                  ? t('reviewsK', { count: formatReviewCountNumber(wine.review_count) })
-                  : t('reviews', { count: wine.review_count })}
+                {displayReviewCount >= 1000
+                  ? t('reviewsK', { count: formatReviewCountNumber(displayReviewCount) })
+                  : t('reviews', { count: displayReviewCount })}
               </p>
             )}
 
@@ -230,8 +238,8 @@ export function WineDetailModal({ wine, onClose, shelfRank, shelfTotal, fetchedR
               </div>
             )}
 
-            {/* Blurb/Description */}
-            {wine.blurb && (
+            {/* Blurb/Description — hidden when blurb is already used as review fallback */}
+            {wine.blurb && reviewTexts.length > 0 && reviewTexts[0] !== wine.blurb && (
               <div className="bg-gray-50 rounded-lg p-4 my-4">
                 <p className="text-gray-600 italic text-center leading-relaxed">
                   &ldquo;{wine.blurb}&rdquo;

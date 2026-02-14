@@ -26,6 +26,7 @@ export function RatingBadge({ wine, isTopThree, position, onClick, shelfRank, is
   const canTap = isTappable(wine.confidence);
   const size = isTopThree ? badgeSizes.topThree : badgeSizes.base;
   const isBestPick = visualEmphasis && shelfRank === 1;
+  const hasRankBorder = isTopThree || (shelfRank !== undefined && shelfRank <= 5);
 
   // Don't render if opacity is 0
   if (baseOpacity === 0) return null;
@@ -48,7 +49,7 @@ export function RatingBadge({ wine, isTopThree, position, onClick, shelfRank, is
     }
   };
 
-  const rankColor = shelfRank === 1 ? colors.rankGold : shelfRank === 2 ? colors.rankSilver : colors.rankBronze;
+  const rankColor = colors.rankGold;
 
   return (
     <div
@@ -85,19 +86,19 @@ export function RatingBadge({ wine, isTopThree, position, onClick, shelfRank, is
             flex items-center justify-center gap-1 rounded-lg
             transition-all duration-200
             ${canTap ? 'cursor-pointer hover:scale-110' : 'cursor-default'}
-            ${isTopThree ? 'shadow-lg' : ''}
+            ${hasRankBorder ? 'shadow-lg' : ''}
           `}
           style={{
             width: size.width,
             height: size.height,
             backgroundColor: colors.badgeBackground,
-            borderWidth: isTopThree ? (isBestPick ? 2.5 : 2) : 1,
-            borderColor: isTopThree
+            borderWidth: hasRankBorder ? (isBestPick ? 2.5 : 2) : 1,
+            borderColor: hasRankBorder
               ? (isBestPick ? 'rgba(255, 204, 0, 0.9)' : colors.topThreeBorder)
               : 'rgba(255, 255, 255, 0.3)',
             boxShadow: isBestPick
               ? `0 0 16px rgba(255, 204, 0, 0.6), 0 0 4px rgba(255, 204, 0, 0.3)`
-              : isTopThree
+              : hasRankBorder
                 ? `0 0 12px ${colors.topThreeGlow}40`
                 : '0 0 6px rgba(0, 0, 0, 0.5)',
           }}
@@ -133,11 +134,11 @@ export function RatingBadge({ wine, isTopThree, position, onClick, shelfRank, is
           </div>
         )}
       </div>
-      {shelfRank !== undefined && (
+      {shelfRank !== undefined && shelfRank <= 5 && (
         <span
           className="font-bold"
           style={{
-            fontSize: shelfRank === 1 ? 10 : 9,
+            fontSize: 10,
             color: rankColor,
             textShadow: '0 1px 2px rgba(0,0,0,0.8)',
             marginTop: 2,

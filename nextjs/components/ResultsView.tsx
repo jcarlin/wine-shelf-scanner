@@ -28,7 +28,7 @@ export function ResultsView({ response, imageUri, onReset, isPartial = false }: 
   const tBug = useTranslations('bugReport');
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
-  const [selectedWine, setSelectedWine] = useState<WineResult | null>(null);
+  const [selectedWineName, setSelectedWineName] = useState<string | null>(null);
   const [imageBounds, setImageBounds] = useState<Rect | null>(null);
   const [imageSize, setImageSize] = useState<Size | null>(null);
   const [showPartialToast, setShowPartialToast] = useState(() => {
@@ -36,6 +36,12 @@ export function ResultsView({ response, imageUri, onReset, isPartial = false }: 
   });
   const [showBugReport, setShowBugReport] = useState(false);
   const { shelfRanking, share: shareEnabled, bugReport: bugReportEnabled } = useFeatureFlags();
+
+  // Derive selectedWine from current results — stays in sync when response updates (e.g. SSE phase2)
+  const selectedWine = useMemo(() => {
+    if (!selectedWineName) return null;
+    return response.results.find((w) => w.wine_name === selectedWineName) ?? null;
+  }, [selectedWineName, response.results]);
 
   // Prefetch reviews for all DB-matched wines as soon as results arrive
   const wineReviews = useWineReviews(response.results);
@@ -57,17 +63,6 @@ export function ResultsView({ response, imageUri, onReset, isPartial = false }: 
       .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
       .slice(0, TOP_WINES_COUNT);
   }, [response.results]);
-
-  // Sync selectedWine when metadata enrichment updates response.results
-  useEffect(() => {
-    if (!selectedWine) return;
-    const updated = response.results.find(
-      (w) => w.wine_name === selectedWine.wine_name
-    );
-    if (updated && updated !== selectedWine) {
-      setSelectedWine(updated);
-    }
-  }, [response.results, selectedWine]);
 
   // Calculate image bounds when image loads or container resizes
   const calculateBounds = useCallback(() => {
@@ -190,7 +185,7 @@ export function ResultsView({ response, imageUri, onReset, isPartial = false }: 
           <OverlayContainer
             wines={response.results}
             imageBounds={imageBounds}
-            onWineSelect={setSelectedWine}
+            onWineSelect={(wine) => setSelectedWineName(wine.wine_name)}
           />
         )}
       </div>
@@ -232,7 +227,7 @@ export function ResultsView({ response, imageUri, onReset, isPartial = false }: 
       {/* Wine Detail Modal */}
       <WineDetailModal
         wine={selectedWine}
-        onClose={() => setSelectedWine(null)}
+        onClose={() => setSelectedWineName(null)}
         shelfRank={selectedWine ? shelfRankings.get(selectedWine.wine_name)?.rank : undefined}
         shelfTotal={selectedWine ? shelfRankings.get(selectedWine.wine_name)?.total : undefined}
         fetchedReviews={selectedWine?.wine_id ? wineReviews.get(selectedWine.wine_id) : undefined}

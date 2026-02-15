@@ -55,6 +55,10 @@
 "processing.tip2" = "Les bouteilles les mieux notées ont un reflet doré";
 "processing.tip3" = "Basé sur 21 millions d'avis agrégés";
 "processing.tip4" = "Nous couvrons plus de 181 000 vins dans le monde";
+"processing.tip5" = "Les notes combinent les scores des principales plateformes vinicoles";
+"processing.tip6" = "Fonctionne mieux avec des photos claires et bien éclairées de rayons à vins";
+"processing.tip7" = "Les scores de confiance indiquent la certitude de chaque correspondance";
+"processing.tip8" = "Les vins les mieux notés sont mis en avant pour un choix rapide";
 
 /* About */
 "about.title" = "Scanner de Rayon à Vins";
@@ -79,3 +83,19 @@
 "bugReport.thanksImprove" = "Merci de nous aider à améliorer !";
 "bugReport.done" = "Terminé";
 "bugReport.cancel" = "Annuler";
+
+/* Server Warmup */
+"warmup.checking" = "Connexion au serveur...";
+"warmup.title" = "Réveil du serveur";
+"warmup.message" = "Notre serveur est en cours de démarrage. Cela prend généralement 15 à 30 secondes.";
+"warmup.timeout" = "Le serveur met trop de temps à démarrer. Veuillez réessayer plus tard.";
+"warmup.unavailableTitle" = "Serveur indisponible";
+"warmup.retry" = "Réessayer";
+"warmup.tip1" = "Le premier lancement de la journée peut prendre un moment";
+"warmup.tip2" = "Notre IA charge plus de 181 000 vins en mémoire";
+"warmup.tip3" = "Les notes de vins proviennent de 21 millions d'avis communautaires";
+"warmup.tip4" = "Chaque scan utilise l'IA Vision de Google pour lire les étiquettes";
+"warmup.tip5" = "Nous comparons le texte OCR avec notre base de données de vins";
+"warmup.tip6" = "Plusieurs algorithmes de correspondance assurent la précision";
+"warmup.tip7" = "Les résultats incluent les notes des principales plateformes vinicoles";
+"warmup.tip8" = "Le serveur reste actif environ 15 minutes après utilisation";

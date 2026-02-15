@@ -55,6 +55,10 @@
 "processing.tip2" = "Top-bewertete Flaschen haben eine goldene Hervorhebung";
 "processing.tip3" = "Basierend auf 21 Millionen aggregierten Bewertungen";
 "processing.tip4" = "Wir decken über 181.000 Weine weltweit ab";
+"processing.tip5" = "Bewertungen kombinieren Punkte von großen Weinplattformen";
+"processing.tip6" = "Funktioniert am besten mit klaren, gut beleuchteten Fotos von Weinregalen";
+"processing.tip7" = "Konfidenzwerte zeigen, wie sicher jede Zuordnung ist";
+"processing.tip8" = "Höher bewertete Weine werden für schnelle Auswahl hervorgehoben";
 
 /* About */
 "about.title" = "Weinregal-Scanner";
@@ -79,3 +83,19 @@
 "bugReport.thanksImprove" = "Danke, dass Sie uns helfen, besser zu werden!";
 "bugReport.done" = "Fertig";
 "bugReport.cancel" = "Abbrechen";
+
+/* Server Warmup */
+"warmup.checking" = "Verbindung zum Server...";
+"warmup.title" = "Server wird gestartet";
+"warmup.message" = "Unser Server startet gerade. Das dauert normalerweise 15–30 Sekunden.";
+"warmup.timeout" = "Der Server braucht zu lange zum Starten. Bitte versuchen Sie es später erneut.";
+"warmup.unavailableTitle" = "Server nicht verfügbar";
+"warmup.retry" = "Erneut versuchen";
+"warmup.tip1" = "Der erste Start des Tages kann einen Moment dauern";
+"warmup.tip2" = "Unsere KI lädt über 181.000 Weine in den Speicher";
+"warmup.tip3" = "Weinbewertungen stammen aus 21 Millionen Community-Reviews";
+"warmup.tip4" = "Jeder Scan nutzt Googles Vision-KI zum Lesen der Etiketten";
+"warmup.tip5" = "Wir gleichen OCR-Text mit unserer Weindatenbank ab";
+"warmup.tip6" = "Mehrere Matching-Algorithmen gewährleisten Genauigkeit";
+"warmup.tip7" = "Ergebnisse enthalten Bewertungen von großen Weinplattformen";
+"warmup.tip8" = "Der Server bleibt nach Nutzung etwa 15 Minuten aktiv";

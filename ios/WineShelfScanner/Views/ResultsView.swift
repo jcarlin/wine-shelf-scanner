@@ -7,6 +7,7 @@ struct ResultsView: View {
     let onNewScan: () -> Void
     let onToggleDebugMode: () -> Void
     let debugMode: Bool
+    var wineReviews: [Int: [ReviewItem]] = [:]
 
     @State private var selectedWine: WineResult?
     @State private var showToast = false
@@ -52,11 +53,13 @@ struct ResultsView: View {
         .accessibilityIdentifier("resultsView")
         .sheet(item: $selectedWine) { wine in
             let rankings = shelfRankingsForDetail
+            let fetchedReviews = wine.wineId.flatMap { wineReviews[$0] }
             WineDetailSheet(
                 wine: wine,
                 imageId: response.imageId,
                 shelfRank: rankings[wine.id]?.rank,
-                shelfTotal: rankings[wine.id]?.total
+                shelfTotal: rankings[wine.id]?.total,
+                fetchedReviews: fetchedReviews
             )
             .presentationDetents([.height(280)])
         }

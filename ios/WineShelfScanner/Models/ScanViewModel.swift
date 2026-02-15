@@ -11,8 +11,11 @@ class ScanViewModel: ObservableObject {
             UserDefaults.standard.set(debugMode, forKey: "debugModeEnabled")
         }
     }
+    /// Prefetched reviews keyed by wine_id, populated after scan completes
+    @Published private(set) var wineReviews: [Int: [ReviewItem]] = [:]
 
-    private let scanService: ScanServiceProtocol
+    /// Expose scan service for health checking
+    let scanService: ScanServiceProtocol
     private let networkMonitor: NetworkMonitor
     private let backgroundManager: BackgroundScanManager
     private var cancellables = Set<AnyCancellable>()
@@ -97,7 +100,8 @@ class ScanViewModel: ObservableObject {
     // MARK: - Private
 
     private func performForegroundScan(with image: UIImage) {
-        state = .processing
+        state = .processing(image)
+        wineReviews = [:]
 
         let quality = FeatureFlags.shared.offlineCache
             ? networkMonitor.compressionQuality
@@ -117,6 +121,8 @@ class ScanViewModel: ObservableObject {
                     ScanCounter.shared.increment()
                 }
                 state = .results(response, image)
+                // Prefetch reviews for wines with database IDs
+                prefetchReviews(for: response.results)
             } catch {
                 // On network failure, fall back to cache if offline and cache is available
                 if FeatureFlags.shared.offlineCache,
@@ -131,12 +137,28 @@ class ScanViewModel: ObservableObject {
     }
 
     private func performBackgroundScan(with image: UIImage) {
-        state = .processing
+        state = .processing(image)
 
         do {
             try backgroundManager.startScan(image: image, debug: debugMode)
         } catch {
             state = .error(error.localizedDescription)
+        }
+    }
+
+    /// Prefetch reviews in parallel for all wines that have a database ID
+    private func prefetchReviews(for wines: [WineResult]) {
+        let winesWithId = wines.filter { $0.wineId != nil }
+        guard !winesWithId.isEmpty else { return }
+
+        for wine in winesWithId {
+            guard let wineId = wine.wineId else { continue }
+            Task {
+                if let response = await scanService.fetchWineReviews(wineId: wineId),
+                   !response.reviews.isEmpty {
+                    self.wineReviews[wineId] = response.reviews
+                }
+            }
         }
     }
 
@@ -147,7 +169,7 @@ class ScanViewModel: ObservableObject {
                 guard let self = self else { return }
                 guard let completed = completed else {
                     // A nil after we were scanning means failure
-                    if case .processing = self.state {
+                    if case .processing(_) = self.state {
                         self.state = .error("Scan failed. Please try again.")
                     } else if case .backgroundProcessing = self.state {
                         self.state = .error("Scan failed. Please try again.")

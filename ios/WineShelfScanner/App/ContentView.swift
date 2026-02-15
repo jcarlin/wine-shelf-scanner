@@ -4,6 +4,7 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var viewModel: ScanViewModel
     @StateObject private var networkMonitor = NetworkMonitor.shared
+    @StateObject private var serverHealth: ServerHealthService
     @ObservedObject private var subscriptionManager = SubscriptionManager.shared
     @State private var showCamera = false
     @State private var showPhotoPicker = false
@@ -39,7 +40,9 @@ struct ContentView: View {
     }
 
     init(viewModel: ScanViewModel? = nil) {
-        _viewModel = StateObject(wrappedValue: viewModel ?? Self.createDefaultViewModel())
+        let vm = viewModel ?? Self.createDefaultViewModel()
+        _viewModel = StateObject(wrappedValue: vm)
+        _serverHealth = StateObject(wrappedValue: ServerHealthService(scanService: vm.scanService))
     }
 
     /// Create a mock image for UI testing (bypasses photo picker)
@@ -136,8 +139,12 @@ struct ContentView: View {
                             scansRemaining: scansRemaining
                         )
 
-                    case .processing:
-                        ProcessingView()
+                    case .processing(let processingImage):
+                        if let processingImage = processingImage {
+                            ScanningOverlayView(image: processingImage)
+                        } else {
+                            ProcessingView()
+                        }
 
                     case .results(let response, let image):
                         ResultsView(
@@ -150,7 +157,8 @@ struct ContentView: View {
                             onToggleDebugMode: {
                                 viewModel.toggleDebugMode()
                             },
-                            debugMode: viewModel.debugMode
+                            debugMode: viewModel.debugMode,
+                            wineReviews: viewModel.wineReviews
                         )
 
                     case .cachedResults(let response, let image, let timestamp):
@@ -257,11 +265,24 @@ struct ContentView: View {
             .onAppear {
                 // Restore completed background scan from previous session
                 viewModel.restoreBackgroundScanIfNeeded()
+                // Start server health check (handles Cloud Run cold starts)
+                if !isUITesting {
+                    serverHealth.start()
+                }
             }
             .onChange(of: scenePhase) { newPhase in
                 if newPhase == .active {
                     // Check for completed background scan when returning to foreground
                     viewModel.restoreBackgroundScanIfNeeded()
+                }
+            }
+            .overlay {
+                // Server warmup overlay (blocks UI until server is ready)
+                if !isUITesting && serverHealth.state != .ready {
+                    ServerWarmupView(
+                        state: serverHealth.state,
+                        onRetry: { serverHealth.retry() }
+                    )
                 }
             }
         }
@@ -408,12 +429,9 @@ struct IdleView: View {
 }
 
 struct ProcessingView: View {
-    private let tips = [
-        NSLocalizedString("processing.tip1", comment: "Tip: tap badge"),
-        NSLocalizedString("processing.tip2", comment: "Tip: gold highlight"),
-        NSLocalizedString("processing.tip3", comment: "Tip: review count"),
-        NSLocalizedString("processing.tip4", comment: "Tip: wine count"),
-    ]
+    private let tips = (1...8).map { index in
+        NSLocalizedString("processing.tip\(index)", comment: "Processing tip \(index)")
+    }
 
     @State private var currentTipIndex = 0
     let timer = Timer.publish(every: 3, on: .main, in: .common).autoconnect()

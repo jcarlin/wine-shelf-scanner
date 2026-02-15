@@ -55,6 +55,10 @@
 "processing.tip2" = "As garrafas mais bem avaliadas têm um destaque dourado";
 "processing.tip3" = "Baseado em 21 milhões de avaliações agregadas";
 "processing.tip4" = "Cobrimos mais de 181.000 vinhos no mundo todo";
+"processing.tip5" = "As avaliações combinam pontuações das principais plataformas de vinhos";
+"processing.tip6" = "Funciona melhor com fotos claras e bem iluminadas de prateleiras de vinhos";
+"processing.tip7" = "Os scores de confiança mostram a certeza de cada correspondência";
+"processing.tip8" = "Vinhos com avaliações mais altas são destacados para seleção rápida";
 
 /* About */
 "about.title" = "Scanner de Prateleira de Vinhos";
@@ -79,3 +83,19 @@
 "bugReport.thanksImprove" = "Obrigado por nos ajudar a melhorar!";
 "bugReport.done" = "Concluído";
 "bugReport.cancel" = "Cancelar";
+
+/* Server Warmup */
+"warmup.checking" = "Conectando ao servidor...";
+"warmup.title" = "Iniciando o servidor";
+"warmup.message" = "Nosso servidor está iniciando. Isso geralmente leva de 15 a 30 segundos.";
+"warmup.timeout" = "O servidor está demorando muito para iniciar. Por favor, tente novamente mais tarde.";
+"warmup.unavailableTitle" = "Servidor indisponível";
+"warmup.retry" = "Tentar novamente";
+"warmup.tip1" = "A primeira execução do dia pode demorar um momento";
+"warmup.tip2" = "Nossa IA está carregando mais de 181.000 vinhos na memória";
+"warmup.tip3" = "As avaliações de vinhos vêm de 21 milhões de reviews da comunidade";
+"warmup.tip4" = "Cada scan usa a IA Vision do Google para ler os rótulos";
+"warmup.tip5" = "Comparamos o texto OCR com nosso banco de dados de vinhos";
+"warmup.tip6" = "Múltiplos algoritmos de correspondência garantem a precisão";
+"warmup.tip7" = "Os resultados incluem avaliações das principais plataformas de vinhos";
+"warmup.tip8" = "O servidor permanece ativo por cerca de 15 minutos após o uso";

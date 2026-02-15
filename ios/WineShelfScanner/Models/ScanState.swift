@@ -3,7 +3,7 @@ import SwiftUI
 /// Application state for the scan flow
 enum ScanState: Equatable {
     case idle
-    case processing
+    case processing(UIImage?)       // Optional image for scanning overlay preview
     case backgroundProcessing(Date)
     case results(ScanResponse, UIImage)
     case cachedResults(ScanResponse, UIImage?, Date)

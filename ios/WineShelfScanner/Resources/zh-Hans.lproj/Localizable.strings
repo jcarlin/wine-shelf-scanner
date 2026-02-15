@@ -55,6 +55,10 @@
 "processing.tip2" = "评分最高的酒瓶有金色高亮";
 "processing.tip3" = "基于2100万条聚合评论";
 "processing.tip4" = "覆盖全球181,000+款葡萄酒";
+"processing.tip5" = "评分综合了各大葡萄酒平台的分数";
+"processing.tip6" = "拍摄清晰、光线充足的葡萄酒货架照片效果最佳";
+"processing.tip7" = "置信度分数显示每个匹配的确定程度";
+"processing.tip8" = "评分较高的葡萄酒会高亮显示，方便快速选择";
 
 /* About */
 "about.title" = "葡萄酒货架扫描仪";
@@ -79,3 +83,19 @@
 "bugReport.thanksImprove" = "感谢您帮助我们改进！";
 "bugReport.done" = "完成";
 "bugReport.cancel" = "取消";
+
+/* Server Warmup */
+"warmup.checking" = "正在连接服务器...";
+"warmup.title" = "正在启动服务器";
+"warmup.message" = "我们的服务器正在启动中，通常需要15-30秒。";
+"warmup.timeout" = "服务器启动时间过长，请稍后再试。";
+"warmup.unavailableTitle" = "服务器不可用";
+"warmup.retry" = "重试";
+"warmup.tip1" = "每天首次启动可能需要一点时间";
+"warmup.tip2" = "我们的AI正在将181,000+款葡萄酒加载到内存中";
+"warmup.tip3" = "葡萄酒评分来自2100万条社区评论";
+"warmup.tip4" = "每次扫描使用Google Vision AI读取酒标";
+"warmup.tip5" = "我们将OCR文字与葡萄酒数据库进行匹配";
+"warmup.tip6" = "多种匹配算法确保准确性";
+"warmup.tip7" = "结果包含来自各大葡萄酒平台的评分";
+"warmup.tip8" = "服务器在使用后保持活跃约15分钟";

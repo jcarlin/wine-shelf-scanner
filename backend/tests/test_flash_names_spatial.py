@@ -209,11 +209,13 @@ class TestSpatialMerge:
         assert len(recognized) == 2
         assert len(fallback) == 0
 
-        # Opus One should have a synthetic bbox centered at (0.75, 0.50)
+        # Opus One: x,y is top-left, center = (0.75+0.04, 0.50+0.125) = (0.79, 0.625)
+        # No calibration (only 1 matched pair, need 2+)
+        # bbox.x = 0.79 - 0.04 = 0.75, bbox.y = 0.625 - 0.125 = 0.50
         opus = next(r for r in recognized if r.wine_name == 'Opus One 2019')
         bbox = opus.bottle_text.bottle.bbox
-        assert abs(bbox.x - (0.75 - 0.04)) < 0.001  # x = center - width/2
-        assert abs(bbox.y - (0.50 - 0.125)) < 0.001  # y = center - height/2
+        assert abs(bbox.x - 0.75) < 0.001
+        assert abs(bbox.y - 0.50) < 0.001
         assert abs(bbox.width - 0.08) < 0.001
         assert abs(bbox.height - 0.25) < 0.001
 
@@ -279,27 +281,34 @@ class TestSpatialMerge:
 
         assert len(recognized) == 1
         bbox = recognized[0].bottle_text.bottle.bbox
-        # x = max(0.0, 0.02 - 0.04) = 0.0
-        assert bbox.x == 0.0
-        # y = max(0.0, 0.05 - 0.125) = 0.0
-        assert bbox.y == 0.0
+        # x,y is top-left: center = (0.02+0.04, 0.05+0.125) = (0.06, 0.175)
+        # bbox.x = max(0.0, 0.06 - 0.04) = 0.02
+        # bbox.y = max(0.0, 0.175 - 0.125) = 0.05
+        assert abs(bbox.x - 0.02) < 0.001
+        assert abs(bbox.y - 0.05) < 0.001
         assert abs(bbox.width - 0.08) < 0.001
         assert abs(bbox.height - 0.25) < 0.001
 
     def test_synthetic_bbox_calibrated_from_matched_pairs(self):
-        """Synthetic bbox position is corrected using offset from matched pairs."""
+        """Synthetic bbox position is corrected using offset from 2+ matched pairs."""
         pipeline = _make_pipeline()
 
-        # Vision bottle center at (0.15, 0.50)
+        # Two Vision bottles so we get 2 matched pairs (calibration requires ≥2)
         bottles = [
             _make_bottle_text("b0", BoundingBox(0.10, 0.30, 0.10, 0.40), "CAYMUS"),
+            # center: (0.15, 0.50)
+            _make_bottle_text("b1", BoundingBox(0.35, 0.30, 0.10, 0.40), "SILVER OAK"),
+            # center: (0.40, 0.50)
         ]
 
-        # Gemini says Caymus is at (0.18, 0.52) — offset of +0.03 x, +0.02 y
-        # Gemini says Opus One is at (0.75, 0.50)
+        # Gemini positions systematically offset by ~(+0.02, +0.025) from top-left
+        # Caymus: top-left (0.13, 0.40) → center (0.17, 0.525) → offset = (0.15-0.17, 0.50-0.525) = (-0.02, -0.025)
+        # Silver Oak: top-left (0.38, 0.40) → center (0.42, 0.525) → offset = (0.40-0.42, 0.50-0.525) = (-0.02, -0.025)
+        # Opus One (unmatched): top-left (0.75, 0.40) → center (0.79, 0.525)
         llm_wines = [
-            {'name': 'Caymus Cabernet', 'rating': None, 'x': 0.18, 'y': 0.52},
-            {'name': 'Opus One 2019', 'rating': None, 'x': 0.75, 'y': 0.50},
+            {'name': 'Caymus Cabernet', 'rating': None, 'x': 0.13, 'y': 0.40},
+            {'name': 'Silver Oak', 'rating': None, 'x': 0.38, 'y': 0.40},
+            {'name': 'Opus One 2019', 'rating': None, 'x': 0.75, 'y': 0.40},
         ]
         llm_ratings = {w['name']: 3.5 for w in llm_wines}
         db_results = {w['name']: None for w in llm_wines}
@@ -308,15 +317,15 @@ class TestSpatialMerge:
             llm_wines, llm_ratings, db_results, bottles
         )
 
-        assert len(recognized) == 2
+        assert len(recognized) == 3
         opus = next(r for r in recognized if r.wine_name == 'Opus One 2019')
         bbox = opus.bottle_text.bottle.bbox
 
-        # Calibration: Vision center (0.15, 0.50) - Gemini pos (0.18, 0.52) = (-0.03, -0.02)
-        # Corrected Opus position: (0.75 + (-0.03), 0.50 + (-0.02)) = (0.72, 0.48)
-        # bbox.x = 0.72 - 0.04 = 0.68
-        expected_center_x = 0.75 - 0.03  # = 0.72
-        expected_center_y = 0.50 - 0.02  # = 0.48
+        # Calibration: mean offset = (-0.02, -0.025), stddev = 0 (consistent)
+        # Opus corrected center: (0.79 + (-0.02), 0.525 + (-0.025)) = (0.77, 0.50)
+        # bbox.x = 0.77 - 0.04 = 0.73, bbox.y = 0.50 - 0.125 = 0.375
+        expected_center_x = 0.77
+        expected_center_y = 0.50
         actual_center_x = bbox.x + bbox.width / 2
         actual_center_y = bbox.y + bbox.height / 2
         assert abs(actual_center_x - expected_center_x) < 0.01
@@ -353,6 +362,111 @@ class TestSpatialMerge:
         assert recognized[0].source == WineSource.DATABASE
         assert recognized[0].rating_source == RatingSource.DATABASE
         assert recognized[0].wine_id == 42
+
+
+    def test_no_wh_treats_xy_as_top_left(self):
+        """When w/h is missing, x,y is treated as top-left corner, not center."""
+        pipeline = _make_pipeline()
+
+        bottles = []
+
+        # Wine at top-left (0.50, 0.30) — without w/h
+        llm_wines = [
+            {'name': 'Test Wine', 'rating': None, 'x': 0.50, 'y': 0.30},
+        ]
+        llm_ratings = {'Test Wine': 3.5}
+        db_results = {'Test Wine': None}
+
+        recognized, fallback = pipeline._spatial_merge(
+            llm_wines, llm_ratings, db_results, bottles
+        )
+
+        assert len(recognized) == 1
+        bbox = recognized[0].bottle_text.bottle.bbox
+        # Center should be (0.50 + 0.04, 0.30 + 0.125) = (0.54, 0.425)
+        # bbox.x = 0.54 - 0.04 = 0.50, bbox.y = 0.425 - 0.125 = 0.30
+        actual_center_x = bbox.x + bbox.width / 2
+        actual_center_y = bbox.y + bbox.height / 2
+        assert abs(actual_center_x - 0.54) < 0.001
+        assert abs(actual_center_y - 0.425) < 0.001
+
+    def test_with_wh_center_uses_dimensions(self):
+        """When w/h is provided, center is computed from top-left + dimensions."""
+        pipeline = _make_pipeline()
+
+        bottles = []
+
+        llm_wines = [
+            {'name': 'Test Wine', 'rating': None, 'x': 0.50, 'y': 0.30, 'w': 0.10, 'h': 0.30},
+        ]
+        llm_ratings = {'Test Wine': 3.5}
+        db_results = {'Test Wine': None}
+
+        recognized, fallback = pipeline._spatial_merge(
+            llm_wines, llm_ratings, db_results, bottles
+        )
+
+        assert len(recognized) == 1
+        bbox = recognized[0].bottle_text.bottle.bbox
+        # Center should be (0.50 + 0.05, 0.30 + 0.15) = (0.55, 0.45)
+        actual_center_x = bbox.x + bbox.width / 2
+        actual_center_y = bbox.y + bbox.height / 2
+        assert abs(actual_center_x - 0.55) < 0.001
+        assert abs(actual_center_y - 0.45) < 0.001
+
+    def test_hungarian_beats_greedy_on_crossing_pattern(self):
+        """Hungarian algorithm correctly handles crossing pattern that greedy would swap."""
+        pipeline = _make_pipeline()
+
+        # Two bottles side by side
+        bottles = [
+            _make_bottle_text("b0", BoundingBox(0.10, 0.30, 0.10, 0.40), "WINE A"),
+            _make_bottle_text("b1", BoundingBox(0.30, 0.30, 0.10, 0.40), "WINE B"),
+        ]
+        # Centers: (0.15, 0.50), (0.35, 0.50)
+
+        # Wine positions are slightly crossing: Wine 1 is slightly closer to b1's x
+        # but the global optimum assigns Wine 1→b0 and Wine 2→b1
+        llm_wines = [
+            {'name': 'Wine 1', 'rating': None, 'x': 0.18, 'y': 0.35},  # center: (0.22, 0.475)
+            {'name': 'Wine 2', 'rating': None, 'x': 0.28, 'y': 0.35},  # center: (0.32, 0.475)
+        ]
+        llm_ratings = {w['name']: 3.5 for w in llm_wines}
+        db_results = {w['name']: None for w in llm_wines}
+
+        recognized, fallback = pipeline._spatial_merge(
+            llm_wines, llm_ratings, db_results, bottles
+        )
+
+        assert len(recognized) == 2
+        wine_to_bottle = {r.wine_name: r.bottle_text for r in recognized}
+        assert wine_to_bottle['Wine 1'].combined_text == "WINE A"
+        assert wine_to_bottle['Wine 2'].combined_text == "WINE B"
+
+    def test_calibration_skipped_with_single_pair(self):
+        """Calibration is skipped when only 1 matched pair (requires ≥2)."""
+        pipeline = _make_pipeline()
+
+        bottles = [
+            _make_bottle_text("b0", BoundingBox(0.10, 0.30, 0.10, 0.40), "CAYMUS"),
+        ]
+
+        # Systematic offset of 0.05 x — but only 1 pair, calibration should NOT apply
+        llm_wines = [
+            {'name': 'Caymus Cabernet', 'rating': None, 'x': 0.16, 'y': 0.40},
+            {'name': 'Opus One 2019', 'rating': None, 'x': 0.75, 'y': 0.40},
+        ]
+        llm_ratings = {w['name']: 3.5 for w in llm_wines}
+        db_results = {w['name']: None for w in llm_wines}
+
+        recognized, fallback = pipeline._spatial_merge(
+            llm_wines, llm_ratings, db_results, bottles
+        )
+
+        opus = next(r for r in recognized if r.wine_name == 'Opus One 2019')
+        bbox = opus.bottle_text.bottle.bbox
+        # Without calibration: center = (0.79, 0.525), bbox.x = 0.75
+        assert abs(bbox.x - 0.75) < 0.001
 
 
 class TestOCRTextMergeFallback:

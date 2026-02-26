@@ -34,6 +34,9 @@ export interface WineResult {
   rating: number | null;
   confidence: number;
   bbox: BoundingBox;
+  identified?: boolean;
+  source?: 'database' | 'llm' | 'vision';
+  rating_source?: 'database' | 'llm_estimated' | 'default' | 'none';
   // Extended metadata (optional - populated from DB or LLM)
   wine_type?: string;  // 'Red', 'White', 'Rosé', 'Sparkling', etc.
   brand?: string;      // Winery or brand name
@@ -132,7 +135,7 @@ export interface FuzzyMatchDebug {
 export interface LLMValidationDebug {
   is_valid_match: boolean;
   wine_name: string | null;
-  confidence: number | null;
+  confidence: number;
   reasoning: string | null;
 }
 
@@ -166,8 +169,24 @@ export interface DebugPipelineStep {
   normalization_trace?: NormalizationTrace | null;
   llm_raw?: LLMRawDebug | null;
   final_result: DebugFinalResult | null;
-  step_failed: boolean;
+  identification_source?: string | null;
+  step_failed: string | boolean | null;
   included_in_results: boolean;
+}
+
+export interface PipelineStats {
+  bottles_detected: number;
+  bottles_with_text: number;
+  bottles_empty: number;
+  fuzzy_matched: number;
+  llm_validated: number;
+  unmatched_count: number;
+  vision_attempted: number;
+  vision_identified: number;
+  vision_error?: string | null;
+  llm_rescue_attempted: number;
+  llm_rescue_identified: number;
+  final_results: number;
 }
 
 export interface DebugData {
@@ -176,6 +195,7 @@ export interface DebugData {
   bottles_detected: number;
   texts_matched: number;
   llm_calls_made: number;
+  pipeline_stats?: PipelineStats;
 }
 
 // MARK: - API Error Types

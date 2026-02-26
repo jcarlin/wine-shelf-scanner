@@ -165,10 +165,10 @@ def _to_wine_result(wine: RecognizedWine) -> WineResult:
         rating=wine.rating,
         confidence=wine.confidence,
         bbox=BoundingBox(
-            x=wine.bottle_text.bottle.bbox.x,
-            y=wine.bottle_text.bottle.bbox.y,
-            width=wine.bottle_text.bottle.bbox.width,
-            height=wine.bottle_text.bottle.bbox.height
+            x=max(0.0, min(1.0, wine.bottle_text.bottle.bbox.x)),
+            y=max(0.0, min(1.0, wine.bottle_text.bottle.bbox.y)),
+            width=max(0.0, min(1.0, wine.bottle_text.bottle.bbox.width)),
+            height=max(0.0, min(1.0, wine.bottle_text.bottle.bbox.height)),
         ),
         identified=wine.identified,
         source=wine.source,

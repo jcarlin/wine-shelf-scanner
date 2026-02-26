@@ -639,48 +639,63 @@ class FlashNamesPipeline:
         recognized: list[RecognizedWine] = []
         fallback = []
 
+        DEFAULT_BOTTLE_WIDTH = 0.08
+        DEFAULT_BOTTLE_HEIGHT = 0.25
+
         # Compute Vision bottle centers from bboxes
         bottle_centers = [bt.bottle.bbox.center for bt in bottle_texts]
 
-        # Build all (distance, llm_idx, bottle_idx) pairs
-        pairs = []
+        # Compute LLM wine centers for wines that have positions
+        llm_centers: dict[int, tuple[float, float]] = {}
         for li, wine in enumerate(llm_wines):
             lx, ly = wine.get('x'), wine.get('y')
             if lx is None or ly is None:
                 continue
-            # Compute center from top-left + dimensions if available
             lw, lh = wine.get('w'), wine.get('h')
             if lw is not None and lh is not None:
                 cx = lx + lw / 2
                 cy = ly + lh / 2
             else:
-                cx, cy = lx, ly
-            for bi, (bx, by) in enumerate(bottle_centers):
-                dist = math.sqrt((cx - bx) ** 2 + (cy - by) ** 2)
-                pairs.append((dist, li, bi))
+                cx = lx + DEFAULT_BOTTLE_WIDTH / 2
+                cy = ly + DEFAULT_BOTTLE_HEIGHT / 2
+            llm_centers[li] = (cx, cy)
 
-        # Greedy assignment: sort by distance, assign closest first
-        pairs.sort()
+        # Optimal assignment using Hungarian algorithm (globally optimal matching)
+        from scipy.optimize import linear_sum_assignment
+        import numpy as np
+
         used_bottles: set[int] = set()
         used_llm: set[int] = set()
         matched_pairs: list[tuple[int, int]] = []  # (llm_idx, bottle_idx)
 
-        for dist, li, bi in pairs:
-            if li in used_llm or bi in used_bottles:
-                continue
-            if dist > self.MAX_SPATIAL_DISTANCE:
-                break  # All remaining pairs are further away
-            used_llm.add(li)
-            used_bottles.add(bi)
-            matched_pairs.append((li, bi))
+        llm_indices = sorted(llm_centers.keys())
+        if llm_indices and bottle_centers:
+            # Build cost matrix: rows=LLM wines, cols=Vision bottles
+            cost_matrix = np.full((len(llm_indices), len(bottle_centers)), fill_value=1e6)
+            for ri, li in enumerate(llm_indices):
+                cx, cy = llm_centers[li]
+                for bi, (bx, by) in enumerate(bottle_centers):
+                    dist = math.sqrt((cx - bx) ** 2 + (cy - by) ** 2)
+                    cost_matrix[ri, bi] = dist
 
-            wine = llm_wines[li]
-            llm_name = wine['name']
-            bt = bottle_texts[bi]
+            row_ind, col_ind = linear_sum_assignment(cost_matrix)
 
-            rw = self._build_recognized_wine(llm_name, llm_ratings, db_results, bt, dist, llm_metadata or {})
-            recognized.append(rw)
-            logger.debug(f"FlashNames: Spatial match '{llm_name}' → bottle {bi} (dist={dist:.3f})")
+            for ri, bi in zip(row_ind, col_ind):
+                li = llm_indices[ri]
+                dist = cost_matrix[ri, bi]
+                if dist > self.MAX_SPATIAL_DISTANCE:
+                    continue  # Skip matches beyond threshold
+                used_llm.add(li)
+                used_bottles.add(bi)
+                matched_pairs.append((li, bi))
+
+                wine = llm_wines[li]
+                llm_name = wine['name']
+                bt = bottle_texts[bi]
+
+                rw = self._build_recognized_wine(llm_name, llm_ratings, db_results, bt, dist, llm_metadata or {})
+                recognized.append(rw)
+                logger.debug(f"FlashNames: Spatial match '{llm_name}' → bottle {bi} (dist={dist:.3f})")
 
         # Second-chance: try OCR text matching for spatially unmatched LLM wines
         spatial_matched = len(used_llm)
@@ -736,18 +751,32 @@ class FlashNamesPipeline:
                     cx = lx + lw / 2
                     cy = ly + lh / 2
                 else:
-                    cx, cy = lx, ly
+                    cx = lx + DEFAULT_BOTTLE_WIDTH / 2
+                    cy = ly + DEFAULT_BOTTLE_HEIGHT / 2
                 bx, by = bottle_centers[bi]
                 offsets_x.append(bx - cx)
                 offsets_y.append(by - cy)
 
-        cal_x = sum(offsets_x) / len(offsets_x) if offsets_x else 0.0
-        cal_y = sum(offsets_y) / len(offsets_y) if offsets_y else 0.0
-        # Reject extreme corrections (> 8% of image) as noise
-        if abs(cal_x) > MAX_CALIBRATION:
-            cal_x = 0.0
-        if abs(cal_y) > MAX_CALIBRATION:
-            cal_y = 0.0
+        cal_x, cal_y = 0.0, 0.0
+        MIN_CALIBRATION_PAIRS = 2
+        MAX_OFFSET_STDDEV = 0.06  # Skip calibration if offsets are inconsistent
+
+        if len(offsets_x) >= MIN_CALIBRATION_PAIRS:
+            mean_x = sum(offsets_x) / len(offsets_x)
+            mean_y = sum(offsets_y) / len(offsets_y)
+            # Check offset consistency via standard deviation
+            std_x = (sum((ox - mean_x) ** 2 for ox in offsets_x) / len(offsets_x)) ** 0.5
+            std_y = (sum((oy - mean_y) ** 2 for oy in offsets_y) / len(offsets_y)) ** 0.5
+
+            if std_x <= MAX_OFFSET_STDDEV and std_y <= MAX_OFFSET_STDDEV:
+                cal_x = mean_x if abs(mean_x) <= MAX_CALIBRATION else 0.0
+                cal_y = mean_y if abs(mean_y) <= MAX_CALIBRATION else 0.0
+            else:
+                logger.info(
+                    f"FlashNames: Skipping calibration — offset stddev too high "
+                    f"(sx={std_x:.3f}, sy={std_y:.3f}) from {len(offsets_x)} pairs"
+                )
+
         if cal_x != 0 or cal_y != 0:
             logger.info(
                 f"FlashNames: Position calibration dx={cal_x:.3f}, dy={cal_y:.3f} "
@@ -756,8 +785,6 @@ class FlashNamesPipeline:
 
         # Unmatched LLM wines: create synthetic bboxes from Gemini positions
         # (with calibration), or fall back to list if no position available.
-        DEFAULT_BOTTLE_WIDTH = 0.08
-        DEFAULT_BOTTLE_HEIGHT = 0.25
         synthetic_count = 0
 
         for li, wine in enumerate(llm_wines):
@@ -779,12 +806,16 @@ class FlashNamesPipeline:
                     center_x = lx + lw / 2 + cal_x
                     center_y = ly + lh / 2 + cal_y
                 else:
-                    center_x = lx + cal_x
-                    center_y = ly + cal_y
+                    center_x = lx + DEFAULT_BOTTLE_WIDTH / 2 + cal_x
+                    center_y = ly + DEFAULT_BOTTLE_HEIGHT / 2 + cal_y
+
+                # Clamp center so bbox stays within [0, 1]
+                center_x = max(bbox_w / 2, min(1.0 - bbox_w / 2, center_x))
+                center_y = max(bbox_h / 2, min(1.0 - bbox_h / 2, center_y))
 
                 synthetic_bbox = VisionBBox(
-                    x=max(0.0, center_x - bbox_w / 2),
-                    y=max(0.0, center_y - bbox_h / 2),
+                    x=center_x - bbox_w / 2,
+                    y=center_y - bbox_h / 2,
                     width=bbox_w,
                     height=bbox_h,
                 )
@@ -890,11 +921,16 @@ class FlashNamesPipeline:
                         center_x = lx + lw / 2
                         center_y = ly + lh / 2
                     else:
-                        center_x, center_y = lx, ly
+                        center_x = lx + DEFAULT_BOTTLE_WIDTH / 2
+                        center_y = ly + DEFAULT_BOTTLE_HEIGHT / 2
+
+                    # Clamp center so bbox stays within [0, 1]
+                    center_x = max(bbox_w / 2, min(1.0 - bbox_w / 2, center_x))
+                    center_y = max(bbox_h / 2, min(1.0 - bbox_h / 2, center_y))
 
                     synthetic_bbox = VisionBBox(
-                        x=max(0.0, center_x - bbox_w / 2),
-                        y=max(0.0, center_y - bbox_h / 2),
+                        x=center_x - bbox_w / 2,
+                        y=center_y - bbox_h / 2,
                         width=bbox_w,
                         height=bbox_h,
                     )

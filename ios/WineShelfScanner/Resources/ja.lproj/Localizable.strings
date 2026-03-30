@@ -55,6 +55,10 @@
 "processing.tip2" = "高評価のボトルにはゴールドのハイライト";
 "processing.tip3" = "2100万件の集約レビューに基づく";
 "processing.tip4" = "世界中の181,000本以上のワインをカバー";
+"processing.tip5" = "評価は主要なワインプラットフォームのスコアを統合";
+"processing.tip6" = "明るくきれいに撮影されたワイン棚の写真で最適に動作";
+"processing.tip7" = "信頼度スコアは各マッチングの確実性を表示";
+"processing.tip8" = "高評価のワインはすばやく選べるようハイライト表示";
 
 /* About */
 "about.title" = "ワイン棚スキャナー";
@@ -79,3 +83,19 @@
 "bugReport.thanksImprove" = "改善にご協力いただきありがとうございます！";
 "bugReport.done" = "完了";
 "bugReport.cancel" = "キャンセル";
+
+/* Server Warmup */
+"warmup.checking" = "サーバーに接続中...";
+"warmup.title" = "サーバーを起動中";
+"warmup.message" = "サーバーを起動しています。通常15〜30秒かかります。";
+"warmup.timeout" = "サーバーの起動に時間がかかりすぎています。後でもう一度お試しください。";
+"warmup.unavailableTitle" = "サーバー利用不可";
+"warmup.retry" = "再試行";
+"warmup.tip1" = "その日の最初の起動には少し時間がかかることがあります";
+"warmup.tip2" = "AIが181,000本以上のワインをメモリに読み込み中";
+"warmup.tip3" = "ワイン評価は2100万件のコミュニティレビューに基づいています";
+"warmup.tip4" = "各スキャンではGoogleのVision AIでラベルを読み取ります";
+"warmup.tip5" = "OCRテキストをワインデータベースと照合します";
+"warmup.tip6" = "複数のマッチングアルゴリズムで精度を確保";
+"warmup.tip7" = "結果には主要なワインプラットフォームの評価が含まれます";
+"warmup.tip8" = "サーバーは使用後約15分間アクティブな状態を維持します";

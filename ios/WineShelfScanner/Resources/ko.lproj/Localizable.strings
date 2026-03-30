@@ -55,6 +55,10 @@
 "processing.tip2" = "최고 평점 병에는 골드 하이라이트 표시";
 "processing.tip3" = "2,100만 통합 리뷰 기반";
 "processing.tip4" = "전 세계 181,000+종 와인 커버";
+"processing.tip5" = "평점은 주요 와인 플랫폼의 점수를 종합";
+"processing.tip6" = "밝고 선명한 와인 선반 사진에서 가장 잘 작동";
+"processing.tip7" = "신뢰도 점수는 각 매칭의 확실성을 표시";
+"processing.tip8" = "높은 평점의 와인은 빠른 선택을 위해 강조 표시";
 
 /* About */
 "about.title" = "와인 선반 스캐너";
@@ -79,3 +83,19 @@
 "bugReport.thanksImprove" = "개선에 도움을 주셔서 감사합니다!";
 "bugReport.done" = "완료";
 "bugReport.cancel" = "취소";
+
+/* Server Warmup */
+"warmup.checking" = "서버에 연결 중...";
+"warmup.title" = "서버 시작 중";
+"warmup.message" = "서버가 시작되고 있습니다. 보통 15~30초 정도 걸립니다.";
+"warmup.timeout" = "서버 시작이 너무 오래 걸리고 있습니다. 나중에 다시 시도해 주세요.";
+"warmup.unavailableTitle" = "서버 사용 불가";
+"warmup.retry" = "다시 시도";
+"warmup.tip1" = "하루 중 첫 실행은 잠시 시간이 걸릴 수 있습니다";
+"warmup.tip2" = "AI가 181,000종 이상의 와인을 메모리에 로딩 중";
+"warmup.tip3" = "와인 평점은 2,100만 커뮤니티 리뷰에서 제공됩니다";
+"warmup.tip4" = "각 스캔은 Google Vision AI로 라벨을 읽습니다";
+"warmup.tip5" = "OCR 텍스트를 와인 데이터베이스와 대조합니다";
+"warmup.tip6" = "여러 매칭 알고리즘으로 정확도를 보장";
+"warmup.tip7" = "결과에는 주요 와인 플랫폼의 평점이 포함됩니다";
+"warmup.tip8" = "서버는 사용 후 약 15분간 활성 상태를 유지합니다";

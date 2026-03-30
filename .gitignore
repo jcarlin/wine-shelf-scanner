@@ -55,6 +55,7 @@ raw-data/
 test-images/
 docs/*
 !docs/FEATURE_PLAN.md
+!docs/IOS_PARITY_AUDIT.md
 
 
 backend/app/data/wines.db

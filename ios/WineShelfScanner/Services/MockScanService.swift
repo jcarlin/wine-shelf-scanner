@@ -20,6 +20,15 @@ class MockScanService: ScanServiceProtocol {
         case fullFailure = "full_failure"  // Alias for UI tests
     }
 
+    func checkHealth() async -> ServerHealthStatus {
+        try? await Task.sleep(nanoseconds: UInt64(0.1 * 1_000_000_000))
+        return .healthy
+    }
+
+    func fetchWineReviews(wineId: Int, limit: Int = 5, textOnly: Bool = true) async -> WineReviewsResponse? {
+        return nil
+    }
+
     func scan(image: UIImage, debug: Bool = false, compressionQuality: CGFloat = 0.8) async throws -> ScanResponse {
         // Simulate network delay
         try await Task.sleep(nanoseconds: UInt64(simulatedDelay * 1_000_000_000))

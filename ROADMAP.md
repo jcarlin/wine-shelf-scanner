@@ -1,7 +1,13 @@
 # Wine Shelf Scanner - Project Roadmap
 
-**Last Updated:** January 31, 2026
+**Last Updated:** May 2, 2026
 **Single Source of Truth** for project status and next steps.
+
+---
+
+## Active Plans
+
+- 🔶 [Overlay Accuracy Plan](docs/OVERLAY_ACCURACY_PLAN.md) — fix the bug where rating overlays land on wrong bottles. Phase 0 (setup) in progress; blocking Phase 7 TestFlight ship.
 
 ---
 

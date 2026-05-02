@@ -853,3 +853,210 @@ class TestCarryForwardPhase1Ratings:
         # bbox1 is not covered by phase 2, but the name already exists — don't re-merge
         assert len(result) == 1
         assert result[0].wine_name == "Caymus Cabernet"
+
+
+class TestOCRAnchoredBbox:
+    """Test OCR-anchored bboxes for unmatched wines."""
+
+    def test_ocr_anchored_bbox_uses_text_position(self):
+        """Unmatched wine with matching OCR text gets label-sized bbox at OCR position."""
+        pipeline = _make_pipeline()
+
+        # One Vision bottle on the left; the right-side wine is unmatched
+        bottles = [
+            _make_bottle_text("b0", BoundingBox(0.05, 0.10, 0.10, 0.30), "CAYMUS"),
+        ]
+
+        llm_wines = [
+            {'name': 'Caymus Cabernet', 'rating': None, 'x': 0.10, 'y': 0.25},
+            {'name': 'Opus One 2019', 'rating': None, 'x': 0.70, 'y': 0.70},
+        ]
+        llm_ratings = {w['name']: 3.5 for w in llm_wines}
+        db_results = {w['name']: None for w in llm_wines}
+
+        # OCR text blocks: "OPUS" and "ONE" near bottom-right (matching the wine)
+        text_blocks = [
+            TextBlock("OPUS", BoundingBox(0.68, 0.72, 0.06, 0.03), 0.95),
+            TextBlock("ONE", BoundingBox(0.75, 0.72, 0.05, 0.03), 0.95),
+        ]
+
+        recognized, fallback = pipeline._spatial_merge(
+            llm_wines, llm_ratings, db_results, bottles, text_blocks=text_blocks
+        )
+
+        assert len(recognized) == 2
+        assert len(fallback) == 0
+
+        opus = next(r for r in recognized if r.wine_name == 'Opus One 2019')
+        bbox = opus.bottle_text.bottle.bbox
+
+        # OCR-anchored: y should be near 0.72 (the OCR text position), not 0.50+ from Gemini
+        assert bbox.y < 0.75  # close to OCR position
+        assert bbox.y > 0.60  # not way up at Gemini synthetic (0.70 - 0.125 = 0.575 without calibration)
+        # Height should be label-sized [0.04, 0.12], not 0.25
+        assert 0.04 <= bbox.height <= 0.12
+
+    def test_ocr_anchor_falls_back_to_gemini_when_no_match(self):
+        """No matching OCR text → existing Gemini synthetic bbox behavior."""
+        pipeline = _make_pipeline()
+
+        bottles = []  # No Vision bottles
+
+        llm_wines = [
+            {'name': 'Mysterious Wine', 'rating': None, 'x': 0.50, 'y': 0.50},
+        ]
+        llm_ratings = {'Mysterious Wine': 3.5}
+        db_results = {'Mysterious Wine': None}
+
+        # OCR text blocks with no relevant text
+        text_blocks = [
+            TextBlock("SALE", BoundingBox(0.10, 0.10, 0.05, 0.03), 0.90),
+            TextBlock("PRICE", BoundingBox(0.20, 0.10, 0.06, 0.03), 0.90),
+        ]
+
+        recognized, fallback = pipeline._spatial_merge(
+            llm_wines, llm_ratings, db_results, bottles, text_blocks=text_blocks
+        )
+
+        assert len(recognized) == 1
+        bbox = recognized[0].bottle_text.bottle.bbox
+        # Should be Gemini synthetic: DEFAULT_BOTTLE_HEIGHT = 0.25
+        assert abs(bbox.height - 0.25) < 0.001
+
+    def test_ocr_anchor_proximity_filter(self):
+        """Same text at two locations — picks the one near Gemini position."""
+        pipeline = _make_pipeline()
+
+        bottles = []
+
+        llm_wines = [
+            {'name': 'Caymus Cabernet', 'rating': None, 'x': 0.70, 'y': 0.70},
+        ]
+        llm_ratings = {'Caymus Cabernet': 3.5}
+        db_results = {'Caymus Cabernet': None}
+
+        # "CAYMUS" appears twice: far away (top-left) and near Gemini pos (bottom-right)
+        text_blocks = [
+            TextBlock("CAYMUS", BoundingBox(0.05, 0.05, 0.08, 0.03), 0.95),  # far
+            TextBlock("CAYMUS", BoundingBox(0.68, 0.72, 0.08, 0.03), 0.95),  # near
+        ]
+
+        recognized, fallback = pipeline._spatial_merge(
+            llm_wines, llm_ratings, db_results, bottles, text_blocks=text_blocks
+        )
+
+        assert len(recognized) == 1
+        bbox = recognized[0].bottle_text.bottle.bbox
+        # Should pick the near text block (y ~0.72), not the far one (y ~0.05)
+        assert bbox.y > 0.60
+        assert bbox.height <= 0.12  # label-sized
+
+    def test_ocr_anchor_label_sized_not_bottle_sized(self):
+        """OCR-anchored bbox height is in [0.04, 0.12], not 0.25."""
+        pipeline = _make_pipeline()
+
+        bottles = []
+
+        llm_wines = [
+            {'name': 'Silver Oak Alexander Valley', 'rating': None, 'x': 0.50, 'y': 0.50},
+        ]
+        llm_ratings = {'Silver Oak Alexander Valley': 4.2}
+        db_results = {'Silver Oak Alexander Valley': None}
+
+        # Multiple text blocks forming a tall cluster
+        text_blocks = [
+            TextBlock("SILVER", BoundingBox(0.48, 0.48, 0.08, 0.03), 0.95),
+            TextBlock("OAK", BoundingBox(0.48, 0.52, 0.06, 0.03), 0.95),
+            TextBlock("ALEXANDER", BoundingBox(0.48, 0.56, 0.10, 0.03), 0.95),
+            TextBlock("VALLEY", BoundingBox(0.48, 0.60, 0.08, 0.03), 0.95),
+        ]
+
+        recognized, fallback = pipeline._spatial_merge(
+            llm_wines, llm_ratings, db_results, bottles, text_blocks=text_blocks
+        )
+
+        assert len(recognized) == 1
+        bbox = recognized[0].bottle_text.bottle.bbox
+        # Height clamped to MAX_LABEL_HEIGHT = 0.12
+        assert bbox.height <= 0.12
+        assert bbox.height >= 0.04
+
+    def test_ocr_anchor_ignores_nondistinctive_tokens(self):
+        """'cabernet' text block from adjacent bottle is NOT included in hull even if within proximity."""
+        pipeline = _make_pipeline()
+
+        bottles = []
+
+        llm_wines = [
+            {'name': 'Rutherford Ranch Cabernet Sauvignon', 'rating': None, 'x': 0.70, 'y': 0.30},
+        ]
+        llm_ratings = {'Rutherford Ranch Cabernet Sauvignon': 3.8}
+        db_results = {'Rutherford Ranch Cabernet Sauvignon': None}
+
+        # "RUTHERFORD" near Gemini position (distinctive), "CABERNET" from adjacent bottle (not distinctive)
+        # Gemini center (default w/h): (0.70+0.04, 0.30+0.125) = (0.74, 0.425)
+        text_blocks = [
+            TextBlock("RUTHERFORD", BoundingBox(0.72, 0.40, 0.10, 0.03), 0.95),  # near, distinctive
+            TextBlock("CABERNET", BoundingBox(0.66, 0.40, 0.08, 0.03), 0.95),    # near, but not distinctive
+        ]
+
+        recognized, fallback = pipeline._spatial_merge(
+            llm_wines, llm_ratings, db_results, bottles, text_blocks=text_blocks
+        )
+
+        assert len(recognized) == 1
+        bbox = recognized[0].bottle_text.bottle.bbox
+        # Hull should be based on "RUTHERFORD" only (x=0.72), not pulled left by "CABERNET" (x=0.66)
+        assert bbox.x >= 0.70  # RUTHERFORD starts at 0.72, minus 0.02 padding = 0.70
+
+    def test_ocr_anchor_uses_gemini_center_not_topleft(self):
+        """Text block slightly right of top-left but near center still matches."""
+        pipeline = _make_pipeline()
+
+        bottles = []
+
+        # Gemini top-left at (0.30, 0.20), default w/h → center = (0.34, 0.325)
+        llm_wines = [
+            {'name': 'Silver Oak', 'rating': None, 'x': 0.30, 'y': 0.20},
+        ]
+        llm_ratings = {'Silver Oak': 4.2}
+        db_results = {'Silver Oak': None}
+
+        # Text block center at (0.38, 0.33) — 0.04 right and 0.005 below center
+        # Distance from center (0.34, 0.325): sqrt(0.04^2 + 0.005^2) ≈ 0.040 — well within 0.10
+        # But distance from top-left (0.30, 0.20): sqrt(0.08^2 + 0.13^2) ≈ 0.153 — would FAIL at old 0.15
+        text_blocks = [
+            TextBlock("SILVER", BoundingBox(0.34, 0.315, 0.08, 0.03), 0.95),
+            TextBlock("OAK", BoundingBox(0.34, 0.35, 0.06, 0.03), 0.95),
+        ]
+
+        recognized, fallback = pipeline._spatial_merge(
+            llm_wines, llm_ratings, db_results, bottles, text_blocks=text_blocks
+        )
+
+        assert len(recognized) == 1
+        bbox = recognized[0].bottle_text.bottle.bbox
+        # Should be OCR-anchored (label-sized), not Gemini synthetic (0.25 height)
+        assert bbox.height <= 0.12
+
+    def test_no_text_blocks_is_noop(self):
+        """text_blocks=None → identical to current Gemini synthetic behavior."""
+        pipeline = _make_pipeline()
+
+        bottles = []
+
+        llm_wines = [
+            {'name': 'Opus One 2019', 'rating': None, 'x': 0.50, 'y': 0.50},
+        ]
+        llm_ratings = {'Opus One 2019': 3.5}
+        db_results = {'Opus One 2019': None}
+
+        # No text_blocks
+        recognized, fallback = pipeline._spatial_merge(
+            llm_wines, llm_ratings, db_results, bottles, text_blocks=None
+        )
+
+        assert len(recognized) == 1
+        bbox = recognized[0].bottle_text.bottle.bbox
+        # Gemini synthetic: height = 0.25
+        assert abs(bbox.height - 0.25) < 0.001

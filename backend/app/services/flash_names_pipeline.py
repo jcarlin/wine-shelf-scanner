@@ -17,6 +17,7 @@ import io
 import json
 import logging
 import math
+import re
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
@@ -592,6 +593,8 @@ class FlashNamesPipeline:
 
     # Maximum Euclidean distance (in 0-1 space) for spatial matching
     MAX_SPATIAL_DISTANCE = 0.25
+    # Weight for OCR text similarity bonus in spatial merge cost matrix
+    OCR_SPATIAL_WEIGHT = 0.15
 
     def _merge_with_vision(
         self,
@@ -622,10 +625,126 @@ class FlashNamesPipeline:
         has_positions = any(w.get('x') is not None and w.get('y') is not None for w in llm_wines)
 
         if has_positions:
-            return self._spatial_merge(llm_wines, llm_ratings, db_results, bottle_texts, llm_metadata)
+            return self._spatial_merge(llm_wines, llm_ratings, db_results, bottle_texts, llm_metadata, text_blocks=vision_result.text_blocks)
         else:
             logger.info("FlashNames: No positions from Gemini, falling back to OCR text matching")
-            return self._ocr_text_merge(llm_wines, llm_ratings, db_results, bottle_texts, llm_metadata)
+            return self._ocr_text_merge(llm_wines, llm_ratings, db_results, bottle_texts, llm_metadata, text_blocks=vision_result.text_blocks)
+
+    @staticmethod
+    def _find_ocr_label_bbox(
+        wine_name: str,
+        text_blocks: list,
+        gemini_x: Optional[float],
+        gemini_y: Optional[float],
+        used_text_indices: set,
+        gemini_w: Optional[float] = None,
+        gemini_h: Optional[float] = None,
+    ) -> Optional[VisionBBox]:
+        """Find OCR text blocks matching a wine name and return a label-sized bbox.
+
+        Uses Vision API text block positions (pixel-accurate) instead of Gemini's
+        rough position estimates to anchor overlays precisely at the label text.
+        """
+        YEAR_PATTERN = re.compile(r'^(19|20)\d{2}$')
+        FILLER_WORDS = {
+            'wine', 'wines', 'the', 'and', 'de', 'di', 'del', 'la', 'le',
+            'les', 'von', 'van', 'estate', 'vineyards', 'winery', 'cellars',
+            'reserve', 'reserva', 'collection', 'cuvee', 'cuvée',
+        }
+
+        # Tokenize wine name into significant words
+        raw_tokens = wine_name.lower().split()
+        tokens = []
+        for t in raw_tokens:
+            t = re.sub(r'[^\w]', '', t)
+            if len(t) < 3:
+                continue
+            if YEAR_PATTERN.match(t):
+                continue
+            if t in FILLER_WORDS:
+                continue
+            tokens.append(t)
+        if not tokens:
+            return None
+
+        # Distinctive tokens = first 1-2 words (brand name)
+        distinctive_tokens = set(tokens[:2])
+
+        PROXIMITY_RADIUS = 0.10
+
+        # Compute Gemini bbox center (not top-left) for proximity comparison
+        DEFAULT_W, DEFAULT_H = 0.08, 0.25
+        gw = gemini_w if gemini_w is not None else DEFAULT_W
+        gh = gemini_h if gemini_h is not None else DEFAULT_H
+
+        # Score each text block
+        candidate_blocks = []  # (text_block_idx, match_count, has_distinctive)
+        for tb_idx, tb in enumerate(text_blocks):
+            if tb_idx in used_text_indices:
+                continue
+
+            # Proximity filter: if Gemini position available, skip distant blocks
+            if gemini_x is not None and gemini_y is not None:
+                gcx = gemini_x + gw / 2
+                gcy = gemini_y + gh / 2
+                tb_cx = tb.bbox.x + tb.bbox.width / 2
+                tb_cy = tb.bbox.y + tb.bbox.height / 2
+                dist = math.sqrt((tb_cx - gcx) ** 2 + (tb_cy - gcy) ** 2)
+                if dist > PROXIMITY_RADIUS:
+                    continue
+
+            tb_text = tb.text.lower()
+            matched = 0
+            has_distinctive = False
+            for token in tokens:
+                if token in tb_text:
+                    matched += 1
+                    if token in distinctive_tokens:
+                        has_distinctive = True
+
+            if matched > 0:
+                candidate_blocks.append((tb_idx, matched, has_distinctive))
+
+        # Require at least 1 distinctive token match
+        if not any(has_dist for _, _, has_dist in candidate_blocks):
+            return None
+
+        matched_indices = [idx for idx, score, has_dist in candidate_blocks if has_dist]
+        if not matched_indices:
+            return None
+
+        # Compute bounding hull of matched text blocks + padding
+        min_x = min(text_blocks[i].bbox.x for i in matched_indices)
+        min_y = min(text_blocks[i].bbox.y for i in matched_indices)
+        max_x = max(text_blocks[i].bbox.x + text_blocks[i].bbox.width for i in matched_indices)
+        max_y = max(text_blocks[i].bbox.y + text_blocks[i].bbox.height for i in matched_indices)
+
+        PADDING = 0.02
+        min_x = max(0.0, min_x - PADDING)
+        min_y = max(0.0, min_y - PADDING)
+        max_x = min(1.0, max_x + PADDING)
+        max_y = min(1.0, max_y + PADDING)
+
+        width = max_x - min_x
+        height = max_y - min_y
+
+        # Clamp height to label-sized [0.04, 0.12]
+        MIN_LABEL_HEIGHT = 0.04
+        MAX_LABEL_HEIGHT = 0.12
+        if height < MIN_LABEL_HEIGHT:
+            center_y = (min_y + max_y) / 2
+            height = MIN_LABEL_HEIGHT
+            min_y = max(0.0, center_y - height / 2)
+        elif height > MAX_LABEL_HEIGHT:
+            center_y = (min_y + max_y) / 2
+            height = MAX_LABEL_HEIGHT
+            min_y = max(0.0, center_y - height / 2)
+
+        # Mark text blocks as used
+        for idx in matched_indices:
+            used_text_indices.add(idx)
+
+        return VisionBBox(x=min_x, y=min_y, width=width, height=height)
 
     def _spatial_merge(
         self,
@@ -634,6 +753,7 @@ class FlashNamesPipeline:
         db_results: dict,
         bottle_texts: list[BottleText],
         llm_metadata: Optional[dict] = None,
+        text_blocks: Optional[list] = None,
     ) -> tuple[list[RecognizedWine], list]:
         """Match LLM wines to Vision bottles by spatial nearest-neighbor."""
         recognized: list[RecognizedWine] = []
@@ -668,22 +788,47 @@ class FlashNamesPipeline:
         used_llm: set[int] = set()
         matched_pairs: list[tuple[int, int]] = []  # (llm_idx, bottle_idx)
 
+        from rapidfuzz import fuzz as _fuzz
+
         llm_indices = sorted(llm_centers.keys())
         if llm_indices and bottle_centers:
             # Build cost matrix: rows=LLM wines, cols=Vision bottles
+            # Blends spatial distance with OCR text dissimilarity so that
+            # text evidence can correct noisy Gemini position estimates.
             cost_matrix = np.full((len(llm_indices), len(bottle_centers)), fill_value=1e6)
+            ocr_sim_matrix: dict[tuple[int, int], float] = {}
             for ri, li in enumerate(llm_indices):
                 cx, cy = llm_centers[li]
+                llm_name_lower = llm_wines[li]['name'].lower()
                 for bi, (bx, by) in enumerate(bottle_centers):
                     dist = math.sqrt((cx - bx) ** 2 + (cy - by) ** 2)
-                    cost_matrix[ri, bi] = dist
+
+                    # OCR similarity bonus: reduce cost when bottle OCR
+                    # text matches the LLM wine name
+                    ocr_bonus = 0.0
+                    ocr_sim = 0.0
+                    ocr_text = (bottle_texts[bi].combined_text or "").lower()
+                    if ocr_text and llm_name_lower:
+                        token_score = _fuzz.token_sort_ratio(llm_name_lower, ocr_text) / 100.0
+                        partial_score = _fuzz.partial_ratio(llm_name_lower, ocr_text) / 100.0
+                        ocr_sim = max(token_score, partial_score * 0.9)
+                        # Strong OCR match reduces cost; weak/no match increases it
+                        ocr_bonus = (ocr_sim - 0.4) * self.OCR_SPATIAL_WEIGHT
+
+                    ocr_sim_matrix[(ri, bi)] = ocr_sim
+                    cost_matrix[ri, bi] = dist - ocr_bonus
 
             row_ind, col_ind = linear_sum_assignment(cost_matrix)
 
             for ri, bi in zip(row_ind, col_ind):
                 li = llm_indices[ri]
-                dist = cost_matrix[ri, bi]
-                if dist > self.MAX_SPATIAL_DISTANCE:
+                cost = cost_matrix[ri, bi]
+                ocr_sim = ocr_sim_matrix.get((ri, bi), 0.0)
+                # Use raw spatial distance for threshold check (not OCR-adjusted cost)
+                cx, cy = llm_centers[li]
+                bx, by = bottle_centers[bi]
+                raw_dist = math.sqrt((cx - bx) ** 2 + (cy - by) ** 2)
+                if raw_dist > self.MAX_SPATIAL_DISTANCE:
                     continue  # Skip matches beyond threshold
                 used_llm.add(li)
                 used_bottles.add(bi)
@@ -693,13 +838,15 @@ class FlashNamesPipeline:
                 llm_name = wine['name']
                 bt = bottle_texts[bi]
 
-                rw = self._build_recognized_wine(llm_name, llm_ratings, db_results, bt, dist, llm_metadata or {})
+                rw = self._build_recognized_wine(llm_name, llm_ratings, db_results, bt, raw_dist, llm_metadata or {})
                 recognized.append(rw)
-                logger.debug(f"FlashNames: Spatial match '{llm_name}' → bottle {bi} (dist={dist:.3f})")
+                logger.info(
+                    f"FlashNames: Match '{llm_name}' → bottle {bi} "
+                    f"(dist={raw_dist:.3f}, ocr_sim={ocr_sim:.2f}, cost={cost:.3f})"
+                )
 
         # Second-chance: try OCR text matching for spatially unmatched LLM wines
         spatial_matched = len(used_llm)
-        from rapidfuzz import fuzz
         OCR_MATCH_THRESHOLD = 0.55
         for li, wine in enumerate(llm_wines):
             if li in used_llm:
@@ -714,8 +861,8 @@ class FlashNamesPipeline:
                 ocr_text = (bt.combined_text or "").lower()
                 if not ocr_text:
                     continue
-                score = fuzz.token_sort_ratio(llm_name_lower, ocr_text) / 100.0
-                partial = fuzz.partial_ratio(llm_name_lower, ocr_text) / 100.0
+                score = _fuzz.token_sort_ratio(llm_name_lower, ocr_text) / 100.0
+                partial = _fuzz.partial_ratio(llm_name_lower, ocr_text) / 100.0
                 combined = max(score, partial * 0.9)
                 if combined > best_score:
                     best_score = combined
@@ -783,9 +930,11 @@ class FlashNamesPipeline:
                 f"from {len(offsets_x)} pairs"
             )
 
-        # Unmatched LLM wines: create synthetic bboxes from Gemini positions
-        # (with calibration), or fall back to list if no position available.
+        # Unmatched LLM wines: try OCR-anchored bbox first, then Gemini synthetic,
+        # or fall back to list if no position available.
         synthetic_count = 0
+        ocr_anchored_count = 0
+        used_text_indices: set[int] = set()
 
         for li, wine in enumerate(llm_wines):
             if li in used_llm:
@@ -793,8 +942,34 @@ class FlashNamesPipeline:
             llm_name = wine['name']
             lx, ly = wine.get('x'), wine.get('y')
 
-            if lx is not None and ly is not None:
-                # Use Gemini-provided dimensions if available, else defaults
+            # 1. Try OCR-anchored bbox (pixel-accurate from Vision API text blocks)
+            ocr_bbox = None
+            if text_blocks:
+                ocr_bbox = self._find_ocr_label_bbox(
+                    llm_name, text_blocks, lx, ly, used_text_indices,
+                    gemini_w=wine.get('w'), gemini_h=wine.get('h'),
+                )
+            if ocr_bbox is not None:
+                # OCR positions are already accurate — no calibration needed
+                synthetic_obj = DetectedObject(name="Bottle", confidence=0.70, bbox=ocr_bbox)
+                synthetic_bt = BottleText(
+                    bottle=synthetic_obj,
+                    text_fragments=[],
+                    combined_text="",
+                    normalized_name="",
+                )
+                rw = self._build_recognized_wine(
+                    llm_name, llm_ratings, db_results, synthetic_bt, 0.0, llm_metadata or {}
+                )
+                rw.confidence = min(rw.confidence, 0.70)
+                recognized.append(rw)
+                ocr_anchored_count += 1
+                logger.debug(
+                    f"FlashNames: OCR-anchored bbox for '{llm_name}' at "
+                    f"({ocr_bbox.x:.2f}, {ocr_bbox.y:.2f}) size=({ocr_bbox.width:.2f}x{ocr_bbox.height:.2f})"
+                )
+            elif lx is not None and ly is not None:
+                # 2. Gemini synthetic bbox (with calibration)
                 lw = wine.get('w')
                 lh = wine.get('h')
                 has_gemini_bbox = lw is not None and lh is not None
@@ -852,7 +1027,8 @@ class FlashNamesPipeline:
                     fallback.append({'wine_name': wine_name, 'rating': rating})
 
         logger.info(
-            f"FlashNames: Final: {len(recognized)} recognized ({synthetic_count} synthetic), "
+            f"FlashNames: Final: {len(recognized)} recognized "
+            f"({ocr_anchored_count} OCR-anchored, {synthetic_count} Gemini-synthetic), "
             f"{len(fallback)} fallback"
         )
 
@@ -868,6 +1044,7 @@ class FlashNamesPipeline:
         db_results: dict,
         bottle_texts: list[BottleText],
         llm_metadata: Optional[dict] = None,
+        text_blocks: Optional[list] = None,
     ) -> tuple[list[RecognizedWine], list]:
         """Fallback: match LLM names to Vision bottles by OCR text similarity."""
         from rapidfuzz import fuzz
@@ -875,6 +1052,7 @@ class FlashNamesPipeline:
         recognized: list[RecognizedWine] = []
         fallback = []
         used_bottles: set[int] = set()
+        used_text_indices: set[int] = set()
 
         OCR_MATCH_THRESHOLD = 0.55  # Raised from 0.40
 
@@ -905,12 +1083,31 @@ class FlashNamesPipeline:
                 rw = self._build_recognized_wine(llm_name, llm_ratings, db_results, bt, best_score, llm_metadata or {})
                 recognized.append(rw)
             else:
-                # Try synthetic bbox from Gemini position
+                # Try OCR-anchored bbox first, then Gemini synthetic
                 DEFAULT_BOTTLE_WIDTH = 0.08
                 DEFAULT_BOTTLE_HEIGHT = 0.25
                 lx, ly = wine.get('x'), wine.get('y')
 
-                if lx is not None and ly is not None:
+                ocr_bbox = None
+                if text_blocks:
+                    ocr_bbox = self._find_ocr_label_bbox(
+                        llm_name, text_blocks, lx, ly, used_text_indices,
+                        gemini_w=wine.get('w'), gemini_h=wine.get('h'),
+                    )
+                if ocr_bbox is not None:
+                    synthetic_obj = DetectedObject(name="Bottle", confidence=0.70, bbox=ocr_bbox)
+                    synthetic_bt = BottleText(
+                        bottle=synthetic_obj,
+                        text_fragments=[],
+                        combined_text="",
+                        normalized_name="",
+                    )
+                    rw = self._build_recognized_wine(
+                        llm_name, llm_ratings, db_results, synthetic_bt, 0.0, llm_metadata or {}
+                    )
+                    rw.confidence = min(rw.confidence, 0.70)
+                    recognized.append(rw)
+                elif lx is not None and ly is not None:
                     lw = wine.get('w')
                     lh = wine.get('h')
                     has_gemini_bbox = lw is not None and lh is not None

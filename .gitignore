@@ -55,11 +55,14 @@ raw-data/
 test-images/
 docs/*
 !docs/FEATURE_PLAN.md
+!docs/OVERLAY_ACCURACY_PLAN.md
 
 
 backend/app/data/wines.db
 backend/app/data/wines.db-*
 backend/app/data/wines.db.backup
+backend/out/
+.playwright-mcp/
 
 expo
 .DS_Store

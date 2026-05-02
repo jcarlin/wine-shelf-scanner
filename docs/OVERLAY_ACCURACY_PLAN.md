@@ -134,8 +134,33 @@ Interactive CLI:
 4. Supports `skip` (Vision missed it — type raw bbox), `multi` (same wine, multiple bottles), `done`.
 
 Annotation budget: **15 images, ~3 min each = ~45 min total**.
-- **Iteration set (10 images):** worst-offender images — `IMG_8334.HEIC`, `IMG_8335.HEIC`, `IMG_8262.HEIC`, plus 7 corpus shelves.
+- **Iteration set (10 images):** worst-offender images plus other candidates from `test-images/` and `test-images/corpus/shelves/`.
 - **Held-out test set (5 images):** never inspected during Phase 3 iteration. Used only at end of Phase 3 to confirm gains generalize.
+
+**Locked image choices (committed 2026-05-02 before any visual inspection):**
+
+Held-out (5) — **DO NOT inspect during Phase 3**:
+1. `test-images/IMG_8121.HEIC`
+2. `test-images/IMG_8125.HEIC`
+3. `test-images/wine-photos.jpg`
+4. `test-images/corpus/shelves/download (3).jpeg`
+5. `test-images/corpus/shelves/red-wine-shelf-in-a-supermarket-B7WY9Y.jpg`
+
+Iteration (10) — used to drive Phase 3 fix:
+1. `test-images/IMG_8080.jpg`
+2. `test-images/IMG_8122.HEIC`
+3. `test-images/IMG_8123.HEIC`
+4. `test-images/IMG_8124.HEIC`
+5. `test-images/IMG_8262.HEIC` (worst-offender)
+6. `test-images/IMG_8334.HEIC` (worst-offender)
+7. `test-images/IMG_8335.HEIC` (worst-offender)
+8. `test-images/wine1.jpeg`
+9. `test-images/corpus/shelves/bottles-of-wine-on-shelves-in-a-specialist-wine-shop-D3A7JC.jpg`
+10. `test-images/corpus/shelves/wine-bottles-display-om-wine-shelf-grocery-store-capital-copenhagen-denmark-december-various-wine-bottles-display-sale-236104890.jpg`
+
+Excluded: `IMG_8262_preview.jpg` (same content as `IMG_8262.HEIC`), `corpus/shelves/images (2).jpeg` (buffer for new user-added images), `wine1_original.avif` (format not supported by `_load_image`).
+
+If the user adds more images to `test-images/corpus/shelves/`, prefer to slot them into the iteration set (the held-out set is locked).
 
 ### 1.3 Metrics module — `backend/tests/accuracy/overlay_metrics.py`
 

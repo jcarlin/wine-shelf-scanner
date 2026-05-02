@@ -52,7 +52,10 @@ build/
 
 # Large data directories
 raw-data/
-test-images/
+test-images/*
+!test-images/corpus/
+test-images/corpus/*
+!test-images/corpus/ground_truth/
 docs/*
 !docs/FEATURE_PLAN.md
 !docs/OVERLAY_ACCURACY_PLAN.md
@@ -61,7 +64,9 @@ docs/*
 backend/app/data/wines.db
 backend/app/data/wines.db-*
 backend/app/data/wines.db.backup
-backend/out/
+backend/out/*
+!backend/out/baseline.json
+!backend/out/mappings/
 .playwright-mcp/
 
 expo

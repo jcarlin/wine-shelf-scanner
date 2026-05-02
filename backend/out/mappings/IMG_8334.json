@@ -1,0 +1,13 @@
+{
+  "image_file": "IMG_8334.HEIC",
+  "notes": "Top-row wines + V5 from second row. Each V's OCR text supports the assignment. V0 OCR begins with 'SHIRAZ COLLECTION' (likely shelf-strip bleed from row above); the substantive label tokens for V0 are 'CABERNET SAUVIGNON 2023 PARISOT'. Several pipeline assignments crossed neighboring bottles (the bug we are measuring).",
+  "targets": [
+    {"wine_name": "Marie-Lou Parisot Cabernet Sauvignon 2023", "v_idx": 0, "distinctive_tokens": ["parisot", "cabernet", "2023"]},
+    {"wine_name": "Marie-Lou Parisot Cotes du Rhone", "v_idx": 1, "distinctive_tokens": ["parisot", "cotes", "rhone"]},
+    {"wine_name": "Artis Beefsteak Cabernet Sauvignon", "v_idx": 2, "distinctive_tokens": ["artis", "beefsteak"]},
+    {"wine_name": "Predator Cabernet Sauvignon Lodi", "v_idx": 3, "distinctive_tokens": ["predator", "cabernet"]},
+    {"wine_name": "Arrogant Frog Pinot Noir", "v_idx": 4, "distinctive_tokens": ["arrogant", "frog"]},
+    {"wine_name": "Talamonti", "v_idx": 5, "distinctive_tokens": ["talamonti"]},
+    {"wine_name": "Louis Latour Bourgogne Pinot Noir", "v_idx": 6, "distinctive_tokens": ["latour", "bourgogne"]}
+  ]
+}

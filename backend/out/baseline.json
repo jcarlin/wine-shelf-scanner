@@ -1,0 +1,2935 @@
+{
+  "aggregate": {
+    "total_targets": 64,
+    "correct": 29,
+    "swap": 6,
+    "miss": 29,
+    "assignment_accuracy": 0.453125,
+    "swap_rate": 0.09375,
+    "miss_rate": 0.453125,
+    "mean_iou": 0.946946711014898,
+    "source_counts": {
+      "recognized": 153
+    }
+  },
+  "per_image": [
+    {
+      "image_id": "IMG_8080.jpg",
+      "total_targets": 6,
+      "correct": 4,
+      "swap": 0,
+      "miss": 2,
+      "assignment_accuracy": 0.6666666666666666,
+      "swap_rate": 0.0,
+      "miss_rate": 0.3333333333333333,
+      "mean_iou": 1.0,
+      "source_counts": {
+        "recognized": 13
+      },
+      "pipeline_info": {
+        "elapsed_ms": 19105,
+        "vision_bottles": 6,
+        "llm_wines": 13,
+        "fallback_count": 0,
+        "recognized_count": 13
+      },
+      "outcomes": [
+        {
+          "target_wine_name": "Giacondi Sangiovese Rubicone",
+          "target_bbox": {
+            "x": 0.5625,
+            "y": 0.068359375,
+            "w": 0.1015625,
+            "h": 0.486328125
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Pedras Negras Sobre Monte",
+          "target_bbox": {
+            "x": 0.21875,
+            "y": 0.07080078125,
+            "w": 0.103515625,
+            "h": 0.54638671875
+          },
+          "classification": "correct",
+          "iou": 1.0,
+          "matched_prediction": {
+            "wine_name": "Sobre Monte",
+            "bbox": {
+              "x": 0.21875,
+              "y": 0.07080078125,
+              "w": 0.103515625,
+              "h": 0.54638671875
+            },
+            "anchor": [
+              0.2705078125,
+              0.2073974609375
+            ],
+            "confidence": 0.65,
+            "source": "recognized"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Dardinen Vina Cruz",
+          "target_bbox": {
+            "x": 0.671875,
+            "y": 0.068359375,
+            "w": 0.1015625,
+            "h": 0.513671875
+          },
+          "classification": "correct",
+          "iou": 1.0,
+          "matched_prediction": {
+            "wine_name": "La Cruz",
+            "bbox": {
+              "x": 0.671875,
+              "y": 0.068359375,
+              "w": 0.1015625,
+              "h": 0.513671875
+            },
+            "anchor": [
+              0.72265625,
+              0.19677734375
+            ],
+            "confidence": 0.801923076923077,
+            "source": "recognized"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Cloud Break Zinfandel California",
+          "target_bbox": {
+            "x": 0.83984375,
+            "y": 0.318359375,
+            "w": 0.1015625,
+            "h": 0.611328125
+          },
+          "classification": "correct",
+          "iou": 1.0,
+          "matched_prediction": {
+            "wine_name": "MC2 2006 Zinfandel (California)",
+            "bbox": {
+              "x": 0.83984375,
+              "y": 0.318359375,
+              "w": 0.1015625,
+              "h": 0.611328125
+            },
+            "anchor": [
+              0.890625,
+              0.47119140625
+            ],
+            "confidence": 0.7454822954822955,
+            "source": "recognized"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Corte Balda Rosso Puglia",
+          "target_bbox": {
+            "x": 0.38671875,
+            "y": 0.310546875,
+            "w": 0.107421875,
+            "h": 0.619140625
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Escondida",
+          "target_bbox": {
+            "x": 0.33203125,
+            "y": 0.0693359375,
+            "w": 0.09765625,
+            "h": 0.4892578125
+          },
+          "classification": "correct",
+          "iou": 1.0,
+          "matched_prediction": {
+            "wine_name": "La Vi\u00f1a Escondida",
+            "bbox": {
+              "x": 0.33203125,
+              "y": 0.0693359375,
+              "w": 0.09765625,
+              "h": 0.4892578125
+            },
+            "anchor": [
+              0.380859375,
+              0.191650390625
+            ],
+            "confidence": 0.7846153846153847,
+            "source": "recognized"
+          },
+          "swap_target": null
+        }
+      ],
+      "unmatched_predictions": [
+        {
+          "wine_name": "Dardinen",
+          "bbox": {
+            "x": 0.38671875,
+            "y": 0.310546875,
+            "w": 0.107421875,
+            "h": 0.619140625
+          },
+          "confidence": 0.85,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Do Mo",
+          "bbox": {
+            "x": 0.5625,
+            "y": 0.068359375,
+            "w": 0.1015625,
+            "h": 0.486328125
+          },
+          "confidence": 0.65,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Marchigue Mahuida Syrah",
+          "bbox": {
+            "x": 0.02892205638474295,
+            "y": 0.569711417816813,
+            "w": 0.1295522388059701,
+            "h": 0.06258469259723964
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Pedras Negras",
+          "bbox": {
+            "x": 0.10603648424543947,
+            "y": 0.44800501882057714,
+            "w": 0.09638474295190712,
+            "h": 0.06885821831869515
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Sangiovese Rubicone",
+          "bbox": {
+            "x": 0.1524709784411277,
+            "y": 0.5930740276035131,
+            "w": 0.11379767827529022,
+            "h": 0.12
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "DARDINES VI\u00d1A CRUZ TEMPRANILLO",
+          "bbox": {
+            "x": 0.2809950248756219,
+            "y": 0.6010790464240903,
+            "w": 0.0914096185737977,
+            "h": 0.055056461731493145
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Corte Balda Rosso",
+          "bbox": {
+            "x": 0.5040464344941956,
+            "y": 0.6299372647427854,
+            "w": 0.1063349917081261,
+            "h": 0.05631116687578419
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Brave Step Cabernet Sauvignon",
+          "bbox": {
+            "x": 0.6275953565505804,
+            "y": 0.6801254705144291,
+            "w": 0.06653399668325044,
+            "h": 0.05003764115432874
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "PEDRAS NEGRAS TINTO",
+          "bbox": {
+            "x": 0.62,
+            "y": 0.39999999999999997,
+            "w": 0.08,
+            "h": 0.58
+          },
+          "confidence": 0.8,
+          "source": "recognized"
+        }
+      ]
+    },
+    {
+      "image_id": "IMG_8121.HEIC",
+      "total_targets": 8,
+      "correct": 3,
+      "swap": 2,
+      "miss": 3,
+      "assignment_accuracy": 0.375,
+      "swap_rate": 0.25,
+      "miss_rate": 0.375,
+      "mean_iou": 1.0,
+      "source_counts": {
+        "recognized": 21
+      },
+      "pipeline_info": {
+        "elapsed_ms": 18018,
+        "vision_bottles": 9,
+        "llm_wines": 21,
+        "fallback_count": 0,
+        "recognized_count": 21
+      },
+      "outcomes": [
+        {
+          "target_wine_name": "Wente Sandstone Merlot",
+          "target_bbox": {
+            "x": 0.208984375,
+            "y": 0.28515625,
+            "w": 0.06640625,
+            "h": 0.32421875
+          },
+          "classification": "correct",
+          "iou": 1.0,
+          "matched_prediction": {
+            "wine_name": "Wente Sandstone Merlot",
+            "bbox": {
+              "x": 0.208984375,
+              "y": 0.28515625,
+              "w": 0.06640625,
+              "h": 0.32421875
+            },
+            "anchor": [
+              0.2421875,
+              0.3662109375
+            ],
+            "confidence": 0.85,
+            "source": "recognized"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Casillero del Diablo Reserva Merlot",
+          "target_bbox": {
+            "x": 0.271484375,
+            "y": 0.28515625,
+            "w": 0.064453125,
+            "h": 0.32421875
+          },
+          "classification": "correct",
+          "iou": 1.0,
+          "matched_prediction": {
+            "wine_name": "Casillero del Diablo Merlot",
+            "bbox": {
+              "x": 0.271484375,
+              "y": 0.28515625,
+              "w": 0.064453125,
+              "h": 0.32421875
+            },
+            "anchor": [
+              0.3037109375,
+              0.3662109375
+            ],
+            "confidence": 0.85,
+            "source": "recognized"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Marques de Casa Concha Merlot 2017",
+          "target_bbox": {
+            "x": 0.10498046875,
+            "y": 0.291015625,
+            "w": 0.07861328125,
+            "h": 0.318359375
+          },
+          "classification": "correct",
+          "iou": 1.0,
+          "matched_prediction": {
+            "wine_name": "Marques de Casa Concha Merlot",
+            "bbox": {
+              "x": 0.10498046875,
+              "y": 0.291015625,
+              "w": 0.07861328125,
+              "h": 0.318359375
+            },
+            "anchor": [
+              0.144287109375,
+              0.37060546875
+            ],
+            "confidence": 0.85,
+            "source": "recognized"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Casillero del Diablo Organic Merlot",
+          "target_bbox": {
+            "x": 0.408203125,
+            "y": 0.6953125,
+            "w": 0.06640625,
+            "h": 0.3046875
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Cecchi Chianti 2023",
+          "target_bbox": {
+            "x": 0.1953125,
+            "y": 0.7109375,
+            "w": 0.0703125,
+            "h": 0.28125
+          },
+          "classification": "swap",
+          "iou": null,
+          "matched_prediction": {
+            "wine_name": "Cecchi Chianti",
+            "bbox": {
+              "x": 0.07470703125,
+              "y": 0.7109375,
+              "w": 0.07373046875,
+              "h": 0.2890625
+            },
+            "anchor": [
+              0.111572265625,
+              0.783203125
+            ],
+            "confidence": 0.85,
+            "source": "recognized"
+          },
+          "swap_target": {
+            "wine_name": "1000 Stories Zinfandel",
+            "bbox": {
+              "x": 0.07470703125,
+              "y": 0.7109375,
+              "w": 0.07373046875,
+              "h": 0.2890625
+            }
+          }
+        },
+        {
+          "target_wine_name": "1000 Stories Zinfandel",
+          "target_bbox": {
+            "x": 0.07470703125,
+            "y": 0.7109375,
+            "w": 0.07373046875,
+            "h": 0.2890625
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Finca Las Moras Malbec",
+          "target_bbox": {
+            "x": 0.412109375,
+            "y": 0.00103759765625,
+            "w": 0.052734375,
+            "h": 0.21868896484375
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "El Enemigo Malbec 2022",
+          "target_bbox": {
+            "x": 0.625,
+            "y": 0.003204345703125,
+            "w": 0.05078125,
+            "h": 0.218475341796875
+          },
+          "classification": "swap",
+          "iou": null,
+          "matched_prediction": {
+            "wine_name": "El Enemigo",
+            "bbox": {
+              "x": 0.412109375,
+              "y": 0.00103759765625,
+              "w": 0.052734375,
+              "h": 0.21868896484375
+            },
+            "anchor": [
+              0.4384765625,
+              0.0557098388671875
+            ],
+            "confidence": 0.7625000000000001,
+            "source": "recognized"
+          },
+          "swap_target": {
+            "wine_name": "Finca Las Moras Malbec",
+            "bbox": {
+              "x": 0.412109375,
+              "y": 0.00103759765625,
+              "w": 0.052734375,
+              "h": 0.21868896484375
+            }
+          }
+        }
+      ],
+      "unmatched_predictions": [
+        {
+          "wine_name": "1725",
+          "bbox": {
+            "x": 0.625,
+            "y": 0.003204345703125,
+            "w": 0.05078125,
+            "h": 0.218475341796875
+          },
+          "confidence": 0.65,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Ruffino",
+          "bbox": {
+            "x": 0.1953125,
+            "y": 0.7109375,
+            "w": 0.0703125,
+            "h": 0.28125
+          },
+          "confidence": 0.85,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Adobe Cabernet Sauvignon (Reserva)",
+          "bbox": {
+            "x": 0.408203125,
+            "y": 0.6953125,
+            "w": 0.06640625,
+            "h": 0.3046875
+          },
+          "confidence": 0.85,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Bread & Butter Cabernet Sauvignon",
+          "bbox": {
+            "x": 0.47265625,
+            "y": 0.6953125,
+            "w": 0.0625,
+            "h": 0.296875
+          },
+          "confidence": 0.85,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Finca Las Moras Malbec",
+          "bbox": {
+            "x": 0.2576610644257703,
+            "y": 0.03602240896358544,
+            "w": 0.06415966386554628,
+            "h": 0.0584407096171802
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Santa Julia",
+          "bbox": {
+            "x": 0.355875350140056,
+            "y": 0.07056956115779645,
+            "w": 0.12018207282913168,
+            "h": 0.09345471521942109
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Concha y Toro Frontera Merlot",
+          "bbox": {
+            "x": 0.5556302521008403,
+            "y": 0.0465266106442577,
+            "w": 0.1362885154061626,
+            "h": 0.11819794584500465
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "RPF Cabernet Sauvignon",
+          "bbox": {
+            "x": 0.7257118055555556,
+            "y": 0.08010979546440976,
+            "w": 0.06,
+            "h": 0.21
+          },
+          "confidence": 0.8,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Aruma Malbec",
+          "bbox": {
+            "x": 0.7130182072829131,
+            "y": 0.438015873015873,
+            "w": 0.18320728291316535,
+            "h": 0.12
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "1000 Vines Zinfandel",
+          "bbox": {
+            "x": 0.015711805555555534,
+            "y": 0.6901097954644098,
+            "w": 0.05,
+            "h": 0.21
+          },
+          "confidence": 0.8,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Cecchi Chianti",
+          "bbox": {
+            "x": 0.09309523809523809,
+            "y": 0.7330345471521942,
+            "w": 0.17077731092436974,
+            "h": 0.047936507936507944
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Bread & Butter Cabernet Sauvignon",
+          "bbox": {
+            "x": 0.41571180555555554,
+            "y": 0.6901097954644098,
+            "w": 0.05,
+            "h": 0.21
+          },
+          "confidence": 0.8,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Luigi Bosca Cabernet Sauvignon",
+          "bbox": {
+            "x": 0.5157118055555556,
+            "y": 0.6901097954644098,
+            "w": 0.05,
+            "h": 0.21
+          },
+          "confidence": 0.8,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Root:1 2015 Cabernet Sauvignon (Maipo Valley)",
+          "bbox": {
+            "x": 0.6657118055555555,
+            "y": 0.6901097954644098,
+            "w": 0.05,
+            "h": 0.21
+          },
+          "confidence": 0.765,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Salus Estate Cabernet Sauvignon",
+          "bbox": {
+            "x": 0.8831862745098039,
+            "y": 0.7363025210084033,
+            "w": 0.057156862745098125,
+            "h": 0.04723622782446313
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Catena Cabernet Sauvignon",
+          "bbox": {
+            "x": 0.8157118055555556,
+            "y": 0.7001097954644098,
+            "w": 0.05,
+            "h": 0.21
+          },
+          "confidence": 0.8,
+          "source": "recognized"
+        }
+      ]
+    },
+    {
+      "image_id": "IMG_8122.HEIC",
+      "total_targets": 7,
+      "correct": 2,
+      "swap": 0,
+      "miss": 5,
+      "assignment_accuracy": 0.2857142857142857,
+      "swap_rate": 0.0,
+      "miss_rate": 0.7142857142857143,
+      "mean_iou": 1.0,
+      "source_counts": {
+        "recognized": 18
+      },
+      "pipeline_info": {
+        "elapsed_ms": 32884,
+        "vision_bottles": 7,
+        "llm_wines": 18,
+        "fallback_count": 0,
+        "recognized_count": 18
+      },
+      "outcomes": [
+        {
+          "target_wine_name": "Santa Julia Malbec 2021",
+          "target_bbox": {
+            "x": 0.19140625,
+            "y": 0.044189453125,
+            "w": 0.0556640625,
+            "h": 0.213623046875
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Concha y Toro Frontera Merlot",
+          "target_bbox": {
+            "x": 0.28125,
+            "y": 0.055419921875,
+            "w": 0.0546875,
+            "h": 0.223876953125
+          },
+          "classification": "correct",
+          "iou": 1.0,
+          "matched_prediction": {
+            "wine_name": "Concha y Toro Frontera Merlot",
+            "bbox": {
+              "x": 0.28125,
+              "y": 0.055419921875,
+              "w": 0.0546875,
+              "h": 0.223876953125
+            },
+            "anchor": [
+              0.30859375,
+              0.11138916015625
+            ],
+            "confidence": 0.7772727272727273,
+            "source": "recognized"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Santa Julia Malbec 2024",
+          "target_bbox": {
+            "x": 0.0654296875,
+            "y": 0.0013275146484375,
+            "w": 0.072265625,
+            "h": 0.2389068603515625
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Casillero del Diablo Reserva Merlot",
+          "target_bbox": {
+            "x": 0.053955078125,
+            "y": 0.69921875,
+            "w": 0.084716796875,
+            "h": 0.30078125
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Familia Arizu Algarrobo",
+          "target_bbox": {
+            "x": 0.1484375,
+            "y": 0.7109375,
+            "w": 0.0693359375,
+            "h": 0.28125
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "El Enemigo Malbec 2022",
+          "target_bbox": {
+            "x": 0.2451171875,
+            "y": 0.05712890625,
+            "w": 0.0439453125,
+            "h": 0.21044921875
+          },
+          "classification": "correct",
+          "iou": 1.0,
+          "matched_prediction": {
+            "wine_name": "El Enemigo 2015 Malbec (Mendoza)",
+            "bbox": {
+              "x": 0.2451171875,
+              "y": 0.05712890625,
+              "w": 0.0439453125,
+              "h": 0.21044921875
+            },
+            "anchor": [
+              0.26708984375,
+              0.1097412109375
+            ],
+            "confidence": 0.7464285714285714,
+            "source": "recognized"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Frontera Merlot",
+          "target_bbox": {
+            "x": 0.33203125,
+            "y": 0.061767578125,
+            "w": 0.048828125,
+            "h": 0.223388671875
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        }
+      ],
+      "unmatched_predictions": [
+        {
+          "wine_name": "Santa Julia Reserva",
+          "bbox": {
+            "x": 0.0654296875,
+            "y": 0.0013275146484375,
+            "w": 0.072265625,
+            "h": 0.2389068603515625
+          },
+          "confidence": 0.7606418918918919,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "1725",
+          "bbox": {
+            "x": 0.33203125,
+            "y": 0.061767578125,
+            "w": 0.048828125,
+            "h": 0.223388671875
+          },
+          "confidence": 0.65,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Adobe Cabernet Sauvignon (Reserva)",
+          "bbox": {
+            "x": 0.053955078125,
+            "y": 0.69921875,
+            "w": 0.084716796875,
+            "h": 0.30078125
+          },
+          "confidence": 0.85,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Bread & Butter Cabernet Sauvignon",
+          "bbox": {
+            "x": 0.1484375,
+            "y": 0.7109375,
+            "w": 0.0693359375,
+            "h": 0.28125
+          },
+          "confidence": 0.85,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Aruma Malbec",
+          "bbox": {
+            "x": 0.19140625,
+            "y": 0.044189453125,
+            "w": 0.0556640625,
+            "h": 0.213623046875
+          },
+          "confidence": 0.744,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "19 Crimes",
+          "bbox": {
+            "x": 0.57593837535014,
+            "y": 0.18821661998132588,
+            "w": 0.09584733893557429,
+            "h": 0.05517273576097101
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Vi\u00f1a Maipo Cabernet Sauvignon",
+          "bbox": {
+            "x": 0.7123179271708683,
+            "y": 0.22719887955182075,
+            "w": 0.05645658263305331,
+            "h": 0.0493370681605976
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Frontera Cabernet Sauvignon",
+          "bbox": {
+            "x": 0.6428151260504201,
+            "y": 0.21529411764705883,
+            "w": 0.199138655462185,
+            "h": 0.09042016806722689
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Casillero del Diablo Merlot",
+          "bbox": {
+            "x": 0.006785714285714284,
+            "y": 0.41977591036414563,
+            "w": 0.12438375350140055,
+            "h": 0.07594771241830073
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Luigi Bosca",
+          "bbox": {
+            "x": 0.2826960784313725,
+            "y": 0.4552567693744164,
+            "w": 0.1322619047619048,
+            "h": 0.07408029878618116
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Wente",
+          "bbox": {
+            "x": 0.73,
+            "y": 0.33,
+            "w": 0.04,
+            "h": 0.24
+          },
+          "confidence": 0.8,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Root:1 2015 Cabernet Sauvignon (Maipo Valley)",
+          "bbox": {
+            "x": 0.41,
+            "y": 0.59,
+            "w": 0.04,
+            "h": 0.24
+          },
+          "confidence": 0.765,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Franciscan 2009 Cabernet Sauvignon (Oakville)",
+          "bbox": {
+            "x": 0.5213165266106442,
+            "y": 0.733734827264239,
+            "w": 0.052254901960784306,
+            "h": 0.04536881419234362
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Bodega Catena Zapata 2008 Catena Alta Cabernet Sauvignon (Mendoza)",
+          "bbox": {
+            "x": 0.57,
+            "y": 0.59,
+            "w": 0.04,
+            "h": 0.24
+          },
+          "confidence": 0.7375,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Montes Alpha Cabernet Sauvignon",
+          "bbox": {
+            "x": 0.65,
+            "y": 0.59,
+            "w": 0.04,
+            "h": 0.24
+          },
+          "confidence": 0.8,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Casillero del Diablo Reserva Privada Cabernet Sauvignon",
+          "bbox": {
+            "x": 0.93,
+            "y": 0.59,
+            "w": 0.04,
+            "h": 0.24
+          },
+          "confidence": 0.8,
+          "source": "recognized"
+        }
+      ]
+    },
+    {
+      "image_id": "IMG_8123.HEIC",
+      "total_targets": 8,
+      "correct": 4,
+      "swap": 1,
+      "miss": 3,
+      "assignment_accuracy": 0.5,
+      "swap_rate": 0.125,
+      "miss_rate": 0.375,
+      "mean_iou": 1.0,
+      "source_counts": {
+        "recognized": 11
+      },
+      "pipeline_info": {
+        "elapsed_ms": 38854,
+        "vision_bottles": 8,
+        "llm_wines": 11,
+        "fallback_count": 0,
+        "recognized_count": 11
+      },
+      "outcomes": [
+        {
+          "target_wine_name": "Bread & Butter Chardonnay 2022",
+          "target_bbox": {
+            "x": 0.5859375,
+            "y": 0.12451171875,
+            "w": 0.10546875,
+            "h": 0.25048828125
+          },
+          "classification": "correct",
+          "iou": 1.0,
+          "matched_prediction": {
+            "wine_name": "Bread & Butter Chardonnay",
+            "bbox": {
+              "x": 0.5859375,
+              "y": 0.12451171875,
+              "w": 0.10546875,
+              "h": 0.25048828125
+            },
+            "anchor": [
+              0.638671875,
+              0.1871337890625
+            ],
+            "confidence": 0.85,
+            "source": "recognized"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Decoy Chardonnay 2022",
+          "target_bbox": {
+            "x": 0.330078125,
+            "y": 0.11767578125,
+            "w": 0.107421875,
+            "h": 0.27294921875
+          },
+          "classification": "swap",
+          "iou": null,
+          "matched_prediction": {
+            "wine_name": "Decoy Chardonnay",
+            "bbox": {
+              "x": 0.388671875,
+              "y": 0.474609375,
+              "w": 0.091796875,
+              "h": 0.224609375
+            },
+            "anchor": [
+              0.4345703125,
+              0.53076171875
+            ],
+            "confidence": 0.85,
+            "source": "recognized"
+          },
+          "swap_target": {
+            "wine_name": "Casal Mendes Vinho Verde",
+            "bbox": {
+              "x": 0.388671875,
+              "y": 0.474609375,
+              "w": 0.091796875,
+              "h": 0.224609375
+            }
+          }
+        },
+        {
+          "target_wine_name": "Casal Mendes Vinho Verde",
+          "target_bbox": {
+            "x": 0.1337890625,
+            "y": 0.73828125,
+            "w": 0.0908203125,
+            "h": 0.19140625
+          },
+          "classification": "correct",
+          "iou": 1.0,
+          "matched_prediction": {
+            "wine_name": "Casal Mendes Ros\u00e9",
+            "bbox": {
+              "x": 0.1337890625,
+              "y": 0.73828125,
+              "w": 0.0908203125,
+              "h": 0.19140625
+            },
+            "anchor": [
+              0.17919921875,
+              0.7861328125
+            ],
+            "confidence": 0.85,
+            "source": "recognized"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Frontera Chardonnay",
+          "target_bbox": {
+            "x": 0.82421875,
+            "y": 0.734375,
+            "w": 0.08203125,
+            "h": 0.24609375
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Casal Mendes Rose",
+          "target_bbox": {
+            "x": 0.04833984375,
+            "y": 0.73046875,
+            "w": 0.09423828125,
+            "h": 0.1953125
+          },
+          "classification": "correct",
+          "iou": 1.0,
+          "matched_prediction": {
+            "wine_name": "Casal Mendes Ros\u00e9",
+            "bbox": {
+              "x": 0.04833984375,
+              "y": 0.73046875,
+              "w": 0.09423828125,
+              "h": 0.1953125
+            },
+            "anchor": [
+              0.095458984375,
+              0.779296875
+            ],
+            "confidence": 0.85,
+            "source": "recognized"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Santa Julia Gran Syrah",
+          "target_bbox": {
+            "x": 0.39453125,
+            "y": 0.73046875,
+            "w": 0.091796875,
+            "h": 0.24609375
+          },
+          "classification": "correct",
+          "iou": 1.0,
+          "matched_prediction": {
+            "wine_name": "Santa",
+            "bbox": {
+              "x": 0.39453125,
+              "y": 0.73046875,
+              "w": 0.091796875,
+              "h": 0.24609375
+            },
+            "anchor": [
+              0.4404296875,
+              0.7919921875
+            ],
+            "confidence": 0.85,
+            "source": "recognized"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Bread & Butter Chardonnay 2022",
+          "target_bbox": {
+            "x": 0.703125,
+            "y": 0.1357421875,
+            "w": 0.12890625,
+            "h": 0.2373046875
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Casal Mendes Vinho Verde",
+          "target_bbox": {
+            "x": 0.388671875,
+            "y": 0.474609375,
+            "w": 0.091796875,
+            "h": 0.224609375
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        }
+      ],
+      "unmatched_predictions": [
+        {
+          "wine_name": "Rombauer Chardonnay 2023",
+          "bbox": {
+            "x": 0.330078125,
+            "y": 0.11767578125,
+            "w": 0.107421875,
+            "h": 0.27294921875
+          },
+          "confidence": 0.65,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Undurraga",
+          "bbox": {
+            "x": 0.82421875,
+            "y": 0.734375,
+            "w": 0.08203125,
+            "h": 0.24609375
+          },
+          "confidence": 0.85,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Fontanelle Chardonnay",
+          "bbox": {
+            "x": 0.703125,
+            "y": 0.1357421875,
+            "w": 0.12890625,
+            "h": 0.2373046875
+          },
+          "confidence": 0.792258064516129,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Lindeman's Shiraz",
+          "bbox": {
+            "x": 0.002175536881419235,
+            "y": 0.2879481792717087,
+            "w": 0.15344537815126047,
+            "h": 0.06503501400560224
+          },
+          "confidence": 0.65,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Decoy",
+          "bbox": {
+            "x": 0.18634920634920635,
+            "y": 0.2826960784313725,
+            "w": 0.10162464985994399,
+            "h": 0.05995798319327733
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Gran Syrah",
+          "bbox": {
+            "x": 0.33667600373482726,
+            "y": 0.8835364145658263,
+            "w": 0.06170868347338937,
+            "h": 0.04595238095238097
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        }
+      ]
+    },
+    {
+      "image_id": "IMG_8124.HEIC",
+      "total_targets": 8,
+      "correct": 4,
+      "swap": 1,
+      "miss": 3,
+      "assignment_accuracy": 0.5,
+      "swap_rate": 0.125,
+      "miss_rate": 0.375,
+      "mean_iou": 0.7760434954340376,
+      "source_counts": {
+        "recognized": 16
+      },
+      "pipeline_info": {
+        "elapsed_ms": 29012,
+        "vision_bottles": 9,
+        "llm_wines": 16,
+        "fallback_count": 0,
+        "recognized_count": 16
+      },
+      "outcomes": [
+        {
+          "target_wine_name": "Joel Gott 815 Cabernet Sauvignon 2021",
+          "target_bbox": {
+            "x": 0.45703125,
+            "y": 0.6640625,
+            "w": 0.1015625,
+            "h": 0.28125
+          },
+          "classification": "correct",
+          "iou": 0.10417398173615017,
+          "matched_prediction": {
+            "wine_name": "Catena Cabernet Sauvignon",
+            "bbox": {
+              "x": 0.46366013071895423,
+              "y": 0.7844467787114846,
+              "w": 0.06450980392156863,
+              "h": 0.04612745098039217
+            },
+            "anchor": [
+              0.4959150326797386,
+              0.7959786414565826
+            ],
+            "confidence": 0.7,
+            "source": "recognized"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "J. Lohr Cabernet Sauvignon Paso Robles",
+          "target_bbox": {
+            "x": 0.76953125,
+            "y": 0.66015625,
+            "w": 0.10546875,
+            "h": 0.2890625
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Vina Maipo Classic Series Cabernet Sauvignon",
+          "target_bbox": {
+            "x": 0.134765625,
+            "y": 0.08642578125,
+            "w": 0.0986328125,
+            "h": 0.21435546875
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Navarro Correas Cabernet Sauvignon",
+          "target_bbox": {
+            "x": 0.388671875,
+            "y": 0.359375,
+            "w": 0.083984375,
+            "h": 0.25390625
+          },
+          "classification": "swap",
+          "iou": null,
+          "matched_prediction": {
+            "wine_name": "Frontera Cabernet Sauvignon",
+            "bbox": {
+              "x": 0.134765625,
+              "y": 0.08642578125,
+              "w": 0.0986328125,
+              "h": 0.21435546875
+            },
+            "anchor": [
+              0.18408203125,
+              0.1400146484375
+            ],
+            "confidence": 0.85,
+            "source": "recognized"
+          },
+          "swap_target": {
+            "wine_name": "Vina Maipo Classic Series Cabernet Sauvignon",
+            "bbox": {
+              "x": 0.134765625,
+              "y": 0.08642578125,
+              "w": 0.0986328125,
+              "h": 0.21435546875
+            }
+          }
+        },
+        {
+          "target_wine_name": "Kendall-Jackson Vintner's Reserve Cabernet Sauvignon",
+          "target_bbox": {
+            "x": 0.2734375,
+            "y": 0.69140625,
+            "w": 0.09375,
+            "h": 0.3046875
+          },
+          "classification": "correct",
+          "iou": 1.0,
+          "matched_prediction": {
+            "wine_name": "Kendall-Jackson Vintner's Reserve Cabernet Sauvignon",
+            "bbox": {
+              "x": 0.2734375,
+              "y": 0.69140625,
+              "w": 0.09375,
+              "h": 0.3046875
+            },
+            "anchor": [
+              0.3203125,
+              0.767578125
+            ],
+            "confidence": 0.85,
+            "source": "recognized"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Wente Cabernet Sauvignon Southern Hills",
+          "target_bbox": {
+            "x": 0.0023651123046875,
+            "y": 0.7109375,
+            "w": 0.0728302001953125,
+            "h": 0.2890625
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Vina Maipo Classic Series Cabernet Sauvignon",
+          "target_bbox": {
+            "x": 0.0242919921875,
+            "y": 0.08056640625,
+            "w": 0.1153564453125,
+            "h": 0.22021484375
+          },
+          "classification": "correct",
+          "iou": 1.0,
+          "matched_prediction": {
+            "wine_name": "Classic Series Cabernet Sauvignon",
+            "bbox": {
+              "x": 0.0242919921875,
+              "y": 0.08056640625,
+              "w": 0.1153564453125,
+              "h": 0.22021484375
+            },
+            "anchor": [
+              0.08197021484375,
+              0.1356201171875
+            ],
+            "confidence": 0.85,
+            "source": "recognized"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Caymus Cabernet Sauvignon",
+          "target_bbox": {
+            "x": 0.76171875,
+            "y": 0.1279296875,
+            "w": 0.0703125,
+            "h": 0.1826171875
+          },
+          "classification": "correct",
+          "iou": 1.0,
+          "matched_prediction": {
+            "wine_name": "Finca Las Moras Cabernet Sauvignon",
+            "bbox": {
+              "x": 0.76171875,
+              "y": 0.1279296875,
+              "w": 0.0703125,
+              "h": 0.1826171875
+            },
+            "anchor": [
+              0.796875,
+              0.173583984375
+            ],
+            "confidence": 0.85,
+            "source": "recognized"
+          },
+          "swap_target": null
+        }
+      ],
+      "unmatched_predictions": [
+        {
+          "wine_name": "Cabernet Sauvignon Napa Valley",
+          "bbox": {
+            "x": 0.3359375,
+            "y": 0.09521484375,
+            "w": 0.09375,
+            "h": 0.20751953125
+          },
+          "confidence": 0.85,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Joel Gott 815 Cabernet Sauvignon",
+          "bbox": {
+            "x": 0.388671875,
+            "y": 0.359375,
+            "w": 0.083984375,
+            "h": 0.25390625
+          },
+          "confidence": 0.85,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Casillero del Diablo Reserva Privada Cabernet Sauvignon",
+          "bbox": {
+            "x": 0.0023651123046875,
+            "y": 0.7109375,
+            "w": 0.0728302001953125,
+            "h": 0.2890625
+          },
+          "confidence": 0.85,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "1865 Selected Vineyards Cabernet Sauvignon",
+          "bbox": {
+            "x": 0.45703125,
+            "y": 0.6640625,
+            "w": 0.1015625,
+            "h": 0.28125
+          },
+          "confidence": 0.85,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Marqu\u00e9s de Casa Concha Cabernet Sauvignon",
+          "bbox": {
+            "x": 0.76953125,
+            "y": 0.66015625,
+            "w": 0.10546875,
+            "h": 0.2890625
+          },
+          "confidence": 0.85,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Southern Hills Cabernet Sauvignon",
+          "bbox": {
+            "x": 0.0,
+            "y": 0.47159663865546214,
+            "w": 0.07882352941176471,
+            "h": 0.09724789915966386
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Alegor\u00eda Gran Reserva Cabernet Sauvignon",
+          "bbox": {
+            "x": 0.06776844070961717,
+            "y": 0.4696708683473389,
+            "w": 0.10255835667600373,
+            "h": 0.05225490196078436
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Audentia Cabernet Sauvignon",
+          "bbox": {
+            "x": 0.2899999999999999,
+            "y": 0.35,
+            "w": 0.06,
+            "h": 0.22
+          },
+          "confidence": 0.7714285714285715,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Joel Gott 815 Cabernet Sauvignon",
+          "bbox": {
+            "x": 0.5539962651727357,
+            "y": 0.4549649859943977,
+            "w": 0.10909430438842205,
+            "h": 0.055756302521008494
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "J. Lohr 2008 Hilltop Cabernet Sauvignon (Paso Robles)",
+          "bbox": {
+            "x": 0.5612324929971989,
+            "y": 0.4857773109243697,
+            "w": 0.15251167133520072,
+            "h": 0.06398459383753508
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Novas Gran Reserva Cabernet Sauvignon",
+          "bbox": {
+            "x": 0.68,
+            "y": 0.35,
+            "w": 0.06,
+            "h": 0.22
+          },
+          "confidence": 0.8,
+          "source": "recognized"
+        }
+      ]
+    },
+    {
+      "image_id": "IMG_8262.HEIC",
+      "total_targets": 4,
+      "correct": 0,
+      "swap": 0,
+      "miss": 4,
+      "assignment_accuracy": 0.0,
+      "swap_rate": 0.0,
+      "miss_rate": 1.0,
+      "mean_iou": null,
+      "source_counts": {
+        "recognized": 1
+      },
+      "pipeline_info": {
+        "elapsed_ms": 30147,
+        "vision_bottles": 4,
+        "llm_wines": 1,
+        "fallback_count": 0,
+        "recognized_count": 1
+      },
+      "outcomes": [
+        {
+          "target_wine_name": "Alamos Malbec",
+          "target_bbox": {
+            "x": 0.73828125,
+            "y": 0.33203125,
+            "w": 0.046875,
+            "h": 0.203125
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Trapiche Reserva Malbec",
+          "target_bbox": {
+            "x": 0.8203125,
+            "y": 0.330078125,
+            "w": 0.05078125,
+            "h": 0.212890625
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Finca Las Moras Malbec",
+          "target_bbox": {
+            "x": 0.5390625,
+            "y": 0.037109375,
+            "w": 0.046875,
+            "h": 0.2421875
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Bosca Montmayou Malbec",
+          "target_bbox": {
+            "x": 0.287109375,
+            "y": 0.06005859375,
+            "w": 0.04296875,
+            "h": 0.20751953125
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        }
+      ],
+      "unmatched_predictions": [
+        {
+          "wine_name": "Unknown",
+          "bbox": {
+            "x": 0.010000000000000002,
+            "y": 0.05,
+            "w": 0.05,
+            "h": 0.22
+          },
+          "confidence": 0.8,
+          "source": "recognized"
+        }
+      ]
+    },
+    {
+      "image_id": "IMG_8334.HEIC",
+      "total_targets": 7,
+      "correct": 2,
+      "swap": 2,
+      "miss": 3,
+      "assignment_accuracy": 0.2857142857142857,
+      "swap_rate": 0.2857142857142857,
+      "miss_rate": 0.42857142857142855,
+      "mean_iou": 0.6786403188479474,
+      "source_counts": {
+        "recognized": 42
+      },
+      "pipeline_info": {
+        "elapsed_ms": 21712,
+        "vision_bottles": 7,
+        "llm_wines": 42,
+        "fallback_count": 0,
+        "recognized_count": 42
+      },
+      "outcomes": [
+        {
+          "target_wine_name": "Marie-Lou Parisot Cabernet Sauvignon 2023",
+          "target_bbox": {
+            "x": 0.296875,
+            "y": 0.12451171875,
+            "w": 0.08203125,
+            "h": 0.21142578125
+          },
+          "classification": "swap",
+          "iou": null,
+          "matched_prediction": {
+            "wine_name": "Marie Laparisot Cabernet Sauvignon 2023",
+            "bbox": {
+              "x": 0.212890625,
+              "y": 0.10009765625,
+              "w": 0.087890625,
+              "h": 0.23779296875
+            },
+            "anchor": [
+              0.2568359375,
+              0.1595458984375
+            ],
+            "confidence": 0.85,
+            "source": "recognized"
+          },
+          "swap_target": {
+            "wine_name": "Marie-Lou Parisot Cotes du Rhone",
+            "bbox": {
+              "x": 0.212890625,
+              "y": 0.10009765625,
+              "w": 0.087890625,
+              "h": 0.23779296875
+            }
+          }
+        },
+        {
+          "target_wine_name": "Marie-Lou Parisot Cotes du Rhone",
+          "target_bbox": {
+            "x": 0.212890625,
+            "y": 0.10009765625,
+            "w": 0.087890625,
+            "h": 0.23779296875
+          },
+          "classification": "correct",
+          "iou": 0.3572806376958948,
+          "matched_prediction": {
+            "wine_name": "Marie-Lou Parisot Cotes du Rhone",
+            "bbox": {
+              "x": 0.19619210379464286,
+              "y": 0.12677176339285715,
+              "w": 0.06,
+              "h": 0.2
+            },
+            "anchor": [
+              0.22619210379464286,
+              0.17677176339285716
+            ],
+            "confidence": 0.65,
+            "source": "recognized"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Artis Beefsteak Cabernet Sauvignon",
+          "target_bbox": {
+            "x": 0.453125,
+            "y": 0.10693359375,
+            "w": 0.078125,
+            "h": 0.23291015625
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Predator Cabernet Sauvignon Lodi",
+          "target_bbox": {
+            "x": 0.6015625,
+            "y": 0.10205078125,
+            "w": 0.07421875,
+            "h": 0.21826171875
+          },
+          "classification": "swap",
+          "iou": null,
+          "matched_prediction": {
+            "wine_name": "Predator 2015 Cabernet Sauvignon (California)",
+            "bbox": {
+              "x": 0.52734375,
+              "y": 0.10498046875,
+              "w": 0.078125,
+              "h": 0.23291015625
+            },
+            "anchor": [
+              0.56640625,
+              0.1632080078125
+            ],
+            "confidence": 0.7881707317073171,
+            "source": "recognized"
+          },
+          "swap_target": {
+            "wine_name": "Arrogant Frog Pinot Noir",
+            "bbox": {
+              "x": 0.52734375,
+              "y": 0.10498046875,
+              "w": 0.078125,
+              "h": 0.23291015625
+            }
+          }
+        },
+        {
+          "target_wine_name": "Arrogant Frog Pinot Noir",
+          "target_bbox": {
+            "x": 0.52734375,
+            "y": 0.10498046875,
+            "w": 0.078125,
+            "h": 0.23291015625
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Talamonti",
+          "target_bbox": {
+            "x": 0.74609375,
+            "y": 0.41015625,
+            "w": 0.08203125,
+            "h": 0.19921875
+          },
+          "classification": "correct",
+          "iou": 1.0,
+          "matched_prediction": {
+            "wine_name": "Talmonti Mo Da",
+            "bbox": {
+              "x": 0.74609375,
+              "y": 0.41015625,
+              "w": 0.08203125,
+              "h": 0.19921875
+            },
+            "anchor": [
+              0.787109375,
+              0.4599609375
+            ],
+            "confidence": 0.8133771929824561,
+            "source": "recognized"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Louis Latour Bourgogne Pinot Noir",
+          "target_bbox": {
+            "x": 0.057861328125,
+            "y": 0.10302734375,
+            "w": 0.082763671875,
+            "h": 0.23876953125
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        }
+      ],
+      "unmatched_predictions": [
+        {
+          "wine_name": "Marie-Lou Parisot Beaujolais",
+          "bbox": {
+            "x": 0.057861328125,
+            "y": 0.10302734375,
+            "w": 0.082763671875,
+            "h": 0.23876953125
+          },
+          "confidence": 0.65,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Artis Malbec",
+          "bbox": {
+            "x": 0.296875,
+            "y": 0.12451171875,
+            "w": 0.08203125,
+            "h": 0.21142578125
+          },
+          "confidence": 0.85,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Predator 2014 Old Vine Zinfandel (Lodi)",
+          "bbox": {
+            "x": 0.453125,
+            "y": 0.10693359375,
+            "w": 0.078125,
+            "h": 0.23291015625
+          },
+          "confidence": 0.85,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Predator Six Spot Red Wine 2021",
+          "bbox": {
+            "x": 0.6015625,
+            "y": 0.10205078125,
+            "w": 0.07421875,
+            "h": 0.21826171875
+          },
+          "confidence": 0.85,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Louis Latour 2011  Bourgogne Gamay",
+          "bbox": {
+            "x": 0.026192103794642853,
+            "y": 0.12677176339285715,
+            "w": 0.05,
+            "h": 0.2
+          },
+          "confidence": 0.723202535708554,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Marie-Lou Parisot Macon Rouge",
+          "bbox": {
+            "x": 0.13619210379464286,
+            "y": 0.12677176339285715,
+            "w": 0.06,
+            "h": 0.2
+          },
+          "confidence": 0.65,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Beefsteak Beef & Liberty",
+          "bbox": {
+            "x": 0.37619210379464285,
+            "y": 0.12677176339285715,
+            "w": 0.06,
+            "h": 0.2
+          },
+          "confidence": 0.65,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Rutherford Ranch 2005 Cabernet Sauvignon (Napa Valley)",
+          "bbox": {
+            "x": 0.6761921037946429,
+            "y": 0.12677176339285715,
+            "w": 0.06,
+            "h": 0.2
+          },
+          "confidence": 0.8,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Obra Cabernet Sauvignon",
+          "bbox": {
+            "x": 0.007310924369747899,
+            "y": 0.48402661064425767,
+            "w": 0.14060690943043883,
+            "h": 0.05120448179271708
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Hagelsberg Merlot",
+          "bbox": {
+            "x": 0.13989729225023342,
+            "y": 0.48717787114845934,
+            "w": 0.09112044817927167,
+            "h": 0.04875350140056023
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Peter Brum Vino Noir",
+          "bbox": {
+            "x": 0.18619210379464285,
+            "y": 0.37677176339285723,
+            "w": 0.05,
+            "h": 0.2
+          },
+          "confidence": 0.8,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Dornfelder-Pinot Noir",
+          "bbox": {
+            "x": 0.23619210379464287,
+            "y": 0.37677176339285723,
+            "w": 0.05,
+            "h": 0.2
+          },
+          "confidence": 0.7857142857142858,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Kindzmarauli",
+          "bbox": {
+            "x": 0.2961921037946429,
+            "y": 0.37677176339285723,
+            "w": 0.05,
+            "h": 0.2
+          },
+          "confidence": 0.7307692307692307,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Merlot Veneto",
+          "bbox": {
+            "x": 0.3898972922502334,
+            "y": 0.3411694677871148,
+            "w": 0.051671335200747015,
+            "h": 0.04245098039215689
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Lamico Ciliegia",
+          "bbox": {
+            "x": 0.39619210379464287,
+            "y": 0.37677176339285723,
+            "w": 0.05,
+            "h": 0.2
+          },
+          "confidence": 0.65,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Talamonti Tre Saggi",
+          "bbox": {
+            "x": 0.5061921037946429,
+            "y": 0.37677176339285723,
+            "w": 0.05,
+            "h": 0.2
+          },
+          "confidence": 0.8,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Talmonti Mo Da",
+          "bbox": {
+            "x": 0.6061921037946428,
+            "y": 0.37677176339285723,
+            "w": 0.05,
+            "h": 0.2
+          },
+          "confidence": 0.8,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "99 Vendemmie",
+          "bbox": {
+            "x": 0.07619210379464286,
+            "y": 0.6267717633928571,
+            "w": 0.05,
+            "h": 0.2
+          },
+          "confidence": 0.65,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Limited Edition 10 Vendemmie",
+          "bbox": {
+            "x": 0.13619210379464286,
+            "y": 0.6267717633928571,
+            "w": 0.05,
+            "h": 0.2
+          },
+          "confidence": 0.7200000000000001,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Primitivo Di Manduria",
+          "bbox": {
+            "x": 0.18619210379464285,
+            "y": 0.6267717633928571,
+            "w": 0.05,
+            "h": 0.2
+          },
+          "confidence": 0.7450000000000001,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Amaranta Verdejo",
+          "bbox": {
+            "x": 0.22673202614379087,
+            "y": 0.7382282913165266,
+            "w": 0.0493370681605976,
+            "h": 0.07186274509803925
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Conte Gastone",
+          "bbox": {
+            "x": 0.39619210379464287,
+            "y": 0.6267717633928571,
+            "w": 0.05,
+            "h": 0.2
+          },
+          "confidence": 0.65,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Marchesi Maria Bella",
+          "bbox": {
+            "x": 0.44619210379464286,
+            "y": 0.6267717633928571,
+            "w": 0.05,
+            "h": 0.2
+          },
+          "confidence": 0.8,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Valle Fedele",
+          "bbox": {
+            "x": 0.5061921037946429,
+            "y": 0.6267717633928571,
+            "w": 0.05,
+            "h": 0.2
+          },
+          "confidence": 0.7666666666666668,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Collezione Merlot",
+          "bbox": {
+            "x": 0.5561921037946429,
+            "y": 0.6267717633928571,
+            "w": 0.05,
+            "h": 0.2
+          },
+          "confidence": 0.8,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Croce Chianti Classico",
+          "bbox": {
+            "x": 0.6061921037946428,
+            "y": 0.6267717633928571,
+            "w": 0.05,
+            "h": 0.2
+          },
+          "confidence": 0.8,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Sacello",
+          "bbox": {
+            "x": 0.6561921037946429,
+            "y": 0.6267717633928571,
+            "w": 0.05,
+            "h": 0.2
+          },
+          "confidence": 0.65,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Sacello Sogno di Ulisse",
+          "bbox": {
+            "x": 0.7161921037946428,
+            "y": 0.6267717633928571,
+            "w": 0.05,
+            "h": 0.2
+          },
+          "confidence": 0.8,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Bottega Acino d'Oro Chianti",
+          "bbox": {
+            "x": 0.10138188608776844,
+            "y": 0.9131232492997199,
+            "w": 0.06987861811391222,
+            "h": 0.0566316526610644
+          },
+          "confidence": 0.65,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Pausemento",
+          "bbox": {
+            "x": 0.13619210379464286,
+            "y": 0.8,
+            "w": 0.05,
+            "h": 0.2
+          },
+          "confidence": 0.65,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Lin",
+          "bbox": {
+            "x": 0.18619210379464285,
+            "y": 0.8,
+            "w": 0.05,
+            "h": 0.2
+          },
+          "confidence": 0.65,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Montepulciano",
+          "bbox": {
+            "x": 0.23619210379464287,
+            "y": 0.8,
+            "w": 0.05,
+            "h": 0.2
+          },
+          "confidence": 0.8,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "MM",
+          "bbox": {
+            "x": 0.2961921037946429,
+            "y": 0.8,
+            "w": 0.05,
+            "h": 0.2
+          },
+          "confidence": 0.65,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Fantini",
+          "bbox": {
+            "x": 0.39619210379464287,
+            "y": 0.8,
+            "w": 0.05,
+            "h": 0.2
+          },
+          "confidence": 0.8,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Brigaldara Case Vecie",
+          "bbox": {
+            "x": 0.44619210379464286,
+            "y": 0.8,
+            "w": 0.05,
+            "h": 0.2
+          },
+          "confidence": 0.7516129032258064,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Merlot",
+          "bbox": {
+            "x": 0.39666666666666667,
+            "y": 0.9472619047619047,
+            "w": 0.053305322128851584,
+            "h": 0.04245098039215689
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Giacobazzi Lambrusco",
+          "bbox": {
+            "x": 0.6061921037946428,
+            "y": 0.8,
+            "w": 0.05,
+            "h": 0.2
+          },
+          "confidence": 0.7916666666666669,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Lambrusco Rosato Secco",
+          "bbox": {
+            "x": 0.6561921037946429,
+            "y": 0.8,
+            "w": 0.05,
+            "h": 0.2
+          },
+          "confidence": 0.7314516129032258,
+          "source": "recognized"
+        }
+      ]
+    },
+    {
+      "image_id": "IMG_8335.HEIC",
+      "total_targets": 6,
+      "correct": 3,
+      "swap": 0,
+      "miss": 3,
+      "assignment_accuracy": 0.5,
+      "swap_rate": 0.0,
+      "miss_rate": 0.5,
+      "mean_iou": 1.0,
+      "source_counts": {
+        "recognized": 14
+      },
+      "pipeline_info": {
+        "elapsed_ms": 15783,
+        "vision_bottles": 9,
+        "llm_wines": 14,
+        "fallback_count": 0,
+        "recognized_count": 14
+      },
+      "outcomes": [
+        {
+          "target_wine_name": "Beronia Reserva 2020",
+          "target_bbox": {
+            "x": 0.310546875,
+            "y": 5.435943603515625e-05,
+            "w": 0.08984375,
+            "h": 0.23041439056396484
+          },
+          "classification": "correct",
+          "iou": 1.0,
+          "matched_prediction": {
+            "wine_name": "Beronia",
+            "bbox": {
+              "x": 0.310546875,
+              "y": 5.435943603515625e-05,
+              "w": 0.08984375,
+              "h": 0.23041439056396484
+            },
+            "anchor": [
+              0.35546875,
+              0.05765795707702637
+            ],
+            "confidence": 0.85,
+            "source": "recognized"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Mimado Garnacha",
+          "target_bbox": {
+            "x": 0.88671875,
+            "y": 0.0,
+            "w": 0.1015625,
+            "h": 0.2265625
+          },
+          "classification": "correct",
+          "iou": 1.0,
+          "matched_prediction": {
+            "wine_name": "Mimao",
+            "bbox": {
+              "x": 0.88671875,
+              "y": 0.0,
+              "w": 0.1015625,
+              "h": 0.2265625
+            },
+            "anchor": [
+              0.9375,
+              0.056640625
+            ],
+            "confidence": 0.65,
+            "source": "recognized"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Tinto Quera",
+          "target_bbox": {
+            "x": 0.140625,
+            "y": 0.0002727508544921875,
+            "w": 0.0927734375,
+            "h": 0.2262897491455078
+          },
+          "classification": "correct",
+          "iou": 1.0,
+          "matched_prediction": {
+            "wine_name": "TINTO QUERA",
+            "bbox": {
+              "x": 0.140625,
+              "y": 0.0002727508544921875,
+              "w": 0.0927734375,
+              "h": 0.2262897491455078
+            },
+            "anchor": [
+              0.18701171875,
+              0.05684518814086914
+            ],
+            "confidence": 0.85,
+            "source": "recognized"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Beronia Mazuelo Reserva",
+          "target_bbox": {
+            "x": 0.392578125,
+            "y": 0.00058746337890625,
+            "w": 0.08984375,
+            "h": 0.22402191162109375
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Quinta Quietud Tinta de Toro",
+          "target_bbox": {
+            "x": 0.1630859375,
+            "y": 0.318359375,
+            "w": 0.0927734375,
+            "h": 0.236328125
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Tunante de Azarache Tempranillo",
+          "target_bbox": {
+            "x": 0.1962890625,
+            "y": 0.61328125,
+            "w": 0.0830078125,
+            "h": 0.23828125
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        }
+      ],
+      "unmatched_predictions": [
+        {
+          "wine_name": "Marqu\u00e9s de Riscal",
+          "bbox": {
+            "x": 0.546875,
+            "y": 0.00112152099609375,
+            "w": 0.08984375,
+            "h": 0.22544097900390625
+          },
+          "confidence": 0.85,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "San Culice",
+          "bbox": {
+            "x": 0.392578125,
+            "y": 0.00058746337890625,
+            "w": 0.08984375,
+            "h": 0.22402191162109375
+          },
+          "confidence": 0.85,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Corral de Campanas",
+          "bbox": {
+            "x": 0.1630859375,
+            "y": 0.318359375,
+            "w": 0.0927734375,
+            "h": 0.236328125
+          },
+          "confidence": 0.85,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Tunante",
+          "bbox": {
+            "x": 0.1201171875,
+            "y": 0.61328125,
+            "w": 0.080078125,
+            "h": 0.23828125
+          },
+          "confidence": 0.85,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Prior Terrae",
+          "bbox": {
+            "x": 0.1962890625,
+            "y": 0.61328125,
+            "w": 0.0830078125,
+            "h": 0.23828125
+          },
+          "confidence": 0.7666666666666668,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Quintay Q",
+          "bbox": {
+            "x": 0.0,
+            "y": 0.4301050420168067,
+            "w": 0.1434827264239029,
+            "h": 0.06871148459383752
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Beefsteak Club Malbec",
+          "bbox": {
+            "x": 0.22,
+            "y": 0.29,
+            "w": 0.07,
+            "h": 0.25
+          },
+          "confidence": 0.7450000000000001,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Carmelo Rodero TSM",
+          "bbox": {
+            "x": 0.46436041083099905,
+            "y": 0.4224019607843137,
+            "w": 0.10629318394024284,
+            "h": 0.047177871148459394
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Se\u00f1orio de Villarrica Crianza",
+          "bbox": {
+            "x": 0.5488608776844071,
+            "y": 0.4288795518207283,
+            "w": 0.10162464985994402,
+            "h": 0.04770308123249306
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Ram\u00f3n Bilbao",
+          "bbox": {
+            "x": 0.7012885154061624,
+            "y": 0.42082633053221286,
+            "w": 0.0815499533146592,
+            "h": 0.0473529411764706
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "La Planta",
+          "bbox": {
+            "x": 0.6665079365079365,
+            "y": 0.7303501400560224,
+            "w": 0.07454715219421104,
+            "h": 0.05102941176470588
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        }
+      ]
+    },
+    {
+      "image_id": "red-wine-shelf-in-a-supermarket-B7WY9Y.jpg",
+      "total_targets": 4,
+      "correct": 2,
+      "swap": 0,
+      "miss": 2,
+      "assignment_accuracy": 0.5,
+      "swap_rate": 0.0,
+      "miss_rate": 0.5,
+      "mean_iou": 1.0,
+      "source_counts": {
+        "recognized": 11
+      },
+      "pipeline_info": {
+        "elapsed_ms": 20970,
+        "vision_bottles": 5,
+        "llm_wines": 11,
+        "fallback_count": 0,
+        "recognized_count": 11
+      },
+      "outcomes": [
+        {
+          "target_wine_name": "Chateau Balan Bordeaux",
+          "target_bbox": {
+            "x": 0.28515625,
+            "y": 0.431640625,
+            "w": 0.068359375,
+            "h": 0.158203125
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Ribeaupierre Medoc",
+          "target_bbox": {
+            "x": 0.419921875,
+            "y": 0.43359375,
+            "w": 0.06640625,
+            "h": 0.1640625
+          },
+          "classification": "correct",
+          "iou": 1.0,
+          "matched_prediction": {
+            "wine_name": "Ribeaupierre",
+            "bbox": {
+              "x": 0.419921875,
+              "y": 0.43359375,
+              "w": 0.06640625,
+              "h": 0.1640625
+            },
+            "anchor": [
+              0.453125,
+              0.474609375
+            ],
+            "confidence": 0.675,
+            "source": "recognized"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Mouton Cadet",
+          "target_bbox": {
+            "x": 0.5546875,
+            "y": 0.0,
+            "w": 0.06640625,
+            "h": 0.1640625
+          },
+          "classification": "correct",
+          "iou": 1.0,
+          "matched_prediction": {
+            "wine_name": "Mouton-Cadet",
+            "bbox": {
+              "x": 0.5546875,
+              "y": 0.0,
+              "w": 0.06640625,
+              "h": 0.1640625
+            },
+            "anchor": [
+              0.587890625,
+              0.041015625
+            ],
+            "confidence": 0.8374999999999999,
+            "source": "recognized"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Medoc",
+          "target_bbox": {
+            "x": 0.828125,
+            "y": 0.2294921875,
+            "w": 0.06640625,
+            "h": 0.1591796875
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        }
+      ],
+      "unmatched_predictions": [
+        {
+          "wine_name": "M\u00e9doc",
+          "bbox": {
+            "x": 0.828125,
+            "y": 0.2294921875,
+            "w": 0.06640625,
+            "h": 0.1591796875
+          },
+          "confidence": 0.85,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Ch\u00e2teau Bela",
+          "bbox": {
+            "x": 0.28515625,
+            "y": 0.431640625,
+            "w": 0.068359375,
+            "h": 0.158203125
+          },
+          "confidence": 0.8350000000000001,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Ch\u00e2teau Tour du Moulin",
+          "bbox": {
+            "x": 0.1,
+            "y": 0.0,
+            "w": 0.06,
+            "h": 0.2
+          },
+          "confidence": 0.8,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Ch\u00e2teau Carcanieux",
+          "bbox": {
+            "x": 0.020000000000000004,
+            "y": 0.0,
+            "w": 0.06,
+            "h": 0.2
+          },
+          "confidence": 0.8,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Nicolas Potel",
+          "bbox": {
+            "x": 0.07930715935334873,
+            "y": 0.300863309352518,
+            "w": 0.07002309468822171,
+            "h": 0.04431654676258995
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "De Toulet",
+          "bbox": {
+            "x": 0.0,
+            "y": 0.5145323741007194,
+            "w": 0.07080831408775981,
+            "h": 0.04719424460431654
+          },
+          "confidence": 0.65,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Tros Moulin",
+          "bbox": {
+            "x": 0.73,
+            "y": 0.44000000000000006,
+            "w": 0.06,
+            "h": 0.2
+          },
+          "confidence": 0.65,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Inspire Sauvignon Blanc",
+          "bbox": {
+            "x": 0.2952424942263279,
+            "y": 0.7389928057553957,
+            "w": 0.06886836027713628,
+            "h": 0.04647482014388493
+          },
+          "confidence": 0.7,
+          "source": "recognized"
+        },
+        {
+          "wine_name": "Rouquet\u2019s Syrah",
+          "bbox": {
+            "x": 0.63,
+            "y": 0.66,
+            "w": 0.06,
+            "h": 0.2
+          },
+          "confidence": 0.7704545454545455,
+          "source": "recognized"
+        }
+      ]
+    },
+    {
+      "image_id": "wine1.jpeg",
+      "total_targets": 6,
+      "correct": 5,
+      "swap": 0,
+      "miss": 1,
+      "assignment_accuracy": 0.8333333333333334,
+      "swap_rate": 0.0,
+      "miss_rate": 0.16666666666666666,
+      "mean_iou": 1.0,
+      "source_counts": {
+        "recognized": 6
+      },
+      "pipeline_info": {
+        "elapsed_ms": 6170,
+        "vision_bottles": 6,
+        "llm_wines": 6,
+        "fallback_count": 0,
+        "recognized_count": 6
+      },
+      "outcomes": [
+        {
+          "target_wine_name": "Elouan Pinot Noir Oregon 2018",
+          "target_bbox": {
+            "x": 0.8359375,
+            "y": 0.00156402587890625,
+            "w": 0.1640625,
+            "h": 0.9984359741210938
+          },
+          "classification": "correct",
+          "iou": 1.0,
+          "matched_prediction": {
+            "wine_name": "Elouan Pinot Noir Oregon",
+            "bbox": {
+              "x": 0.8359375,
+              "y": 0.00156402587890625,
+              "w": 0.1640625,
+              "h": 0.9984359741210938
+            },
+            "anchor": [
+              0.91796875,
+              0.2511730194091797
+            ],
+            "confidence": 0.85,
+            "source": "recognized"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Crimson Ranch California Pinot Noir 2019",
+          "target_bbox": {
+            "x": 0.0027618408203125,
+            "y": 0.00433349609375,
+            "w": 0.1837615966796875,
+            "h": 0.99566650390625
+          },
+          "classification": "correct",
+          "iou": 1.0,
+          "matched_prediction": {
+            "wine_name": "California Pinot Noir",
+            "bbox": {
+              "x": 0.0027618408203125,
+              "y": 0.00433349609375,
+              "w": 0.1837615966796875,
+              "h": 0.99566650390625
+            },
+            "anchor": [
+              0.09464263916015625,
+              0.2532501220703125
+            ],
+            "confidence": 0.781967213114754,
+            "source": "recognized"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "The Willamette Journal Pinot Noir",
+          "target_bbox": {
+            "x": 0.6640625,
+            "y": 0.00347900390625,
+            "w": 0.1796875,
+            "h": 0.99652099609375
+          },
+          "classification": "correct",
+          "iou": 1.0,
+          "matched_prediction": {
+            "wine_name": "The Willamette Journal",
+            "bbox": {
+              "x": 0.6640625,
+              "y": 0.00347900390625,
+              "w": 0.1796875,
+              "h": 0.99652099609375
+            },
+            "anchor": [
+              0.75390625,
+              0.2526092529296875
+            ],
+            "confidence": 0.85,
+            "source": "recognized"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Vennstone Pinot Noir Sonoma County",
+          "target_bbox": {
+            "x": 0.3359375,
+            "y": 0.0089111328125,
+            "w": 0.18359375,
+            "h": 0.9910888671875
+          },
+          "classification": "correct",
+          "iou": 1.0,
+          "matched_prediction": {
+            "wine_name": "Vennstone Pinot Noir",
+            "bbox": {
+              "x": 0.3359375,
+              "y": 0.0089111328125,
+              "w": 0.18359375,
+              "h": 0.9910888671875
+            },
+            "anchor": [
+              0.427734375,
+              0.256683349609375
+            ],
+            "confidence": 0.85,
+            "source": "recognized"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Ropiteau Plante Noble Pinot Noir 2019",
+          "target_bbox": {
+            "x": 0.1787109375,
+            "y": 0.0,
+            "w": 0.1611328125,
+            "h": 1.0
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Precipice California Pinot Noir",
+          "target_bbox": {
+            "x": 0.515625,
+            "y": 0.0015106201171875,
+            "w": 0.16015625,
+            "h": 0.9984893798828125
+          },
+          "classification": "correct",
+          "iou": 1.0,
+          "matched_prediction": {
+            "wine_name": "Precipice Pinot Noir",
+            "bbox": {
+              "x": 0.515625,
+              "y": 0.0015106201171875,
+              "w": 0.16015625,
+              "h": 0.9984893798828125
+            },
+            "anchor": [
+              0.595703125,
+              0.2511329650878906
+            ],
+            "confidence": 0.7968767507002802,
+            "source": "recognized"
+          },
+          "swap_target": null
+        }
+      ],
+      "unmatched_predictions": [
+        {
+          "wine_name": "Province Pinot Noir",
+          "bbox": {
+            "x": 0.1787109375,
+            "y": 0.0,
+            "w": 0.1611328125,
+            "h": 1.0
+          },
+          "confidence": 0.7252141982864136,
+          "source": "recognized"
+        }
+      ]
+    }
+  ]
+}

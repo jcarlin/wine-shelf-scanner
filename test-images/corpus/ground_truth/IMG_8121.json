@@ -1,0 +1,127 @@
+{
+  "image_file": "IMG_8121.HEIC",
+  "wines": [],
+  "overlay_targets": [
+    {
+      "wine_name": "Wente Sandstone Merlot",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "wente",
+        "sandstone"
+      ],
+      "bbox": {
+        "x": 0.208984375,
+        "y": 0.28515625,
+        "w": 0.06640625,
+        "h": 0.32421875
+      },
+      "v_idx": 0
+    },
+    {
+      "wine_name": "Casillero del Diablo Reserva Merlot",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "casillero",
+        "diablo"
+      ],
+      "bbox": {
+        "x": 0.271484375,
+        "y": 0.28515625,
+        "w": 0.064453125,
+        "h": 0.32421875
+      },
+      "v_idx": 1
+    },
+    {
+      "wine_name": "Marques de Casa Concha Merlot 2017",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "marques",
+        "concha"
+      ],
+      "bbox": {
+        "x": 0.10498046875,
+        "y": 0.291015625,
+        "w": 0.07861328125,
+        "h": 0.318359375
+      },
+      "v_idx": 3
+    },
+    {
+      "wine_name": "Casillero del Diablo Organic Merlot",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "casillero",
+        "diablo"
+      ],
+      "bbox": {
+        "x": 0.408203125,
+        "y": 0.6953125,
+        "w": 0.06640625,
+        "h": 0.3046875
+      },
+      "v_idx": 4
+    },
+    {
+      "wine_name": "Cecchi Chianti 2023",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "cecchi",
+        "chianti"
+      ],
+      "bbox": {
+        "x": 0.1953125,
+        "y": 0.7109375,
+        "w": 0.0703125,
+        "h": 0.28125
+      },
+      "v_idx": 5
+    },
+    {
+      "wine_name": "1000 Stories Zinfandel",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "stories",
+        "zinfandel"
+      ],
+      "bbox": {
+        "x": 0.07470703125,
+        "y": 0.7109375,
+        "w": 0.07373046875,
+        "h": 0.2890625
+      },
+      "v_idx": 6
+    },
+    {
+      "wine_name": "Finca Las Moras Malbec",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "finca",
+        "moras"
+      ],
+      "bbox": {
+        "x": 0.412109375,
+        "y": 0.00103759765625,
+        "w": 0.052734375,
+        "h": 0.21868896484375
+      },
+      "v_idx": 7
+    },
+    {
+      "wine_name": "El Enemigo Malbec 2022",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "enemigo",
+        "malbec"
+      ],
+      "bbox": {
+        "x": 0.625,
+        "y": 0.003204345703125,
+        "w": 0.05078125,
+        "h": 0.218475341796875
+      },
+      "v_idx": 8
+    }
+  ],
+  "overlay_target_count": 8
+}

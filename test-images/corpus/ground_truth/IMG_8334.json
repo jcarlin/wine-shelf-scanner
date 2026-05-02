@@ -1,0 +1,113 @@
+{
+  "image_file": "IMG_8334.HEIC",
+  "wines": [],
+  "overlay_targets": [
+    {
+      "wine_name": "Marie-Lou Parisot Cabernet Sauvignon 2023",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "parisot",
+        "cabernet",
+        "2023"
+      ],
+      "bbox": {
+        "x": 0.296875,
+        "y": 0.12451171875,
+        "w": 0.08203125,
+        "h": 0.21142578125
+      },
+      "v_idx": 0
+    },
+    {
+      "wine_name": "Marie-Lou Parisot Cotes du Rhone",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "parisot",
+        "cotes",
+        "rhone"
+      ],
+      "bbox": {
+        "x": 0.212890625,
+        "y": 0.10009765625,
+        "w": 0.087890625,
+        "h": 0.23779296875
+      },
+      "v_idx": 1
+    },
+    {
+      "wine_name": "Artis Beefsteak Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "artis",
+        "beefsteak"
+      ],
+      "bbox": {
+        "x": 0.453125,
+        "y": 0.10693359375,
+        "w": 0.078125,
+        "h": 0.23291015625
+      },
+      "v_idx": 2
+    },
+    {
+      "wine_name": "Predator Cabernet Sauvignon Lodi",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "predator",
+        "cabernet"
+      ],
+      "bbox": {
+        "x": 0.6015625,
+        "y": 0.10205078125,
+        "w": 0.07421875,
+        "h": 0.21826171875
+      },
+      "v_idx": 3
+    },
+    {
+      "wine_name": "Arrogant Frog Pinot Noir",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "arrogant",
+        "frog"
+      ],
+      "bbox": {
+        "x": 0.52734375,
+        "y": 0.10498046875,
+        "w": 0.078125,
+        "h": 0.23291015625
+      },
+      "v_idx": 4
+    },
+    {
+      "wine_name": "Talamonti",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "talamonti"
+      ],
+      "bbox": {
+        "x": 0.74609375,
+        "y": 0.41015625,
+        "w": 0.08203125,
+        "h": 0.19921875
+      },
+      "v_idx": 5
+    },
+    {
+      "wine_name": "Louis Latour Bourgogne Pinot Noir",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "latour",
+        "bourgogne"
+      ],
+      "bbox": {
+        "x": 0.057861328125,
+        "y": 0.10302734375,
+        "w": 0.082763671875,
+        "h": 0.23876953125
+      },
+      "v_idx": 6
+    }
+  ],
+  "overlay_target_count": 7
+}

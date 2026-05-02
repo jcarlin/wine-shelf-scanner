@@ -1,0 +1,132 @@
+{
+  "image_file": "IMG_8123.HEIC",
+  "wines": [],
+  "overlay_targets": [
+    {
+      "wine_name": "Bread & Butter Chardonnay 2022",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "bread",
+        "butter",
+        "chardonnay"
+      ],
+      "bbox": {
+        "x": 0.5859375,
+        "y": 0.12451171875,
+        "w": 0.10546875,
+        "h": 0.25048828125
+      },
+      "v_idx": 0
+    },
+    {
+      "wine_name": "Decoy Chardonnay 2022",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "decoy",
+        "chardonnay"
+      ],
+      "bbox": {
+        "x": 0.330078125,
+        "y": 0.11767578125,
+        "w": 0.107421875,
+        "h": 0.27294921875
+      },
+      "v_idx": 1
+    },
+    {
+      "wine_name": "Casal Mendes Vinho Verde",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "casal",
+        "mendes",
+        "verde"
+      ],
+      "bbox": {
+        "x": 0.1337890625,
+        "y": 0.73828125,
+        "w": 0.0908203125,
+        "h": 0.19140625
+      },
+      "v_idx": 2
+    },
+    {
+      "wine_name": "Frontera Chardonnay",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "frontera",
+        "chardonnay"
+      ],
+      "bbox": {
+        "x": 0.82421875,
+        "y": 0.734375,
+        "w": 0.08203125,
+        "h": 0.24609375
+      },
+      "v_idx": 3
+    },
+    {
+      "wine_name": "Casal Mendes Rose",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "casal",
+        "mendes",
+        "rose"
+      ],
+      "bbox": {
+        "x": 0.04833984375,
+        "y": 0.73046875,
+        "w": 0.09423828125,
+        "h": 0.1953125
+      },
+      "v_idx": 4
+    },
+    {
+      "wine_name": "Santa Julia Gran Syrah",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "gran",
+        "syrah"
+      ],
+      "bbox": {
+        "x": 0.39453125,
+        "y": 0.73046875,
+        "w": 0.091796875,
+        "h": 0.24609375
+      },
+      "v_idx": 5
+    },
+    {
+      "wine_name": "Bread & Butter Chardonnay 2022",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "bread",
+        "butter",
+        "chardonnay"
+      ],
+      "bbox": {
+        "x": 0.703125,
+        "y": 0.1357421875,
+        "w": 0.12890625,
+        "h": 0.2373046875
+      },
+      "v_idx": 6
+    },
+    {
+      "wine_name": "Casal Mendes Vinho Verde",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "casal",
+        "mendes",
+        "verde"
+      ],
+      "bbox": {
+        "x": 0.388671875,
+        "y": 0.474609375,
+        "w": 0.091796875,
+        "h": 0.224609375
+      },
+      "v_idx": 7
+    }
+  ],
+  "overlay_target_count": 8
+}

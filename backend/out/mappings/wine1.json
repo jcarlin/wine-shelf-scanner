@@ -1,0 +1,12 @@
+{
+  "image_file": "wine1.jpeg",
+  "notes": "6 bottles, all Pinot Noir, very clean OCR. Gemini found 6 wines that match 1:1 to V bottles by OCR text.",
+  "targets": [
+    {"wine_name": "Elouan Pinot Noir Oregon 2018", "v_idx": 0, "distinctive_tokens": ["elouan", "oregon"]},
+    {"wine_name": "Crimson Ranch California Pinot Noir 2019", "v_idx": 1, "distinctive_tokens": ["crimson", "ranch"]},
+    {"wine_name": "The Willamette Journal Pinot Noir", "v_idx": 2, "distinctive_tokens": ["willamette", "journal"]},
+    {"wine_name": "Vennstone Pinot Noir Sonoma County", "v_idx": 3, "distinctive_tokens": ["vennstone", "sonoma"]},
+    {"wine_name": "Ropiteau Plante Noble Pinot Noir 2019", "v_idx": 4, "distinctive_tokens": ["ropiteau", "plante"]},
+    {"wine_name": "Precipice California Pinot Noir", "v_idx": 5, "distinctive_tokens": ["precipice"]}
+  ]
+}

@@ -1,0 +1,97 @@
+{
+  "image_file": "IMG_8335.HEIC",
+  "wines": [],
+  "overlay_targets": [
+    {
+      "wine_name": "Beronia Reserva 2020",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "beronia",
+        "reserva"
+      ],
+      "bbox": {
+        "x": 0.310546875,
+        "y": 5.435943603515625e-05,
+        "w": 0.08984375,
+        "h": 0.23041439056396484
+      },
+      "v_idx": 1
+    },
+    {
+      "wine_name": "Mimado Garnacha",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "mimado",
+        "garnacha"
+      ],
+      "bbox": {
+        "x": 0.88671875,
+        "y": 0.0,
+        "w": 0.1015625,
+        "h": 0.2265625
+      },
+      "v_idx": 2
+    },
+    {
+      "wine_name": "Tinto Quera",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "tinto",
+        "quera"
+      ],
+      "bbox": {
+        "x": 0.140625,
+        "y": 0.0002727508544921875,
+        "w": 0.0927734375,
+        "h": 0.2262897491455078
+      },
+      "v_idx": 3
+    },
+    {
+      "wine_name": "Beronia Mazuelo Reserva",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "beronia",
+        "mazuelo"
+      ],
+      "bbox": {
+        "x": 0.392578125,
+        "y": 0.00058746337890625,
+        "w": 0.08984375,
+        "h": 0.22402191162109375
+      },
+      "v_idx": 4
+    },
+    {
+      "wine_name": "Quinta Quietud Tinta de Toro",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "quinta",
+        "quietud"
+      ],
+      "bbox": {
+        "x": 0.1630859375,
+        "y": 0.318359375,
+        "w": 0.0927734375,
+        "h": 0.236328125
+      },
+      "v_idx": 5
+    },
+    {
+      "wine_name": "Tunante de Azarache Tempranillo",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "tunante",
+        "azarache"
+      ],
+      "bbox": {
+        "x": 0.1962890625,
+        "y": 0.61328125,
+        "w": 0.0830078125,
+        "h": 0.23828125
+      },
+      "v_idx": 7
+    }
+  ],
+  "overlay_target_count": 6
+}

@@ -1,0 +1,66 @@
+{
+  "image_file": "red-wine-shelf-in-a-supermarket-B7WY9Y.jpg",
+  "wines": [],
+  "overlay_targets": [
+    {
+      "wine_name": "Chateau Balan Bordeaux",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "chateau",
+        "balan"
+      ],
+      "bbox": {
+        "x": 0.28515625,
+        "y": 0.431640625,
+        "w": 0.068359375,
+        "h": 0.158203125
+      },
+      "v_idx": 0
+    },
+    {
+      "wine_name": "Ribeaupierre Medoc",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "ribeaupierre",
+        "medoc"
+      ],
+      "bbox": {
+        "x": 0.419921875,
+        "y": 0.43359375,
+        "w": 0.06640625,
+        "h": 0.1640625
+      },
+      "v_idx": 1
+    },
+    {
+      "wine_name": "Mouton Cadet",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "mouton",
+        "cadet"
+      ],
+      "bbox": {
+        "x": 0.5546875,
+        "y": 0.0,
+        "w": 0.06640625,
+        "h": 0.1640625
+      },
+      "v_idx": 2
+    },
+    {
+      "wine_name": "Medoc",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "medoc"
+      ],
+      "bbox": {
+        "x": 0.828125,
+        "y": 0.2294921875,
+        "w": 0.06640625,
+        "h": 0.1591796875
+      },
+      "v_idx": 3
+    }
+  ],
+  "overlay_target_count": 4
+}

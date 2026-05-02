@@ -1,0 +1,97 @@
+{
+  "image_file": "IMG_8080.jpg",
+  "wines": [],
+  "overlay_targets": [
+    {
+      "wine_name": "Giacondi Sangiovese Rubicone",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "giacondi",
+        "sangiovese"
+      ],
+      "bbox": {
+        "x": 0.5625,
+        "y": 0.068359375,
+        "w": 0.1015625,
+        "h": 0.486328125
+      },
+      "v_idx": 0
+    },
+    {
+      "wine_name": "Pedras Negras Sobre Monte",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "pedras",
+        "negras"
+      ],
+      "bbox": {
+        "x": 0.21875,
+        "y": 0.07080078125,
+        "w": 0.103515625,
+        "h": 0.54638671875
+      },
+      "v_idx": 1
+    },
+    {
+      "wine_name": "Dardinen Vina Cruz",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "dardinen",
+        "cruz"
+      ],
+      "bbox": {
+        "x": 0.671875,
+        "y": 0.068359375,
+        "w": 0.1015625,
+        "h": 0.513671875
+      },
+      "v_idx": 2
+    },
+    {
+      "wine_name": "Cloud Break Zinfandel California",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "cloud",
+        "break",
+        "zinfandel"
+      ],
+      "bbox": {
+        "x": 0.83984375,
+        "y": 0.318359375,
+        "w": 0.1015625,
+        "h": 0.611328125
+      },
+      "v_idx": 3
+    },
+    {
+      "wine_name": "Corte Balda Rosso Puglia",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "corte",
+        "balda"
+      ],
+      "bbox": {
+        "x": 0.38671875,
+        "y": 0.310546875,
+        "w": 0.107421875,
+        "h": 0.619140625
+      },
+      "v_idx": 4
+    },
+    {
+      "wine_name": "Escondida",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "escondida"
+      ],
+      "bbox": {
+        "x": 0.33203125,
+        "y": 0.0693359375,
+        "w": 0.09765625,
+        "h": 0.4892578125
+      },
+      "v_idx": 5
+    }
+  ],
+  "overlay_target_count": 6
+}

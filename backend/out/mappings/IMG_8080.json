@@ -1,0 +1,12 @@
+{
+  "image_file": "IMG_8080.jpg",
+  "notes": "6 Vision bottles, OCR clear enough to identify each.",
+  "targets": [
+    {"wine_name": "Giacondi Sangiovese Rubicone", "v_idx": 0, "distinctive_tokens": ["giacondi", "sangiovese"]},
+    {"wine_name": "Pedras Negras Sobre Monte", "v_idx": 1, "distinctive_tokens": ["pedras", "negras"]},
+    {"wine_name": "Dardinen Vina Cruz", "v_idx": 2, "distinctive_tokens": ["dardinen", "cruz"]},
+    {"wine_name": "Cloud Break Zinfandel California", "v_idx": 3, "distinctive_tokens": ["cloud", "break", "zinfandel"]},
+    {"wine_name": "Corte Balda Rosso Puglia", "v_idx": 4, "distinctive_tokens": ["corte", "balda"]},
+    {"wine_name": "Escondida", "v_idx": 5, "distinctive_tokens": ["escondida"]}
+  ]
+}

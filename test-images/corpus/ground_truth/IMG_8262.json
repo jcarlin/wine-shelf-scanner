@@ -1,0 +1,67 @@
+{
+  "image_file": "IMG_8262.HEIC",
+  "wines": [],
+  "overlay_targets": [
+    {
+      "wine_name": "Alamos Malbec",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "alamos",
+        "malbec"
+      ],
+      "bbox": {
+        "x": 0.73828125,
+        "y": 0.33203125,
+        "w": 0.046875,
+        "h": 0.203125
+      },
+      "v_idx": 0
+    },
+    {
+      "wine_name": "Trapiche Reserva Malbec",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "trapiche",
+        "reserva"
+      ],
+      "bbox": {
+        "x": 0.8203125,
+        "y": 0.330078125,
+        "w": 0.05078125,
+        "h": 0.212890625
+      },
+      "v_idx": 1
+    },
+    {
+      "wine_name": "Finca Las Moras Malbec",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "finca",
+        "moras"
+      ],
+      "bbox": {
+        "x": 0.5390625,
+        "y": 0.037109375,
+        "w": 0.046875,
+        "h": 0.2421875
+      },
+      "v_idx": 2
+    },
+    {
+      "wine_name": "Bosca Montmayou Malbec",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "bosca",
+        "montmayou"
+      ],
+      "bbox": {
+        "x": 0.287109375,
+        "y": 0.06005859375,
+        "w": 0.04296875,
+        "h": 0.20751953125
+      },
+      "v_idx": 3
+    }
+  ],
+  "overlay_target_count": 4
+}

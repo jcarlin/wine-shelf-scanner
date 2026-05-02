@@ -1,0 +1,114 @@
+{
+  "image_file": "IMG_8122.HEIC",
+  "wines": [],
+  "overlay_targets": [
+    {
+      "wine_name": "Santa Julia Malbec 2021",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "santa",
+        "julia",
+        "malbec"
+      ],
+      "bbox": {
+        "x": 0.19140625,
+        "y": 0.044189453125,
+        "w": 0.0556640625,
+        "h": 0.213623046875
+      },
+      "v_idx": 0
+    },
+    {
+      "wine_name": "Concha y Toro Frontera Merlot",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "frontera",
+        "merlot"
+      ],
+      "bbox": {
+        "x": 0.28125,
+        "y": 0.055419921875,
+        "w": 0.0546875,
+        "h": 0.223876953125
+      },
+      "v_idx": 1
+    },
+    {
+      "wine_name": "Santa Julia Malbec 2024",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "santa",
+        "julia",
+        "malbec"
+      ],
+      "bbox": {
+        "x": 0.0654296875,
+        "y": 0.0013275146484375,
+        "w": 0.072265625,
+        "h": 0.2389068603515625
+      },
+      "v_idx": 2
+    },
+    {
+      "wine_name": "Casillero del Diablo Reserva Merlot",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "casillero",
+        "diablo"
+      ],
+      "bbox": {
+        "x": 0.053955078125,
+        "y": 0.69921875,
+        "w": 0.084716796875,
+        "h": 0.30078125
+      },
+      "v_idx": 3
+    },
+    {
+      "wine_name": "Familia Arizu Algarrobo",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "arizu",
+        "algarrobo"
+      ],
+      "bbox": {
+        "x": 0.1484375,
+        "y": 0.7109375,
+        "w": 0.0693359375,
+        "h": 0.28125
+      },
+      "v_idx": 4
+    },
+    {
+      "wine_name": "El Enemigo Malbec 2022",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "enemigo",
+        "malbec"
+      ],
+      "bbox": {
+        "x": 0.2451171875,
+        "y": 0.05712890625,
+        "w": 0.0439453125,
+        "h": 0.21044921875
+      },
+      "v_idx": 5
+    },
+    {
+      "wine_name": "Frontera Merlot",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "frontera",
+        "merlot"
+      ],
+      "bbox": {
+        "x": 0.33203125,
+        "y": 0.061767578125,
+        "w": 0.048828125,
+        "h": 0.223388671875
+      },
+      "v_idx": 6
+    }
+  ],
+  "overlay_target_count": 7
+}

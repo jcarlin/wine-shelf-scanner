@@ -1,0 +1,126 @@
+{
+  "image_file": "IMG_8124.HEIC",
+  "wines": [],
+  "overlay_targets": [
+    {
+      "wine_name": "Joel Gott 815 Cabernet Sauvignon 2021",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "joel",
+        "gott"
+      ],
+      "bbox": {
+        "x": 0.45703125,
+        "y": 0.6640625,
+        "w": 0.1015625,
+        "h": 0.28125
+      },
+      "v_idx": 0
+    },
+    {
+      "wine_name": "J. Lohr Cabernet Sauvignon Paso Robles",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "lohr",
+        "paso"
+      ],
+      "bbox": {
+        "x": 0.76953125,
+        "y": 0.66015625,
+        "w": 0.10546875,
+        "h": 0.2890625
+      },
+      "v_idx": 1
+    },
+    {
+      "wine_name": "Vina Maipo Classic Series Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "maipo",
+        "classic"
+      ],
+      "bbox": {
+        "x": 0.134765625,
+        "y": 0.08642578125,
+        "w": 0.0986328125,
+        "h": 0.21435546875
+      },
+      "v_idx": 2
+    },
+    {
+      "wine_name": "Navarro Correas Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "navarro",
+        "correas"
+      ],
+      "bbox": {
+        "x": 0.388671875,
+        "y": 0.359375,
+        "w": 0.083984375,
+        "h": 0.25390625
+      },
+      "v_idx": 3
+    },
+    {
+      "wine_name": "Kendall-Jackson Vintner's Reserve Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "kendall",
+        "jackson"
+      ],
+      "bbox": {
+        "x": 0.2734375,
+        "y": 0.69140625,
+        "w": 0.09375,
+        "h": 0.3046875
+      },
+      "v_idx": 4
+    },
+    {
+      "wine_name": "Wente Cabernet Sauvignon Southern Hills",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "wente",
+        "southern"
+      ],
+      "bbox": {
+        "x": 0.0023651123046875,
+        "y": 0.7109375,
+        "w": 0.0728302001953125,
+        "h": 0.2890625
+      },
+      "v_idx": 6
+    },
+    {
+      "wine_name": "Vina Maipo Classic Series Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "maipo",
+        "classic"
+      ],
+      "bbox": {
+        "x": 0.0242919921875,
+        "y": 0.08056640625,
+        "w": 0.1153564453125,
+        "h": 0.22021484375
+      },
+      "v_idx": 7
+    },
+    {
+      "wine_name": "Caymus Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "caymus"
+      ],
+      "bbox": {
+        "x": 0.76171875,
+        "y": 0.1279296875,
+        "w": 0.0703125,
+        "h": 0.1826171875
+      },
+      "v_idx": 8
+    }
+  ],
+  "overlay_target_count": 8
+}

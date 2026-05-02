@@ -26,6 +26,8 @@ htmlcov/
 # Google Cloud credentials
 *.json
 !**/mocks/*.json
+!out/baseline.json
+!out/mappings/**/*.json
 
 # OS
 .DS_Store

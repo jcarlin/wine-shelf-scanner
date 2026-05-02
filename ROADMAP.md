@@ -7,7 +7,8 @@
 
 ## Active Plans
 
-- 🔶 [Overlay Accuracy Plan](docs/OVERLAY_ACCURACY_PLAN.md) — fix the bug where rating overlays land on wrong bottles. Phase 0 (setup) in progress; blocking Phase 7 TestFlight ship.
+- 🔶 [Single-LLM Pivot Plan](docs/SINGLE_LLM_PIVOT_PLAN.md) — replace the multi-stage pipeline (Vision API + Gemini Flash + Hungarian merge) with a single multimodal LLM call (Sonnet 4.6 default, swappable via `SINGLE_LLM_MODEL` env). Adds vintage as a first-class field. Resolves the overlay placement bug architecturally. ~1,200 net lines deleted. Blocking Phase 7 TestFlight ship.
+- ✅ [Overlay Accuracy Plan](docs/OVERLAY_ACCURACY_PLAN.md) — Phase 0 (setup) and Phase 1 (eval harness + 45% baseline) done. Phases 2–3 superseded by the single-LLM pivot above. Phases 4–5 (frontend polish + iOS) still queued post-pivot.
 
 ---
 

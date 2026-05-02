@@ -4,18 +4,18 @@
 
 ## Status
 
-- **Current phase:** Phase 1 (Eval Harness & Baseline) — done. Phase 2 ready to start.
+- **Current phase:** **Phases 2 and 3 are OBSOLETE.** A controlled experiment (2026-05-02) showed a single multimodal LLM call (Sonnet 4.6 / Opus 4.7) replaces the entire multi-stage pipeline more accurately. Work has pivoted to the single-LLM rearchitecture. **See [`SINGLE_LLM_PIVOT_PLAN.md`](SINGLE_LLM_PIVOT_PLAN.md) — that is now the canonical plan for fixing the overlay placement bug.**
 - **Branch:** `rating-overlays`
 - **Last update:** 2026-05-02
 
 | Phase | Name | Status | Notes |
 |---|---|---|---|
 | 0 | Setup & plan installation | ✅ Done | Gate 0 green. Baseline (band-aids from 85ad66f follow-up) committed. |
-| 1 | Eval harness & baseline | ✅ Done | 10-image baseline: acc=45.3%, swap=9.4%, miss=45.3%, mean_iou=0.947. |
-| 2 | Diagnose failure modes | 🔶 Ready to start | |
-| 3 | Targeted spatial-merge fix | ⏳ | |
-| 4 | Frontend polish | ⏳ | |
-| 5 | iOS end-to-end + production | ⏳ | |
+| 1 | Eval harness & baseline | ✅ Done | 10-image baseline: acc=45.3%, swap=9.4%, miss=45.3%, mean_iou=0.947. Eval harness is REUSED by the new plan to benchmark new vs old pipeline accuracy. |
+| 2 | Diagnose failure modes | 🚫 Obsolete | Pivoted to single-LLM architecture; no spatial merge to diagnose. |
+| 3 | Targeted spatial-merge fix | 🚫 Obsolete | Pivoted to single-LLM architecture; no spatial merge to fix. |
+| 4 | Frontend polish | ⏳ | Still relevant (iOS opacity reconciliation, EXIF audit, visual regression). Will run after the pivot ships. |
+| 5 | iOS end-to-end + production | ⏳ | Still relevant. Will run after the pivot ships. |
 
 ---
 

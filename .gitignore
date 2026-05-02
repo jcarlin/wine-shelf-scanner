@@ -59,6 +59,7 @@ test-images/corpus/*
 docs/*
 !docs/FEATURE_PLAN.md
 !docs/OVERLAY_ACCURACY_PLAN.md
+!docs/SINGLE_LLM_PIVOT_PLAN.md
 
 
 backend/app/data/wines.db

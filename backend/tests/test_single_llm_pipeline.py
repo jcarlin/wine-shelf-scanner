@@ -236,10 +236,11 @@ class TestSingleLLMModelSelection:
         # not whatever the developer has set in .env.
         monkeypatch.delenv("SINGLE_LLM_MODEL", raising=False)
         pipeline = SingleLLMPipeline(wine_matcher=WineMatcher(), use_llm_cache=False)
-        # Default points at Haiku 4.5 (cheapest, fast vision). Override via
-        # SINGLE_LLM_MODEL env var to use Sonnet 4.6, Opus 4.7, Gemini, etc.
-        assert pipeline._select_model() == "anthropic/claude-haiku-4-5-20251001"
-        assert Config.single_llm_model() == "anthropic/claude-haiku-4-5-20251001"
+        # Default points at Sonnet 4.6 (strong 2D bbox quality on dense shelves).
+        # Haiku 4.5 was tried but degenerates to 1D-lane output — see CLAUDE.md
+        # "Known limitations" and docs/SINGLE_LLM_PIVOT_PLAN.md "Notes — Phase F".
+        assert pipeline._select_model() == "anthropic/claude-sonnet-4-6"
+        assert Config.single_llm_model() == "anthropic/claude-sonnet-4-6"
 
     def test_explicit_model_override(self):
         pipeline = SingleLLMPipeline(

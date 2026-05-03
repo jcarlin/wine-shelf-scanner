@@ -10,7 +10,7 @@
 
 ## Status
 
-- **Phase**: F (pending live API budget) — Phases A-E landed in commit `ec65c06`.
+- **Phase**: F (per-image validation done; full eval-harness comparison pending) — Phases A-E landed in commit `ec65c06`.
 - **Branch**: `rating-overlays`
 - **Last update**: 2026-05-02
 - **Implementing agent**: Claude Opus 4.7 (1M context)
@@ -22,8 +22,8 @@
 | C | Schema/model updates (vintage everywhere) | ✅ |
 | D | Frontend types (Next.js + iOS) | ✅ |
 | E | Tests (rewrite/delete) | ✅ |
-| F | Deploy + benchmark vs old pipeline | ⏳ (blocked on Anthropic credit) |
-| G | **Delete all dead code** (no orphans, no commented-out blocks, no unreferenced files) | ⏳ (after F soaks ≥ 24h) |
+| F | Deploy + benchmark vs old pipeline | 🟡 Partial — IMG_8080 validated on Sonnet 4.6 + Opus 4.7. Haiku 4.5 disqualified. Eval harness rewrite + 10-image baseline still pending. See "Notes — Phase F" below. |
+| G | **Delete all dead code** (no orphans, no commented-out blocks, no unreferenced files) | ⏳ (after F finalized) |
 
 ---
 
@@ -266,6 +266,31 @@ End-to-end test sequence after the implementing agent finishes Phases A–F:
 - **Vintage extraction quality.** Some labels don't show vintage (NV champagnes, generic table wines). LLM should return `null`; guard against the LLM hallucinating a vintage. Spot-check 5+ images during verification.
 - **`vision_cache` table data loss.** Dropping the table loses cached Vision API responses. Migration should be idempotent. If you want extra caution, keep the table and just stop writing to it.
 - **Hidden imports.** Some scripts (`backend/scripts/visualize_bboxes.py`, `annotate_overlays.py`) may import `flash_names_pipeline` directly. Phase G.13 audit catches this — ensure those scripts work or are deleted/rewritten.
+
+## Notes — Phase F (partial, 2026-05-02)
+
+Per-image validation completed for IMG_8080 (the dense 15-bottle shelf used as our reference image). Findings:
+
+- **Haiku 4.5 disqualified.** Two consecutive scans returned byte-identical bboxes — 12 vertical strips with `y=0, h=1, w=0.08`, varying only in `x` on an evenly-spaced 0.06 grid. Haiku is not doing 2D spatial detection; it's emitting 1D lane indices. With our overlay-anchor formula every star ends up at `y = 0.25` of image height. This is a fundamental model-capability ceiling at temperature=0.1, not sampling drift. The cost-optimization plan that swapped the default to Haiku is hereby reverted.
+- **Sonnet 4.6 ✅** — 11 bottles detected, real 2D bboxes. y range 0.05–0.25 (5 distinct values), h range 0.68–0.78 (4 distinct), back-row/front-row split 3/8. Latency: ~18s. Estimated cost ~$0.02–0.04/scan. New default.
+- **Opus 4.7 ✅** — 12 bottles, also real 2D. Slightly better recall (catches one more occluded back-row bottle). Latency: ~25.8s. Estimated cost ~$0.05–0.07/scan. Keep available as `SINGLE_LLM_MODEL` override; don't make it the default (latency).
+- **`temperature` deprecation gotcha for Opus 4.7+.** Anthropic's API returns 400 if `temperature` is sent. The pipeline now (a) only passes `temperature` for non-`opus-4-7` models and (b) sets `drop_params=True` on the litellm call for forward-compat against future Anthropic deprecations.
+- **Token-usage logging added** in `_call_llm`. Every successful call now logs `prompt`/`completion`/`cached` token counts at INFO level. Removes the "estimate cost from response byte size" guesswork.
+
+What's still pending for full Phase F closure:
+
+- **Eval harness rewrite.** `backend/scripts/eval_overlays.py` still imports `FlashNamesPipeline` (line 40) and runs the legacy pipeline. Needs to be pointed at `SingleLLMPipeline` so `--all` produces a SingleLLM baseline JSON we can `--compare` against `out/baseline.json`. Until this lands, Phase F can't be marked ✅.
+- **Multi-image validation.** Only IMG_8080 has been validated end-to-end. Run the full GT corpus (10 images) with Sonnet once the eval harness is updated. Budget: ~$0.20–0.40 total.
+- **Production Cloud Run deploy.** Local dev only so far; production still on `flash_names`. Don't deploy until eval-harness validation is clean.
+- **24h soak.** Plan requires 24h of healthy production runs before Phase G can begin.
+
+References:
+
+- Diagnosis plan + execution log: `~/.claude/plans/oh-shit-should-we-magical-squid.md`.
+- Reference baseline: `test-images/corpus/baselines/IMG_8080_opus_4_7.json` (15 bottles, hand-curated upper-bound; bbox format `{x,y,w,h}` not `{x,y,width,height}`).
+- Captured live responses (not committed; for one-session diff only): `/tmp/img_8080_opus.json`, `/tmp/img_8080_sonnet.json`.
+
+---
 
 ## Open Questions (decide before starting Phase A)
 

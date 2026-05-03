@@ -88,23 +88,25 @@ See `ROADMAP.md` for current project status and next steps.
 
 The backend has been rearchitected to use **one multimodal LLM call per scan** (`PIPELINE_MODE=single_llm`, default). The previous multi-stage flash_names pipeline (Vision API + Gemini Flash + Hungarian spatial-merge) is being deprecated and will be deleted in Phase G of the pivot.
 
-- **Default model**: `anthropic/claude-haiku-4-5-20251001` (cheapest tier; ~$0.006/scan). Swap via `SINGLE_LLM_MODEL` env to `anthropic/claude-sonnet-4-6` (~$0.018), `anthropic/claude-opus-4-7` (strongest), `gemini/gemini-2.5-pro`, etc.
-- **Pipeline file**: `backend/app/services/single_llm_pipeline.py`. Single class, no fallback to legacy on failure (errors propagate so they surface).
+- **Default model**: `anthropic/claude-sonnet-4-6` (strong 2D bbox quality, ~$0.02–0.04/scan, ~18s latency). Swap via `SINGLE_LLM_MODEL` env to `anthropic/claude-opus-4-7` (strongest, ~$0.05–0.07, ~25s), `gemini/gemini-2.5-pro`, etc. **Do NOT use `anthropic/claude-haiku-4-5-20251001`** — see Known limitations.
+- **Pipeline file**: `backend/app/services/single_llm_pipeline.py`. Single class, no fallback to legacy on failure (errors propagate so they surface). Logs `prompt`/`completion`/`cached` token counts on every successful call so cost is observable from logs.
 - **Vintage** is a first-class field on the response (`WineResult.vintage`), populated when the model can read a year off the label.
+- **`temperature` deprecation**: Anthropic deprecated `temperature` for Opus 4.7+ (returns 400 if passed). The pipeline conditionally skips it for `opus-4-7` models and passes `drop_params=True` to litellm for forward-compat.
 
 **Status of the pivot (`docs/SINGLE_LLM_PIVOT_PLAN.md`):**
 - Phases A-E (build pipeline, route, schema, frontend types, tests) — ✅ landed in commit `ec65c06`.
-- Phase F (live benchmark vs `out/baseline.json`) — ⏳ blocked on Anthropic credit.
+- Phase F (live benchmark vs `out/baseline.json`) — ⏳ partial: per-image validation done on IMG_8080 with Sonnet 4.6 + Opus 4.7. Full eval-harness comparison still pending (eval_overlays.py uses FlashNamesPipeline; needs Phase F follow-up to point at SingleLLMPipeline).
 - Phase G (delete `flash_names_pipeline.py`, `turbo_pipeline.py`, `claude_vision.py`, `ocr_processor.py`, `vision.py`) — ⏳ deferred until F validates the new pipeline.
 
-**Cost-optimization plan applied** (`~/.claude/plans/ok-lets-not-limit-crystalline-cocke.md`): trimmed prompt (no `blurb`, strict JSON-only output rules), `max_tokens=2500`, truncation canary in `_call_llm`. Default model swapped to Haiku 4.5.
+**Cost-optimization plan applied** (`~/.claude/plans/ok-lets-not-limit-crystalline-cocke.md`): trimmed prompt (no `blurb`, strict JSON-only output rules), `max_tokens=2500`, truncation canary in `_call_llm`. The default-model-to-Haiku piece of that plan was reverted after diagnosis showed Haiku produces degenerate output (see Known limitations).
 
 ### Known limitations
 
-- **Claude bbox precision is intrinsically limited.** Anthropic's vision docs admit "Claude's spatial reasoning abilities are limited." The single-LLM pivot fixed the *swap* bug (Hungarian merge misrouting names to bottles) but does NOT fix bbox precision itself. Dense shelves still see imperfect overlay placement.
-- **Mitigation paths if bbox accuracy matters:**
-  1. Try Sonnet 4.6 or Opus 4.7 (slightly better than Haiku at spatial reasoning).
-  2. Hybrid YOLO + per-crop architecture: object detection (YOLO/Apple Vision) for sub-pixel-accurate bboxes, then LLM only for label OCR per crop. Not yet planned/built.
+- **Haiku 4.5 cannot do 2D spatial detection on dense shelves.** Diagnosed 2026-05-02 on IMG_8080: two consecutive Haiku calls returned byte-identical bboxes — 12 vertical strips with `y=0, h=1, w=0.08`, varying only in `x` on an evenly-spaced 0.06 grid. The model collapses to 1D lane indices instead of producing 2D bboxes. With the overlay-anchor formula (`y + h*0.25`), every star ends up at 25% of image height regardless of which bottle the wine belongs to. **Do not use Haiku 4.5 for this app.** Sonnet 4.6 and Opus 4.7 produce clean two-row output on the same image.
+- **Claude bbox precision is still imperfect even on Sonnet/Opus.** Anthropic's vision docs admit "Claude's spatial reasoning abilities are limited." The single-LLM pivot fixed the *swap* bug (Hungarian merge misrouting names to bottles) but does NOT fix bbox precision itself. Dense shelves still see some overlay misplacement at the per-bottle level.
+- **Mitigation paths if bbox accuracy matters more:**
+  1. Use Opus 4.7 instead of Sonnet 4.6 (~3× cost, ~1.5× latency, marginally better).
+  2. Hybrid YOLO + per-crop architecture: object detection (YOLO/Apple Vision) for sub-pixel-accurate bboxes, then LLM only for label OCR per crop. Not yet planned/built (would be a Phase H plan).
 
 ### Reference baselines
 

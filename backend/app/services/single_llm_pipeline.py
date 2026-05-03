@@ -301,7 +301,7 @@ class SingleLLMPipeline:
         # _compress_image_for_vision always emits JPEG.
         media_type = "image/jpeg"
 
-        response = await litellm.acompletion(
+        kwargs = dict(
             model=model,
             messages=[
                 {
@@ -321,15 +321,37 @@ class SingleLLMPipeline:
                 }
             ],
             max_tokens=self.max_tokens,
-            temperature=self.temperature,
+            drop_params=True,
         )
+        # Anthropic deprecated `temperature` for Opus 4.7+ (returns 400 if
+        # passed). Keep it for older models where it still tightens determinism.
+        if "opus-4-7" not in model:
+            kwargs["temperature"] = self.temperature
+
+        response = await litellm.acompletion(**kwargs)
+
+        # Log token usage on every successful call so we can see real cost
+        # without estimating from response byte size. Guarded with isinstance —
+        # some providers / mocks omit usage.
+        usage = getattr(response, "usage", None)
+        prompt_tokens = getattr(usage, "prompt_tokens", None) if usage else None
+        completion_tokens = getattr(usage, "completion_tokens", None) if usage else None
+        cached_tokens = None
+        prompt_details = getattr(usage, "prompt_tokens_details", None) if usage else None
+        if prompt_details is not None:
+            cached_tokens = getattr(prompt_details, "cached_tokens", None)
+        if isinstance(prompt_tokens, (int, float)) or isinstance(completion_tokens, (int, float)):
+            logger.info(
+                "SingleLLMPipeline: %s usage prompt=%s completion=%s cached=%s",
+                model,
+                prompt_tokens,
+                completion_tokens,
+                cached_tokens,
+            )
 
         # Truncation canary: if Sonnet/Haiku spent ≥ 95% of the output budget,
         # the JSON is probably cut mid-array and the parser will silently drop
         # entries. Surface it so we can bump max_tokens before users notice.
-        # Guarded with isinstance — some providers / mocks omit usage.
-        usage = getattr(response, "usage", None)
-        completion_tokens = getattr(usage, "completion_tokens", None) if usage else None
         if isinstance(completion_tokens, (int, float)) and \
                 completion_tokens >= self.max_tokens * 0.95:
             logger.warning(

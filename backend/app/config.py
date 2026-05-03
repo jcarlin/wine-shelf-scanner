@@ -165,12 +165,13 @@ class Config:
         """Multimodal model for the single-LLM pipeline.
 
         Any LiteLLM-supported multimodal model works — e.g.:
-          - anthropic/claude-haiku-4-5-20251001 (default — cheapest, fast vision)
-          - anthropic/claude-sonnet-4-6 (stronger, ~3× more expensive)
-          - anthropic/claude-opus-4-7 (strongest, much more expensive)
+          - anthropic/claude-sonnet-4-6 (default — strong 2D bbox quality, ~$0.02-0.04/scan)
+          - anthropic/claude-opus-4-7 (strongest, ~$0.05-0.07/scan, ~25s latency)
+          - anthropic/claude-haiku-4-5-20251001 (NOT recommended — degenerates to
+            1D-lane bboxes on dense shelves; see CLAUDE.md "Known limitations")
           - gemini/gemini-2.5-pro
         """
-        return os.getenv("SINGLE_LLM_MODEL", "anthropic/claude-haiku-4-5-20251001")
+        return os.getenv("SINGLE_LLM_MODEL", "anthropic/claude-sonnet-4-6")
 
     # === Fast Pipeline ===
     @staticmethod

@@ -1,0 +1,133 @@
+{
+  "_meta": {
+    "image_file": "IMG_8080.jpg",
+    "model": "anthropic/claude-opus-4-7",
+    "captured": "2026-05-02",
+    "purpose": "Upper-bound baseline. Use to compare new pipeline outputs (Haiku/Sonnet/Gemini) on the same image.",
+    "bbox_format": "{x, y, w, h} normalized 0-1 — note 'w'/'h' (NOT 'width'/'height' per the API contract). Convert before direct comparison."
+  },
+  "image_file": "IMG_8080.jpg",
+  "image_aspect_ratio": "landscape, approximately 1.6:1",
+  "bottles": [
+    {
+      "bbox": {"x": 0.00, "y": 0.22, "w": 0.10, "h": 0.78},
+      "wine_name": "Marchigue Mahuida Syrah (Organic)",
+      "visible_label": "FINCA, MARCHIGUE, MAHUIDA, SYRAH, MADE WITH ORGANIC GRAPES",
+      "confidence": "high",
+      "occlusion": "none",
+      "position_hint": "front row, 1st bottle from left, green capsule"
+    },
+    {
+      "bbox": {"x": 0.04, "y": 0.05, "w": 0.08, "h": 0.65},
+      "wine_name": "Pedras Negras Vinho Tinto (back row)",
+      "visible_label": "PEDRAS, NEGRAS",
+      "confidence": "medium",
+      "occlusion": "partial",
+      "position_hint": "back row, 1st from left, gold capsule, partially behind Mahuida"
+    },
+    {
+      "bbox": {"x": 0.09, "y": 0.18, "w": 0.10, "h": 0.82},
+      "wine_name": "Giacondi Sangiovese Rubicone",
+      "visible_label": "GIACONDI, AUTENTICO ITALIANO, SANGIOVESE, RUBICONE",
+      "confidence": "high",
+      "occlusion": "none",
+      "position_hint": "front row, 2nd from left, burgundy capsule"
+    },
+    {
+      "bbox": {"x": 0.14, "y": 0.04, "w": 0.08, "h": 0.63},
+      "wine_name": "Sobre Monte Garnacha Cabernet Sauvignon",
+      "visible_label": "SOBRE, MONTE, GARNACHA, CABERNET SAUVIGNON",
+      "confidence": "high",
+      "occlusion": "partial",
+      "position_hint": "back row, 2nd from left, partially behind Giacondi front"
+    },
+    {
+      "bbox": {"x": 0.20, "y": 0.14, "w": 0.10, "h": 0.86},
+      "wine_name": "Viña Cruz Tempranillo",
+      "visible_label": "VIÑA, CRUZ, TEMPRANILLO, EXCLUSIVE WINE",
+      "confidence": "high",
+      "occlusion": "none",
+      "position_hint": "front row, 3rd from left, black diamond-pattern label"
+    },
+    {
+      "bbox": {"x": 0.25, "y": 0.03, "w": 0.08, "h": 0.64},
+      "wine_name": "La Escondida Cabernet Sauvignon",
+      "visible_label": "LA ESCONDIDA, ARGENTINA, CABERNET, SAUVIGNON",
+      "confidence": "high",
+      "occlusion": "partial",
+      "position_hint": "back row, 3rd from left, gray capsule, behind Viña Cruz front"
+    },
+    {
+      "bbox": {"x": 0.31, "y": 0.12, "w": 0.10, "h": 0.88},
+      "wine_name": "Dardines Tempranillo Merlot",
+      "visible_label": "DARDINES, TEMPRANILLO, MERLOT",
+      "confidence": "high",
+      "occlusion": "none",
+      "position_hint": "front row, 4th from left, gold circular label on white"
+    },
+    {
+      "bbox": {"x": 0.37, "y": 0.02, "w": 0.08, "h": 0.66},
+      "wine_name": "DO MO (producer/vintage unreadable)",
+      "visible_label": "DO, MO",
+      "confidence": "medium",
+      "occlusion": "partial",
+      "position_hint": "back row, center, tall dark bottle, stylized DO MO label, pink capsule"
+    },
+    {
+      "bbox": {"x": 0.41, "y": 0.08, "w": 0.10, "h": 0.92},
+      "wine_name": "Corte Balda Rosso Puglia (Winemaker's Collection)",
+      "visible_label": "CORTE BALDA, ROSSO, PUGLIA, WINEMAKER'S COLLECTION, PRIMITIVO GRENICO SYRA",
+      "confidence": "high",
+      "occlusion": "none",
+      "position_hint": "front row, 5th from left, center, dark label, tallest bottle in image"
+    },
+    {
+      "bbox": {"x": 0.51, "y": 0.04, "w": 0.08, "h": 0.64},
+      "wine_name": "Giacondi Sangiovese Rubicone (back row)",
+      "visible_label": "GIACONDI, AUTENTICO ITALIANO, SANGIOVESE, RUBICONE",
+      "confidence": "high",
+      "occlusion": "partial",
+      "position_hint": "back row, center-right, behind Corte Balda, dark red capsule"
+    },
+    {
+      "bbox": {"x": 0.52, "y": 0.16, "w": 0.09, "h": 0.84},
+      "wine_name": "Brave Step Cabernet Sauvignon",
+      "visible_label": "BRAVE STEP, CABERNET SAUVIGNON",
+      "confidence": "high",
+      "occlusion": "none",
+      "position_hint": "front row, 6th from left, white label with horse illustration"
+    },
+    {
+      "bbox": {"x": 0.62, "y": 0.04, "w": 0.08, "h": 0.64},
+      "wine_name": "Viña Cruz (back row)",
+      "visible_label": "VIÑA, CRUZ, EXCLUSIVE WINE",
+      "confidence": "medium",
+      "occlusion": "partial",
+      "position_hint": "back row, right-center, behind Brave Step, white label visible"
+    },
+    {
+      "bbox": {"x": 0.62, "y": 0.18, "w": 0.10, "h": 0.82},
+      "wine_name": "Pedras Negras Vinho Tinto",
+      "visible_label": "PEDRAS, NEGRAS, VINHO TINTO",
+      "confidence": "high",
+      "occlusion": "none",
+      "position_hint": "front row, 7th from left, white label, dark capsule"
+    },
+    {
+      "bbox": {"x": 0.72, "y": 0.04, "w": 0.08, "h": 0.64},
+      "wine_name": "Dardines Tempranillo Merlot (back row)",
+      "visible_label": "DARDINES, TEMPRANILLO, MERLOT",
+      "confidence": "medium",
+      "occlusion": "partial",
+      "position_hint": "back row, 2nd from right, gold circular label, behind Pedras Negras front"
+    },
+    {
+      "bbox": {"x": 0.88, "y": 0.14, "w": 0.12, "h": 0.86},
+      "wine_name": "Cloud Break Zinfandel California Barrel Reserve",
+      "visible_label": "CLOUD BREAK, ZINFANDEL, CALIFORNIA, BARREL RESERVE",
+      "confidence": "high",
+      "occlusion": "none",
+      "position_hint": "front row, rightmost bottle, black label with white text"
+    }
+  ]
+}

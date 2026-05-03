@@ -10,20 +10,20 @@
 
 ## Status
 
-- **Phase**: A (not started)
-- **Branch**: `rating-overlays` (or current working branch — verify with `git branch`)
+- **Phase**: F (pending live API budget) — Phases A-E landed in commit `ec65c06`.
+- **Branch**: `rating-overlays`
 - **Last update**: 2026-05-02
-- **Implementing agent**: TBD (kickoff pending)
+- **Implementing agent**: Claude Opus 4.7 (1M context)
 
 | Phase | Name | Status |
 |---|---|---|
-| A | Build `single_llm_pipeline.py` | ⏳ |
-| B | Wire route, default `single_llm` mode, drop streaming | ⏳ |
-| C | Schema/model updates (vintage everywhere) | ⏳ |
-| D | Frontend types (Next.js + iOS) | ⏳ |
-| E | Tests (rewrite/delete) | ⏳ |
-| F | Deploy + benchmark vs old pipeline | ⏳ |
-| G | **Delete all dead code** (no orphans, no commented-out blocks, no unreferenced files) | ⏳ |
+| A | Build `single_llm_pipeline.py` | ✅ |
+| B | Wire route, default `single_llm` mode, drop streaming | ✅ |
+| C | Schema/model updates (vintage everywhere) | ✅ |
+| D | Frontend types (Next.js + iOS) | ✅ |
+| E | Tests (rewrite/delete) | ✅ |
+| F | Deploy + benchmark vs old pipeline | ⏳ (blocked on Anthropic credit) |
+| G | **Delete all dead code** (no orphans, no commented-out blocks, no unreferenced files) | ⏳ (after F soaks ≥ 24h) |
 
 ---
 
@@ -103,13 +103,13 @@ Each phase ends in a working state and is independently revertable. Estimated im
 
 ### Phase A — Build `single_llm_pipeline.py`
 
-- [ ] **A.1** Create `backend/app/services/single_llm_pipeline.py` based on `fast_pipeline.py` (which is 80% there).
-- [ ] **A.2** Add `Config.single_llm_model()` reading `SINGLE_LLM_MODEL` env var. Default `"anthropic/claude-sonnet-4-5-20250929"`.
-- [ ] **A.3** Update the prompt to require `vintage` (4-digit year string or `null`) in the JSON contract. Tighten prompt: "Be exhaustive — count and identify EVERY visible bottle including back rows and partially occluded bottles."
-- [ ] **A.4** Add `vintage` to response parser; default `None` if missing.
-- [ ] **A.5** Add tiny `_select_model(...)` shim returning a model name (default impl returns `Config.single_llm_model()`). Single-model implementation only — no fallback or ensemble.
-- [ ] **A.6** Drop everything Vision-related from the new file (no `_run_vision`, no spatial merge, no OCR processor calls).
-- [ ] **A.7** Reuse `llm_rating_cache` (SQLite). Extend `LLMRatingCache.set/get` signatures to round-trip `vintage`. Create a new Alembic migration adding `vintage TEXT` column to `llm_rating_cache`.
+- [x] **A.1** Create `backend/app/services/single_llm_pipeline.py` based on `fast_pipeline.py` (which is 80% there).
+- [x] **A.2** Add `Config.single_llm_model()` reading `SINGLE_LLM_MODEL` env var. Default changed to `"anthropic/claude-haiku-4-5-20251001"` (see Notes — Phase A.2).
+- [x] **A.3** Update the prompt to require `vintage` (4-digit year string or `null`) in the JSON contract. Tighten prompt: "Be exhaustive — count and identify EVERY visible bottle including back rows and partially occluded bottles."
+- [x] **A.4** Add `vintage` to response parser; default `None` if missing.
+- [x] **A.5** Add tiny `_select_model(...)` shim returning a model name (default impl returns `Config.single_llm_model()`). Single-model implementation only — no fallback or ensemble.
+- [x] **A.6** Drop everything Vision-related from the new file (no `_run_vision`, no spatial merge, no OCR processor calls).
+- [x] **A.7** Reuse `llm_rating_cache` (SQLite). Extend `LLMRatingCache.set/get` signatures to round-trip `vintage`. Create a new Alembic migration adding `vintage TEXT` column to `llm_rating_cache`.
 
 Critical files:
 - **CREATE** `backend/app/services/single_llm_pipeline.py` (~250 lines)
@@ -126,42 +126,39 @@ Reuses (do NOT rewrite these):
 
 ### Phase B — Route + remove old modes
 
-- [ ] **B.1** EDIT `backend/app/routes/scan.py`:
+- [x] **B.1** EDIT `backend/app/routes/scan.py`:
    - Implement `_run_single_llm_pipeline(image_bytes)` calling `SingleLLMPipeline.scan(...)` and the existing `_enrich_with_reviews()` post-step.
    - Add new pipeline mode `"single_llm"` in dispatch (around lines 826–877).
    - Make `"single_llm"` the new default when `PIPELINE_MODE` is unset.
-- [ ] **B.2** EDIT `backend/app/routes/scan_stream.py`:
+- [x] **B.2** EDIT `backend/app/routes/scan_stream.py`:
    - **Drop streaming entirely.** Single-LLM call is one-shot ~3–5 s; the 2-phase progressive contract was only meaningful when there was a fast Phase 1 (Vision-only) and slow Phase 2 (Gemini-enriched). With one call there's nothing to stream.
-   - Either delete the file, OR have `/scan/stream` return a 410 Gone response. Frontends call `/scan` instead.
-   - Update Next.js client (`nextjs/lib/api-client.ts:scanImageStream`) to call `/scan` synchronously; delete `partial_results` state machinery in `useScanState.ts`.
-- [ ] **B.3** EDIT `backend/app/config.py` — change `pipeline_mode()` default from `"flash_names"` to `"single_llm"`. Drop `FLASH_NAMES_MODEL`, `FAST_PIPELINE_MODEL`, `FAST_PIPELINE_TIMEOUT`, `FAST_PIPELINE_FALLBACK` env vars (no longer relevant). Keep `SINGLE_LLM_MODEL`, `LLM_IMAGE_MAX_DIM`, `LLM_IMAGE_QUALITY`.
+   - Deleted the file outright (chose delete over 410 Gone). Removed `scan_stream_router` from `routes/__init__.py` and `main.py`.
+   - Updated Next.js client (`nextjs/lib/api-client.ts`) — `scanImageStream` deleted entirely. `useScanState.ts` rewritten to call `scanImage` synchronously; `partial_results` state removed from `ScanState`. `ResultsView` lost `isPartial` prop.
+- [~] **B.3** EDIT `backend/app/config.py` — `pipeline_mode()` default flipped to `"single_llm"`. **Did NOT drop the legacy env-var helpers** (`FLASH_NAMES_MODEL`, `FAST_PIPELINE_MODEL`, etc.) because the legacy pipeline modules still import them; they're harmless dead config until Phase G deletes the modules. See Notes — Phase B.3.
 
 ### Phase C — Schema & model updates
 
-- [ ] **C.1** EDIT `backend/app/services/recognition_pipeline.py:RecognizedWine` (lines 192–211): add `vintage: Optional[str] = None`.
-- [ ] **C.2** EDIT `backend/app/models/response.py:WineResult`: add `vintage: Optional[str] = Field(None, description="Wine vintage year, e.g. '2021'")`.
-- [ ] **C.3** EDIT `backend/app/services/llm_rating_cache.py`: extend `set/get` signatures to round-trip `vintage`.
-- [ ] **C.4** CREATE Alembic migration adding `vintage TEXT` column to `llm_rating_cache`. Use `CREATE TABLE IF NOT EXISTS` style or `ALTER TABLE ... ADD COLUMN` per existing pattern in `alembic/versions/`.
-- [ ] **C.5** Optional: add `vintage TEXT` to `wines` table via separate migration so `WineMatcher` can return canonical vintages on DB-matched wines. Defer if the DB doesn't currently store vintage per wine — LLM-returned vintage is fine for now.
+- [x] **C.1** EDIT `backend/app/services/recognition_pipeline.py:RecognizedWine`: add `vintage: Optional[str] = None`.
+- [x] **C.2** EDIT `backend/app/models/response.py:WineResult`: add `vintage: Optional[str] = Field(None, ...)`.
+- [x] **C.3** EDIT `backend/app/services/llm_rating_cache.py`: extend `set/get` signatures to round-trip `vintage`. `CachedRating` dataclass also gained the field.
+- [x] **C.4** CREATE Alembic migration `007_add_vintage_to_llm_cache.py` (`ALTER TABLE llm_ratings_cache ADD COLUMN vintage TEXT`).
+- [ ] **C.5** Optional: add `vintage TEXT` to `wines` table via separate migration. **Deferred** — LLM-returned vintage is sufficient for now. Re-evaluate after seeing how often Vivino-DB-matched wines have known canonical vintages.
 
 ### Phase D — Frontend types
 
-- [ ] **D.1** EDIT `nextjs/lib/types.ts:WineResult` — add `vintage?: string;`.
-- [ ] **D.2** Optional: `nextjs/components/DetailSheet.tsx` (or wherever the detail modal renders) — show vintage under the wine name if present. Keep tiny.
-- [ ] **D.3** EDIT `ios/WineShelfScanner/Models/ScanResponse.swift` — add `let vintage: String?`. Decode-failable so existing responses without `vintage` still parse.
+- [x] **D.1** EDIT `nextjs/lib/types.ts:WineResult` — added `vintage?: string;`.
+- [ ] **D.2** Optional: `nextjs/components/DetailSheet.tsx` — show vintage under the wine name. **Deferred** — type is wired through, rendering can be a small follow-up.
+- [x] **D.3** EDIT `ios/WineShelfScanner/Models/ScanResponse.swift` — added `var vintage: String? = nil` + `case vintage` in `CodingKeys`. Decode-failable so older responses still parse.
 
 ### Phase E — Tests
 
-- [ ] **E.1** RENAME `backend/tests/test_fast_pipeline.py` → `test_single_llm_pipeline.py`. Tests:
-   - The pipeline calls `litellm.acompletion` with the model from `Config.single_llm_model()`.
-   - Vintage is parsed from the response into `RecognizedWine.vintage`.
-   - LLM error / unavailable model surfaces an error (no silent fallback).
-   - Cache hit returns vintage from `llm_rating_cache`.
-- [ ] **E.2** DELETE `backend/tests/test_flash_names_spatial.py` (~1,060 lines including Phase 0 band-aid tests).
-- [ ] **E.3** EDIT `backend/tests/test_recognition_pipeline.py` — drop tests for any `_spatial_merge` / `_ocr_text_merge` / `_find_ocr_label_bbox` references. Keep `RecognizedWine` field tests; add vintage assertion.
-- [ ] **E.4** EDIT `backend/tests/test_scan.py` — verify route dispatches to `single_llm` by default.
-- [ ] **E.5** EDIT `backend/tests/test_overlay_metrics.py` — no change needed; metric semantics unchanged.
-- [ ] **E.6** ADD an integration test in `test_single_llm_pipeline.py` that mocks a Sonnet response containing a vintage field and verifies the route returns `vintage` in `results[].vintage`.
+- [x] **E.1** RENAME `backend/tests/test_fast_pipeline.py` → `test_single_llm_pipeline.py`. Covers: model from `Config.single_llm_model()`, vintage parsing, LLM-error propagation (no silent fallback), cache vintage round-trip, integration with mocked litellm.
+- [x] **E.2** DELETE `backend/tests/test_flash_names_spatial.py` (~1,060 lines).
+- [x] **E.3** EDIT `backend/tests/test_recognition_pipeline.py` — added vintage type assertion to `test_recognized_wine_has_all_fields`. No spatial-merge tests existed in this file to drop.
+- [x] **E.4** EDIT `backend/tests/test_scan.py` — added `TestPipelineDispatch` class verifying `Config.pipeline_mode()` defaults to `single_llm` and the route routes through `SingleLLMPipeline.scan`.
+- [x] **E.5** EDIT `backend/tests/test_overlay_metrics.py` — confirmed no change needed.
+- [x] **E.6** Integration test added in `test_single_llm_pipeline.py::TestSingleLLMIntegration::test_full_scan_flow_with_vintage` — mocks litellm response with vintages and verifies they reach `RecognizedWine.vintage`.
+- [x] **E.7 (added)** `backend/tests/test_scan_e2e.py` — added autouse fixture mocking `SingleLLMPipeline.scan` so e2e tests no longer hit a real API. Surfaced when `test_accepts_png` started returning 500 instead of 200 (single_llm has no silent fallback, unlike `flash_names`).
 
 ### Phase F — Deploy + Benchmark
 

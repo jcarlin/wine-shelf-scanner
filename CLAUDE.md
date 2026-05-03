@@ -84,6 +84,32 @@ If it doesn't help the user choose a bottle faster, leave it out.
 
 See `ROADMAP.md` for current project status and next steps.
 
+### Current architecture (2026-05-02 — single-LLM pivot)
+
+The backend has been rearchitected to use **one multimodal LLM call per scan** (`PIPELINE_MODE=single_llm`, default). The previous multi-stage flash_names pipeline (Vision API + Gemini Flash + Hungarian spatial-merge) is being deprecated and will be deleted in Phase G of the pivot.
+
+- **Default model**: `anthropic/claude-haiku-4-5-20251001` (cheapest tier; ~$0.006/scan). Swap via `SINGLE_LLM_MODEL` env to `anthropic/claude-sonnet-4-6` (~$0.018), `anthropic/claude-opus-4-7` (strongest), `gemini/gemini-2.5-pro`, etc.
+- **Pipeline file**: `backend/app/services/single_llm_pipeline.py`. Single class, no fallback to legacy on failure (errors propagate so they surface).
+- **Vintage** is a first-class field on the response (`WineResult.vintage`), populated when the model can read a year off the label.
+
+**Status of the pivot (`docs/SINGLE_LLM_PIVOT_PLAN.md`):**
+- Phases A-E (build pipeline, route, schema, frontend types, tests) — ✅ landed in commit `ec65c06`.
+- Phase F (live benchmark vs `out/baseline.json`) — ⏳ blocked on Anthropic credit.
+- Phase G (delete `flash_names_pipeline.py`, `turbo_pipeline.py`, `claude_vision.py`, `ocr_processor.py`, `vision.py`) — ⏳ deferred until F validates the new pipeline.
+
+**Cost-optimization plan applied** (`~/.claude/plans/ok-lets-not-limit-crystalline-cocke.md`): trimmed prompt (no `blurb`, strict JSON-only output rules), `max_tokens=2500`, truncation canary in `_call_llm`. Default model swapped to Haiku 4.5.
+
+### Known limitations
+
+- **Claude bbox precision is intrinsically limited.** Anthropic's vision docs admit "Claude's spatial reasoning abilities are limited." The single-LLM pivot fixed the *swap* bug (Hungarian merge misrouting names to bottles) but does NOT fix bbox precision itself. Dense shelves still see imperfect overlay placement.
+- **Mitigation paths if bbox accuracy matters:**
+  1. Try Sonnet 4.6 or Opus 4.7 (slightly better than Haiku at spatial reasoning).
+  2. Hybrid YOLO + per-crop architecture: object detection (YOLO/Apple Vision) for sub-pixel-accurate bboxes, then LLM only for label OCR per crop. Not yet planned/built.
+
+### Reference baselines
+
+`test-images/corpus/baselines/IMG_8080_opus_4_7.json` — 15-bottle Opus 4.7 baseline scan. Use as upper-bound when comparing new pipeline outputs. Bbox format is `{x, y, w, h}` (NOT `width/height` — convert before diff). See `test-images/corpus/baselines/README.md`.
+
 ---
 
 ## Directory Structure
@@ -251,6 +277,31 @@ Tap rating badge → modal sheet.
 ---
 
 ## Backend Pipeline — Detailed Scan Flow
+
+> **Current default**: `single_llm` (one multimodal LLM call per scan). The legacy multi-stage description below describes the deprecated `flash_names` / `legacy` modes — kept for reference until Phase G deletes them.
+
+### Single-LLM pipeline (default)
+
+**File:** `backend/app/services/single_llm_pipeline.py`. **Route:** `routes/scan.py:_run_single_llm_pipeline()`. **Mode:** `PIPELINE_MODE=single_llm`.
+
+Flow:
+1. HEIC→JPEG conversion (if needed) and size validation.
+2. Image compressed to fit Anthropic's 5 MB base64 limit (`_compress_image_for_vision` with raw budget ~3.6 MB).
+3. **One** `litellm.acompletion(...)` call with the configured model (`Config.single_llm_model()`, default Haiku 4.5). Prompt asks for an array of `{wine_name, vintage, confidence, estimated_rating, bbox, wine_type, brand, region, varietal}`.
+4. Parse JSON, build `RecognizedWine` objects.
+5. DB cross-match via `WineMatcher.match()` — DB-matched wines (confidence ≥ 0.80) get the canonical name + DB rating; LLM-only wines get the LLM-estimated rating with confidence capped at 0.75.
+6. Cache LLM-only wines in `llm_rating_cache` (with vintage).
+7. Enrich DB-matched wines with review snippets, apply feature flags, return `ScanResponse`.
+
+**No fallback to other pipelines.** If the LLM call fails (rate limit, credit exhausted, etc.) the exception propagates — by design.
+
+**Truncation canary:** if the response uses ≥ 95% of `max_tokens` (default 2500), a warning is logged. Bump `max_tokens` if you see this for dense shelves.
+
+---
+
+### Legacy multi-stage pipeline (DEPRECATED — kept until Phase G)
+
+The flash_names / turbo / hybrid / fast / legacy modes are no longer the default and will be deleted in Phase G of the single-LLM pivot. Documentation below applies to those modes only.
 
 ### Entry Point: `POST /scan` → `routes/scan.py:scan_shelf()`
 
@@ -667,7 +718,17 @@ Instead of OCR → fuzzy match → LLM validate → Vision fallback → LLM resc
 
 The backend supports multiple scan pipeline modes, selected via `PIPELINE_MODE` env var. Production runs `flash_names`.
 
-### `flash_names` (Production Default)
+### `single_llm` (Production Default — 2026-05-02)
+
+**File:** `backend/app/services/single_llm_pipeline.py`
+
+Single multimodal LLM call per scan. See "Single-LLM pipeline (default)" section above for full flow. Replaces flash_names as the production default.
+
+**Total external calls:** 1 LLM call.
+**Estimated latency:** 3-8s depending on model (Haiku ~3s, Sonnet ~5s, Opus ~8s).
+**Estimated cost per scan:** $0.006 (Haiku) → $0.018 (Sonnet) → much more (Opus).
+
+### `flash_names` (Deprecated, scheduled for removal in Phase G)
 
 **File:** `backend/app/services/flash_names_pipeline.py`
 
@@ -720,15 +781,16 @@ Combines flash_names approach with additional validation. Experimental.
 
 ### Pipeline Mode Selection
 
-Set `PIPELINE_MODE` env var. All modes fall back to legacy pipeline on failure.
+Set `PIPELINE_MODE` env var. `single_llm` is now the default and has NO fallback (errors propagate). The legacy modes still fall back to the legacy pipeline on failure.
 
-| Mode | Env Value | Prod? | LLM Calls | Vision API Calls |
-|------|-----------|-------|-----------|------------------|
-| Flash Names | `flash_names` | **Yes** | 1 | 1 |
-| Turbo | `turbo` | No | 0-1 | 1 |
-| Legacy | `legacy` | No | 1-3 | 1 (+0-1 Claude) |
-| Fast | `fast` | No | 1 | 0 |
-| Hybrid | `hybrid` | No | 1-2 | 1 |
+| Mode | Env Value | Prod? | LLM Calls | Vision API Calls | Status |
+|------|-----------|-------|-----------|------------------|--------|
+| **Single-LLM** | `single_llm` | **Yes (default)** | 1 | 0 | Active |
+| Flash Names | `flash_names` | No | 1 | 1 | Deprecated, deletes in Phase G |
+| Turbo | `turbo` | No | 0-1 | 1 | Deprecated, deletes in Phase G |
+| Legacy | `legacy` | No | 1-3 | 1 (+0-1 Claude) | Deprecated, deletes in Phase G |
+| Fast | `fast` | No | 1 | 0 | Deprecated, deletes in Phase G |
+| Hybrid | `hybrid` | No | 1-2 | 1 | Deprecated, deletes in Phase G |
 
 ---
 

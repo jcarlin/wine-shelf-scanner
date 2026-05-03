@@ -7,7 +7,8 @@
 
 ## Active Plans
 
-- 🔶 [Single-LLM Pivot Plan](docs/SINGLE_LLM_PIVOT_PLAN.md) — replace the multi-stage pipeline (Vision API + Gemini Flash + Hungarian merge) with a single multimodal LLM call (Sonnet 4.6 default, swappable via `SINGLE_LLM_MODEL` env). Adds vintage as a first-class field. Resolves the overlay placement bug architecturally. ~1,200 net lines deleted. Blocking Phase 7 TestFlight ship.
+- 🔶 [Single-LLM Pivot Plan](docs/SINGLE_LLM_PIVOT_PLAN.md) — Phases A-E ✅ landed (commit `ec65c06`, ~912 net lines deleted). Default model is now **Haiku 4.5** (swappable via `SINGLE_LLM_MODEL`). Phase F (live benchmark vs `out/baseline.json`) blocked on Anthropic credit. Phase G (delete `flash_names_pipeline.py` + 4 sibling pipelines) deferred until F validates the new pipeline. **Open issue:** the pivot fixed the swap bug (Hungarian merge) but did NOT fix Claude's bbox-precision limit — overlays on dense shelves are still imperfect (per Anthropic's own vision docs).
+- 🔶 [Cost-Optimization Plan](~/.claude/plans/ok-lets-not-limit-crystalline-cocke.md) — applied in commit `ec65c06`: prompt trimmed (no `blurb`, strict JSON-only), `max_tokens=2500`, default swapped Sonnet→Haiku (~$0.080→$0.006/scan). Truncation canary added to `_call_llm`.
 - ✅ [Overlay Accuracy Plan](docs/OVERLAY_ACCURACY_PLAN.md) — Phase 0 (setup) and Phase 1 (eval harness + 45% baseline) done. Phases 2–3 superseded by the single-LLM pivot above. Phases 4–5 (frontend polish + iOS) still queued post-pivot.
 
 ---

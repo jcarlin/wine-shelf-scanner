@@ -84,34 +84,59 @@ Feature-flagged: `feature_bug_report` (iOS) / `NEXT_PUBLIC_FEATURE_BUG_REPORT` (
 
 ## Quick Start
 
+### Run locally (day-to-day)
+
+You need **two terminals**, one for each service. Each command is run from a specific directory — the path matters because both rely on relative imports/configs.
+
+**Terminal 1 — Backend** (FastAPI on http://localhost:8000):
+
+```bash
+cd /Users/julian/dev/wine-shelf-scanner/backend
+venv/bin/uvicorn main:app --reload --host 127.0.0.1 --port 8000
+```
+
+> First time only: create the venv and install deps — see [Backend first-time setup](#backend-first-time-setup) below.
+
+**Terminal 2 — Next.js web frontend** (on http://localhost:3000):
+
+```bash
+cd /Users/julian/dev/wine-shelf-scanner/nextjs
+npm run dev
+```
+
+> First time only: `npm install`. Node 18+ required.
+
+Both must be running for the web app to work end-to-end. The frontend defaults `NEXT_PUBLIC_API_BASE_URL` to `http://localhost:8000` in development; override in `nextjs/.env.local` if needed.
+
+**Health check:** open http://localhost:8000/health (should return `{"status":"healthy"}`) and http://localhost:3000 (should render the camera capture UI).
+
+**Stop:** `Ctrl+C` in each terminal. To free a stuck port: `lsof -iTCP:8000 -sTCP:LISTEN -t | xargs kill -9` (or `:3000`).
+
 ### Prerequisites
 
 - Python 3.9+
 - Xcode 15+ (for iOS development)
 - Node.js 18+ (for Next.js)
-- Google Cloud account with Vision API enabled
+- Google Cloud account with Vision API enabled (for real Vision calls)
+- Anthropic API key (for the default `single_llm` pipeline)
 
-### Backend Setup
+### Backend first-time setup
 
 ```bash
-cd backend
+cd /Users/julian/dev/wine-shelf-scanner/backend
 
-# Create virtual environment
+# Create virtual environment + install deps
 python3 -m venv venv
-source venv/bin/activate
+venv/bin/pip install -r requirements.txt
 
-# Install dependencies
-pip install -r requirements.txt
+# Configure: copy .env.example → .env and fill in keys
+cp .env.example .env  # then edit .env
 
-# For local testing with mocks (no GCP needed):
-export USE_MOCKS=true
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-
-# For real Vision API:
-export GOOGLE_APPLICATION_CREDENTIALS=./credentials.json
-export USE_MOCKS=false
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+# Apply database migrations (creates wines.db schema)
+venv/bin/alembic upgrade head
 ```
+
+The default pipeline (`PIPELINE_MODE=single_llm`) needs `ANTHROPIC_API_KEY` set in `.env`. To use a different multimodal model, add `SINGLE_LLM_MODEL=anthropic/claude-haiku-4-5-20251001` (or `gemini/gemini-2.5-pro`, etc.) — see [Configuration](#configuration) below.
 
 ### iOS Setup
 
@@ -123,26 +148,11 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
    ```
 3. Build and run on simulator or device
 
-### Next.js Setup
+Get your Mac's IP with `ipconfig getifaddr en0` (WiFi).
 
-```bash
-cd nextjs
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-# Visit http://localhost:3000
-```
+### Next.js production deploy
 
 For production, deploy to Vercel and set `NEXT_PUBLIC_API_BASE_URL` to your Cloud Run backend URL.
-
-### Getting Your Mac's IP
-
-```bash
-ipconfig getifaddr en0  # WiFi
-```
 
 ## Backend Pipeline
 

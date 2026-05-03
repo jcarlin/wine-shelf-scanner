@@ -58,6 +58,7 @@ struct WineResult: Codable, Equatable, Identifiable {
     var region: String? = nil         // Wine region (e.g., 'Napa Valley', 'Burgundy')
     var varietal: String? = nil       // Grape varietal (e.g., 'Cabernet Sauvignon')
     var blurb: String? = nil          // Brief description of the wine or producer
+    var vintage: String? = nil        // Wine year (e.g., '2021'), nil for NV / unreadable
     var reviewCount: Int? = nil       // Number of reviews
     var reviewSnippets: [String]? = nil  // Sample review quotes
     // Feature-flagged fields (null when feature is off)
@@ -78,6 +79,7 @@ struct WineResult: Codable, Equatable, Identifiable {
         case region
         case varietal
         case blurb
+        case vintage
         case reviewCount = "review_count"
         case reviewSnippets = "review_snippets"
         case isSafePick = "is_safe_pick"

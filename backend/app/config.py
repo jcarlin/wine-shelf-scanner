@@ -156,8 +156,21 @@ class Config:
     # === Pipeline Mode ===
     @staticmethod
     def pipeline_mode() -> str:
-        """Pipeline mode: legacy, turbo, flash_names, hybrid, fast. Default: turbo."""
-        return os.getenv("PIPELINE_MODE", "turbo").lower()
+        """Pipeline mode. Default: single_llm (one multimodal LLM call per scan)."""
+        return os.getenv("PIPELINE_MODE", "single_llm").lower()
+
+    # === Single-LLM Pipeline ===
+    @staticmethod
+    def single_llm_model() -> str:
+        """Multimodal model for the single-LLM pipeline.
+
+        Any LiteLLM-supported multimodal model works — e.g.:
+          - anthropic/claude-haiku-4-5-20251001 (default — cheapest, fast vision)
+          - anthropic/claude-sonnet-4-6 (stronger, ~3× more expensive)
+          - anthropic/claude-opus-4-7 (strongest, much more expensive)
+          - gemini/gemini-2.5-pro
+        """
+        return os.getenv("SINGLE_LLM_MODEL", "anthropic/claude-haiku-4-5-20251001")
 
     # === Fast Pipeline ===
     @staticmethod

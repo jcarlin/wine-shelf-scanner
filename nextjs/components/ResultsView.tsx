@@ -20,10 +20,9 @@ interface ResultsViewProps {
   response: ScanResponse;
   imageUri: string;
   onReset: () => void;
-  isPartial?: boolean;
 }
 
-export function ResultsView({ response, imageUri, onReset, isPartial = false }: ResultsViewProps) {
+export function ResultsView({ response, imageUri, onReset }: ResultsViewProps) {
   const t = useTranslations('results');
   const tBug = useTranslations('bugReport');
   const containerRef = useRef<HTMLDivElement>(null);
@@ -189,16 +188,6 @@ export function ResultsView({ response, imageUri, onReset, isPartial = false }: 
           />
         )}
       </div>
-
-      {/* Partial scan indicator */}
-      {isPartial && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30
-          bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-full">
-          <span className="text-white/80 text-xs animate-pulse">
-            Finding more bottles...
-          </span>
-        </div>
-      )}
 
       {/* Debug Panel */}
       {response.debug && <DebugPanel data={response.debug} />}

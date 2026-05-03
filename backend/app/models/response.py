@@ -68,6 +68,7 @@ class WineResult(BaseModel):
     region: Optional[str] = Field(None, description="Wine region (e.g., 'Napa Valley', 'Burgundy')")
     varietal: Optional[str] = Field(None, description="Grape varietal (e.g., 'Cabernet Sauvignon')")
     blurb: Optional[str] = Field(None, description="Brief description of the wine or producer")
+    vintage: Optional[str] = Field(None, description="Wine vintage year, e.g. '2021', or None if NV / unreadable")
     review_count: Optional[int] = Field(None, description="Number of reviews")
     review_snippets: Optional[list[str]] = Field(None, description="Sample review quotes")
     # Feature-flagged fields (null when feature is off)

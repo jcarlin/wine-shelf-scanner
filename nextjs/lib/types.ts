@@ -43,6 +43,7 @@ export interface WineResult {
   region?: string;     // Wine region (e.g., 'Napa Valley', 'Burgundy')
   varietal?: string;   // Grape varietal (e.g., 'Cabernet Sauvignon')
   blurb?: string;      // Brief description of the wine or producer
+  vintage?: string;    // Wine year (e.g., '2021'), undefined for NV / unreadable
   review_count?: number;        // Number of reviews
   review_snippets?: string[];   // Sample review quotes
   // Feature-flagged fields (null when feature is off)
@@ -86,7 +87,6 @@ export interface ScanResponse {
 export type ScanState =
   | { status: 'idle' }
   | { status: 'processing'; imageUri: string | null }
-  | { status: 'partial_results'; response: ScanResponse; imageUri: string }
   | { status: 'results'; response: ScanResponse; imageUri: string }
   | { status: 'error'; message: string };
 

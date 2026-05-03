@@ -33,6 +33,7 @@ from ..services.wine_matcher import WineMatcher, _is_llm_generic_response
 from ..services.fast_pipeline import FastPipeline
 from ..services.flash_names_pipeline import FlashNamesPipeline
 from ..services.hybrid_pipeline import HybridPipeline
+from ..services.single_llm_pipeline import SingleLLMPipeline
 from ..services.turbo_pipeline import TurboPipeline
 from ..services.wine_sync import sync_discovered_wines
 
@@ -178,6 +179,7 @@ def _to_wine_result(wine: RecognizedWine) -> WineResult:
         region=wine.region,
         varietal=wine.varietal,
         blurb=wine.blurb,
+        vintage=wine.vintage,
         review_count=wine.review_count,
         review_snippets=wine.review_snippets,
     )
@@ -511,6 +513,43 @@ async def scan_shelf(
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
+async def _run_single_llm_pipeline(
+    image_id: str,
+    image_bytes: bytes,
+    wine_matcher: WineMatcher,
+    flags: Optional[FeatureFlags] = None,
+) -> ScanResponse:
+    """Run the single-LLM pipeline.
+
+    No fallback — exceptions propagate to the caller so failures surface
+    instead of silently degrading.
+    """
+    t0 = time.perf_counter()
+
+    pipeline = SingleLLMPipeline(wine_matcher=wine_matcher)
+    result = await pipeline.scan(image_bytes)
+
+    results, fallback = build_results_from_recognized(
+        result.recognized_wines,
+        wine_matcher,
+        flags=flags,
+    )
+
+    elapsed = time.perf_counter() - t0
+    logger.info(
+        f"[{image_id}] Single-LLM pipeline completed in {elapsed:.2f}s: "
+        f"{len(results)} results, {len(fallback)} fallback "
+        f"(model={result.timings.get('model')}, "
+        f"llm={result.timings.get('llm_call_ms')}ms)"
+    )
+
+    return ScanResponse(
+        image_id=image_id,
+        results=results,
+        fallback_list=fallback,
+    )
+
+
 async def _run_fast_pipeline(
     image_id: str,
     image_bytes: bytes,
@@ -825,6 +864,11 @@ async def process_image(
     """
     # === Pipeline Mode Routing ===
     mode = Config.pipeline_mode()
+
+    if mode == "single_llm":
+        return await _run_single_llm_pipeline(
+            image_id, image_bytes, wine_matcher, flags
+        )
 
     if mode == "turbo":
         try:

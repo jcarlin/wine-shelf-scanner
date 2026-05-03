@@ -2,12 +2,16 @@
 Tests for the /scan endpoint.
 """
 
+from unittest.mock import AsyncMock, patch
+
 import pytest
 from fastapi.testclient import TestClient
 from io import BytesIO
 
 from main import app
+from app.config import Config
 from app.models import ScanResponse
+from app.services.single_llm_pipeline import SingleLLMResult
 
 
 client = TestClient(app)
@@ -174,6 +178,41 @@ class TestScanEndpoint:
         )
 
         assert response.status_code == 200
+
+
+class TestPipelineDispatch:
+    """The /scan route defaults to the single-LLM pipeline."""
+
+    def test_pipeline_mode_default_is_single_llm(self, monkeypatch):
+        """Config.pipeline_mode() must default to 'single_llm' (no env override)."""
+        monkeypatch.delenv("PIPELINE_MODE", raising=False)
+        assert Config.pipeline_mode() == "single_llm"
+
+    def test_scan_dispatches_to_single_llm_pipeline(self, monkeypatch):
+        """A real /scan call (no mock_scenario) routes through SingleLLMPipeline.
+
+        Sets PIPELINE_MODE=single_llm explicitly so the test is independent of
+        the developer's local .env.
+        """
+        monkeypatch.setenv("PIPELINE_MODE", "single_llm")
+
+        fake_result = SingleLLMResult(
+            recognized_wines=[],
+            raw_llm_wines=[],
+            timings={"model": Config.single_llm_model(), "total_ms": 0},
+        )
+
+        with patch(
+            "app.services.single_llm_pipeline.SingleLLMPipeline.scan",
+            new=AsyncMock(return_value=fake_result),
+        ) as mock_scan:
+            response = client.post(
+                "/scan?use_vision_api=true",
+                files={"image": ("test.jpg", create_test_image(), "image/jpeg")},
+            )
+
+        assert response.status_code == 200
+        assert mock_scan.await_count == 1
 
 
 class TestHealthEndpoint:

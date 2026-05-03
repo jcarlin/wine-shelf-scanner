@@ -6,7 +6,13 @@ Tests complete workflow:
 - Response matches API contract
 - Confidence thresholds enforced
 - Fallback list populated correctly
+
+NOTE: SingleLLMPipeline.scan is autouse-mocked at module scope to keep these
+tests offline and free. Tests that need real pipeline behaviour should pass
+mock_scenario=... or override the fixture explicitly.
 """
+
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from io import BytesIO
@@ -14,9 +20,23 @@ from fastapi.testclient import TestClient
 
 from main import app
 from app.models import ScanResponse, WineResult, FallbackWine, BoundingBox
+from app.services.single_llm_pipeline import SingleLLMResult
 
 
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def _mock_single_llm():
+    """Stub the LLM call so e2e tests never hit a real API."""
+    fake_result = SingleLLMResult(
+        recognized_wines=[], raw_llm_wines=[], timings={"total_ms": 0},
+    )
+    with patch(
+        "app.services.single_llm_pipeline.SingleLLMPipeline.scan",
+        new=AsyncMock(return_value=fake_result),
+    ):
+        yield
 
 
 def create_test_image() -> BytesIO:

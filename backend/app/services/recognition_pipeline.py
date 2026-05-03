@@ -205,6 +205,7 @@ class RecognizedWine:
     region: Optional[str] = None
     varietal: Optional[str] = None
     blurb: Optional[str] = None
+    vintage: Optional[str] = None  # Wine year (e.g., '2021'), None for NV / unreadable
     review_count: Optional[int] = None
     review_snippets: Optional[list[str]] = None
     wine_id: Optional[int] = None

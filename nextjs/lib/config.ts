@@ -46,11 +46,8 @@ export const Config = {
   /** API base URL for the wine scanner backend */
   API_BASE_URL: getApiBaseUrl(),
 
-  /** Request timeout in milliseconds (Vision API can take 10-40s) */
-  REQUEST_TIMEOUT: 45000,
-
-  /** SSE stream timeout in milliseconds (cold start + full pipeline can take 30-40s) */
-  STREAM_TIMEOUT: 600000,
+  /** Request timeout in milliseconds (cold start + multimodal LLM call can take 30-40s) */
+  REQUEST_TIMEOUT: 60000,
 
   /** Image quality for compression (0-1) */
   IMAGE_QUALITY: 0.8,

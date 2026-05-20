@@ -53,15 +53,10 @@ export async function checkServerHealth(): Promise<HealthStatus> {
       status: 'unavailable',
       message: `Server returned ${response.status}`,
     };
-  } catch (error) {
-    if (isAbortError(error)) {
-      return {
-        status: 'unavailable',
-        message: 'Health check timed out',
-      };
-    }
-
-    // Network error likely means server is cold starting
+  } catch {
+    // Timeouts and network errors are indistinguishable from a Cloud Run
+    // cold start. Surface as warming_up so useServerHealth keeps polling;
+    // the hook caps retries before declaring the server unavailable.
     return {
       status: 'warming_up',
       retryAfter: 5,

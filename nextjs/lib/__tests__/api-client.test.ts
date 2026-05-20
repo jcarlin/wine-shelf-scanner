@@ -195,6 +195,70 @@ describe('api-client', () => {
       }
     });
   });
+
+  describe('checkServerHealth', () => {
+    it('returns healthy on 200', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: { get: () => null },
+      });
+
+      const { checkServerHealth } = require('../api-client');
+      const result = await checkServerHealth();
+
+      expect(result).toEqual({ status: 'healthy' });
+    });
+
+    it('returns warming_up with Retry-After on 503', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+        headers: { get: (name: string) => (name === 'Retry-After' ? '12' : null) },
+      });
+
+      const { checkServerHealth } = require('../api-client');
+      const result = await checkServerHealth();
+
+      expect(result).toEqual({ status: 'warming_up', retryAfter: 12 });
+    });
+
+    it('returns unavailable on other non-2xx responses', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        headers: { get: () => null },
+      });
+
+      const { checkServerHealth } = require('../api-client');
+      const result = await checkServerHealth();
+
+      expect(result).toEqual({
+        status: 'unavailable',
+        message: 'Server returned 500',
+      });
+    });
+
+    it('treats AbortError (timeout) as warming_up so polling continues during cold start', async () => {
+      const abortError = new Error('Aborted');
+      abortError.name = 'AbortError';
+      mockFetch.mockRejectedValueOnce(abortError);
+
+      const { checkServerHealth } = require('../api-client');
+      const result = await checkServerHealth();
+
+      expect(result).toEqual({ status: 'warming_up', retryAfter: 5 });
+    });
+
+    it('treats generic network errors as warming_up', async () => {
+      mockFetch.mockRejectedValueOnce(new Error('Network request failed'));
+
+      const { checkServerHealth } = require('../api-client');
+      const result = await checkServerHealth();
+
+      expect(result).toEqual({ status: 'warming_up', retryAfter: 5 });
+    });
+  });
 });
 
 describe('Config', () => {

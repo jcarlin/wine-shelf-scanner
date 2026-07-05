@@ -18,8 +18,10 @@ spec:
       annotations:
         # Boost CPU allocation during startup to speed up cold starts
         run.googleapis.com/startup-cpu-boost: "true"
-        # Scaling configuration
-        autoscaling.knative.dev/minScale: "0"
+        # Scaling configuration. minScale=1 keeps one instance warm: measured
+        # cold start added ~35-40s to the first scan (GCS DB download +
+        # startup); ~$15-20/mo at idle rates.
+        autoscaling.knative.dev/minScale: "1"
         autoscaling.knative.dev/maxScale: "10"
         # Allow up to 80 concurrent requests per instance
         autoscaling.knative.dev/maxConcurrentRequests: "80"
@@ -61,9 +63,22 @@ spec:
               value: "gemini"
             - name: GEMINI_MODEL
               value: "gemini-2.0-flash"
-            # Pipeline mode (legacy, turbo, flash_names, hybrid, fast)
+            # Pipeline mode: detect_read (tiled Vision boxes + Sonnet 5
+            # per-crop label reads; feasibility CONDITIONAL GO 2026-07-05,
+            # docs/FEASIBILITY_VERDICT.md)
             - name: PIPELINE_MODE
-              value: "flash_names"
+              value: "detect_read"
+            - name: DETECT_READ_MODEL
+              value: "anthropic/claude-sonnet-5"
+            # Input-quality gate: reject scans whose median detected bottle
+            # width is below this (px at full resolution); 0 disables.
+            - name: DETECT_READ_MIN_BOTTLE_PX
+              value: "140"
+            # Cloud Run filesystem is ephemeral tmpfs — disable the JSONL
+            # file write; per-call usage still lands in Cloud Logging via the
+            # structured stdout line.
+            - name: TOKEN_USAGE_LOG_PATH
+              value: ""
             # Fast pipeline (superseded by PIPELINE_MODE, kept for backward compat)
             - name: USE_FAST_PIPELINE
               value: "false"

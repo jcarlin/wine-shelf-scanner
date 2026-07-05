@@ -145,12 +145,17 @@ Break-even ≈ 140 scans/user/mo at sticker pricing — an order of magnitude ab
   8/10 corpus images at shipped settings. The new pipeline beats it on every axis.
 
 **Conditions / next steps if GO is exercised:**
-1. Owner decision on latency: the chunk-size experiment is measured and dead (see §2) —
-   accepting ~12–18s means shipping progressive render (SSE) for perceived latency.
-2. Input-quality gate: warn/reject when median detected bottle width < ~140px (boxes are known
-   before any LLM spend, so the check is free).
+1. ~~Owner decision on latency / progressive render~~ — **discharged 2026-07-05**
+   (production rollout stream 1, `docs/PRODUCTION_ROLLOUT_LOG.md`): `POST /scan/stream`
+   SSE streams each crop-read chunk as it completes; measured first badges at 7.1s
+   (wine1.jpeg) vs 12.5s done. Webapp consumes it by default with fallback to `POST /scan`.
+2. ~~Input-quality gate~~ — **discharged 2026-07-05** (rollout stream 2): median detected
+   bottle width < 140px (env `DETECT_READ_MIN_BOTTLE_PX`) rejects before LLM spend with the
+   additive `scan_quality` response field; webapp shows "Too far away / Retake Photo".
+   Verified live: 480×360 thumbnail gated at median 31px with zero LLM cost.
 3. Re-cut the held-out set with device-quality photos (4/6 of the current set are web stock) for
-   a confirmatory ~$0.15 run before public accuracy claims.
+   a confirmatory ~$0.15 run before public accuracy claims. **In progress 2026-07-05** on the
+   never-tuned repo images (IMG_8125 24MP + medium-res floor check) — addendum below when done.
 4. ~~Frontend BEST PICK tie-break~~ — fixed 2026-07-05 (`nextjs/lib/shelf-rankings.ts`: ordinal
    ranking with confidence/name tie-break; 78/78 frontend tests pass). Phase G legacy-pipeline
    deletion remains separately gated.

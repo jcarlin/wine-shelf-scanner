@@ -94,7 +94,12 @@ See `ROADMAP.md` for current project status and next steps.
 > Files: `backend/app/services/detect_read.py` (core, shared with the eval harness) +
 > `detect_read_pipeline.py` (DB match / cache / usage logging via `SingleLLMPipeline`).
 > Held-out: badge precision .905, $0.021/scan (Sonnet 5 intro pricing), ~12–18s e2e.
-> Local `.env` runs detect_read; deployed Cloud Run still runs single_llm until the GO is exercised.
+> Local `.env` runs detect_read. `backend/deploy/service.yaml` (on the `rating-overlays`
+> branch) sets `PIPELINE_MODE=detect_read` + `DETECT_READ_MODEL` + `minScale=1` — it goes
+> live when PR #51 merges (merge = deploy via `.github/workflows/deploy.yml`). Before that
+> merge, deployed Cloud Run runs the old `flash_names` config. Production rollout work
+> (progressive SSE render, input-quality gate, error mapping) is logged in
+> `docs/PRODUCTION_ROLLOUT_LOG.md`.
 > Gotcha: Sonnet 5 defaults to adaptive thinking when `thinking` is omitted — perception reads must
 > pass `thinking={"type":"disabled"}` or completion tokens (cost and latency) roughly triple.
 
@@ -468,25 +473,36 @@ Final catch-all for remaining unmatched bottles AND orphaned texts:
 - `mock_scenario` — Select fixture (full_shelf, partial_detection, etc.)
 - `use_vision_fixture` — Path to captured Vision API fixture for replay
 
-### SSE Streaming Endpoint
+### SSE Streaming Endpoint (detect_read only — built 2026-07-05)
 
-`POST /scan/stream` — Progressive scan via Server-Sent Events. Streams results in two phases:
+`POST /scan/stream` — Progressive scan via Server-Sent Events. Detect+Read makes 2-4
+parallel crop-read LLM calls per scan; each completed chunk is a streaming boundary, so
+first badges reach the client at ~7-8s (typical photo) instead of after the slowest
+chunk + rescue pass (~12-18s).
 
-- **event: phase1** — Turbo-quality results from Vision API + DB matching (~3.5s). Subset of bottles that matched the DB.
-- **event: phase2** — Gemini-enhanced results with full metadata (~6-8s). Complete replacement of phase1.
-- **event: done** — Stream complete.
+- **event: partial** (0+ times) — complete `ScanResponse` JSON with the wines read so far.
+  Cumulative replacement — the client swaps its entire state. Partials skip review
+  enrichment and DB-sync.
+- **event: done** (once, on success) — final complete `ScanResponse`, identical to what
+  `POST /scan` returns (including `scan_quality` when the input-quality gate fired).
+- **event: error** (terminal, on pipeline failure) — `{"message": str}`. Clients keep any
+  partials already rendered, or fall back to `POST /scan` if nothing arrived.
 
-Both phase1 and phase2 data are complete `ScanResponse` JSON objects (same schema as `POST /scan`). Phase2 is a full replacement — the frontend swaps its entire state.
+Returns **501** unless `PIPELINE_MODE=detect_read` (clients fall back to `POST /scan`).
 
-**File:** `backend/app/routes/scan_stream.py`
-**Pipeline method:** `FlashNamesPipeline.scan_progressive()` in `backend/app/services/flash_names_pipeline.py`
+**Files:** route `backend/app/routes/scan_stream.py`; core generator
+`run_detect_read_stream()` in `backend/app/services/detect_read.py` (`run_detect_read`
+consumes the same generator, so `/scan` and `/scan/stream` share one measured code path);
+pipeline method `DetectReadPipeline.scan_stream()`.
 
 **Graceful degradation:**
-- If SSE connection drops after phase1, client still has turbo-quality results.
-- If Gemini fails, phase2 emits with turbo-only data.
+- Stream dies after partials → frontend keeps the last partial as the result.
+- Endpoint missing/501/network failure before any event → frontend falls back to `POST /scan`.
 - `POST /scan` is unchanged — iOS and other clients keep working.
 
-**Frontend:** Next.js uses `scanImageStream()` in `nextjs/lib/api-client.ts` with `partial_results` state in `useScanState.ts`.
+**Frontend:** `scanImageStream()` in `nextjs/lib/api-client.ts`; `useScanState.ts` streams
+by default and marks in-flight results with `partial: true` (ResultsView shows a
+"Reading labels…" pill).
 
 ### Bug Report Endpoint
 
@@ -797,12 +813,19 @@ Combines flash_names approach with additional validation. Experimental.
 
 ### Pipeline Mode Selection
 
-Set `PIPELINE_MODE` env var. `single_llm` is now the default and has NO fallback (errors propagate). The legacy modes still fall back to the legacy pipeline on failure.
+Set `PIPELINE_MODE` env var. `detect_read` and `single_llm` have NO fallback (errors
+propagate — mapped to 503/504 by the route, see `map_pipeline_error`). The legacy modes
+still fall back to the legacy pipeline on failure.
+
+**Source of truth for what production runs is `backend/deploy/service.yaml`, not this
+table.** (Historical doc rot: this table long claimed `single_llm` was deployed while
+service.yaml actually ran `flash_names`.)
 
 | Mode | Env Value | Prod? | LLM Calls | Vision API Calls | Status |
 |------|-----------|-------|-----------|------------------|--------|
-| **Single-LLM** | `single_llm` | **Yes (default)** | 1 | 0 | Active |
-| Flash Names | `flash_names` | No | 1 | 1 | Deprecated, deletes in Phase G |
+| **Detect+Read** | `detect_read` | **Yes (service.yaml, PR #51)** | 1-5 (crop reads + rescue) | 5 (tiled, concurrent) | Active; supports `/scan/stream` |
+| Single-LLM | `single_llm` | No | 1 | 0 | Superseded by detect_read (31.2% placement accuracy, verdict §4) |
+| Flash Names | `flash_names` | Previous prod | 1 | 1 | Deprecated, deletes in Phase G |
 | Turbo | `turbo` | No | 0-1 | 1 | Deprecated, deletes in Phase G |
 | Legacy | `legacy` | No | 1-3 | 1 (+0-1 Claude) | Deprecated, deletes in Phase G |
 | Fast | `fast` | No | 1 | 0 | Deprecated, deletes in Phase G |

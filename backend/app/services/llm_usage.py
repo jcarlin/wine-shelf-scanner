@@ -30,6 +30,9 @@ _PRICES: dict[str, dict[str, float]] = {
     "anthropic/claude-sonnet-4-6":         {"input": 3.00,  "output": 15.00, "cache_read": 0.30},
     "anthropic/claude-opus-4-7":           {"input": 15.00, "output": 75.00, "cache_read": 1.50},
     "anthropic/claude-haiku-4-5-20251001": {"input": 1.00,  "output": 5.00,  "cache_read": 0.10},
+    # Claude 5 family / Opus 4.8 (rates from litellm.model_cost, 2026-07-04)
+    "anthropic/claude-sonnet-5":           {"input": 2.00,  "output": 10.00, "cache_read": 0.20},
+    "anthropic/claude-opus-4-8":           {"input": 5.00,  "output": 25.00, "cache_read": 0.50},
     "gemini/gemini-2.5-pro":               {"input": 1.25,  "output": 5.00,  "cache_read": 0.31},
 }
 

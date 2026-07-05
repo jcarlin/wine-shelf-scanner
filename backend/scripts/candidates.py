@@ -71,7 +71,10 @@ async def _llm_call(model: str, content: list, max_tokens: int, usage_out: list,
         max_tokens=max_tokens,
         drop_params=True,
     )
-    if temperature is not None and "opus-4-7" not in model:
+    # Anthropic deprecated `temperature` from Opus 4.7 onward (400 if passed);
+    # skip it for the 4.7+/5-family models.
+    _no_temp = ("opus-4-7", "opus-4-8", "sonnet-5", "fable", "mythos")
+    if temperature is not None and not any(t in model for t in _no_temp):
         kwargs["temperature"] = temperature
     t0 = time.perf_counter()
     response = await litellm.acompletion(**kwargs)
@@ -88,7 +91,8 @@ async def _llm_call(model: str, content: list, max_tokens: int, usage_out: list,
         "cost_usd": compute_cost_usd(model, pt, ct, None),
         "truncated": bool(ct and ct >= max_tokens * 0.95),
     })
-    return response.choices[0].message.content
+    # Content can be None (e.g. empty/refusal responses) — normalize to "".
+    return response.choices[0].message.content or ""
 
 
 def _image_part(image_bytes: bytes) -> dict:
@@ -403,4 +407,10 @@ CANDIDATES: dict[str, Callable[[bytes, str], Awaitable[CandidateResult]]] = {
     "c2_marks_haiku": _make_set_of_marks("anthropic/claude-haiku-4-5-20251001", "c2_marks_haiku"),
     "c3_crops_sonnet": _make_per_crop("anthropic/claude-sonnet-4-6", "c3_crops_sonnet"),
     "c3_crops_haiku": _make_per_crop("anthropic/claude-haiku-4-5-20251001", "c3_crops_haiku"),
+    # Claude 5 family / Opus 4.8 — newest models, cheaper than their predecessors
+    "c1_lean_sonnet5": _make_lean_single("anthropic/claude-sonnet-5", "c1_lean_sonnet5"),
+    "c2_marks_sonnet5": _make_set_of_marks("anthropic/claude-sonnet-5", "c2_marks_sonnet5"),
+    "c3_crops_sonnet5": _make_per_crop("anthropic/claude-sonnet-5", "c3_crops_sonnet5"),
+    "c2_marks_opus48": _make_set_of_marks("anthropic/claude-opus-4-8", "c2_marks_opus48"),
+    "c3_crops_opus48": _make_per_crop("anthropic/claude-opus-4-8", "c3_crops_opus48"),
 }

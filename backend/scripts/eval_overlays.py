@@ -554,6 +554,20 @@ async def _evaluate_one(
         "top3_correct": view.top3_correct,
         "top3_precision": view.top3_precision,
     }
+    # Per-badge detail (rating rank order) so top-3 failures are diagnosable
+    # from the JSON without re-running the scan.
+    from tests.accuracy.overlay_metrics import _classify_badge  # noqa: WPS433
+    ranked = sorted(predictions, key=lambda p: (p.rating or 0.0, p.confidence), reverse=True)
+    info["badges_ranked"] = [
+        {
+            "wine_name": p.wine_name,
+            "rating": p.rating,
+            "confidence": p.confidence,
+            "anchor": [round(p.anchor[0], 4), round(p.anchor[1], 4)],
+            "class": _classify_badge(p, targets, 0.85),
+        }
+        for p in ranked
+    ]
 
     if render_visual:
         # Pull cached Vision bbox + OCR data so the diff PNG can label each

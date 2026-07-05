@@ -350,8 +350,14 @@ class TestScanEndpointInputValidation:
 
         assert response.status_code == 200
 
-    def test_corrupt_image_returns_400(self):
-        """A truncated/undecodable image is client error, not a 500."""
+    def test_corrupt_image_returns_400(self, monkeypatch):
+        """A truncated/undecodable image is client error, not a 500.
+
+        Pin the env: mocks off so the image actually reaches the pipeline,
+        detect_read mode so PIL decodes (and raises) before any network call.
+        """
+        monkeypatch.setenv("USE_MOCKS", "false")
+        monkeypatch.setenv("PIPELINE_MODE", "detect_read")
         # PNG signature + header, but broken IDAT — PIL raises OSError on decode.
         png_bytes = bytes([
             0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,

@@ -29,6 +29,7 @@ from fastapi.responses import StreamingResponse
 from ..config import Config
 from ..feature_flags import FeatureFlags, get_feature_flags
 from ..models import ScanQuality, ScanResponse
+from ..services.abuse_protection import enforce_abuse_protection, record_scan_spend
 from ..services.detect_read_pipeline import DetectReadPipeline
 from ..services.wine_matcher import WineMatcher
 from .scan import (
@@ -52,6 +53,7 @@ async def scan_shelf_stream(
     image: UploadFile = File(..., description="Wine shelf image"),
     wine_matcher: WineMatcher = Depends(get_wine_matcher),
     flags: FeatureFlags = Depends(get_feature_flags),
+    device_key: str = Depends(enforce_abuse_protection),
 ) -> StreamingResponse:
     """Progressive scan: stream partial results as crop-read chunks complete."""
     if Config.pipeline_mode() != "detect_read":
@@ -104,6 +106,7 @@ async def scan_shelf_stream(
                 event = "partial" if result.partial else "done"
                 yield _sse(event, response.model_dump(mode="json"))
                 if not result.partial:
+                    record_scan_spend(result.timings.get("cost_usd"))
                     logger.info(
                         f"[{image_id}] /scan/stream done: {len(results)} results "
                         f"(model={result.timings.get('model')}, "

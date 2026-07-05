@@ -199,6 +199,51 @@ class Config:
         (FEASIBILITY_VERDICT.md §1 note 3). 0 disables the gate."""
         return float(os.getenv("DETECT_READ_MIN_BOTTLE_PX", "140"))
 
+    # === Abuse Protection (W1) ===
+    @staticmethod
+    def app_attest_enforce() -> str:
+        """Enforcement mode for /scan identity: 'off' (default; dev/tests),
+        'log' (admit unattested callers but log + quota them), 'require'
+        (401 without a valid App Attest assertion or web proxy secret)."""
+        mode = os.getenv("APP_ATTEST_ENFORCE", "off").lower()
+        return mode if mode in ("off", "log", "require") else "off"
+
+    @staticmethod
+    def app_attest_team_id() -> str:
+        """Apple Developer Team ID (empty until the human gate provides it)."""
+        return os.getenv("APPLE_TEAM_ID", "")
+
+    @staticmethod
+    def app_attest_bundle_id() -> str:
+        return os.getenv("APP_BUNDLE_ID", "com.wineshelfscanner.app")
+
+    @staticmethod
+    def app_attest_app_id() -> str:
+        """App ID as used in the App Attest RP ID hash: TEAMID.bundle.id"""
+        return f"{Config.app_attest_team_id()}.{Config.app_attest_bundle_id()}"
+
+    @staticmethod
+    def app_attest_allow_development() -> bool:
+        """Accept development-environment attestations (sandbox/TestFlight dev)."""
+        return os.getenv("APP_ATTEST_ALLOW_DEV", "false").lower() == "true"
+
+    @staticmethod
+    def device_daily_scan_limit() -> int:
+        """Per-identity daily scan cap (safety, not monetization). 0 disables."""
+        return int(os.getenv("DEVICE_DAILY_SCAN_LIMIT", "40"))
+
+    @staticmethod
+    def daily_spend_limit_usd() -> float:
+        """Global daily-spend circuit breaker; /scan returns 503 above it.
+        0 disables."""
+        return float(os.getenv("DAILY_SPEND_LIMIT_USD", "25"))
+
+    @staticmethod
+    def api_client_secret() -> Optional[str]:
+        """Shared secret for server-side web clients (Vercel proxy) that
+        cannot do App Attest. None disables the web credential path."""
+        return os.getenv("API_CLIENT_SECRET") or None
+
     # === Fast Pipeline ===
     @staticmethod
     def use_fast_pipeline() -> bool:

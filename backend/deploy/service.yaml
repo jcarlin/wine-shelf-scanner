@@ -21,8 +21,13 @@ spec:
         # Scaling configuration. minScale=1 keeps one instance warm: measured
         # cold start added ~35-40s to the first scan (GCS DB download +
         # startup); ~$15-20/mo at idle rates.
+        # maxScale=1: abuse-protection state (quota/spend breaker) is
+        # per-instance SQLite, so one instance makes the caps exact. One
+        # instance at concurrency 80 comfortably covers launch traffic;
+        # raise only after moving quota/spend state to shared storage
+        # (Redis/Firestore).
         autoscaling.knative.dev/minScale: "1"
-        autoscaling.knative.dev/maxScale: "10"
+        autoscaling.knative.dev/maxScale: "1"
         # Allow up to 80 concurrent requests per instance
         autoscaling.knative.dev/maxConcurrentRequests: "80"
     spec:
@@ -50,7 +55,7 @@ spec:
             - name: LOG_LEVEL
               value: "INFO"
             - name: DEBUG_MODE
-              value: "true"
+              value: "false"
             # Caching configuration
             - name: VISION_CACHE_ENABLED
               value: "true"
@@ -79,6 +84,21 @@ spec:
             # structured stdout line.
             - name: TOKEN_USAGE_LOG_PATH
               value: ""
+            # Abuse protection (W1). "log" admits unattested callers (the
+            # webapp can't do App Attest) but quotas them per identity and
+            # keeps the global spend breaker armed. Flip to "require" once
+            # the iOS build ships attestation AND the webapp calls through
+            # an authenticated proxy.
+            - name: APP_ATTEST_ENFORCE
+              value: "log"
+            - name: APP_BUNDLE_ID
+              value: "com.wineshelfscanner.app"
+            # APPLE_TEAM_ID intentionally unset — human gate (Apple Developer
+            # enrollment). /device/register returns 503 until it is set.
+            - name: DEVICE_DAILY_SCAN_LIMIT
+              value: "40"
+            - name: DAILY_SPEND_LIMIT_USD
+              value: "25"
             # Fast pipeline (superseded by PIPELINE_MODE, kept for backward compat)
             - name: USE_FAST_PIPELINE
               value: "false"

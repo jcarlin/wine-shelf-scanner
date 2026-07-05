@@ -22,6 +22,7 @@ from ..mocks.fixtures import get_mock_response
 from ..models import BoundingBox, DebugData, FallbackWine, RatingSourceDetail, ScanQuality, ScanResponse, WineResult
 from ..models.debug import PipelineStats
 from ..models.enums import RatingSource, WineSource
+from ..services.abuse_protection import enforce_abuse_protection, record_scan_spend
 from ..services.claude_vision import get_claude_vision_service, VisionIdentifiedWine
 from ..services.llm_rating_cache import get_llm_rating_cache
 from ..services.ocr_processor import BottleText, OCRProcessor, OCRProcessingResult, OrphanedText, extract_wine_names
@@ -489,6 +490,7 @@ async def scan_shelf(
     use_vision_fixture: Optional[str] = Query(None, description="Path to captured Vision API response fixture for replay"),
     wine_matcher: WineMatcher = Depends(get_wine_matcher),
     flags: FeatureFlags = Depends(get_feature_flags),
+    device_key: str = Depends(enforce_abuse_protection),
 ) -> ScanResponse:
     """
     Scan a wine shelf image and return detected wines with ratings.
@@ -595,6 +597,7 @@ async def _run_single_llm_pipeline(
         f"(model={result.timings.get('model')}, "
         f"llm={result.timings.get('llm_call_ms')}ms)"
     )
+    record_scan_spend(result.timings.get("cost_usd"))
 
     return ScanResponse(
         image_id=image_id,
@@ -632,6 +635,7 @@ async def _run_detect_read_pipeline(
         f"(model={result.timings.get('model')}, "
         f"cost=${result.timings.get('cost_usd')}, {result.timings.get('notes')})"
     )
+    record_scan_spend(result.timings.get("cost_usd"))
 
     return ScanResponse(
         image_id=image_id,

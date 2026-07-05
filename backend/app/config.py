@@ -159,6 +159,18 @@ class Config:
         """Pipeline mode. Default: single_llm (one multimodal LLM call per scan)."""
         return os.getenv("PIPELINE_MODE", "single_llm").lower()
 
+    # === Token Usage Logging ===
+    @staticmethod
+    def token_usage_log_path() -> str:
+        """Path for the per-call token-usage JSONL file.
+
+        Empty string disables the file write (e.g., Cloud Run, where the
+        filesystem is ephemeral tmpfs and burns container memory). The
+        structured stdout JSON line is still emitted in either case —
+        capture it via Cloud Logging in production.
+        """
+        return os.getenv("TOKEN_USAGE_LOG_PATH", "backend/logs/token_usage.jsonl")
+
     # === Single-LLM Pipeline ===
     @staticmethod
     def single_llm_model() -> str:

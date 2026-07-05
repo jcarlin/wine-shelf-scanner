@@ -19,7 +19,7 @@ Usage:
     python -m scripts.eval_overlays --image test-images/IMG_8334.HEIC --visual
 
 The script loads the image + ground-truth JSON, runs the production pipeline
-(`FlashNamesPipeline.scan`), and scores predictions against `overlay_targets`
+(`SingleLLMPipeline.scan`), and scores predictions against `overlay_targets`
 using `tests.accuracy.overlay_metrics.score_image`.
 """
 
@@ -37,7 +37,11 @@ BACKEND_ROOT = SCRIPT_DIR.parent
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
-from app.services.flash_names_pipeline import FlashNamesPipeline  # noqa: E402
+from dotenv import load_dotenv  # noqa: E402
+
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
+from app.services.single_llm_pipeline import SingleLLMPipeline  # noqa: E402
 from scripts.visualize_bboxes import _load_image  # noqa: E402  # type: ignore
 from tests.accuracy.overlay_metrics import (  # noqa: E402
     AggregateMetrics,
@@ -118,9 +122,9 @@ async def _run_pipeline(image_path: Path) -> tuple[list[OverlayPrediction], dict
     img.save(buf, format="JPEG", quality=95)
     image_bytes = buf.getvalue()
 
-    pipeline = FlashNamesPipeline()
+    pipeline = SingleLLMPipeline()
     t0 = time.perf_counter()
-    result = await pipeline.scan(image_bytes)
+    result = await pipeline.scan(image_bytes, image_id=image_path.name)
     elapsed_ms = round((time.perf_counter() - t0) * 1000)
 
     predictions: list[OverlayPrediction] = []
@@ -139,15 +143,14 @@ async def _run_pipeline(image_path: Path) -> tuple[list[OverlayPrediction], dict
                     "h": bbox.height,
                 },
                 confidence=rw.confidence,
-                source="recognized",
+                source="single_llm",
             )
         )
 
     info = {
         "elapsed_ms": elapsed_ms,
-        "vision_bottles": result.timings.get("vision_bottles", 0),
-        "llm_wines": result.timings.get("llm_wines", 0),
-        "fallback_count": len(result.fallback),
+        "model": result.timings.get("model"),
+        "llm_call_ms": result.timings.get("llm_call_ms"),
         "recognized_count": len(result.recognized_wines),
     }
     return predictions, info

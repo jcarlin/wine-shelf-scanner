@@ -61,6 +61,8 @@ docs/*
 !docs/FEATURE_PLAN.md
 !docs/OVERLAY_ACCURACY_PLAN.md
 !docs/SINGLE_LLM_PIVOT_PLAN.md
+!docs/FEASIBILITY_RUN_LOG.md
+!docs/FEASIBILITY_VERDICT.md
 
 
 backend/app/data/wines.db

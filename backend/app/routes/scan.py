@@ -527,7 +527,7 @@ async def _run_single_llm_pipeline(
     t0 = time.perf_counter()
 
     pipeline = SingleLLMPipeline(wine_matcher=wine_matcher)
-    result = await pipeline.scan(image_bytes)
+    result = await pipeline.scan(image_bytes, image_id=image_id)
 
     results, fallback = build_results_from_recognized(
         result.recognized_wines,

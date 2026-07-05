@@ -25,6 +25,7 @@ from ..config import Config
 from ..models.enums import RatingSource, WineSource
 from .claude_vision import _compress_image_for_vision
 from .llm_rating_cache import get_llm_rating_cache, LLMRatingCache
+from .llm_usage import log_usage
 from .ocr_processor import BottleText
 from .recognition_pipeline import RecognizedWine
 from .vision import BoundingBox as VisionBBox, DetectedObject
@@ -205,7 +206,10 @@ class SingleLLMPipeline:
         wine_matcher: Optional[WineMatcher] = None,
         use_llm_cache: Optional[bool] = None,
         model: Optional[str] = None,
-        max_tokens: int = 2500,
+        # 2500 proved too small on dense shelves (20-40 bottles): the JSON
+        # array truncates mid-stream, fails to parse, and the scan returns
+        # ZERO results. Measured 2026-07-04: 8/10 corpus images truncated.
+        max_tokens: int = 8000,
         temperature: float = 0.1,
     ):
         self.wine_matcher = wine_matcher or WineMatcher()
@@ -230,9 +234,13 @@ class SingleLLMPipeline:
         self,
         image_bytes: bytes,
         image_media_type: str = "image/jpeg",
+        image_id: str = "",
     ) -> SingleLLMResult:
         """
         Run the single-LLM pipeline.
+
+        `image_id` is forwarded into the per-call token-usage record so
+        cost can be correlated back to a specific scan request.
 
         Raises whatever the LLM call raises; callers must handle.
         """
@@ -242,7 +250,7 @@ class SingleLLMPipeline:
         timings["model"] = model
 
         t0 = time.perf_counter()
-        llm_wines = await self._call_llm(image_bytes, image_media_type, model)
+        llm_wines = await self._call_llm(image_bytes, image_media_type, model, image_id)
         timings["llm_call_ms"] = round((time.perf_counter() - t0) * 1000)
         logger.info(
             f"SingleLLMPipeline: {model} identified {len(llm_wines)} wines "
@@ -288,6 +296,7 @@ class SingleLLMPipeline:
         image_bytes: bytes,
         image_media_type: str,
         model: str,
+        image_id: str,
     ) -> list[SingleLLMWine]:
         litellm = _get_litellm()
         if litellm is None:
@@ -328,11 +337,14 @@ class SingleLLMPipeline:
         if "opus-4-7" not in model:
             kwargs["temperature"] = self.temperature
 
+        # Time only the network round-trip — base64 + image compression are
+        # local CPU work and don't belong in the latency_ms field used for
+        # provider cost/perf analysis.
+        api_start = time.perf_counter()
         response = await litellm.acompletion(**kwargs)
+        api_latency_ms = round((time.perf_counter() - api_start) * 1000)
 
-        # Log token usage on every successful call so we can see real cost
-        # without estimating from response byte size. Guarded with isinstance —
-        # some providers / mocks omit usage.
+        # Pull usage off the response. Some providers / mocks omit it.
         usage = getattr(response, "usage", None)
         prompt_tokens = getattr(usage, "prompt_tokens", None) if usage else None
         completion_tokens = getattr(usage, "completion_tokens", None) if usage else None
@@ -340,25 +352,33 @@ class SingleLLMPipeline:
         prompt_details = getattr(usage, "prompt_tokens_details", None) if usage else None
         if prompt_details is not None:
             cached_tokens = getattr(prompt_details, "cached_tokens", None)
-        if isinstance(prompt_tokens, (int, float)) or isinstance(completion_tokens, (int, float)):
-            logger.info(
-                "SingleLLMPipeline: %s usage prompt=%s completion=%s cached=%s",
-                model,
-                prompt_tokens,
-                completion_tokens,
-                cached_tokens,
-            )
 
-        # Truncation canary: if Sonnet/Haiku spent ≥ 95% of the output budget,
+        # Truncation canary: if the response spent ≥ 95% of the output budget,
         # the JSON is probably cut mid-array and the parser will silently drop
-        # entries. Surface it so we can bump max_tokens before users notice.
-        if isinstance(completion_tokens, (int, float)) and \
-                completion_tokens >= self.max_tokens * 0.95:
+        # entries. Surface it (warning + flag in the usage record) so we can
+        # bump max_tokens before users notice.
+        truncated = (
+            isinstance(completion_tokens, (int, float))
+            and completion_tokens >= self.max_tokens * 0.95
+        )
+        if truncated:
             logger.warning(
                 "SingleLLMPipeline: response near max_tokens (%d/%d) — "
                 "possible truncation. Consider raising max_tokens.",
                 completion_tokens,
                 self.max_tokens,
+            )
+
+        if prompt_tokens is not None or completion_tokens is not None:
+            log_usage(
+                image_id=image_id,
+                model=model,
+                prompt_tokens=int(prompt_tokens) if prompt_tokens is not None else None,
+                completion_tokens=int(completion_tokens) if completion_tokens is not None else None,
+                cached_tokens=int(cached_tokens) if cached_tokens is not None else None,
+                latency_ms=api_latency_ms,
+                truncated=bool(truncated),
+                log_path=Config.token_usage_log_path(),
             )
 
         response_text = response.choices[0].message.content

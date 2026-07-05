@@ -48,6 +48,9 @@ class CandidateResult:
     predictions: list[CandidatePrediction]
     usage: list[dict] = field(default_factory=list)  # one per paid call
     notes: str = ""
+    # Wall-clock ms when the candidate parallelizes paid calls; None means
+    # the serial sum of usage latencies is accurate.
+    wall_ms: Optional[int] = None
 
     @property
     def total_cost_usd(self) -> float:
@@ -396,6 +399,23 @@ def _make_per_crop(model: str, label: str, tiled: bool = True) -> Callable:
 
 
 # ---------------------------------------------------------------------------
+# C4 — tuned Detect+Read (production core in app/services/detect_read.py)
+# ---------------------------------------------------------------------------
+
+def _make_detect_read(model: str, label: str) -> Callable:
+    from app.services.detect_read import run_detect_read
+
+    async def run(image_bytes: bytes, image_id: str) -> CandidateResult:
+        r = await run_detect_read(image_bytes, model, call_label=label)
+        preds = [CandidatePrediction(wine_name=p.wine_name, bbox=p.bbox,
+                                     confidence=p.confidence, rating=p.rating)
+                 for p in r.predictions]
+        return CandidateResult(predictions=preds, usage=r.usage, notes=r.notes,
+                               wall_ms=r.wall_ms)
+    return run
+
+
+# ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
 
@@ -413,4 +433,7 @@ CANDIDATES: dict[str, Callable[[bytes, str], Awaitable[CandidateResult]]] = {
     "c3_crops_sonnet5": _make_per_crop("anthropic/claude-sonnet-5", "c3_crops_sonnet5"),
     "c2_marks_opus48": _make_set_of_marks("anthropic/claude-opus-4-8", "c2_marks_opus48"),
     "c3_crops_opus48": _make_per_crop("anthropic/claude-opus-4-8", "c3_crops_opus48"),
+    # Round 3: tuned Detect+Read (batched Vision, compact output, no thinking,
+    # mark dedup, empty-retry, weak-mark crop re-read) — the production core.
+    "c4_daread_sonnet5": _make_detect_read("anthropic/claude-sonnet-5", "c4_daread_sonnet5"),
 }

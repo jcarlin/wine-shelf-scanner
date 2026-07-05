@@ -152,7 +152,7 @@ async def _run_pipeline(image_path: Path) -> tuple[list[OverlayPrediction], dict
             "candidate": _ACTIVE_CANDIDATE,
             "usage": result.usage,
             "cost_usd": result.total_cost_usd,
-            "paid_latency_ms": result.total_latency_ms,
+            "paid_latency_ms": result.wall_ms or result.total_latency_ms,
             "recognized_count": len(predictions),
             "notes": result.notes,
         }

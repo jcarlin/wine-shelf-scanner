@@ -34,6 +34,7 @@ from ..services.fast_pipeline import FastPipeline
 from ..services.flash_names_pipeline import FlashNamesPipeline
 from ..services.hybrid_pipeline import HybridPipeline
 from ..services.single_llm_pipeline import SingleLLMPipeline
+from ..services.detect_read_pipeline import DetectReadPipeline
 from ..services.turbo_pipeline import TurboPipeline
 from ..services.wine_sync import sync_discovered_wines
 
@@ -550,6 +551,43 @@ async def _run_single_llm_pipeline(
     )
 
 
+async def _run_detect_read_pipeline(
+    image_id: str,
+    image_bytes: bytes,
+    wine_matcher: WineMatcher,
+    flags: Optional[FeatureFlags] = None,
+) -> ScanResponse:
+    """Run the Detect+Read pipeline (Vision boxes + Claude label reads).
+
+    No fallback — exceptions propagate to the caller so failures surface
+    instead of silently degrading.
+    """
+    t0 = time.perf_counter()
+
+    pipeline = DetectReadPipeline(wine_matcher=wine_matcher)
+    result = await pipeline.scan(image_bytes, image_id=image_id)
+
+    results, fallback = build_results_from_recognized(
+        result.recognized_wines,
+        wine_matcher,
+        flags=flags,
+    )
+
+    elapsed = time.perf_counter() - t0
+    logger.info(
+        f"[{image_id}] Detect+Read pipeline completed in {elapsed:.2f}s: "
+        f"{len(results)} results, {len(fallback)} fallback "
+        f"(model={result.timings.get('model')}, "
+        f"cost=${result.timings.get('cost_usd')}, {result.timings.get('notes')})"
+    )
+
+    return ScanResponse(
+        image_id=image_id,
+        results=results,
+        fallback_list=fallback,
+    )
+
+
 async def _run_fast_pipeline(
     image_id: str,
     image_bytes: bytes,
@@ -867,6 +905,11 @@ async def process_image(
 
     if mode == "single_llm":
         return await _run_single_llm_pipeline(
+            image_id, image_bytes, wine_matcher, flags
+        )
+
+    if mode == "detect_read":
+        return await _run_detect_read_pipeline(
             image_id, image_bytes, wine_matcher, flags
         )
 

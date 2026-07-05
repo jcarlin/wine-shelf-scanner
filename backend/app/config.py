@@ -185,6 +185,12 @@ class Config:
         """
         return os.getenv("SINGLE_LLM_MODEL", "anthropic/claude-sonnet-4-6")
 
+    @staticmethod
+    def detect_read_model() -> str:
+        """Label-reading model for the detect_read pipeline (set-of-marks +
+        crop re-reads; the LLM never emits coordinates)."""
+        return os.getenv("DETECT_READ_MODEL", "anthropic/claude-sonnet-5")
+
     # === Fast Pipeline ===
     @staticmethod
     def use_fast_pipeline() -> bool:

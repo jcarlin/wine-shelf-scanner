@@ -126,7 +126,21 @@ the user taps Try Again; deliberate (no silent auto-retry spend).
 
 ## Stream 5 — Deploy (gated)
 
-_(pending — nothing reaches production before the owner gate)_
+**COORDINATION (from the App-Store-launch session, 2026-07-05):** stream 3 / W1 is
+**code-complete and load-tested on branch `launch-w1`** (App Attest + per-device daily quota
+429 + global daily-spend breaker 503; `/scan` gains `Depends(enforce_abuse_protection)`).
+It merges into `rating-overlays` as soon as the tree is clean — please merge/rebase before
+deploying so production never exposes the unprotected endpoint. service.yaml notes:
+- **maxScale MUST be 1** while quota/spend state is per-instance SQLite (launch-w1 sets this);
+  your uncommitted minScale=1 warm-instance change composes fine → `minScale=1, maxScale=1`.
+- launch-w1 also sets `DEBUG_MODE=false`, `APP_ATTEST_ENFORCE=log` (webapp can't attest;
+  quota+breaker still active in log mode), `DEVICE_DAILY_SCAN_LIMIT=40`,
+  `DAILY_SPEND_LIMIT_USD=25`, and adds cbor2/cryptography to requirements.txt.
+- `/scan/stream` needs the same dependency — the launch session adds it during the merge.
+- To later flip `APP_ATTEST_ENFORCE=require`: webapp must call via a server-side proxy
+  sending `API_CLIENT_SECRET`; browser-direct calls can't hold a secret.
+
+_(nothing reaches production before the owner gate)_
 
 ## Stream 6 — Confirmatory accuracy run
 

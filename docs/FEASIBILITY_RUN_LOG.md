@@ -48,6 +48,44 @@ Still blocked on owner: rotated OPENROUTER_API_KEY (not yet provided anywhere re
 
 ## Rounds
 
+### Round 2 — Bake-off on corpus v2 (2026-07-04/05) — COMPLETE, at Gate 2
+
+12 candidates × 7 iteration images (207 targets). Full table in `backend/out/bakeoff/` (JSONs+logs);
+merged summary via scratchpad `summarize_bakeoff.py`. Bar: badgeP ≥.85, top3 ≥.90, swap ≤.05,
+cost ≤$0.03, latency ≤10s p50.
+
+| candidate | acc | swap | badgeP | top3P | $/scan | lat_s |
+|---|---|---|---|---|---|---|
+| **c3_crops_sonnet5** | .768 | **.000** | **.925** | .74 | .0536 | 18.9 |
+| c3_crops_opus48 | .734 | .039 | .869 | .79 | .1153 | 20.2 |
+| **c2_marks_sonnet5** | .667 | .034 | .849 | **1.00** | .0395 | 24.9 |
+| c2_marks_opus48 | .729 | .058 | .823 | .86 | .0639 | 20.6 |
+| c2_marks_sonnet(4.6) | .469 | .121 | .711 | .80 | .0294 | 24.8 |
+| c3_crops_haiku | .411 | .188 | .599 | .76 | .0274 | 16.6 |
+| c2_marks_haiku | .304 | .130 | .571 | .67 | .0141 | 14.9 |
+| prod_single_llm(4.6) | .239 | .122 | .427 | .45 | ~.099 | ~57 |
+| c1_lean_* (haiku/sonnet/sonnet5/opus4.7) | .07–.40 | .08–.21 | .20–.35 | .33–.38 | .013–.240 | 12–34 |
+
+Findings:
+1. **C1 family (LLM draws own boxes) is dead across 4 models** — ≤35% badge precision at any price.
+2. **Detect+Read dominates**: tiled-Vision boxes + Claude-5-family label reading. C3 (per-crop) is
+   structurally swap-free (92.5% badgeP, 0 swaps); C2 (set-of-marks) hits 100% top-3 at lower cost.
+3. **Sonnet 5 > Opus 4.8** on both architectures at half the price. Newest models materially matter.
+4. **Rendered proof** (`backend/out/render_checks/gate2_c2s5_IMG_8080.jpg`, `gate2_c2s5_IMG_8123.jpg`):
+   16/18 and 25/27 badges visually on the correct bottle. Harness *understates* rendered truth: the
+   "wrong" badges mostly sit on real-but-unannotated occluded/back-row duplicates (off_bottle GT
+   artifact). Metric caveat the other way: names_match(0.85) accepted "Torre Monte"≈"Sobre Monte".
+5. Remaining engineering gaps to bar: cost .0395→.03 and latency 25→10s (downscale marked image —
+   image tokens dominate both; parallel crop-refinement), duplicate-mark badges (dedup), occasional
+   empty LLM responses (retry-once).
+6. Transient parallel-run failures (socket exhaustion, 600s timeouts) were re-run and merged via
+   `*_gap.json`; all leaders cover all 7 images.
+
+**Gate 2 proposal: "Detect + Read" architecture** — tiled Google Vision detection (5 parallel calls,
+$0.0075, 2.4s) + one Sonnet 5 set-of-marks read + C3-style crop re-read for low-confidence marks +
+mark dedup + empty-retry + existing DB rating override. Round 3 = tune to cost/latency bar on
+iteration set; then production port + webapp + Gate 3 held-out measurement with Playwright proof.
+
 ### Round 0 — Baseline (single_llm + Sonnet 4.6) — DONE 2026-07-04, awaiting Gate 1 approval
 
 **Runs (all artifacts under `backend/out/`, usage logs under `backend/logs/`):**

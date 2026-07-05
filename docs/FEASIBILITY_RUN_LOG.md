@@ -6,7 +6,7 @@
 
 ## Run status
 
-- **Phase:** Round 1 — GT audit + bake-off prep (Gate 1 bar APPROVED by owner 2026-07-04)
+- **Phase:** COMPLETE — Gate 3 verdict delivered 2026-07-05 (CONDITIONAL GO, see FEASIBILITY_VERDICT.md)
 - **Branch:** `rating-overlays`
 - **Started:** 2026-07-04
 
@@ -48,7 +48,30 @@ Still blocked on owner: rotated OPENROUTER_API_KEY (not yet provided anywhere re
 
 ## Rounds
 
-### Round 3 — Detect+Read tuning + production port (2026-07-05, in progress)
+### Gate 3 — Held-out measurement + verdict (2026-07-05) — RUN COMPLETE, VERDICT DELIVERED
+
+One held-out run (`out/bakeoff/gate3_heldout.json`, 6 images / 161 targets), no tuning after:
+badgeP **.905** ✓ · top3 .875 (14/16; both misses on shared-store es_market — independent
+subset 10/10) · swap **.006** ✓ · coverage **.416** ✗ · $.0209/scan ✓ · wall p50 12.2s ✗.
+Split that explains coverage: device-quality photos (IMG_8121 24MP, wine1 close-range) score
+badgeP .971 / top3 6/6 / swap 0 / **coverage .767 ✓**; the 4 web-stock images (0.8–1.2MP,
+median bottle 55–78px, 0/118 targets ≥140px legibility floor) collapse to .288 coverage while
+precision holds .85 — the model correctly refuses to guess unreadable labels. Measured e2e
+warm-server POST /scan: 15.0/16.3/23.0s (p50≈16s) — latency bar failed, presented as tradeoff.
+
+All 6 held-out images rendered via webapp + screenshotted (`out/render_checks/gate3_*.png`),
+badge-on-bottle judged by eye in-session; renders match or beat harness scores. Noted: webapp
+re-scan of intl_market returned 3 results vs the harness run's 8 — run-to-run variance is high
+on illegible input. Product nit: rating ties produce multiple BEST PICK tags (wine1: three 4.0s).
+
+**VERDICT (docs/FEASIBILITY_VERDICT.md): CONDITIONAL GO** — accuracy bars pass on device-class
+photos with 1 swap/368 targets total; conditions = latency decision (progressive render or
+CROPS_PER_CALL 18→10 experiment, est. p50 10–12s) + input-resolution gate (<~140px median
+bottle width → prompt retake). Unit economics comfortable (92-94% gross margin at $4.99/mo,
+12 scans/user/mo, iOS COGS $0.24–0.36/user/mo). Sticker-pricing sensitivity and iOS-vs-web
+cost caveat (−$0.0075 + −2s on-device detection) documented in the verdict.
+
+### Round 3 — Detect+Read tuning + production port (2026-07-05) — COMPLETE
 
 **Diagnosis (from recorded Gate 2 usage, `out/bakeoff/c2_marks_sonnet5*.json` / `c3_crops_sonnet5*.json`):**
 1. The "image payload dominates cost/latency" hypothesis was WRONG. C2+Sonnet5: prompt was a flat

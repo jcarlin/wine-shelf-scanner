@@ -32,7 +32,10 @@
     "couldNotIdentify": "No se pudieron identificar las botellas",
     "tryDifferentAngle": "Intenta con una foto más cercana o un ángulo diferente",
     "tryAnother": "Intentar con Otra Foto",
-    "winesFound": "Vinos Encontrados"
+    "winesFound": "Vinos Encontrados",
+    "tooFarTitle": "Demasiado lejos",
+    "tooFarMessage": "Las etiquetas de los vinos son demasiado pequeñas para leerse a esta distancia. Acércate al estante y vuelve a tomar la foto.",
+    "retake": "Volver a tomar la foto"
   },
   "error": {
     "tryAgain": "Intentar de Nuevo"

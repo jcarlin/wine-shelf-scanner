@@ -32,7 +32,10 @@
     "couldNotIdentify": "병을 식별할 수 없습니다",
     "tryDifferentAngle": "더 가까이에서 찍거나 다른 각도로 시도해 보세요",
     "tryAnother": "다른 사진 시도",
-    "winesFound": "발견된 와인"
+    "winesFound": "발견된 와인",
+    "tooFarTitle": "너무 멀리 있습니다",
+    "tooFarMessage": "이 거리에서는 와인 라벨이 너무 작아 읽을 수 없습니다. 진열대에 더 가까이 가서 다시 촬영해 주세요.",
+    "retake": "다시 촬영"
   },
   "error": {
     "tryAgain": "다시 시도"

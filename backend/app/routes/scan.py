@@ -19,7 +19,7 @@ from pillow_heif import register_heif_opener
 from ..config import Config
 from ..feature_flags import FeatureFlags, get_feature_flags
 from ..mocks.fixtures import get_mock_response
-from ..models import BoundingBox, DebugData, FallbackWine, RatingSourceDetail, ScanResponse, WineResult
+from ..models import BoundingBox, DebugData, FallbackWine, RatingSourceDetail, ScanQuality, ScanResponse, WineResult
 from ..models.debug import PipelineStats
 from ..models.enums import RatingSource, WineSource
 from ..services.claude_vision import get_claude_vision_service, VisionIdentifiedWine
@@ -509,6 +509,10 @@ async def scan_shelf(
     except ValueError as e:
         logger.warning(f"Invalid image format: {e}")
         raise HTTPException(status_code=400, detail="Invalid image format")
+    except OSError as e:
+        # PIL raises OSError on truncated/undecodable image data.
+        logger.warning(f"Undecodable image: {e}")
+        raise HTTPException(status_code=400, detail="Invalid or corrupted image file")
     except Exception as e:
         logger.error(f"Unexpected error processing image: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -585,6 +589,7 @@ async def _run_detect_read_pipeline(
         image_id=image_id,
         results=results,
         fallback_list=fallback,
+        scan_quality=ScanQuality(**result.scan_quality) if result.scan_quality else None,
     )
 
 

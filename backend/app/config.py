@@ -191,6 +191,14 @@ class Config:
         crop re-reads; the LLM never emits coordinates)."""
         return os.getenv("DETECT_READ_MODEL", "anthropic/claude-sonnet-5")
 
+    @staticmethod
+    def detect_read_min_bottle_px() -> float:
+        """Input-quality floor: reject scans whose median detected bottle width
+        (full-resolution px) is below this — label text is illegible below
+        ~140px, so coverage collapses while cost is still spent
+        (FEASIBILITY_VERDICT.md §1 note 3). 0 disables the gate."""
+        return float(os.getenv("DETECT_READ_MIN_BOTTLE_PX", "140"))
+
     # === Fast Pipeline ===
     @staticmethod
     def use_fast_pipeline() -> bool:

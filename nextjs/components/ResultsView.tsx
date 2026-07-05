@@ -10,6 +10,7 @@ import { BugReportModal } from './BugReportModal';
 import { DebugPanel } from './DebugPanel';
 import { Toast } from './Toast';
 import { FallbackList } from './FallbackList';
+import { LowQualityNotice } from './LowQualityNotice';
 import { getImageBounds } from '@/lib/image-bounds';
 import { isVisible } from '@/lib/overlay-math';
 import { useFeatureFlags } from '@/lib/feature-flags';
@@ -111,6 +112,11 @@ export function ResultsView({ response, imageUri, onReset }: ResultsViewProps) {
       });
     }
   }, [imageSize, calculateBounds]);
+
+  // Input-quality gate fired: bottles too small to read — ask for a retake
+  if (visibleCount === 0 && response.scan_quality?.status === 'low_resolution') {
+    return <LowQualityNotice onReset={onReset} />;
+  }
 
   // If no visible results, show fallback list
   if (visibleCount === 0) {

@@ -78,6 +78,9 @@ class SingleLLMResult:
     recognized_wines: list[RecognizedWine]
     raw_llm_wines: list[SingleLLMWine]
     timings: dict
+    # Input-quality signal (detect_read only): {"status", "median_bottle_px",
+    # "bottles_detected"} when the scan was gated, else None.
+    scan_quality: Optional[dict] = None
 
 
 SINGLE_LLM_PROMPT = """You are a wine expert analyzing a photo of a wine shelf or wine display.

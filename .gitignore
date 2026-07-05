@@ -63,6 +63,7 @@ docs/*
 !docs/SINGLE_LLM_PIVOT_PLAN.md
 !docs/FEASIBILITY_RUN_LOG.md
 !docs/FEASIBILITY_VERDICT.md
+!docs/PRODUCTION_ROLLOUT_LOG.md
 
 
 backend/app/data/wines.db
@@ -71,6 +72,7 @@ backend/app/data/wines.db.backup
 backend/out/*
 !backend/out/baseline.json
 !backend/out/mappings/
+!backend/out/render_checks/
 .playwright-mcp/
 
 expo

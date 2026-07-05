@@ -32,7 +32,10 @@
     "couldNotIdentify": "ボトルを識別できませんでした",
     "tryDifferentAngle": "もっと近くから撮影するか、別の角度で試してください",
     "tryAnother": "別の写真を試す",
-    "winesFound": "見つかったワイン"
+    "winesFound": "見つかったワイン",
+    "tooFarTitle": "遠すぎます",
+    "tooFarMessage": "この距離ではワインのラベルが小さすぎて読み取れません。棚に近づいて撮り直してください。",
+    "retake": "撮り直す"
   },
   "error": {
     "tryAgain": "再試行"

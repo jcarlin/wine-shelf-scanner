@@ -21,6 +21,7 @@ import io
 import json
 import logging
 import re
+import statistics
 import time
 import unicodedata
 from dataclasses import dataclass, field
@@ -81,6 +82,12 @@ class DetectReadResult:
     # Wall-clock ms for the whole detect+read section. The per-call latency
     # sum overstates when panel reads run in parallel.
     wall_ms: Optional[int] = None
+    # Input-quality gate (production only; the eval harness never gates).
+    # Label text is physically illegible below ~140px bottle width — precision
+    # holds but coverage collapses (FEASIBILITY_VERDICT.md §1 note 3).
+    median_bottle_px: Optional[float] = None
+    bottles_detected: Optional[int] = None
+    low_quality: bool = False
 
     @property
     def total_cost_usd(self) -> float:
@@ -137,9 +144,12 @@ def detect_bottles(img: Image.Image, iou_dedup: float = 0.45) -> list[dict]:
     jobs: list[tuple[float, float, float, float, Image.Image]] = [(0, 0, W, H, img)]
     overlap = 0.15
     tw, th = W * (0.5 + overlap / 2), H * (0.5 + overlap / 2)
-    for ox, oy in [(0, 0), (W - tw, 0), (0, H - th), (W - tw, H - th)]:
-        crop = img.crop((int(ox), int(oy), int(ox + tw), int(oy + th)))
-        jobs.append((ox, oy, tw, th, crop))
+    # Degenerate uploads (a few px) collapse tiles to zero size, which crashes
+    # downscale/JPEG encode — the full frame alone covers them.
+    if int(tw) >= 1 and int(th) >= 1:
+        for ox, oy in [(0, 0), (W - tw, 0), (0, H - th), (W - tw, H - th)]:
+            crop = img.crop((int(ox), int(oy), int(ox + tw), int(oy + th)))
+            jobs.append((ox, oy, tw, th, crop))
 
     client = _get_vision_client()
 
@@ -366,7 +376,8 @@ async def _read_crops(model: str, img: Image.Image, boxes: list[dict],
 
 
 async def run_detect_read(image_bytes: bytes, model: str,
-                          call_label: str = "detect_read") -> DetectReadResult:
+                          call_label: str = "detect_read",
+                          min_bottle_px: Optional[float] = None) -> DetectReadResult:
     wall_start = time.perf_counter()
     usage: list[dict] = []
     img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
@@ -381,6 +392,20 @@ async def run_detect_read(image_bytes: bytes, model: str,
     })
     if not boxes:
         return DetectReadResult(predictions=[], usage=usage, notes="no bottles detected")
+
+    # Input-quality gate: boxes are known before any LLM spend, so rejecting
+    # an illegible shelf here is free (Vision-only). Opt-in via min_bottle_px;
+    # the eval harness never gates.
+    median_px = statistics.median(b["w"] * img.width for b in boxes)
+    if min_bottle_px is not None and median_px < min_bottle_px:
+        return DetectReadResult(
+            predictions=[], usage=usage,
+            notes=(f"low_resolution median_bottle_px={median_px:.0f} "
+                   f"< {min_bottle_px:.0f} (detected={len(boxes)})"),
+            wall_ms=round((time.perf_counter() - wall_start) * 1000),
+            median_bottle_px=median_px, bottles_detected=len(boxes),
+            low_quality=True,
+        )
 
     boxes = _reading_order(boxes)
     all_ids = list(range(len(boxes)))
@@ -424,4 +449,5 @@ async def run_detect_read(image_bytes: bytes, model: str,
         notes=(f"detected={len(boxes)} chunks={len(chunks)} "
                f"rescued={len(weak)} deduped={n_dedup}"),
         wall_ms=round((time.perf_counter() - wall_start) * 1000),
+        median_bottle_px=median_px, bottles_detected=len(boxes),
     )

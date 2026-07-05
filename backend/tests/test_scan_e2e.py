@@ -339,7 +339,20 @@ class TestScanEndpointInputValidation:
 
     def test_accepts_png(self):
         """Test PNG content type is accepted."""
-        # Create minimal PNG
+        from PIL import Image
+        buf = BytesIO()
+        Image.new("RGB", (64, 64), (90, 30, 30)).save(buf, format="PNG")
+        buf.seek(0)
+        response = client.post(
+            "/scan",
+            files={"image": ("test.png", buf, "image/png")}
+        )
+
+        assert response.status_code == 200
+
+    def test_corrupt_image_returns_400(self):
+        """A truncated/undecodable image is client error, not a 500."""
+        # PNG signature + header, but broken IDAT — PIL raises OSError on decode.
         png_bytes = bytes([
             0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
             0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
@@ -356,7 +369,8 @@ class TestScanEndpointInputValidation:
             files={"image": ("test.png", BytesIO(png_bytes), "image/png")}
         )
 
-        assert response.status_code == 200
+        assert response.status_code == 400
+        assert "image" in response.json()["detail"].lower()
 
     def test_missing_image_returns_error(self):
         """Test missing image parameter returns error."""

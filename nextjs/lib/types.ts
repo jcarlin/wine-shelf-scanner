@@ -77,10 +77,19 @@ export interface FallbackWine {
   rating: number;
 }
 
+/** Input-quality signal — set when the backend gated the scan (e.g. bottles
+ * too small for label text to be legible). Additive, optional field. */
+export interface ScanQuality {
+  status: 'low_resolution' | string;
+  median_bottle_px?: number | null;
+  bottles_detected?: number | null;
+}
+
 export interface ScanResponse {
   image_id: string;
   results: WineResult[];
   fallback_list: FallbackWine[];
+  scan_quality?: ScanQuality | null;
   debug?: DebugData;
 }
 

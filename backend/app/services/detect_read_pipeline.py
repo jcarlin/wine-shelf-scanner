@@ -41,10 +41,26 @@ class DetectReadPipeline(SingleLLMPipeline):
         model = self._select_model()
         timings["model"] = model
 
-        result = await run_detect_read(image_bytes, model, call_label="detect_read")
+        min_px = Config.detect_read_min_bottle_px()
+        result = await run_detect_read(
+            image_bytes, model, call_label="detect_read",
+            min_bottle_px=min_px if min_px > 0 else None,
+        )
         timings["detect_read_ms"] = round((time.perf_counter() - total_start) * 1000)
         timings["cost_usd"] = round(result.total_cost_usd, 6)
         timings["notes"] = result.notes
+
+        scan_quality = None
+        if result.low_quality:
+            scan_quality = {
+                "status": "low_resolution",
+                "median_bottle_px": round(result.median_bottle_px),
+                "bottles_detected": result.bottles_detected,
+            }
+            logger.info(
+                f"DetectReadPipeline: input-quality gate rejected scan "
+                f"({result.notes})"
+            )
 
         for u in result.usage:
             if u.get("prompt_tokens") is None and u.get("completion_tokens") is None:
@@ -76,7 +92,8 @@ class DetectReadPipeline(SingleLLMPipeline):
         ]
         if not llm_wines:
             timings["total_ms"] = round((time.perf_counter() - total_start) * 1000)
-            return SingleLLMResult(recognized_wines=[], raw_llm_wines=[], timings=timings)
+            return SingleLLMResult(recognized_wines=[], raw_llm_wines=[],
+                                   timings=timings, scan_quality=scan_quality)
 
         t0 = time.perf_counter()
         recognized = self._match_against_db(llm_wines)

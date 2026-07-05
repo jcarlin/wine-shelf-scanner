@@ -596,6 +596,12 @@ def main():
              "production pipeline (e.g. c1_lean_sonnet).",
     )
     parser.add_argument(
+        "--only",
+        help="Comma-separated GT stems to include with --all "
+             "(e.g. IMG_8080,IMG_8123). Used to restrict runs to the "
+             "iteration set and keep held-out images untouched.",
+    )
+    parser.add_argument(
         "--visual",
         action="store_true",
         help="Render diff PNGs into backend/out/visuals/.",
@@ -646,6 +652,9 @@ def main():
     targets_paths: list[Path] = []
     if args.all:
         targets_paths = _gt_files_with_targets()
+        if args.only:
+            wanted = {s.strip() for s in args.only.split(",") if s.strip()}
+            targets_paths = [p for p in targets_paths if p.stem in wanted]
         if not targets_paths:
             print("No GT files with overlay_targets found under "
                   f"{GT_DIR}. Run annotate_overlays.py first.")

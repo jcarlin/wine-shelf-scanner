@@ -192,24 +192,32 @@ def detect_bottles(image_bytes: bytes, tiled: bool = True,
     """
     img = Image.open(io.BytesIO(image_bytes))
     W, H = img.size
-    boxes = _vision_bottles_raw(image_bytes)
 
+    jobs: list[tuple[float, float, float, float, bytes]] = [(0, 0, W, H, image_bytes)]
     if tiled:
         overlap = 0.15
         tw, th = W * (0.5 + overlap / 2), H * (0.5 + overlap / 2)
-        origins = [(0, 0), (W - tw, 0), (0, H - th), (W - tw, H - th)]
-        for ox, oy in origins:
+        for ox, oy in [(0, 0), (W - tw, 0), (0, H - th), (W - tw, H - th)]:
             crop = img.crop((int(ox), int(oy), int(ox + tw), int(oy + th)))
             buf = io.BytesIO()
             crop.convert("RGB").save(buf, format="JPEG", quality=90)
-            for b in _vision_bottles_raw(buf.getvalue()):
-                boxes.append({
-                    "x": (ox + b["x"] * tw) / W,
-                    "y": (oy + b["y"] * th) / H,
-                    "w": b["w"] * tw / W,
-                    "h": b["h"] * th / H,
-                    "conf": b["conf"],
-                })
+            jobs.append((ox, oy, tw, th, buf.getvalue()))
+
+    # The 5 Vision calls are independent — run them concurrently.
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=len(jobs)) as ex:
+        results = list(ex.map(lambda j: _vision_bottles_raw(j[4]), jobs))
+
+    boxes: list[dict] = []
+    for (ox, oy, jw, jh, _), found in zip(jobs, results):
+        for b in found:
+            boxes.append({
+                "x": (ox + b["x"] * jw) / W,
+                "y": (oy + b["y"] * jh) / H,
+                "w": b["w"] * jw / W,
+                "h": b["h"] * jh / H,
+                "conf": b["conf"],
+            })
 
     boxes.sort(key=lambda b: b["conf"], reverse=True)
     kept: list[dict] = []

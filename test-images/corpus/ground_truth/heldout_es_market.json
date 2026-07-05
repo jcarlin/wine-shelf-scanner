@@ -1,0 +1,459 @@
+{
+  "image_file": "7A9C3758-6B5F-4655-9BD0-7DCDB769A1EA_1_105_c.jpeg",
+  "wines": [],
+  "audit": {
+    "date": "2026-07-04",
+    "notes": "Corpus v2: rebuilt via detection-seeded annotation (tiled-Vision boxes, per-box zoom-crop reading, no-guessing rule). source=annotator_approx boxes are approximate hand boxes. Lead added 3 same-wine-family coverage targets (Beronia Reserva 2020, leftmost Ramon Bilbao, leftmost La Planta) after visual spot-check."
+  },
+  "overlay_targets": [
+    {
+      "wine_name": "San Quirce Ribera del Duero",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "san",
+        "quirce",
+        "ribera",
+        "duero"
+      ],
+      "bbox": {
+        "x": 0.7103,
+        "y": 0.0,
+        "w": 0.0943,
+        "h": 0.2325
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Sur",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "sur"
+      ],
+      "bbox": {
+        "x": 0.8906,
+        "y": 0.0,
+        "w": 0.0938,
+        "h": 0.2236
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Beronia Mazuelo Reserva 2019",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "beronia",
+        "mazuelo",
+        "reserva"
+      ],
+      "bbox": {
+        "x": 0.3926,
+        "y": 0.0003,
+        "w": 0.0898,
+        "h": 0.2253
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Carmelo Rodero",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "carmelo",
+        "rodero"
+      ],
+      "bbox": {
+        "x": 0.4758,
+        "y": 0.3257,
+        "w": 0.0873,
+        "h": 0.2291
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Beefsteak Old Vine Tempranillo",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "beefsteak",
+        "vine",
+        "tempranillo"
+      ],
+      "bbox": {
+        "x": 0.2493,
+        "y": 0.3257,
+        "w": 0.0831,
+        "h": 0.2336
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Beronia Crianza 2021",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "beronia",
+        "crianza"
+      ],
+      "bbox": {
+        "x": 0.5508,
+        "y": 0.0,
+        "w": 0.0859,
+        "h": 0.2256
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Marques de Riscal Reserva",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "marques",
+        "riscal",
+        "reserva"
+      ],
+      "bbox": {
+        "x": 0.6328,
+        "y": 0.0007,
+        "w": 0.0859,
+        "h": 0.2249
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Quinta Quietud Tinta de Toro Reserva 2020",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "quinta",
+        "quietud",
+        "tinta",
+        "toro"
+      ],
+      "bbox": {
+        "x": 0.0038,
+        "y": 0.3167,
+        "w": 0.0788,
+        "h": 0.2426
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Beronia Mazuelo Reserva 2019",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "beronia",
+        "mazuelo",
+        "reserva"
+      ],
+      "bbox": {
+        "x": 0.4747,
+        "y": 0.0,
+        "w": 0.0828,
+        "h": 0.2302
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Vinedos de Villarrica Crianza 2020",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "vinedos",
+        "villarrica",
+        "crianza"
+      ],
+      "bbox": {
+        "x": 0.5581,
+        "y": 0.3145,
+        "w": 0.0792,
+        "h": 0.2381
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Beefsteak Old Vine Tempranillo",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "beefsteak",
+        "vine",
+        "tempranillo"
+      ],
+      "bbox": {
+        "x": 0.3279,
+        "y": 0.3279,
+        "w": 0.0809,
+        "h": 0.2313
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Tunante",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "tunante"
+      ],
+      "bbox": {
+        "x": 0.1196,
+        "y": 0.6227,
+        "w": 0.0814,
+        "h": 0.2291
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Ramon Bilbao Crianza 2021",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "ramon",
+        "bilbao",
+        "crianza"
+      ],
+      "bbox": {
+        "x": 0.7889,
+        "y": 0.3145,
+        "w": 0.0854,
+        "h": 0.2179
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Tunante",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "tunante"
+      ],
+      "bbox": {
+        "x": 0.0418,
+        "y": 0.6227,
+        "w": 0.0811,
+        "h": 0.2291
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "La Planta",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "planta"
+      ],
+      "bbox": {
+        "x": 0.7417,
+        "y": 0.6283,
+        "w": 0.0809,
+        "h": 0.228
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "La Planta",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "planta"
+      ],
+      "bbox": {
+        "x": 0.6653,
+        "y": 0.6227,
+        "w": 0.0786,
+        "h": 0.2336
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Ramon Bilbao Crianza 2021",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "ramon",
+        "bilbao",
+        "crianza"
+      ],
+      "bbox": {
+        "x": 0.8675,
+        "y": 0.3122,
+        "w": 0.0831,
+        "h": 0.2201
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Tempore Terrae Garnacha",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "tempore",
+        "terrae",
+        "garnacha"
+      ],
+      "bbox": {
+        "x": 0.5115,
+        "y": 0.6249,
+        "w": 0.0786,
+        "h": 0.2291
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Tunante",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "tunante"
+      ],
+      "bbox": {
+        "x": 0.1999,
+        "y": 0.6249,
+        "w": 0.0786,
+        "h": 0.2269
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Tempore Terrae Garnacha",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "tempore",
+        "terrae",
+        "garnacha"
+      ],
+      "bbox": {
+        "x": 0.5923,
+        "y": 0.6305,
+        "w": 0.0786,
+        "h": 0.2235
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Tunante",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "tunante"
+      ],
+      "bbox": {
+        "x": 0.2785,
+        "y": 0.6227,
+        "w": 0.0764,
+        "h": 0.2291
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Tempore Terrae Garnacha",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "tempore",
+        "terrae",
+        "garnacha"
+      ],
+      "bbox": {
+        "x": 0.4347,
+        "y": 0.6271,
+        "w": 0.074,
+        "h": 0.2291
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Beefsteak Old Vine Tempranillo",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "beefsteak",
+        "vine",
+        "tempranillo"
+      ],
+      "bbox": {
+        "x": 0.427,
+        "y": 0.3302,
+        "w": 0.0566,
+        "h": 0.2291
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Corral de Campanas Tinta de Toro",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "corral",
+        "campanas",
+        "tinta",
+        "toro"
+      ],
+      "bbox": {
+        "x": 0.0781,
+        "y": 0.425,
+        "w": 0.0758,
+        "h": 0.1292
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Mimao Garnacha",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "mimao",
+        "garnacha"
+      ],
+      "bbox": {
+        "x": 0.81,
+        "y": 0.03,
+        "w": 0.075,
+        "h": 0.2
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Vinedos de Villarrica Crianza",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "vinedos",
+        "villarrica",
+        "crianza"
+      ],
+      "bbox": {
+        "x": 0.64,
+        "y": 0.33,
+        "w": 0.08,
+        "h": 0.23
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Beronia Reserva 2020",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "beronia",
+        "reserva",
+        "2020"
+      ],
+      "bbox": {
+        "x": 0.32,
+        "y": 0.07,
+        "w": 0.057,
+        "h": 0.157
+      },
+      "source": "leadagent_visual"
+    },
+    {
+      "wine_name": "Ramon Bilbao Crianza 2021",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "ramon",
+        "bilbao",
+        "crianza"
+      ],
+      "bbox": {
+        "x": 0.717,
+        "y": 0.35,
+        "w": 0.07,
+        "h": 0.178
+      },
+      "source": "leadagent_visual"
+    },
+    {
+      "wine_name": "La Planta",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "planta"
+      ],
+      "bbox": {
+        "x": 0.67,
+        "y": 0.638,
+        "w": 0.067,
+        "h": 0.19
+      },
+      "source": "leadagent_visual"
+    }
+  ],
+  "overlay_target_count": 29
+}

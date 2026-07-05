@@ -1,36 +1,409 @@
 {
   "image_file": "red-wine-shelf-in-a-supermarket-B7WY9Y.jpg",
   "wines": [],
+  "audit": {
+    "date": "2026-07-04",
+    "notes": "Corpus v2: rebuilt via detection-seeded annotation (tiled-Vision boxes, per-box zoom-crop reading, no-guessing rule). source=annotator_approx boxes are approximate hand boxes."
+  },
   "overlay_targets": [
     {
-      "wine_name": "Chateau Balan Bordeaux",
+      "wine_name": "Chateau Lafitte Carcasset",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "chateau",
+        "lafitte",
+        "carcasset"
+      ],
+      "bbox": {
+        "x": 0.0267,
+        "y": 0.0002,
+        "w": 0.0755,
+        "h": 0.1693
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Ribeaupierre Chardonnay",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "ribeaupierre",
+        "chardonnay"
+      ],
+      "bbox": {
+        "x": 0.1673,
+        "y": 0.6361,
+        "w": 0.073,
+        "h": 0.1685
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Les Grangues Rothschild",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "les",
+        "grangues",
+        "rothschild"
+      ],
+      "bbox": {
+        "x": 0.5002,
+        "y": 0.0024,
+        "w": 0.0719,
+        "h": 0.1705
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Ribeaupierre Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "ribeaupierre",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.571,
+        "y": 0.635,
+        "w": 0.0708,
+        "h": 0.1696
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Ribeaupierre Sauvignon Blanc",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "ribeaupierre",
+        "sauvignon",
+        "blanc"
+      ],
+      "bbox": {
+        "x": 0.438,
+        "y": 0.6395,
+        "w": 0.0719,
+        "h": 0.1651
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Tertre du Moulin",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "tertre",
+        "moulin"
+      ],
+      "bbox": {
+        "x": 0.3032,
+        "y": 0.0,
+        "w": 0.0696,
+        "h": 0.1696
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Ribeaupierre Sauvignon Blanc",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "ribeaupierre",
+        "sauvignon",
+        "blanc"
+      ],
+      "bbox": {
+        "x": 0.3032,
+        "y": 0.6361,
+        "w": 0.0696,
+        "h": 0.1685
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Tertre du Moulin",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "tertre",
+        "moulin"
+      ],
+      "bbox": {
+        "x": 0.1033,
+        "y": 0.0012,
+        "w": 0.0696,
+        "h": 0.1684
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Tertre du Moulin",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "tertre",
+        "moulin"
+      ],
+      "bbox": {
+        "x": 0.1741,
+        "y": 0.002,
+        "w": 0.0696,
+        "h": 0.1676
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Chateau Rouquet",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "chateau",
+        "rouquet"
+      ],
+      "bbox": {
+        "x": 0.8315,
+        "y": 0.6395,
+        "w": 0.0696,
+        "h": 0.1651
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Ribeaupierre Cinsault",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "ribeaupierre",
+        "cinsault"
+      ],
+      "bbox": {
+        "x": 0.6384,
+        "y": 0.6395,
+        "w": 0.0685,
+        "h": 0.1673
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Ribeaupierre Merlot",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "ribeaupierre",
+        "merlot"
+      ],
+      "bbox": {
+        "x": 0.2381,
+        "y": 0.6373,
+        "w": 0.0674,
+        "h": 0.1696
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Beaujolais",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "beaujolais"
+      ],
+      "bbox": {
+        "x": 0.8989,
+        "y": 0.4431,
+        "w": 0.0741,
+        "h": 0.1526
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Monopoles Nicolas Napoleon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "monopoles",
+        "nicolas",
+        "napoleon"
+      ],
+      "bbox": {
+        "x": 0.1359,
+        "y": 0.2111,
+        "w": 0.064,
+        "h": 0.1752
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Chateau La Tonnelle",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "chateau",
+        "tonnelle"
+      ],
+      "bbox": {
+        "x": 0.1146,
+        "y": 0.4272,
+        "w": 0.0674,
+        "h": 0.1651
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Chateau Trois Moulins Haut-Medoc",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "chateau",
+        "trois",
+        "moulins",
+        "haut"
+      ],
+      "bbox": {
+        "x": 0.8967,
+        "y": 0.2269,
+        "w": 0.0696,
+        "h": 0.1595
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Chateau Trois Moulins Haut-Medoc",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "chateau",
+        "trois",
+        "moulins",
+        "haut"
+      ],
+      "bbox": {
+        "x": 0.8281,
+        "y": 0.2295,
+        "w": 0.0664,
+        "h": 0.1592
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Calvet Bordeaux",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "calvet",
+        "bordeaux"
+      ],
+      "bbox": {
+        "x": 0.5659,
+        "y": 0.429,
+        "w": 0.0691,
+        "h": 0.1437
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Chateau de Toulet",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "chateau",
+        "toulet"
+      ],
+      "bbox": {
+        "x": 0.0013,
+        "y": 0.4276,
+        "w": 0.058,
+        "h": 0.1658
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Beaujolais",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "beaujolais"
+      ],
+      "bbox": {
+        "x": 0.8315,
+        "y": 0.438,
+        "w": 0.0696,
+        "h": 0.1348
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Calvet Bordeaux",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "calvet",
+        "bordeaux"
+      ],
+      "bbox": {
+        "x": 0.7552,
+        "y": 0.4335,
+        "w": 0.0674,
+        "h": 0.1393
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Dulac Medoc",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "dulac",
+        "medoc"
+      ],
+      "bbox": {
+        "x": 0.3729,
+        "y": 0.4448,
+        "w": 0.0629,
+        "h": 0.1464
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Dulac Medoc",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "dulac",
+        "medoc"
+      ],
+      "bbox": {
+        "x": 0.3055,
+        "y": 0.4425,
+        "w": 0.0629,
+        "h": 0.1303
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Chateau Balan",
       "bbox_kind": "bottle",
       "distinctive_tokens": [
         "chateau",
         "balan"
       ],
       "bbox": {
-        "x": 0.28515625,
-        "y": 0.431640625,
-        "w": 0.068359375,
-        "h": 0.158203125
+        "x": 0.3,
+        "y": 0.22,
+        "w": 0.13,
+        "h": 0.13
       },
-      "v_idx": 0
+      "source": "annotator_approx"
     },
     {
-      "wine_name": "Ribeaupierre Medoc",
+      "wine_name": "Chateau Charmail",
       "bbox_kind": "bottle",
       "distinctive_tokens": [
-        "ribeaupierre",
-        "medoc"
+        "chateau",
+        "charmail"
       ],
       "bbox": {
-        "x": 0.419921875,
-        "y": 0.43359375,
-        "w": 0.06640625,
-        "h": 0.1640625
+        "x": 0.44,
+        "y": 0.22,
+        "w": 0.12,
+        "h": 0.13
       },
-      "v_idx": 1
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Monopoles Nicolas Napoleon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "monopoles",
+        "nicolas",
+        "napoleon"
+      ],
+      "bbox": {
+        "x": 0.03,
+        "y": 0.21,
+        "w": 0.1,
+        "h": 0.17
+      },
+      "source": "annotator_approx"
     },
     {
       "wine_name": "Mouton Cadet",
@@ -40,12 +413,12 @@
         "cadet"
       ],
       "bbox": {
-        "x": 0.5546875,
-        "y": 0.0,
-        "w": 0.06640625,
-        "h": 0.1640625
+        "x": 0.6,
+        "y": 0.02,
+        "w": 0.11,
+        "h": 0.15
       },
-      "v_idx": 2
+      "source": "annotator_approx"
     },
     {
       "wine_name": "Medoc",
@@ -54,13 +427,74 @@
         "medoc"
       ],
       "bbox": {
-        "x": 0.828125,
-        "y": 0.2294921875,
-        "w": 0.06640625,
-        "h": 0.1591796875
+        "x": 0.79,
+        "y": 0.05,
+        "w": 0.07,
+        "h": 0.13
       },
-      "v_idx": 3
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Bourgogne Chardonnay",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "bourgogne",
+        "chardonnay"
+      ],
+      "bbox": {
+        "x": 0.19,
+        "y": 0.43,
+        "w": 0.07,
+        "h": 0.15
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Calvet Bordeaux",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "calvet",
+        "bordeaux"
+      ],
+      "bbox": {
+        "x": 0.63,
+        "y": 0.43,
+        "w": 0.12,
+        "h": 0.14
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Chateau Rouquet",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "chateau",
+        "rouquet"
+      ],
+      "bbox": {
+        "x": 0.76,
+        "y": 0.64,
+        "w": 0.06,
+        "h": 0.16
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Napoleon Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "napoleon",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.88,
+        "y": 0.54,
+        "w": 0.07,
+        "h": 0.15
+      },
+      "source": "annotator_approx"
     }
   ],
-  "overlay_target_count": 4
+  "overlay_target_count": 32
 }

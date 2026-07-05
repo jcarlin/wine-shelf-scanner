@@ -106,3 +106,59 @@ for direct Gemini. Without them, only Anthropic-hosted models are testable.
   C1 lean-output variants registered (sonnet/opus/haiku). Planned: C2 set-of-marks (Vision boxes +
   numbered markers, LLM assigns names to IDs — no LLM coordinates), C3 per-crop label reading,
   C6 OCR-cluster anchors. C2/C3/C6 build specs to be delegated to parallel agents after GT fixes.
+
+#### GT audit results (all 10 images, agent-audited + spot-verified) — HEADLINE FINDING
+
+**30 of 64 original overlay_targets (47%) were defective**: box on the wrong bottle (wrong_bbox),
+wrong/mashed-up name (wrong_name), or invented wines (e.g. "Louis Latour" in IMG_8334 — no such
+bottle exists there; "Ribeaupierre Medoc" in red-wine-shelf). Per image: 8080 3/6, 8121 4/8,
+8122 3/7, 8123 4/8, 8124 4/8, 8262 4/4 (ALL), 8334 3/7, 8335 3/6, redshelf 2/4, wine1 0/6 (clean).
+Common patterns: box lands 1-2 bottles away from the named wine (machine annotation offset),
+names conflate two adjacent bottles, coverage skips most readable bottles.
+
+**Consequence: every earlier accuracy number (old flash_names 45.3%, Round 0's 31.2%) was scored
+against ~half-corrupt GT and is unreliable as an absolute.** Relative model-to-model comparisons
+made against the same GT remain directionally useful, nothing more.
+
+**Corpus v2 rebuild (in progress):** IMG_8080 rebuilt + visually verified (13 targets, was 6).
+The other 8 defective images being rebuilt via detection-seeded protocol (tiled-Vision boxes,
+numbered marks + zoom crops, agent reads each crop, no-guessing rule, audit knowledge as
+cross-check). wine1 kept as-is (clean). 3 NEW held-out images being annotated the same way:
+`heldout_es_market` (36 boxes), `heldout_intl_market` (33), `heldout_shop_uk` (23) — real dense
+store shelves, much harder than the staged corpus. Note: corpus-v2 boxes are seeded from the same
+tiled-Vision detector C2/C3 use — coverage metric could favor them; mitigated by adding
+agent-listed extra_bottles with hand boxes, and noted for the verdict.
+
+Audit JSONs preserved in git history of this file's session; raw agent outputs in the session
+transcript. IMG_8080's identity: it is a screenshot of the same source photo as
+corpus/shelves/8921FE9E-...jpeg (Google Lens UI icons baked into pixels).
+
+#### Corpus v2 status (2026-07-04, late)
+
+Merged and spot-checked (verdicts in `backend/out/gt_rebuild/verdicts/` and
+`backend/out/new_heldout/*/verdicts.json`; target boxes = tiled-Vision detections verified per-crop,
+plus approximate hand boxes for detector misses):
+
+| Image | v1 targets | v2 targets | Notes |
+|---|---|---|---|
+| IMG_8080 | 6 (3 bad) | 13 | rebuilt + lead-verified |
+| IMG_8121 (held-out) | 8 (4 bad) | 37 | rebuilt |
+| IMG_8122 | 7 (3 bad) | pending | rebuild in flight |
+| IMG_8123 | 8 (4 bad) | 25 | rebuilt, lead spot-check clean |
+| IMG_8124 | 8 (4 bad) | 27 | rebuilt |
+| IMG_8262 | 4 (4 bad) | 40 | rebuilt, lead spot-check clean |
+| IMG_8334 | 7 (3 bad) | 36 | rebuilt |
+| IMG_8335 | 6 (3 bad) | 31 | rebuilt |
+| red-wine-shelf (held-out) | 4 (2 bad) | 32 | rebuilt |
+| wine1 (held-out) | 6 (0 bad) | 6 | unchanged (clean) |
+| heldout_es_market (NEW) | — | 29 | lead added 3 same-family coverage targets after spot-check |
+| heldout_shop_uk (NEW) | — | 30 | includes famous SKUs (Cepparello, Daumas Gassac) |
+| heldout_intl_market (NEW) | — | pending | annotation in flight |
+
+Held-out set (6): IMG_8121, wine1, red-wine-shelf, heldout_es_market, heldout_intl_market,
+heldout_shop_uk. Iteration set (7): IMG_8080, IMG_8122, IMG_8123, IMG_8124, IMG_8262, IMG_8334,
+IMG_8335. Caveat noted: heldout_es_market shares SKUs with iteration image IMG_8335 (same store
+chain, different shelf/photo); shop_uk and intl_market are fully independent distributions.
+Known metric caveat: GT coverage is not exhaustive — a correct badge on an unannotated bottle
+whose name matches an annotated same-name target elsewhere scores off_bottle. Mitigated by
+same-family coverage additions during spot-checks; residual risk noted for the verdict.

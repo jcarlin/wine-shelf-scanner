@@ -1,0 +1,493 @@
+{
+  "image_file": "bottles-of-wine-on-shelves-in-a-specialist-wine-shop-D3A7JC.jpg",
+  "wines": [],
+  "audit": {
+    "date": "2026-07-04",
+    "notes": "Corpus v2: rebuilt via detection-seeded annotation (tiled-Vision boxes, per-box zoom-crop reading, no-guessing rule). source=annotator_approx boxes are approximate hand boxes."
+  },
+  "overlay_targets": [
+    {
+      "wine_name": "Pasquiers Grenache Noir",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "pasquiers",
+        "grenache",
+        "noir"
+      ],
+      "bbox": {
+        "x": 0.8113,
+        "y": 0.0004,
+        "w": 0.0651,
+        "h": 0.2826
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Il Faggio",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "faggio"
+      ],
+      "bbox": {
+        "x": 0.9259,
+        "y": 0.6541,
+        "w": 0.0719,
+        "h": 0.2561
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Mas de Daumas Gassac 2003",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "mas",
+        "daumas",
+        "gassac"
+      ],
+      "bbox": {
+        "x": 0.9169,
+        "y": 0.3324,
+        "w": 0.0764,
+        "h": 0.2381
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Saint-Aubin Premier Cru Les Frionnes",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "saint",
+        "aubin",
+        "premier",
+        "cru"
+      ],
+      "bbox": {
+        "x": 0.3773,
+        "y": 0.0,
+        "w": 0.0629,
+        "h": 0.283
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Chateau La Fleur Nardin Saint-Emilion",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "chateau",
+        "fleur",
+        "nardin",
+        "saint"
+      ],
+      "bbox": {
+        "x": 0.5699,
+        "y": 0.0,
+        "w": 0.0629,
+        "h": 0.2808
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Cote de Nuits-Villages Pierre Bouree Fils",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "cote",
+        "nuits",
+        "villages",
+        "pierre"
+      ],
+      "bbox": {
+        "x": 0.3145,
+        "y": 0.0004,
+        "w": 0.0629,
+        "h": 0.2803
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Chateau Mouras Graves",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "chateau",
+        "mouras",
+        "graves"
+      ],
+      "bbox": {
+        "x": 0.6912,
+        "y": 0.0,
+        "w": 0.0618,
+        "h": 0.283
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Moulin des Chenes Lirac",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "moulin",
+        "des",
+        "chenes",
+        "lirac"
+      ],
+      "bbox": {
+        "x": 0.1308,
+        "y": 0.3257,
+        "w": 0.0657,
+        "h": 0.2403
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Bourgogne Pinot Noir",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "bourgogne",
+        "pinot",
+        "noir"
+      ],
+      "bbox": {
+        "x": 0.124,
+        "y": 0.0106,
+        "w": 0.0547,
+        "h": 0.2823
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "58 Guineas Claret",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "guineas",
+        "claret"
+      ],
+      "bbox": {
+        "x": 0.5143,
+        "y": 0.001,
+        "w": 0.0528,
+        "h": 0.282
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Lafran-Veyrolles Bandol",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "lafran",
+        "veyrolles",
+        "bandol"
+      ],
+      "bbox": {
+        "x": 0.8473,
+        "y": 0.3369,
+        "w": 0.0606,
+        "h": 0.2291
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Selvapiana Bucerchiale Chianti Rufina Riserva",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "selvapiana",
+        "bucerchiale",
+        "chianti",
+        "rufina"
+      ],
+      "bbox": {
+        "x": 0.3189,
+        "y": 0.6766,
+        "w": 0.0584,
+        "h": 0.2313
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Selvapiana Chianti Rufina",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "selvapiana",
+        "chianti",
+        "rufina"
+      ],
+      "bbox": {
+        "x": 0.1909,
+        "y": 0.6889,
+        "w": 0.0595,
+        "h": 0.2167
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Paul Jaboulet Aine Chateauneuf-du-Pape Les Cedres",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "paul",
+        "jaboulet",
+        "aine",
+        "chateauneuf"
+      ],
+      "bbox": {
+        "x": 0.1898,
+        "y": 0.3459,
+        "w": 0.0573,
+        "h": 0.2246
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Notre Dame des Anges Cazes",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "notre",
+        "dame",
+        "des",
+        "anges"
+      ],
+      "bbox": {
+        "x": 0.4355,
+        "y": 0.4269,
+        "w": 0.0642,
+        "h": 0.1991
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Paul Jaboulet Aine Ventoux Les Traverses",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "paul",
+        "jaboulet",
+        "aine",
+        "ventoux"
+      ],
+      "bbox": {
+        "x": 0.0079,
+        "y": 0.4258,
+        "w": 0.0611,
+        "h": 0.2024
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Mas la Chevaliere",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "mas",
+        "chevaliere"
+      ],
+      "bbox": {
+        "x": 0.5099,
+        "y": 0.425,
+        "w": 0.0562,
+        "h": 0.201
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Domaine Cazes Cotes du Roussillon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "domaine",
+        "cazes",
+        "cotes",
+        "roussillon"
+      ],
+      "bbox": {
+        "x": 0.5688,
+        "y": 0.4262,
+        "w": 0.0562,
+        "h": 0.1998
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Le Canon du Marechal Cazes",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "canon",
+        "marechal",
+        "cazes"
+      ],
+      "bbox": {
+        "x": 0.3257,
+        "y": 0.3459,
+        "w": 0.0472,
+        "h": 0.2246
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Domaine du Moulin Grenache",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "domaine",
+        "moulin",
+        "grenache"
+      ],
+      "bbox": {
+        "x": 0.7642,
+        "y": 0.4257,
+        "w": 0.0517,
+        "h": 0.2026
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Les Volets Pinot Noir",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "les",
+        "volets",
+        "pinot",
+        "noir"
+      ],
+      "bbox": {
+        "x": 0.0,
+        "y": 0.0,
+        "w": 0.055,
+        "h": 0.28
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Cote de Beaune-Villages Pierre Bouree Fils",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "cote",
+        "beaune",
+        "villages",
+        "pierre"
+      ],
+      "bbox": {
+        "x": 0.245,
+        "y": 0.0,
+        "w": 0.06,
+        "h": 0.28
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Monrouby Grenache Carignan",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "monrouby",
+        "grenache",
+        "carignan"
+      ],
+      "bbox": {
+        "x": 0.75,
+        "y": 0.0,
+        "w": 0.055,
+        "h": 0.28
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Paul Jaboulet Aine Cotes du Rhone Parallele 45",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "paul",
+        "jaboulet",
+        "aine",
+        "cotes"
+      ],
+      "bbox": {
+        "x": 0.06,
+        "y": 0.34,
+        "w": 0.06,
+        "h": 0.22
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Madiran 2007",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "madiran"
+      ],
+      "bbox": {
+        "x": 0.63,
+        "y": 0.34,
+        "w": 0.06,
+        "h": 0.23
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Chianti Classico",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "chianti",
+        "classico"
+      ],
+      "bbox": {
+        "x": 0.4,
+        "y": 0.66,
+        "w": 0.055,
+        "h": 0.24
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Cepparello",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "cepparello"
+      ],
+      "bbox": {
+        "x": 0.47,
+        "y": 0.66,
+        "w": 0.06,
+        "h": 0.24
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Flaccianello della Pieve",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "flaccianello",
+        "della",
+        "pieve"
+      ],
+      "bbox": {
+        "x": 0.66,
+        "y": 0.66,
+        "w": 0.06,
+        "h": 0.24
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Promessa Syrah-Merlot",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "promessa",
+        "syrah",
+        "merlot"
+      ],
+      "bbox": {
+        "x": 0.79,
+        "y": 0.66,
+        "w": 0.05,
+        "h": 0.24
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "A-Mano Primitivo",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "mano",
+        "primitivo"
+      ],
+      "bbox": {
+        "x": 0.86,
+        "y": 0.66,
+        "w": 0.05,
+        "h": 0.24
+      },
+      "source": "annotator_approx"
+    }
+  ],
+  "overlay_target_count": 30
+}

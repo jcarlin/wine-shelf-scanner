@@ -1,0 +1,842 @@
+{
+  "aggregate": {
+    "total_targets": 21,
+    "correct": 16,
+    "swap": 0,
+    "miss": 5,
+    "assignment_accuracy": 0.7619047619047619,
+    "swap_rate": 0.0,
+    "miss_rate": 0.23809523809523808,
+    "mean_iou": 0.992201391923951,
+    "source_counts": {
+      "c4_daread_sonnet5": 20
+    }
+  },
+  "per_image": [
+    {
+      "image_id": "IMG_8125.HEIC",
+      "total_targets": 21,
+      "correct": 16,
+      "swap": 0,
+      "miss": 5,
+      "assignment_accuracy": 0.7619047619047619,
+      "swap_rate": 0.0,
+      "miss_rate": 0.23809523809523808,
+      "mean_iou": 0.992201391923951,
+      "source_counts": {
+        "c4_daread_sonnet5": 20
+      },
+      "pipeline_info": {
+        "elapsed_ms": 17960,
+        "candidate": "c4_daread_sonnet5",
+        "usage": [
+          {
+            "call": "vision_detect",
+            "model": "google/vision-object-localization",
+            "latency_ms": 2200,
+            "cost_usd": 0.0075,
+            "prompt_tokens": null,
+            "completion_tokens": null
+          },
+          {
+            "call": "c4_daread_sonnet5",
+            "model": "anthropic/claude-sonnet-5",
+            "prompt_tokens": 437,
+            "completion_tokens": 37,
+            "latency_ms": 3580,
+            "cost_usd": 0.001244,
+            "truncated": false
+          },
+          {
+            "call": "c4_daread_sonnet5",
+            "model": "anthropic/claude-sonnet-5",
+            "prompt_tokens": 2671,
+            "completion_tokens": 300,
+            "latency_ms": 5447,
+            "cost_usd": 0.008342,
+            "truncated": false
+          },
+          {
+            "call": "c4_daread_sonnet5",
+            "model": "anthropic/claude-sonnet-5",
+            "prompt_tokens": 3205,
+            "completion_tokens": 268,
+            "latency_ms": 5981,
+            "cost_usd": 0.00909,
+            "truncated": false
+          },
+          {
+            "call": "c4_daread_sonnet5_rescue",
+            "model": "anthropic/claude-sonnet-5",
+            "prompt_tokens": 949,
+            "completion_tokens": 45,
+            "latency_ms": 3226,
+            "cost_usd": 0.002348,
+            "truncated": false
+          }
+        ],
+        "cost_usd": 0.028524,
+        "paid_latency_ms": 17941,
+        "recognized_count": 20,
+        "notes": "detected=21 chunks=3 rescued=2 deduped=0",
+        "precision": {
+          "on_correct": 16,
+          "wrong_bottle": 0,
+          "off_bottle": 1,
+          "unjudgeable": 3,
+          "badge_precision": 0.9411764705882353,
+          "top3_judged": 3,
+          "top3_correct": 3,
+          "top3_precision": 1.0
+        },
+        "badges_ranked": [
+          {
+            "wine_name": "Izadi Crianza Rioja 2021",
+            "rating": 4.0,
+            "confidence": 0.9,
+            "anchor": [
+              0.8304,
+              0.4797
+            ],
+            "class": "on_correct"
+          },
+          {
+            "wine_name": "Izadi Crianza Rioja 2021",
+            "rating": 4.0,
+            "confidence": 0.9,
+            "anchor": [
+              0.9057,
+              0.4795
+            ],
+            "class": "on_correct"
+          },
+          {
+            "wine_name": "La Posta Armando Bonarda 2022",
+            "rating": 4.0,
+            "confidence": 0.9,
+            "anchor": [
+              0.1325,
+              0.7731
+            ],
+            "class": "on_correct"
+          },
+          {
+            "wine_name": "La Posta Armando Bonarda 2022",
+            "rating": 4.0,
+            "confidence": 0.9,
+            "anchor": [
+              0.2224,
+              0.7706
+            ],
+            "class": "on_correct"
+          },
+          {
+            "wine_name": "Izadi Selecci\u00f3n Rioja",
+            "rating": 4.0,
+            "confidence": 0.55,
+            "anchor": [
+              0.6016,
+              0.4767
+            ],
+            "class": "on_correct"
+          },
+          {
+            "wine_name": "Izadi Selecci\u00f3n Rioja",
+            "rating": 4.0,
+            "confidence": 0.55,
+            "anchor": [
+              0.7024,
+              0.4815
+            ],
+            "class": "off_bottle"
+          },
+          {
+            "wine_name": "La Maldita Garnacha Rioja 2023",
+            "rating": 3.9,
+            "confidence": 0.9,
+            "anchor": [
+              0.4717,
+              0.7594
+            ],
+            "class": "on_correct"
+          },
+          {
+            "wine_name": "La Maldita Garnacha Rioja 2023",
+            "rating": 3.9,
+            "confidence": 0.9,
+            "anchor": [
+              0.626,
+              0.7605
+            ],
+            "class": "on_correct"
+          },
+          {
+            "wine_name": "Pasqua Edizione Speciale",
+            "rating": 3.9,
+            "confidence": 0.6,
+            "anchor": [
+              0.2151,
+              0.4672
+            ],
+            "class": "unjudgeable"
+          },
+          {
+            "wine_name": "Pasqua Edizione Speciale",
+            "rating": 3.9,
+            "confidence": 0.6,
+            "anchor": [
+              0.3088,
+              0.4672
+            ],
+            "class": "unjudgeable"
+          },
+          {
+            "wine_name": "Pasqua Edizione Speciale",
+            "rating": 3.9,
+            "confidence": 0.55,
+            "anchor": [
+              0.4054,
+              0.4666
+            ],
+            "class": "unjudgeable"
+          },
+          {
+            "wine_name": "Marqu\u00e9s de C\u00e1ceres Crianza Rioja 2021",
+            "rating": 3.8,
+            "confidence": 0.9,
+            "anchor": [
+              0.793,
+              0.095
+            ],
+            "class": "on_correct"
+          },
+          {
+            "wine_name": "Marqu\u00e9s de C\u00e1ceres Crianza Rioja",
+            "rating": 3.8,
+            "confidence": 0.85,
+            "anchor": [
+              0.9012,
+              0.1054
+            ],
+            "class": "on_correct"
+          },
+          {
+            "wine_name": "La Maldita Garnacha Blanca Rioja 2023",
+            "rating": 3.8,
+            "confidence": 0.85,
+            "anchor": [
+              0.808,
+              0.7555
+            ],
+            "class": "on_correct"
+          },
+          {
+            "wine_name": "Frescobaldi Pomino",
+            "rating": 3.8,
+            "confidence": 0.55,
+            "anchor": [
+              0.3549,
+              0.7644
+            ],
+            "class": "on_correct"
+          },
+          {
+            "wine_name": "La Maldita Garnacha Blanca Rioja",
+            "rating": 3.6,
+            "confidence": 0.85,
+            "anchor": [
+              0.8877,
+              0.7448
+            ],
+            "class": "on_correct"
+          },
+          {
+            "wine_name": "Diablo Dark Red",
+            "rating": 3.3,
+            "confidence": 0.9,
+            "anchor": [
+              0.2515,
+              0.0728
+            ],
+            "class": "on_correct"
+          },
+          {
+            "wine_name": "Diablo Dark Red",
+            "rating": 3.3,
+            "confidence": 0.9,
+            "anchor": [
+              0.5323,
+              0.1167
+            ],
+            "class": "on_correct"
+          },
+          {
+            "wine_name": "Diablo Dark Red",
+            "rating": 3.3,
+            "confidence": 0.85,
+            "anchor": [
+              0.1465,
+              0.0729
+            ],
+            "class": "on_correct"
+          },
+          {
+            "wine_name": "Diablo Dark Red",
+            "rating": 3.3,
+            "confidence": 0.85,
+            "anchor": [
+              0.3516,
+              0.0742
+            ],
+            "class": "on_correct"
+          }
+        ]
+      },
+      "outcomes": [
+        {
+          "target_wine_name": "Diablo Dark Red",
+          "target_bbox": {
+            "x": 0.0947265625,
+            "y": 0.00119781494140625,
+            "w": 0.103515625,
+            "h": 0.28591156005859375
+          },
+          "classification": "correct",
+          "iou": 0.9990393595730487,
+          "matched_prediction": {
+            "wine_name": "Diablo Dark Red",
+            "bbox": {
+              "x": 0.0947265625,
+              "y": 0.00147247314453125,
+              "w": 0.103515625,
+              "h": 0.28563690185546875
+            },
+            "anchor": [
+              0.146484375,
+              0.07288169860839844
+            ],
+            "confidence": 0.85,
+            "source": "c4_daread_sonnet5"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Diablo Dark Red",
+          "target_bbox": {
+            "x": 0.1982421875,
+            "y": 0.0,
+            "w": 0.1064453125,
+            "h": 0.291015625
+          },
+          "classification": "correct",
+          "iou": 1.0,
+          "matched_prediction": {
+            "wine_name": "Diablo Dark Red",
+            "bbox": {
+              "x": 0.1982421875,
+              "y": 0.0,
+              "w": 0.1064453125,
+              "h": 0.291015625
+            },
+            "anchor": [
+              0.25146484375,
+              0.07275390625
+            ],
+            "confidence": 0.9,
+            "source": "c4_daread_sonnet5"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Diablo Dark Red",
+          "target_bbox": {
+            "x": 0.30078125,
+            "y": 0.0,
+            "w": 0.1015625,
+            "h": 0.296875
+          },
+          "classification": "correct",
+          "iou": 1.0,
+          "matched_prediction": {
+            "wine_name": "Diablo Dark Red",
+            "bbox": {
+              "x": 0.30078125,
+              "y": 0.0,
+              "w": 0.1015625,
+              "h": 0.296875
+            },
+            "anchor": [
+              0.3515625,
+              0.07421875
+            ],
+            "confidence": 0.85,
+            "source": "c4_daread_sonnet5"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Diablo Dark Red",
+          "target_bbox": {
+            "x": 0.4941406249999999,
+            "y": 0.052221679687499994,
+            "w": 0.0763671875,
+            "h": 0.25773925781249996
+          },
+          "classification": "correct",
+          "iou": 1.000000000000001,
+          "matched_prediction": {
+            "wine_name": "Diablo Dark Red",
+            "bbox": {
+              "x": 0.4941406249999999,
+              "y": 0.052221679687499994,
+              "w": 0.0763671875,
+              "h": 0.25773925781249996
+            },
+            "anchor": [
+              0.5323242187499999,
+              0.11665649414062498
+            ],
+            "confidence": 0.9,
+            "source": "c4_daread_sonnet5"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Marques de Caceres Crianza 2021 Rioja",
+          "target_bbox": {
+            "x": 0.73828125,
+            "y": 0.0289306640625,
+            "w": 0.109375,
+            "h": 0.2640380859375
+          },
+          "classification": "correct",
+          "iou": 0.9995376791493297,
+          "matched_prediction": {
+            "wine_name": "Marqu\u00e9s de C\u00e1ceres Crianza Rioja 2021",
+            "bbox": {
+              "x": 0.73828125,
+              "y": 0.029052734375,
+              "w": 0.109375,
+              "h": 0.263916015625
+            },
+            "anchor": [
+              0.79296875,
+              0.09503173828125
+            ],
+            "confidence": 0.9,
+            "source": "c4_daread_sonnet5"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Marques de Caceres Crianza 2021 Rioja",
+          "target_bbox": {
+            "x": 0.8472656250000001,
+            "y": 0.042395019531249994,
+            "w": 0.10781249999999999,
+            "h": 0.25184326171875
+          },
+          "classification": "correct",
+          "iou": 0.9999999999999994,
+          "matched_prediction": {
+            "wine_name": "Marqu\u00e9s de C\u00e1ceres Crianza Rioja",
+            "bbox": {
+              "x": 0.8472656250000001,
+              "y": 0.042395019531249994,
+              "w": 0.10781249999999999,
+              "h": 0.25184326171875
+            },
+            "anchor": [
+              0.9011718750000002,
+              0.10535583496093749
+            ],
+            "confidence": 0.85,
+            "source": "c4_daread_sonnet5"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Pasqua Desire Lush & Zin",
+          "target_bbox": {
+            "x": 0.16733398437499997,
+            "y": 0.43124999999999997,
+            "w": 0.09545898437499999,
+            "h": 0.14375
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Pasqua Desire Lush & Zin",
+          "target_bbox": {
+            "x": 0.26279296874999997,
+            "y": 0.43124999999999997,
+            "w": 0.09208984374999998,
+            "h": 0.14375
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Pasqua Desire Lush & Zin",
+          "target_bbox": {
+            "x": 0.35937499999999994,
+            "y": 0.43124999999999997,
+            "w": 0.09208984374999998,
+            "h": 0.14150390624999998
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Apothic Inferno",
+          "target_bbox": {
+            "x": 0.4941406249999999,
+            "y": 0.43124999999999997,
+            "w": 0.0763671875,
+            "h": 0.14375
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Izadi Seleccion Rioja",
+          "target_bbox": {
+            "x": 0.5659423828125,
+            "y": 0.4447265625,
+            "w": 0.07131347656249999,
+            "h": 0.12802734375
+          },
+          "classification": "correct",
+          "iou": 1.0000000000000004,
+          "matched_prediction": {
+            "wine_name": "Izadi Selecci\u00f3n Rioja",
+            "bbox": {
+              "x": 0.5659423828125,
+              "y": 0.4447265625,
+              "w": 0.07131347656249999,
+              "h": 0.12802734375
+            },
+            "anchor": [
+              0.60159912109375,
+              0.47673339843749996
+            ],
+            "confidence": 0.55,
+            "source": "c4_daread_sonnet5"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Izadi Crianza 2021 Rioja",
+          "target_bbox": {
+            "x": 0.7798828125000001,
+            "y": 0.42500000000000004,
+            "w": 0.10107421874999999,
+            "h": 0.21899414062499997
+          },
+          "classification": "correct",
+          "iou": 1.0000000000000007,
+          "matched_prediction": {
+            "wine_name": "Izadi Crianza Rioja 2021",
+            "bbox": {
+              "x": 0.7798828125000001,
+              "y": 0.42500000000000004,
+              "w": 0.10107421874999999,
+              "h": 0.21899414062499997
+            },
+            "anchor": [
+              0.8304199218750001,
+              0.47974853515625004
+            ],
+            "confidence": 0.9,
+            "source": "c4_daread_sonnet5"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Izadi Crianza 2021 Rioja",
+          "target_bbox": {
+            "x": 0.85400390625,
+            "y": 0.42626342773437503,
+            "w": 0.10332031249999998,
+            "h": 0.213238525390625
+          },
+          "classification": "correct",
+          "iou": 0.9995064977792397,
+          "matched_prediction": {
+            "wine_name": "Izadi Crianza Rioja 2021",
+            "bbox": {
+              "x": 0.85400390625,
+              "y": 0.42615814208984387,
+              "w": 0.10332031249999998,
+              "h": 0.21334381103515623
+            },
+            "anchor": [
+              0.9056640625,
+              0.4794940948486329
+            ],
+            "confidence": 0.9,
+            "source": "c4_daread_sonnet5"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "La Posta Armando Bonarda 2022",
+          "target_bbox": {
+            "x": 0.08647460937499998,
+            "y": 0.7080078125,
+            "w": 0.09208984374999998,
+            "h": 0.26054687499999996
+          },
+          "classification": "correct",
+          "iou": 1.0,
+          "matched_prediction": {
+            "wine_name": "La Posta Armando Bonarda 2022",
+            "bbox": {
+              "x": 0.08647460937499998,
+              "y": 0.7080078125,
+              "w": 0.09208984374999998,
+              "h": 0.26054687499999996
+            },
+            "anchor": [
+              0.13251953125,
+              0.77314453125
+            ],
+            "confidence": 0.9,
+            "source": "c4_daread_sonnet5"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "La Posta Armando Bonarda 2022",
+          "target_bbox": {
+            "x": 0.17856445312499997,
+            "y": 0.706884765625,
+            "w": 0.08759765624999999,
+            "h": 0.25493164062499996
+          },
+          "classification": "correct",
+          "iou": 1.0,
+          "matched_prediction": {
+            "wine_name": "La Posta Armando Bonarda 2022",
+            "bbox": {
+              "x": 0.17856445312499997,
+              "y": 0.706884765625,
+              "w": 0.08759765624999999,
+              "h": 0.25493164062499996
+            },
+            "anchor": [
+              0.22236328124999996,
+              0.77061767578125
+            ],
+            "confidence": 0.9,
+            "source": "c4_daread_sonnet5"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Frescobaldi Pomino",
+          "target_bbox": {
+            "x": 0.31220703124999993,
+            "y": 0.702392578125,
+            "w": 0.08535156249999999,
+            "h": 0.24819335937499998
+          },
+          "classification": "correct",
+          "iou": 0.9999999999999997,
+          "matched_prediction": {
+            "wine_name": "Frescobaldi Pomino",
+            "bbox": {
+              "x": 0.31220703124999993,
+              "y": 0.702392578125,
+              "w": 0.08535156249999999,
+              "h": 0.24819335937499998
+            },
+            "anchor": [
+              0.3548828124999999,
+              0.76444091796875
+            ],
+            "confidence": 0.55,
+            "source": "c4_daread_sonnet5"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "La Maldita Garnacha Rioja 2023",
+          "target_bbox": {
+            "x": 0.43349609375,
+            "y": 0.695654296875,
+            "w": 0.0763671875,
+            "h": 0.25493164062499996
+          },
+          "classification": "correct",
+          "iou": 1.000000000000001,
+          "matched_prediction": {
+            "wine_name": "La Maldita Garnacha Rioja 2023",
+            "bbox": {
+              "x": 0.43349609375,
+              "y": 0.695654296875,
+              "w": 0.0763671875,
+              "h": 0.25493164062499996
+            },
+            "anchor": [
+              0.4716796875,
+              0.75938720703125
+            ],
+            "confidence": 0.9,
+            "source": "c4_daread_sonnet5"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "La Maldita Garnacha Rioja 2023",
+          "target_bbox": {
+            "x": 0.5822265625,
+            "y": 0.6979003906250001,
+            "w": 0.08759765624999999,
+            "h": 0.250439453125
+          },
+          "classification": "correct",
+          "iou": 1.000000000000002,
+          "matched_prediction": {
+            "wine_name": "La Maldita Garnacha Rioja 2023",
+            "bbox": {
+              "x": 0.5822265625,
+              "y": 0.6979003906250001,
+              "w": 0.08759765624999999,
+              "h": 0.250439453125
+            },
+            "anchor": [
+              0.6260253906250001,
+              0.76051025390625
+            ],
+            "confidence": 0.9,
+            "source": "c4_daread_sonnet5"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "La Maldita Garnacha Blanca Rioja 2023",
+          "target_bbox": {
+            "x": 0.7708984375,
+            "y": 0.6934082031250001,
+            "w": 0.07412109374999999,
+            "h": 0.24819335937499998
+          },
+          "classification": "correct",
+          "iou": 0.9999999999999997,
+          "matched_prediction": {
+            "wine_name": "La Maldita Garnacha Blanca Rioja 2023",
+            "bbox": {
+              "x": 0.7708984375,
+              "y": 0.6934082031250001,
+              "w": 0.07412109374999999,
+              "h": 0.24819335937499998
+            },
+            "anchor": [
+              0.807958984375,
+              0.7554565429687501
+            ],
+            "confidence": 0.85,
+            "source": "c4_daread_sonnet5"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "La Maldita Garnacha Blanca Rioja 2023",
+          "target_bbox": {
+            "x": 0.8472656250000001,
+            "y": 0.6810546875000001,
+            "w": 0.08310546875,
+            "h": 0.25830078124999994
+          },
+          "classification": "correct",
+          "iou": 0.8771387342815915,
+          "matched_prediction": {
+            "wine_name": "La Maldita Garnacha Blanca Rioja",
+            "bbox": {
+              "x": 0.8405273437499999,
+              "y": 0.679931640625,
+              "w": 0.0943359375,
+              "h": 0.259423828125
+            },
+            "anchor": [
+              0.8876953124999999,
+              0.74478759765625
+            ],
+            "confidence": 0.85,
+            "source": "c4_daread_sonnet5"
+          },
+          "swap_target": null
+        },
+        {
+          "target_wine_name": "Beringer Bros Red Wine Blend",
+          "target_bbox": {
+            "x": 0.595,
+            "y": 0.055,
+            "w": 0.135,
+            "h": 0.265
+          },
+          "classification": "miss",
+          "iou": null,
+          "matched_prediction": null,
+          "swap_target": null
+        }
+      ],
+      "unmatched_predictions": [
+        {
+          "wine_name": "Pasqua Edizione Speciale",
+          "bbox": {
+            "x": 0.16733398437499997,
+            "y": 0.43124999999999997,
+            "w": 0.09545898437499999,
+            "h": 0.14375
+          },
+          "confidence": 0.6,
+          "source": "c4_daread_sonnet5"
+        },
+        {
+          "wine_name": "Pasqua Edizione Speciale",
+          "bbox": {
+            "x": 0.26279296874999997,
+            "y": 0.43124999999999997,
+            "w": 0.09208984374999998,
+            "h": 0.14375
+          },
+          "confidence": 0.6,
+          "source": "c4_daread_sonnet5"
+        },
+        {
+          "wine_name": "Pasqua Edizione Speciale",
+          "bbox": {
+            "x": 0.35937499999999994,
+            "y": 0.43124999999999997,
+            "w": 0.09208984374999998,
+            "h": 0.14150390624999998
+          },
+          "confidence": 0.55,
+          "source": "c4_daread_sonnet5"
+        },
+        {
+          "wine_name": "Izadi Selecci\u00f3n Rioja",
+          "bbox": {
+            "x": 0.6630859375,
+            "y": 0.42657051086425785,
+            "w": 0.07861328124999999,
+            "h": 0.21966972351074218
+          },
+          "confidence": 0.55,
+          "source": "c4_daread_sonnet5"
+        }
+      ]
+    }
+  ]
+}

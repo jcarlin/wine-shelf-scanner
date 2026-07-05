@@ -1,0 +1,323 @@
+{
+  "image_file": "IMG_8125.HEIC",
+  "wines": [],
+  "overlay_targets": [
+    {
+      "wine_name": "Diablo Dark Red",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "diablo"
+      ],
+      "bbox": {
+        "x": 0.0947265625,
+        "y": 0.00119781494140625,
+        "w": 0.103515625,
+        "h": 0.28591156005859375
+      },
+      "v_idx": 0
+    },
+    {
+      "wine_name": "Diablo Dark Red",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "diablo"
+      ],
+      "bbox": {
+        "x": 0.1982421875,
+        "y": 0.0,
+        "w": 0.1064453125,
+        "h": 0.291015625
+      },
+      "v_idx": 1
+    },
+    {
+      "wine_name": "Diablo Dark Red",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "diablo"
+      ],
+      "bbox": {
+        "x": 0.30078125,
+        "y": 0.0,
+        "w": 0.1015625,
+        "h": 0.296875
+      },
+      "v_idx": 2
+    },
+    {
+      "wine_name": "Diablo Dark Red",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "diablo"
+      ],
+      "bbox": {
+        "x": 0.4941406249999999,
+        "y": 0.052221679687499994,
+        "w": 0.0763671875,
+        "h": 0.25773925781249996
+      },
+      "v_idx": 3
+    },
+    {
+      "wine_name": "Marques de Caceres Crianza 2021 Rioja",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "marques",
+        "caceres"
+      ],
+      "bbox": {
+        "x": 0.73828125,
+        "y": 0.0289306640625,
+        "w": 0.109375,
+        "h": 0.2640380859375
+      },
+      "v_idx": 4
+    },
+    {
+      "wine_name": "Marques de Caceres Crianza 2021 Rioja",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "marques",
+        "caceres"
+      ],
+      "bbox": {
+        "x": 0.8472656250000001,
+        "y": 0.042395019531249994,
+        "w": 0.10781249999999999,
+        "h": 0.25184326171875
+      },
+      "v_idx": 5
+    },
+    {
+      "wine_name": "Pasqua Desire Lush & Zin",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "pasqua",
+        "desire"
+      ],
+      "bbox": {
+        "x": 0.16733398437499997,
+        "y": 0.43124999999999997,
+        "w": 0.09545898437499999,
+        "h": 0.14375
+      },
+      "v_idx": 6
+    },
+    {
+      "wine_name": "Pasqua Desire Lush & Zin",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "pasqua",
+        "desire"
+      ],
+      "bbox": {
+        "x": 0.26279296874999997,
+        "y": 0.43124999999999997,
+        "w": 0.09208984374999998,
+        "h": 0.14375
+      },
+      "v_idx": 7
+    },
+    {
+      "wine_name": "Pasqua Desire Lush & Zin",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "pasqua",
+        "desire"
+      ],
+      "bbox": {
+        "x": 0.35937499999999994,
+        "y": 0.43124999999999997,
+        "w": 0.09208984374999998,
+        "h": 0.14150390624999998
+      },
+      "v_idx": 8
+    },
+    {
+      "wine_name": "Apothic Inferno",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "apothic",
+        "inferno"
+      ],
+      "bbox": {
+        "x": 0.4941406249999999,
+        "y": 0.43124999999999997,
+        "w": 0.0763671875,
+        "h": 0.14375
+      },
+      "v_idx": 9
+    },
+    {
+      "wine_name": "Izadi Seleccion Rioja",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "izadi",
+        "seleccion"
+      ],
+      "bbox": {
+        "x": 0.5659423828125,
+        "y": 0.4447265625,
+        "w": 0.07131347656249999,
+        "h": 0.12802734375
+      },
+      "v_idx": 10
+    },
+    {
+      "wine_name": "Izadi Crianza 2021 Rioja",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "izadi",
+        "crianza"
+      ],
+      "bbox": {
+        "x": 0.7798828125000001,
+        "y": 0.42500000000000004,
+        "w": 0.10107421874999999,
+        "h": 0.21899414062499997
+      },
+      "v_idx": 12
+    },
+    {
+      "wine_name": "Izadi Crianza 2021 Rioja",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "izadi",
+        "crianza"
+      ],
+      "bbox": {
+        "x": 0.85400390625,
+        "y": 0.42626342773437503,
+        "w": 0.10332031249999998,
+        "h": 0.213238525390625
+      },
+      "v_idx": 13
+    },
+    {
+      "wine_name": "La Posta Armando Bonarda 2022",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "posta",
+        "armando",
+        "bonarda"
+      ],
+      "bbox": {
+        "x": 0.08647460937499998,
+        "y": 0.7080078125,
+        "w": 0.09208984374999998,
+        "h": 0.26054687499999996
+      },
+      "v_idx": 14
+    },
+    {
+      "wine_name": "La Posta Armando Bonarda 2022",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "posta",
+        "armando",
+        "bonarda"
+      ],
+      "bbox": {
+        "x": 0.17856445312499997,
+        "y": 0.706884765625,
+        "w": 0.08759765624999999,
+        "h": 0.25493164062499996
+      },
+      "v_idx": 15
+    },
+    {
+      "wine_name": "Frescobaldi Pomino",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "frescobaldi",
+        "pomino"
+      ],
+      "bbox": {
+        "x": 0.31220703124999993,
+        "y": 0.702392578125,
+        "w": 0.08535156249999999,
+        "h": 0.24819335937499998
+      },
+      "v_idx": 16
+    },
+    {
+      "wine_name": "La Maldita Garnacha Rioja 2023",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "maldita",
+        "garnacha"
+      ],
+      "bbox": {
+        "x": 0.43349609375,
+        "y": 0.695654296875,
+        "w": 0.0763671875,
+        "h": 0.25493164062499996
+      },
+      "v_idx": 17
+    },
+    {
+      "wine_name": "La Maldita Garnacha Rioja 2023",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "maldita",
+        "garnacha"
+      ],
+      "bbox": {
+        "x": 0.5822265625,
+        "y": 0.6979003906250001,
+        "w": 0.08759765624999999,
+        "h": 0.250439453125
+      },
+      "v_idx": 18
+    },
+    {
+      "wine_name": "La Maldita Garnacha Blanca Rioja 2023",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "maldita",
+        "garnacha",
+        "blanca"
+      ],
+      "bbox": {
+        "x": 0.7708984375,
+        "y": 0.6934082031250001,
+        "w": 0.07412109374999999,
+        "h": 0.24819335937499998
+      },
+      "v_idx": 19
+    },
+    {
+      "wine_name": "La Maldita Garnacha Blanca Rioja 2023",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "maldita",
+        "garnacha",
+        "blanca"
+      ],
+      "bbox": {
+        "x": 0.8472656250000001,
+        "y": 0.6810546875000001,
+        "w": 0.08310546875,
+        "h": 0.25830078124999994
+      },
+      "v_idx": 20
+    },
+    {
+      "wine_name": "Beringer Bros Red Wine Blend",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "beringer",
+        "bros"
+      ],
+      "bbox": {
+        "x": 0.595,
+        "y": 0.055,
+        "w": 0.135,
+        "h": 0.265
+      },
+      "hand_box": true
+    }
+  ],
+  "overlay_target_count": 21,
+  "annotation_notes": "corpus-v2 protocol: 21 tiled-Vision detection boxes, per-crop verified; box index 11 left UNNAMED (own label illegible under glare, no-guessing rule); +1 hand box for detector-missed Beringer Bros. Confirmatory Stream-6 annotation 2026-07-05."
+}

@@ -154,6 +154,27 @@ deploying so production never exposes the unprotected endpoint. service.yaml not
 
 _(nothing reaches production before the owner gate)_
 
-## Stream 6 — Confirmatory accuracy run
+## Stream 6 — Confirmatory accuracy run ✅ (2026-07-05, subagent)
 
-_(pending)_
+**What was done:** 140px pre-check on the three never-scored repo candidates using the
+pipeline's own tiled detection: wine-photos.jpg median **85px** and the 1.8MP copenhagen stock
+shelf **72px** → both below the floor, excluded before annotation (independently reproduces the
+verdict's web-low-res finding); IMG_8125 (24.5MP device HEIC) median **395px** → survived.
+IMG_8125 annotated under corpus-v2 (21 targets: 20 detection-seeded per-crop verified + 1 hand
+box for a detector-missed bottle; 1 bottle left unnamed under no-guessing), then scored ONCE
+with `c4_daread_sonnet5`, no tuning after.
+
+**Measured (all from `backend/out/bakeoff/stream6_confirmatory_IMG_8125.json`):** badge
+precision **.941** (16/17), top-3 **1.000** (3/3), swaps **0**/21, coverage **.762**,
+**$0.0285**/scan, **17.9s** wall. Passes every accuracy bar; fails only latency (known,
+mitigated by stream 1). Sits inside the verdict's device-quality band — no regression on
+genuinely unseen input. Addendum appended to `FEASIBILITY_VERDICT.md` (condition 3 discharged
+to the extent the repo's images allow; n=1 caveat stated). GT committed:
+`test-images/corpus/ground_truth/IMG_8125.json`; pre-check: `out/bakeoff/stream6_precheck.json`.
+
+**Environment note (disclosed):** the subagent's Vision calls needed a runtime-only REST-transport
+monkeypatch in its scratch scripts (IPv6 gRPC unroutable there); no product code touched.
+Total stream spend ≈ $0.06–0.08.
+
+**Next:** before any public accuracy claim, collect a multi-image device-photo held-out set
+(the repo has no more un-tuned-on device photos).

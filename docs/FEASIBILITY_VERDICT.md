@@ -153,15 +153,35 @@ Break-even ≈ 140 scans/user/mo at sticker pricing — an order of magnitude ab
    bottle width < 140px (env `DETECT_READ_MIN_BOTTLE_PX`) rejects before LLM spend with the
    additive `scan_quality` response field; webapp shows "Too far away / Retake Photo".
    Verified live: 480×360 thumbnail gated at median 31px with zero LLM cost.
-3. Re-cut the held-out set with device-quality photos (4/6 of the current set are web stock) for
-   a confirmatory ~$0.15 run before public accuracy claims. **In progress 2026-07-05** on the
-   never-tuned repo images (IMG_8125 24MP + medium-res floor check) — addendum below when done.
+3. ~~Confirmatory device-photo run~~ — **discharged 2026-07-05 to the extent the repo's images
+   allow** (see addendum below): IMG_8125 (never scored) passes every accuracy bar; the two other
+   never-scored candidates fail the 140px floor and were excluded before annotation. Single-image
+   confirmation — directional, not statistical; a public accuracy claim still wants a multi-image
+   device-photo set.
 4. ~~Frontend BEST PICK tie-break~~ — fixed 2026-07-05 (`nextjs/lib/shelf-rankings.ts`: ordinal
    ranking with confidence/name tie-break; 78/78 frontend tests pass). Phase G legacy-pipeline
    deletion remains separately gated.
 
 **Post-verdict verification (2026-07-05):** the owner manually clicked every rendered badge on
 IMG_8121 in the webapp and confirmed each detail sheet's wine matches the bottle under the badge.
+
+**Addendum — confirmatory device-photo run (rollout stream 6, 2026-07-05).** Condition 3 asked
+for a device-quality confirmatory pass. Of the repo's three verified never-scored candidates, two
+were rejected by the 140px pre-check — median detected bottle width **85px** (wine-photos.jpg,
+1.3MP) and **72px** (1.8MP stock shelf) — independently reproducing the "web low-res collapses
+coverage" finding before any LLM spend. The survivor, **IMG_8125** (24.5MP iPhone HEIC, scanned
+once historically, never scored), was annotated under the corpus-v2 protocol (21 detection-seeded
+boxes per-crop verified, 1 bottle left unnamed under no-guessing, +1 hand box for a
+detector-missed readable bottle) and scored **once** with `c4_daread_sonnet5`, no tuning after:
+**badge precision .941 (16/17 judged), top-3 1.000 (3/3), 0 swaps / 21 targets, coverage .762,
+$0.0285/scan, 17.9s wall** (`backend/out/bakeoff/stream6_confirmatory_IMG_8125.json`; pre-check
+measurements in `stream6_precheck.json`; GT `test-images/corpus/ground_truth/IMG_8125.json`).
+Every accuracy bar passes; only latency fails, matching the known tradeoff (progressive render is
+the shipped mitigation). The result sits inside the existing device-quality band (.971/.767
+held-out; .910/.729 iteration) — no regression, no overfit signal on genuinely unseen input.
+**Caveat: n=1 image / 21 targets — directional corroboration, not a statistically powered re-cut**
+(the repo contains no further un-tuned-on device photos). The two exclusions double as live
+evidence that the condition-2 input-quality gate is load-bearing.
 
 **Caveats carried from the run log:** corpus-v2 GT boxes are seeded from the same tiled detector
 the pipeline uses (coverage may be flattered; mitigated with hand-added extra bottles);

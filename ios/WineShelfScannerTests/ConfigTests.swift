@@ -22,14 +22,18 @@ final class ConfigTests: XCTestCase {
 
     // MARK: - API Base URL Tests
 
-    func testFallbackURLIsValid() {
-        // When no environment variable or Info.plist value is set,
-        // Config should return a valid production URL
-        let fallbackURL = URL(string: "https://wine-scanner-api-82762985464.us-central1.run.app")!
-
-        // The actual URL should be a valid URL
+    func testConfiguredURLIsDeterministic() {
+        // Debug builds point at the local backend (Debug.xcconfig),
+        // Release builds point at production (Release.xcconfig).
+        // Env var API_BASE_URL may override at runtime (testing hook).
+        if ProcessInfo.processInfo.environment["API_BASE_URL"] == nil {
+            #if DEBUG
+            XCTAssertEqual(Config.apiBaseURL.absoluteString, "http://localhost:8000")
+            #else
+            XCTAssertTrue(Config.apiBaseURL.absoluteString.hasPrefix("https://"))
+            #endif
+        }
         XCTAssertNotNil(Config.apiBaseURL)
-        XCTAssertTrue(Config.apiBaseURL.absoluteString.hasPrefix("https://"))
     }
 
     func testApiBaseURLIsValidURL() {

@@ -8,7 +8,7 @@ struct CachedScansView: View {
 
     private let cache = ScanCacheService.shared
 
-    private static let relativeDateFormatter: RelativeDateTimeFormatter = {
+    fileprivate static let relativeDateFormatter: RelativeDateTimeFormatter = {
         let f = RelativeDateTimeFormatter()
         f.unitsStyle = .short
         return f

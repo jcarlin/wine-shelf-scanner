@@ -5,11 +5,20 @@ import Combine
 @MainActor
 class ScanViewModel: ObservableObject {
     @Published private(set) var state: ScanState = .idle
-    @Published var debugMode: Bool = true {
+    @Published var debugMode: Bool = ScanViewModel.defaultDebugMode {
         didSet {
             // Persist debug mode preference
             UserDefaults.standard.set(debugMode, forKey: "debugModeEnabled")
         }
+    }
+
+    /// Debug UI is available in Debug builds only; always off in Release.
+    private static var defaultDebugMode: Bool {
+        #if DEBUG
+        return true
+        #else
+        return false
+        #endif
     }
 
     private let scanService: ScanServiceProtocol
@@ -29,8 +38,8 @@ class ScanViewModel: ObservableObject {
         self.networkMonitor = networkMonitor ?? NetworkMonitor.shared
         self.backgroundManager = backgroundManager ?? BackgroundScanManager.shared
 
-        // Debug mode always enabled
-        self.debugMode = true
+        // Debug mode enabled by default in Debug builds only
+        self.debugMode = Self.defaultDebugMode
 
         // Observe background scan completion
         observeBackgroundScanCompletion()

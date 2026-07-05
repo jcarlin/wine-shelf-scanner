@@ -1,0 +1,13 @@
+{
+  "image_file": "117009.jpeg",
+  "wines": [
+    {
+      "wine_name": "Louis Latour Santenay Rouge",
+      "expected_rating": null,
+      "rating_tolerance": 0.5,
+      "notes": "Winery: Louis Latour, Region: Santenay, Type: Red"
+    }
+  ],
+  "total_visible_bottles": 1,
+  "notes": "XWines evaluation image. Country: France. Simple name: Santenay Rouge"
+}

@@ -1,0 +1,13 @@
+{
+  "image_file": "142170.jpeg",
+  "wines": [
+    {
+      "wine_name": "Ruffino Torgaio Toscana",
+      "expected_rating": null,
+      "rating_tolerance": 0.5,
+      "notes": "Winery: Ruffino, Region: Toscana, Type: Red"
+    }
+  ],
+  "total_visible_bottles": 1,
+  "notes": "XWines evaluation image. Country: Italy. Simple name: Torgaio Toscana"
+}

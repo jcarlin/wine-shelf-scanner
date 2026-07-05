@@ -1,0 +1,13 @@
+{
+  "image_file": "160277.jpeg",
+  "wines": [
+    {
+      "wine_name": "Toro Albal\u00e1 Fino El\u00e9ctrico 3 Fases",
+      "expected_rating": null,
+      "rating_tolerance": 0.5,
+      "notes": "Winery: Toro Albal\u00e1, Region: Montilla-Moriles, Type: Dessert"
+    }
+  ],
+  "total_visible_bottles": 1,
+  "notes": "XWines evaluation image. Country: Spain. Simple name: Fino El\u00e9ctrico 3 Fases"
+}

@@ -84,9 +84,23 @@ If it doesn't help the user choose a bottle faster, leave it out.
 
 See `ROADMAP.md` for current project status and next steps.
 
-### Current architecture (2026-05-02 — single-LLM pivot)
+### Current architecture (2026-07-05 — Detect + Read)
 
-The backend has been rearchitected to use **one multimodal LLM call per scan** (`PIPELINE_MODE=single_llm`, default). The previous multi-stage flash_names pipeline (Vision API + Gemini Flash + Hungarian spatial-merge) is being deprecated and will be deleted in Phase G of the pivot.
+> **SUPERSEDES the single-LLM pivot below.** The feasibility run (see `docs/FEASIBILITY_VERDICT.md`,
+> CONDITIONAL GO) measured single_llm at 31.2% placement accuracy and replaced it with
+> **`PIPELINE_MODE=detect_read`**: tiled Google Vision object localization finds bottle boxes,
+> Claude Sonnet 5 (`DETECT_READ_MODEL`) reads each bottle's label from a per-bottle crop — the LLM
+> never emits coordinates, so name↔bottle swaps are structurally eliminated (1 swap / 368 targets).
+> Files: `backend/app/services/detect_read.py` (core, shared with the eval harness) +
+> `detect_read_pipeline.py` (DB match / cache / usage logging via `SingleLLMPipeline`).
+> Held-out: badge precision .905, $0.021/scan (Sonnet 5 intro pricing), ~12–18s e2e.
+> Local `.env` runs detect_read; deployed Cloud Run still runs single_llm until the GO is exercised.
+> Gotcha: Sonnet 5 defaults to adaptive thinking when `thinking` is omitted — perception reads must
+> pass `thinking={"type":"disabled"}` or completion tokens (cost and latency) roughly triple.
+
+### Previous architecture (2026-05-02 — single-LLM pivot)
+
+The backend was rearchitected to use **one multimodal LLM call per scan** (`PIPELINE_MODE=single_llm`, still the deployed production default). The previous multi-stage flash_names pipeline (Vision API + Gemini Flash + Hungarian spatial-merge) is being deprecated and will be deleted in Phase G of the pivot.
 
 - **Default model**: `anthropic/claude-sonnet-4-6` (strong 2D bbox quality, ~$0.02–0.04/scan, ~18s latency). Swap via `SINGLE_LLM_MODEL` env to `anthropic/claude-opus-4-7` (strongest, ~$0.05–0.07, ~25s), `gemini/gemini-2.5-pro`, etc. **Do NOT use `anthropic/claude-haiku-4-5-20251001`** — see Known limitations.
 - **Pipeline file**: `backend/app/services/single_llm_pipeline.py`. Single class, no fallback to legacy on failure (errors propagate so they surface). Logs `prompt`/`completion`/`cached` token counts on every successful call so cost is observable from logs.

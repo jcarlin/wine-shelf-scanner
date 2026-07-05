@@ -1,0 +1,13 @@
+{
+  "image_file": "139388.jpeg",
+  "wines": [
+    {
+      "wine_name": "Cavaliere d'Oro Gabbiano Pinot Grigio",
+      "expected_rating": null,
+      "rating_tolerance": 0.5,
+      "notes": "Winery: Cavaliere d'Oro, Region: Delle Venezie, Type: White"
+    }
+  ],
+  "total_visible_bottles": 1,
+  "notes": "XWines evaluation image. Country: Italy. Simple name: Gabbiano Pinot Grigio"
+}

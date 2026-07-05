@@ -311,7 +311,7 @@ def dedup_predictions(preds: list[DetectReadPrediction]) -> list[DetectReadPredi
 # Crops per LLM call. Crops are independent, so chunking across parallel
 # calls halves wall time with no context loss and no extra image tokens
 # (unlike the abandoned marked-image panel split).
-CROPS_PER_CALL = 18
+CROPS_PER_CALL = 10
 
 
 def _reading_order(boxes: list[dict]) -> list[dict]:

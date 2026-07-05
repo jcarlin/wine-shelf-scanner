@@ -1,0 +1,13 @@
+{
+  "image_file": "185481.jpeg",
+  "wines": [
+    {
+      "wine_name": "Columbia Crest Coyote Canyon Reserve Syrah",
+      "expected_rating": null,
+      "rating_tolerance": 0.5,
+      "notes": "Winery: Columbia Crest, Region: Horse Heaven Hills, Type: Red"
+    }
+  ],
+  "total_visible_bottles": 1,
+  "notes": "XWines evaluation image. Country: United States. Simple name: Coyote Canyon Reserve Syrah"
+}

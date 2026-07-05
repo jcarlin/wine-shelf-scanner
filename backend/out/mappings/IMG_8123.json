@@ -1,9 +1,9 @@
 {
   "image_file": "IMG_8123.HEIC",
-  "notes": "8 Vision bottles. Three Casal Mendes bottles (different SKUs: white verde, rose, white verde again) — same-brand collision case.",
+  "notes": "8 Vision bottles. Three Casal Mendes bottles (different SKUs: white verde, rose, white verde again) — same-brand collision case. V1 was originally mapped to 'Decoy Chardonnay 2022' based on OCR, but visual audit (2026-05-02) confirmed V1's actual bottle is the yellow-labeled Rombauer; the OCR pulled in 'DECOY CHARDONNAY' from the neighboring bottle to its left which Vision missed entirely. The pipeline correctly drew a synthetic-bbox 'P:Decoy Chardonnay' on the actual Decoy bottle position; my original GT was the error.",
   "targets": [
     {"wine_name": "Bread & Butter Chardonnay 2022", "v_idx": 0, "distinctive_tokens": ["bread", "butter", "chardonnay"]},
-    {"wine_name": "Decoy Chardonnay 2022", "v_idx": 1, "distinctive_tokens": ["decoy", "chardonnay"]},
+    {"wine_name": "Rombauer Chardonnay 2023", "v_idx": 1, "distinctive_tokens": ["rombauer", "chardonnay"]},
     {"wine_name": "Casal Mendes Vinho Verde", "v_idx": 2, "distinctive_tokens": ["casal", "mendes", "verde"]},
     {"wine_name": "Frontera Chardonnay", "v_idx": 3, "distinctive_tokens": ["frontera", "chardonnay"]},
     {"wine_name": "Casal Mendes Rose", "v_idx": 4, "distinctive_tokens": ["casal", "mendes", "rose"]},

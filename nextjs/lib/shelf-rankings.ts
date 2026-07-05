@@ -8,6 +8,19 @@
 import { WineResult } from './types';
 import { isVisible } from './overlay-math';
 
+/**
+ * Rating descending, ties broken by confidence then name so ordering is
+ * deterministic and exactly one wine can hold rank 1 (a rating tie was
+ * rendering multiple BEST PICK tags).
+ */
+function byRatingThenConfidence(a: WineResult, b: WineResult): number {
+  const ratingDiff = (b.rating ?? 0) - (a.rating ?? 0);
+  if (ratingDiff !== 0) return ratingDiff;
+  const confDiff = b.confidence - a.confidence;
+  if (confDiff !== 0) return confDiff;
+  return a.wine_name.localeCompare(b.wine_name);
+}
+
 /** Minimum number of visible wines required to show shelf rankings */
 export const MINIMUM_RANKED_WINES = 3;
 
@@ -32,21 +45,15 @@ export function computeShelfRankings(wines: WineResult[]): Map<string, ShelfRank
   const visibleWines = wines.filter((w) => isVisible(w.confidence));
   const ranked = [...visibleWines]
     .filter((w) => w.rating !== null)
-    .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+    .sort(byRatingThenConfidence);
 
   if (ranked.length < MINIMUM_RANKED_WINES) {
     return new Map();
   }
 
   const rankings = new Map<string, ShelfRank>();
-  let currentRank = 1;
-
   ranked.forEach((wine, index) => {
-    // Same rating = same rank (dense ranking)
-    if (index > 0 && wine.rating !== ranked[index - 1].rating) {
-      currentRank = index + 1;
-    }
-    rankings.set(wine.wine_name, { rank: currentRank, total: ranked.length });
+    rankings.set(wine.wine_name, { rank: index + 1, total: ranked.length });
   });
 
   return rankings;
@@ -62,7 +69,7 @@ export function computeShelfRankings(wines: WineResult[]): Map<string, ShelfRank
 export function getTopWineNames(wines: WineResult[], count: number = TOP_WINES_COUNT): string[] {
   return [...wines]
     .filter((w) => isVisible(w.confidence) && w.rating !== null)
-    .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
+    .sort(byRatingThenConfidence)
     .slice(0, count)
     .map((w) => w.wine_name);
 }

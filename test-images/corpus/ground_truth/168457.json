@@ -1,0 +1,13 @@
+{
+  "image_file": "168457.jpeg",
+  "wines": [
+    {
+      "wine_name": "CHANDON Argentina Extra Brut Cuv\u00e9e Sp\u00e9ciale Baron B",
+      "expected_rating": null,
+      "rating_tolerance": 0.5,
+      "notes": "Winery: CHANDON Argentina, Region: Mendoza, Type: Sparkling"
+    }
+  ],
+  "total_visible_bottles": 1,
+  "notes": "XWines evaluation image. Country: Argentina. Simple name: Extra Brut Cuv\u00e9e Sp\u00e9ciale Baron B"
+}

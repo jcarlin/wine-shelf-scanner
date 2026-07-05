@@ -71,6 +71,21 @@ bottle width → prompt retake). Unit economics comfortable (92-94% gross margin
 12 scans/user/mo, iOS COGS $0.24–0.36/user/mo). Sticker-pricing sensitivity and iOS-vs-web
 cost caveat (−$0.0075 + −2s on-device detection) documented in the verdict.
 
+### Post-Gate-3 addendum (2026-07-05, same day)
+
+- **Owner verification:** owner clicked every rendered badge on IMG_8121 in the webapp and
+  confirmed each detail sheet's wine matches the bottle under it. (An automated Playwright
+  click-sweep was attempted; its badge selector matched nothing — superseded by the manual check.)
+- **CROPS_PER_CALL 18→10 experiment (`out/bakeoff/c5_crops_v7_chunks10.json`): latency hypothesis
+  DISPROVEN.** p50 16.6s (walls 12.6–22.5s) — unchanged; the wall is the slowest parallel call
+  (Anthropic per-request generation-speed variance), not chunk count. badgeP .926 / top3 1.000 /
+  swap 0 / cov .729 / $.0325 — kept 10 (nominally better precision, equal cost). Conclusion:
+  pipeline latency floored ~12–18s with Sonnet 5; progressive render is the production lever.
+- **BEST PICK tie-break fixed** in `nextjs/lib/shelf-rankings.ts` (ordinal ranking, ties broken by
+  confidence then name — was dense ranking → multiple BEST PICK tags on rating ties).
+  `npm run type-check` clean, 78/78 tests pass.
+- XWines single-label GT (57 numeric JSONs) committed — was untracked; part of corpus v2.
+
 ### Round 3 — Detect+Read tuning + production port (2026-07-05) — COMPLETE
 
 **Diagnosis (from recorded Gate 2 usage, `out/bakeoff/c2_marks_sonnet5*.json` / `c3_crops_sonnet5*.json`):**

@@ -104,8 +104,10 @@ Structure: Vision ~2s → parallel crop-read calls 6–13s (Anthropic generation
 dominates) → rescue 0–5s. Mitigations, by leverage:
 1. **Progressive render** (SSE `phase1` plumbing already exists in the codebase): first badges at
    ~6–8s while the rest stream in — perceived latency, not pipeline latency, is the product bar.
-2. **Smaller chunks** (`CROPS_PER_CALL` 18→10): more parallel calls at identical token cost;
-   estimated p50 ~10–12s. Identified, not yet measured.
+2. ~~Smaller chunks~~ **Measured and disproven** (`CROPS_PER_CALL` 18→10, `c5_crops_v7_chunks10.json`):
+   p50 16.6s — unchanged. The wall is the slowest parallel call (per-request generation-speed
+   variance), not chunk size. Precision nudged up (.926) at identical cost, so 10 was kept, but
+   **pipeline latency is floored at ~12–18s with this model; progressive render is the path.**
 3. iOS on-device detection: −2s and −$0.0075.
 
 ---
@@ -143,13 +145,18 @@ Break-even ≈ 140 scans/user/mo at sticker pricing — an order of magnitude ab
   8/10 corpus images at shipped settings. The new pipeline beats it on every axis.
 
 **Conditions / next steps if GO is exercised:**
-1. Owner decision on latency: ship with progressive render at 12–18s, or hold for the
-   `CROPS_PER_CALL` experiment (est. p50 ~10–12s) first.
+1. Owner decision on latency: the chunk-size experiment is measured and dead (see §2) —
+   accepting ~12–18s means shipping progressive render (SSE) for perceived latency.
 2. Input-quality gate: warn/reject when median detected bottle width < ~140px (boxes are known
    before any LLM spend, so the check is free).
 3. Re-cut the held-out set with device-quality photos (4/6 of the current set are web stock) for
    a confirmatory ~$0.15 run before public accuracy claims.
-4. Frontend BEST PICK tie-break; Phase G legacy-pipeline deletion (separately gated).
+4. ~~Frontend BEST PICK tie-break~~ — fixed 2026-07-05 (`nextjs/lib/shelf-rankings.ts`: ordinal
+   ranking with confidence/name tie-break; 78/78 frontend tests pass). Phase G legacy-pipeline
+   deletion remains separately gated.
+
+**Post-verdict verification (2026-07-05):** the owner manually clicked every rendered badge on
+IMG_8121 in the webapp and confirmed each detail sheet's wine matches the bottle under the badge.
 
 **Caveats carried from the run log:** corpus-v2 GT boxes are seeded from the same tiled detector
 the pipeline uses (coverage may be flattered; mitigated with hand-added extra bottles);

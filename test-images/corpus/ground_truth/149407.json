@@ -1,0 +1,13 @@
+{
+  "image_file": "149407.jpeg",
+  "wines": [
+    {
+      "wine_name": "Mustela Langhe Chardonnay",
+      "expected_rating": null,
+      "rating_tolerance": 0.5,
+      "notes": "Winery: Mustela, Region: Langhe, Type: White"
+    }
+  ],
+  "total_visible_bottles": 1,
+  "notes": "XWines evaluation image. Country: Italy. Simple name: Langhe Chardonnay"
+}

@@ -92,14 +92,26 @@ Streams: (1) progressive rendering (SSE), (2) input-quality gate, (3) rate limit
 
 **Next:** none — discharges verdict condition 2.
 
-## Stream 3 — Rate limiting
+## Stream 3 — Rate limiting ✅ (2026-07-05, by the App-Store-launch session — merge `70fc7a9`)
 
-**CLAIMED 2026-07-05 by the App-Store-launch session** (plan
-`~/.claude/plans/you-are-an-apple-humble-owl.md`, workstream W1; execution log
-`docs/LAUNCH_EXECUTION_LOG.md`). Scope expanded per that plan: account-less App Attest
-verification on `/scan`, per-device daily quota (429), global daily-spend circuit breaker (503).
-Work happens on worktree branch `launch-w1` and merges back here when green — please don't
-start parallel rate-limiting work.
+**What changed** (full detail in `docs/LAUNCH_EXECUTION_LOG.md`):
+- App Attest verification (attestation + assertion, cbor2+cryptography, Apple root CA),
+  `/device/challenge` + `/device/register`; `/scan` and `/scan/stream` both gain
+  `Depends(enforce_abuse_protection)`.
+- Per-identity daily quota (`DEVICE_DAILY_SCAN_LIMIT=40` → 429) + global daily-spend
+  circuit breaker (`DAILY_SPEND_LIMIT_USD=25` → 503); per-scan cost recorded from
+  `timings.cost_usd` on both endpoints.
+- Modes: `APP_ATTEST_ENFORCE=off` (default; dev/tests unchanged) / `log` (prod at launch —
+  webapp can't attest; quota+breaker still active) / `require` (401). Web path for later:
+  server-side proxy with `API_CLIENT_SECRET`.
+- service.yaml (merged with stream-5 prep): `minScale=1, maxScale=1` (warm instance AND
+  exact per-instance quota state), W1 env vars. `APPLE_TEAM_ID` unset = human gate.
+
+**Verified:** 30 tests (crypto against a synthetic injected CA, stores, route 401/403/429/503,
+challenge replay, stream-endpoint 401); live load test: quota `200,200,200,429,429,429`,
+device isolation, breaker 503. Merged suite 336 passed / 0 failed.
+**Remaining (launch session's iOS track):** AppAttestManager client + real-device
+attestation check (needs Apple Team ID — human gate).
 
 ## Stream 4 — Error UX ✅ (2026-07-05)
 

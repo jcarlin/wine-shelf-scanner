@@ -64,6 +64,7 @@ docs/*
 !docs/FEASIBILITY_RUN_LOG.md
 !docs/FEASIBILITY_VERDICT.md
 !docs/PRODUCTION_ROLLOUT_LOG.md
+!docs/LAUNCH_EXECUTION_LOG.md
 
 
 backend/app/data/wines.db

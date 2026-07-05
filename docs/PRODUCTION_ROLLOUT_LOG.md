@@ -62,7 +62,12 @@ _(pending)_
 
 ## Stream 3 — Rate limiting
 
-_(pending)_
+**CLAIMED 2026-07-05 by the App-Store-launch session** (plan
+`~/.claude/plans/you-are-an-apple-humble-owl.md`, workstream W1; execution log
+`docs/LAUNCH_EXECUTION_LOG.md`). Scope expanded per that plan: account-less App Attest
+verification on `/scan`, per-device daily quota (429), global daily-spend circuit breaker (503).
+Work happens on worktree branch `launch-w1` and merges back here when green — please don't
+start parallel rate-limiting work.
 
 ## Stream 4 — Error UX
 

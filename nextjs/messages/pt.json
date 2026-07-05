@@ -26,7 +26,8 @@
     "scannedWith": "Digitalizado com Scanner de Prateleira de Vinhos",
     "topPicks": "Melhores escolhas da prateleira:",
     "stars": "estrelas",
-    "more": "+ {count} mais"
+    "more": "+ {count} mais",
+    "stillScanning": "Lendo rótulos…"
   },
   "fallback": {
     "couldNotIdentify": "Não foi possível identificar as garrafas",

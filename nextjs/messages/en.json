@@ -30,7 +30,8 @@
     "scannedWith": "Scanned with Wine Shelf Scanner",
     "topPicks": "Top picks from the shelf:",
     "stars": "stars",
-    "more": "+ {count} more"
+    "more": "+ {count} more",
+    "stillScanning": "Reading labels…"
   },
   "fallback": {
     "couldNotIdentify": "Could not identify bottles",

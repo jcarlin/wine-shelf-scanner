@@ -88,6 +88,9 @@ class DetectReadResult:
     median_bottle_px: Optional[float] = None
     bottles_detected: Optional[int] = None
     low_quality: bool = False
+    # True for intermediate run_detect_read_stream snapshots (more chunks or
+    # the rescue pass still outstanding); the last yielded result is final.
+    partial: bool = False
 
     @property
     def total_cost_usd(self) -> float:
@@ -375,9 +378,33 @@ async def _read_crops(model: str, img: Image.Image, boxes: list[dict],
     return out
 
 
-async def run_detect_read(image_bytes: bytes, model: str,
-                          call_label: str = "detect_read",
-                          min_bottle_px: Optional[float] = None) -> DetectReadResult:
+def _named_to_predictions(boxes: list[dict], named: dict[int, tuple]
+                          ) -> tuple[list[DetectReadPrediction], int]:
+    """Build deduped, confidence-filtered predictions from id -> (name, conf,
+    rating). Returns (predictions, n_deduped)."""
+    preds = [
+        DetectReadPrediction(
+            wine_name=name,
+            bbox={k: boxes[i][k] for k in ("x", "y", "w", "h")},
+            confidence=conf, rating=rating,
+        )
+        for i, (name, conf, rating) in named.items()
+    ]
+    n_before = len(preds)
+    preds = dedup_predictions(preds)
+    n_dedup = n_before - len(preds)
+    preds = [p for p in preds if p.confidence >= MIN_CONFIDENCE]
+    return preds, n_dedup
+
+
+async def run_detect_read_stream(image_bytes: bytes, model: str,
+                                 call_label: str = "detect_read",
+                                 min_bottle_px: Optional[float] = None):
+    """Streaming variant of run_detect_read: an async generator that yields a
+    cumulative DetectReadResult snapshot (partial=True) as each parallel
+    crop-read chunk completes, then the final post-rescue result
+    (partial=False). The last yielded result is exactly what run_detect_read
+    returns — /scan and /scan/stream share this one code path."""
     wall_start = time.perf_counter()
     usage: list[dict] = []
     img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
@@ -391,14 +418,15 @@ async def run_detect_read(image_bytes: bytes, model: str,
         "prompt_tokens": None, "completion_tokens": None,
     })
     if not boxes:
-        return DetectReadResult(predictions=[], usage=usage, notes="no bottles detected")
+        yield DetectReadResult(predictions=[], usage=usage, notes="no bottles detected")
+        return
 
     # Input-quality gate: boxes are known before any LLM spend, so rejecting
     # an illegible shelf here is free (Vision-only). Opt-in via min_bottle_px;
     # the eval harness never gates.
     median_px = statistics.median(b["w"] * img.width for b in boxes)
     if min_bottle_px is not None and median_px < min_bottle_px:
-        return DetectReadResult(
+        yield DetectReadResult(
             predictions=[], usage=usage,
             notes=(f"low_resolution median_bottle_px={median_px:.0f} "
                    f"< {min_bottle_px:.0f} (detected={len(boxes)})"),
@@ -406,17 +434,33 @@ async def run_detect_read(image_bytes: bytes, model: str,
             median_bottle_px=median_px, bottles_detected=len(boxes),
             low_quality=True,
         )
+        return
 
     boxes = _reading_order(boxes)
     all_ids = list(range(len(boxes)))
     chunks = [all_ids[i:i + CROPS_PER_CALL] for i in range(0, len(all_ids), CROPS_PER_CALL)]
-    results = await asyncio.gather(*[
-        _read_crops(model, img, boxes, chunk, "label", usage, call_label)
-        for chunk in chunks
-    ])
     named: dict[int, tuple] = {}
-    for r in results:
-        named.update(r)
+    tasks = [
+        asyncio.create_task(
+            _read_crops(model, img, boxes, chunk, "label", usage, call_label))
+        for chunk in chunks
+    ]
+    try:
+        completed = 0
+        for fut in asyncio.as_completed(tasks):
+            named.update(await fut)
+            completed += 1
+            preds, _ = _named_to_predictions(boxes, named)
+            yield DetectReadResult(
+                predictions=preds, usage=list(usage),
+                notes=f"partial chunks={completed}/{len(chunks)}",
+                wall_ms=round((time.perf_counter() - wall_start) * 1000),
+                median_bottle_px=median_px, bottles_detected=len(boxes),
+                partial=True,
+            )
+    finally:
+        for t in tasks:
+            t.cancel()
 
     # Rescue pass: unreadable or low-confidence label-zone crops get one
     # full-bottle re-read (wider context). Tiny boxes can't be read at all.
@@ -432,22 +476,25 @@ async def run_detect_read(image_bytes: bytes, model: str,
             if orig is None or conf >= orig[1]:
                 named[i] = (name, conf, rating)
 
-    preds = [
-        DetectReadPrediction(
-            wine_name=name,
-            bbox={k: boxes[i][k] for k in ("x", "y", "w", "h")},
-            confidence=conf, rating=rating,
-        )
-        for i, (name, conf, rating) in named.items()
-    ]
-    n_before = len(preds)
-    preds = dedup_predictions(preds)
-    n_dedup = n_before - len(preds)
-    preds = [p for p in preds if p.confidence >= MIN_CONFIDENCE]
-    return DetectReadResult(
+    preds, n_dedup = _named_to_predictions(boxes, named)
+    yield DetectReadResult(
         predictions=preds, usage=usage,
         notes=(f"detected={len(boxes)} chunks={len(chunks)} "
                f"rescued={len(weak)} deduped={n_dedup}"),
         wall_ms=round((time.perf_counter() - wall_start) * 1000),
         median_bottle_px=median_px, bottles_detected=len(boxes),
     )
+
+
+async def run_detect_read(image_bytes: bytes, model: str,
+                          call_label: str = "detect_read",
+                          min_bottle_px: Optional[float] = None) -> DetectReadResult:
+    """Non-streaming entry point: consume the stream, return the final result.
+    Shared with the eval harness — semantics are unchanged from the
+    pre-streaming implementation."""
+    result: Optional[DetectReadResult] = None
+    async for result in run_detect_read_stream(image_bytes, model,
+                                               call_label=call_label,
+                                               min_bottle_px=min_bottle_px):
+        pass
+    return result

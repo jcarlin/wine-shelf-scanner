@@ -26,7 +26,8 @@
     "scannedWith": "使用葡萄酒货架扫描仪扫描",
     "topPicks": "货架精选：",
     "stars": "星",
-    "more": "+ {count} 更多"
+    "more": "+ {count} 更多",
+    "stillScanning": "正在识别酒标…"
   },
   "fallback": {
     "couldNotIdentify": "无法识别酒瓶",

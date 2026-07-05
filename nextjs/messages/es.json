@@ -26,7 +26,8 @@
     "scannedWith": "Escaneado con Escáner de Vinos",
     "topPicks": "Mejores opciones del estante:",
     "stars": "estrellas",
-    "more": "+ {count} más"
+    "more": "+ {count} más",
+    "stillScanning": "Leyendo etiquetas…"
   },
   "fallback": {
     "couldNotIdentify": "No se pudieron identificar las botellas",

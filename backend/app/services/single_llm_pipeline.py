@@ -81,6 +81,8 @@ class SingleLLMResult:
     # Input-quality signal (detect_read only): {"status", "median_bottle_px",
     # "bottles_detected"} when the scan was gated, else None.
     scan_quality: Optional[dict] = None
+    # True for intermediate scan_stream snapshots (detect_read only).
+    partial: bool = False
 
 
 SINGLE_LLM_PROMPT = """You are a wine expert analyzing a photo of a wine shelf or wine display.

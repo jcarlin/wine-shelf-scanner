@@ -26,7 +26,8 @@
     "scannedWith": "와인 선반 스캐너로 스캔",
     "topPicks": "선반 추천:",
     "stars": "점",
-    "more": "+ {count}개 더"
+    "more": "+ {count}개 더",
+    "stillScanning": "라벨 읽는 중…"
   },
   "fallback": {
     "couldNotIdentify": "병을 식별할 수 없습니다",

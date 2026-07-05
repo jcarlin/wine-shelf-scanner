@@ -173,6 +173,137 @@ export async function scanImage(
   }
 }
 
+export interface ScanStreamOptions extends ScanOptions {
+  /** Called with each cumulative partial ScanResponse as chunks complete */
+  onPartial?: (partial: ScanResponse) => void;
+}
+
+/** Overall budget for a streaming scan (backend p95 ~19s + headroom) */
+const STREAM_TIMEOUT_MS = 90000;
+
+/**
+ * Progressive scan via SSE (POST /scan/stream).
+ *
+ * Emits cumulative partial results through onPartial while the backend is
+ * still reading labels; resolves with the final response. Falls back to
+ * plain POST /scan when streaming is unavailable (older backend, proxies,
+ * non-detect_read pipeline). If the stream dies after partials arrived,
+ * resolves with the last partial rather than discarding rendered badges.
+ */
+export async function scanImageStream(
+  file: File,
+  options: ScanStreamOptions = {}
+): Promise<ScanResult> {
+  if (Config.USE_MOCKS) {
+    return scanImage(file, options);
+  }
+
+  const formData = new FormData();
+  formData.append('image', file, file.name);
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), STREAM_TIMEOUT_MS);
+
+  let lastPartial: ScanResponse | null = null;
+
+  try {
+    const response = await fetch(`${Config.API_BASE_URL}/scan/stream`, {
+      method: 'POST',
+      body: formData,
+      headers: { Accept: 'text/event-stream' },
+      signal: controller.signal,
+    });
+
+    if (!response.ok || !response.body) {
+      // Endpoint missing/disabled (404/501) or proxy trouble — fall back.
+      clearTimeout(timeout);
+      return scanImage(file, options);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let errorMessage: string | null = null;
+
+    const handleEvent = (block: string): ScanResponse | null => {
+      let event: string | null = null;
+      let data: string | null = null;
+      for (const line of block.split('\n')) {
+        if (line.startsWith('event: ')) event = line.slice(7).trim();
+        else if (line.startsWith('data: ')) data = line.slice(6);
+      }
+      if (!event || data === null) return null;
+      if (event === 'error') {
+        try {
+          errorMessage = (JSON.parse(data) as { message?: string }).message ?? null;
+        } catch {
+          errorMessage = null;
+        }
+        return null;
+      }
+      let parsed: ScanResponse;
+      try {
+        parsed = JSON.parse(data) as ScanResponse;
+      } catch {
+        return null;
+      }
+      if (event === 'done') return parsed;
+      if (event === 'partial') {
+        lastPartial = parsed;
+        options.onPartial?.(parsed);
+      }
+      return null;
+    };
+
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      let sep;
+      while ((sep = buffer.indexOf('\n\n')) !== -1) {
+        const block = buffer.slice(0, sep);
+        buffer = buffer.slice(sep + 2);
+        const final = handleEvent(block);
+        if (final) {
+          clearTimeout(timeout);
+          return { success: true, data: final };
+        }
+        if (errorMessage !== null) break;
+      }
+      if (errorMessage !== null) break;
+    }
+
+    clearTimeout(timeout);
+
+    // Stream ended without a done event (error event or connection cut).
+    if (lastPartial) {
+      // Keep what the user can already see rather than erroring out.
+      return { success: true, data: lastPartial };
+    }
+    if (errorMessage !== null) {
+      return {
+        success: false,
+        error: { type: 'SERVER_ERROR', message: errorMessage, status: 500 },
+      };
+    }
+    // Nothing arrived at all — one plain-scan fallback.
+    return scanImage(file, options);
+  } catch (error) {
+    clearTimeout(timeout);
+    if (lastPartial) {
+      return { success: true, data: lastPartial };
+    }
+    if (isAbortError(error)) {
+      return {
+        success: false,
+        error: { type: 'TIMEOUT', message: 'Request timed out. Please try again.' },
+      };
+    }
+    // Network/transport failure before any event — fall back once.
+    return scanImage(file, options);
+  }
+}
+
 /** Timeout for review fetches (ms) */
 const REVIEWS_TIMEOUT_MS = 10000;
 

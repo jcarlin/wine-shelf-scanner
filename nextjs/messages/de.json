@@ -26,7 +26,8 @@
     "scannedWith": "Gescannt mit Weinregal-Scanner",
     "topPicks": "Top-Auswahl aus dem Regal:",
     "stars": "Sterne",
-    "more": "+ {count} weitere"
+    "more": "+ {count} weitere",
+    "stillScanning": "Etiketten werden gelesen…"
   },
   "fallback": {
     "couldNotIdentify": "Flaschen konnten nicht identifiziert werden",

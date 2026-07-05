@@ -26,9 +26,41 @@ Streams: (1) progressive rendering (SSE), (2) input-quality gate, (3) rate limit
   1600×1153 (1.8MP). The two medium-res images need a detection-based median-bottle-width check
   against the ~140px floor before annotation effort.
 
-## Stream 1 — Progressive rendering (SSE)
+## Stream 1 — Progressive rendering (SSE) ✅ (2026-07-05)
 
-_(pending)_
+**What changed (built from scratch — the SSE endpoint CLAUDE.md described did not exist):**
+- `detect_read.py`: core refactored into `run_detect_read_stream(...)`, an async generator
+  yielding a cumulative `DetectReadResult` snapshot (`partial=True`) as each parallel crop-read
+  chunk completes (via `asyncio.as_completed`), then the final post-rescue result.
+  `run_detect_read` now just consumes the generator — `/scan` and `/scan/stream` share one
+  code path, and the eval harness measures the exact shipping code.
+- `DetectReadPipeline.scan_stream()`: DB-matches each snapshot; final snapshot gets the full
+  usage-logging/cache treatment (identical to `scan()`).
+- New route `backend/app/routes/scan_stream.py` — `POST /scan/stream`, SSE events:
+  `partial` (0+, complete cumulative ScanResponse), `done` (final, identical to POST /scan),
+  `error` (in-band terminal signal after streaming began). Partial snapshots skip
+  enrichment/DB-sync; the final does it all. 501 unless `PIPELINE_MODE=detect_read`
+  (clients fall back). `POST /scan` unchanged (iOS).
+- Next.js: `scanImageStream()` in `lib/api-client.ts` (fetch + manual SSE parse; falls back to
+  `POST /scan` when the endpoint is missing/unreachable; keeps the last partial if the stream
+  dies mid-scan rather than discarding rendered badges), `useScanState` streams by default
+  (empty partials stay on the scanning overlay), `ResultsView` shows a "Reading labels…" pill
+  (translated, 10 locales) while more chunks are in flight. jsdom TextDecoder polyfill added
+  to jest.setup.ts for the SSE parser tests.
+
+**Verified:**
+- TDD: 4 generator/pipeline tests + 4 route tests (backend), 4 client tests (frontend) — all
+  written failing-first. Backend 312 passed (remaining failures: known perf flakes + 2
+  pre-existing missing-GT-fixture); frontend 84/84 + type-check clean.
+- Live SSE timing (curl-level, wine1.jpeg): `partial` with 2 results at **7.1s**, partial
+  6 results at 8.9s, `done` at 12.5s — vs 12.5s to first paint without streaming.
+- Webapp E2E (Playwright, IMG_8121.HEIC 24MP, real scan): in-page sampler recorded first
+  badge +22.1s, 19 badges +28.3s, done +30.4s (24MP HEIC pays upload + conversion +
+  detection before the first chunk; typical-size photos hit the ~7-8s first-badge target).
+  Screenshots: `rollout_stream_partial_8121.png` (1 badge + "Reading labels…" pill),
+  `rollout_stream_final_8121.png` (19 badges, BEST PICK, ranks).
+
+**Next:** none — discharges verdict condition 1 (perceived-latency mitigation shipped).
 
 ## Stream 2 — Input-quality gate ✅ (2026-07-05)
 

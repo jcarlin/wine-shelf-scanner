@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { ScanState } from '@/lib/types';
-import { scanImage } from '@/lib/api-client';
+import { scanImageStream } from '@/lib/api-client';
 import { getDisplayableImageUrl } from '@/lib/image-converter';
 import { useScanCache } from './useScanCache';
 import { featureFlags } from '@/lib/feature-flags';
@@ -27,7 +27,21 @@ export function useScanState() {
 
     const resolvedImageUri = imageUri || '';
 
-    const result = await scanImage(file, { debug: debugMode });
+    const result = await scanImageStream(file, {
+      debug: debugMode,
+      onPartial: (partial) => {
+        // First badges as soon as a crop-read chunk lands; empty partials
+        // stay on the scanning overlay.
+        if (partial.results.length > 0) {
+          setState({
+            status: 'results',
+            response: partial,
+            imageUri: resolvedImageUri,
+            partial: true,
+          });
+        }
+      },
+    });
 
     if (!result.success) {
       if (imageUri) URL.revokeObjectURL(imageUri);

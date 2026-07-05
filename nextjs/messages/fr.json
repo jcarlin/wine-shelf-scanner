@@ -26,7 +26,8 @@
     "scannedWith": "Scanné avec Scanner de Rayon à Vins",
     "topPicks": "Meilleurs choix du rayon :",
     "stars": "étoiles",
-    "more": "+ {count} de plus"
+    "more": "+ {count} de plus",
+    "stillScanning": "Lecture des étiquettes…"
   },
   "fallback": {
     "couldNotIdentify": "Impossible d'identifier les bouteilles",

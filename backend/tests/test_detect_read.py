@@ -96,6 +96,88 @@ class TestInputQualityGate:
         assert len(result.predictions) == 1
 
 
+class TestDetectReadStream:
+    """run_detect_read_stream yields cumulative snapshots per completed chunk,
+    then a final post-rescue result identical to what run_detect_read returns."""
+
+    @pytest.mark.asyncio
+    async def test_yields_cumulative_snapshots_then_final(self):
+        import asyncio
+        from app.services.detect_read import run_detect_read_stream
+
+        async def fake_read_crops(model, img, boxes, ids, zone, usage, call_label):
+            # First chunk (contains id 0) returns fast; second chunk slower.
+            await asyncio.sleep(0.01 if 0 in ids else 0.05)
+            return {i: (f"Wine {i}", 0.9, 4.0) for i in ids}
+
+        with patch(
+            "app.services.detect_read.detect_bottles",
+            return_value=_boxes([200] * 12, image_width=4000),
+        ), patch(
+            "app.services.detect_read._read_crops",
+            new=AsyncMock(side_effect=fake_read_crops),
+        ):
+            snapshots = [
+                s async for s in run_detect_read_stream(
+                    _jpeg(4000), "anthropic/claude-sonnet-5")
+            ]
+
+        # 12 boxes -> 2 chunks of 10/2 -> 2 chunk snapshots + 1 final.
+        assert len(snapshots) == 3
+        assert len(snapshots[0].predictions) == 10   # fast chunk first
+        assert len(snapshots[1].predictions) == 12   # cumulative
+        assert len(snapshots[-1].predictions) == 12  # final, post-rescue
+        assert snapshots[-1].bottles_detected == 12
+        # Non-final snapshots are marked partial so callers can tell.
+        assert snapshots[0].partial is True
+        assert snapshots[-1].partial is False
+
+    @pytest.mark.asyncio
+    async def test_final_snapshot_matches_run_detect_read(self):
+        from app.services.detect_read import run_detect_read, run_detect_read_stream
+
+        async def fake_read_crops(model, img, boxes, ids, zone, usage, call_label):
+            return {i: (f"Wine {i}", 0.9, 4.0) for i in ids}
+
+        patches = dict(
+            detect=_boxes([200] * 5, image_width=4000),
+        )
+        with patch(
+            "app.services.detect_read.detect_bottles", return_value=patches["detect"],
+        ), patch(
+            "app.services.detect_read._read_crops",
+            new=AsyncMock(side_effect=fake_read_crops),
+        ):
+            final = None
+            async for final in run_detect_read_stream(
+                    _jpeg(4000), "anthropic/claude-sonnet-5"):
+                pass
+            direct = await run_detect_read(_jpeg(4000), "anthropic/claude-sonnet-5")
+
+        assert [p.wine_name for p in final.predictions] == \
+            [p.wine_name for p in direct.predictions]
+
+    @pytest.mark.asyncio
+    async def test_gated_scan_yields_single_low_quality_snapshot(self):
+        from app.services.detect_read import run_detect_read_stream
+
+        with patch(
+            "app.services.detect_read.detect_bottles",
+            return_value=_boxes([80, 90, 100], image_width=1000),
+        ), patch(
+            "app.services.detect_read._read_crops",
+            new=AsyncMock(side_effect=AssertionError("no reads below the floor")),
+        ):
+            snapshots = [
+                s async for s in run_detect_read_stream(
+                    _jpeg(1000), "anthropic/claude-sonnet-5", min_bottle_px=140)
+            ]
+
+        assert len(snapshots) == 1
+        assert snapshots[0].low_quality is True
+        assert snapshots[0].partial is False
+
+
 class TestDetectBottlesDegenerateInputs:
     """Tiny images must not crash detection (tiles collapse to zero size)."""
 
@@ -145,6 +227,39 @@ class TestPipelineQualitySignal:
             result = await pipeline.scan(_jpeg(1000), image_id="test-img")
 
         assert result.scan_quality is None
+
+
+class TestPipelineScanStream:
+    """DetectReadPipeline.scan_stream yields DB-matched snapshots per chunk."""
+
+    @pytest.mark.asyncio
+    async def test_yields_partial_then_final(self):
+        from app.services.detect_read import DetectReadPrediction
+        from app.services.detect_read_pipeline import DetectReadPipeline
+
+        def pred(name):
+            return DetectReadPrediction(
+                wine_name=name, bbox={"x": 0.1, "y": 0.1, "w": 0.1, "h": 0.5},
+                confidence=0.9, rating=4.0)
+
+        async def fake_stream(image_bytes, model, call_label="detect_read",
+                              min_bottle_px=None):
+            yield DetectReadResult(predictions=[pred("Opus One")], usage=[],
+                                   notes="partial chunks=1/2", partial=True)
+            yield DetectReadResult(
+                predictions=[pred("Opus One"), pred("Caymus Cabernet Sauvignon")],
+                usage=[], notes="detected=2 chunks=2 rescued=0 deduped=0")
+
+        pipeline = DetectReadPipeline(wine_matcher=None, use_llm_cache=False)
+        with patch("app.services.detect_read_pipeline.run_detect_read_stream",
+                   new=fake_stream):
+            results = [r async for r in pipeline.scan_stream(_jpeg(), image_id="t")]
+
+        assert len(results) == 2
+        assert results[0].partial is True
+        assert len(results[0].recognized_wines) == 1
+        assert results[1].partial is False
+        assert len(results[1].recognized_wines) == 2
 
 
 class TestScanQualityResponseModel:

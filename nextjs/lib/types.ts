@@ -96,7 +96,8 @@ export interface ScanResponse {
 export type ScanState =
   | { status: 'idle' }
   | { status: 'processing'; imageUri: string | null }
-  | { status: 'results'; response: ScanResponse; imageUri: string }
+  // partial: streaming scan still in flight — more badges may arrive
+  | { status: 'results'; response: ScanResponse; imageUri: string; partial?: boolean }
   | { status: 'error'; message: string };
 
 export interface Size {

@@ -26,7 +26,8 @@
     "scannedWith": "ワイン棚スキャナーでスキャン",
     "topPicks": "棚のおすすめ：",
     "stars": "つ星",
-    "more": "+ 他{count}本"
+    "more": "+ 他{count}本",
+    "stillScanning": "ラベルを読み取り中…"
   },
   "fallback": {
     "couldNotIdentify": "ボトルを識別できませんでした",

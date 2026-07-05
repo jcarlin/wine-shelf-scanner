@@ -26,7 +26,8 @@
     "scannedWith": "Scansionato con Scanner Scaffale Vini",
     "topPicks": "Migliori scelte dallo scaffale:",
     "stars": "stelle",
-    "more": "+ {count} altri"
+    "more": "+ {count} altri",
+    "stillScanning": "Lettura delle etichette…"
   },
   "fallback": {
     "couldNotIdentify": "Impossibile identificare le bottiglie",

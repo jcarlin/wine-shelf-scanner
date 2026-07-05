@@ -55,6 +55,7 @@ export default function Home() {
           response={state.response}
           imageUri={state.imageUri}
           onReset={reset}
+          scanning={state.partial}
         />
       )}
 

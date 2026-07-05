@@ -26,7 +26,8 @@
     "scannedWith": "Отсканировано с помощью Сканера Винной Полки",
     "topPicks": "Лучшее на полке:",
     "stars": "звёзд",
-    "more": "+ ещё {count}"
+    "more": "+ ещё {count}",
+    "stillScanning": "Читаем этикетки…"
   },
   "fallback": {
     "couldNotIdentify": "Не удалось определить бутылки",

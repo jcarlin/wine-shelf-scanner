@@ -1,19 +1,18 @@
 """
 Detect + Read core (Gate 2 approved architecture).
 
-Tiled Google Vision object localization finds bottle boxes; one Claude
-set-of-marks call names each numbered box (the LLM never emits coordinates);
-weak marks get a per-crop re-read. Shared by the eval harness
-(scripts/candidates.py: c4_daread_*) and the production pipeline so the
-eval measures the exact code that ships.
+Tiled Google Vision object localization finds bottle boxes; Claude reads
+each bottle's label from a per-bottle crop (the LLM never emits coordinates,
+and crop k IS bottle k, so there is no marker<->bottle correspondence to
+lose). Weak reads get one full-bottle rescue pass. Shared by the eval
+harness (scripts/candidates.py: c4_daread_*) and the production pipeline so
+the eval measures the exact code that ships.
 
-Round 3 tuning (measured against the Gate 2 c2_marks_sonnet5 runs):
-- Completion tokens dominated LLM cost (~70%) and latency (~8.5 ms/token):
-  compact array output + thinking disabled cut them.
-- The 5 Vision tile calls each created a client and uploaded a full-res
-  JPEG: one batch_annotate_images call on downscaled tiles cuts wall time.
-- Duplicate marks (tile-edge dupes) produced duplicate badges and broke
-  top-3 precision: same-name+overlap dedup after the read.
+Round 3 history (measured): set-of-marks variants (Gate 2 C2) kept breaking
+id<->bottle sync on dense lookalike walls — off-by-one swap cascades — so
+the per-crop C3 architecture became the primary read, with thinking
+disabled, compact array output, label-zone crops, parallel chunked calls,
+width-aware group-box merging, and same-name overlap dedup.
 """
 
 import asyncio
@@ -42,15 +41,14 @@ logger = logging.getLogger(__name__)
 # Long edge (px) for images sent to Vision detection. Tiles cover half the
 # frame each, so 1600 here ≈ 3200 effective full-frame resolution.
 DETECT_LONG_EDGE = 1600
-# Long edge for the marked image sent to the LLM. ~2048px ≈ 4.2k image
-# tokens; smaller starts to hurt label legibility on dense shelves.
-MARKED_LONG_EDGE = 2048
-# Marks with no name or confidence below this get a crop re-read.
+# Reads with no name or confidence below this get a full-bottle rescue read.
 REREAD_CONF_THRESHOLD = 0.55
 REREAD_MAX_CROPS = 8
-# Re-read crops are the label zone only (middle band of the bottle), bounded
-# to 512x768 px: full-bottle crops at 512 wide ran ~1k image tokens each.
-CROP_MAX = (512, 768)
+# Primary label-zone crops are height-bound on tall bottles, so the height
+# cap sets the token cost: 640px ≈ 210 image tokens/crop (768px ≈ 300).
+# The full-bottle rescue pass keeps the taller cap for context.
+CROP_MAX = (512, 640)
+CROP_MAX_FULL = (512, 896)
 # Production hides badges below 0.45 confidence; don't emit them at all.
 MIN_CONFIDENCE = 0.45
 
@@ -176,72 +174,65 @@ def detect_bottles(img: Image.Image, iou_dedup: float = 0.45) -> list[dict]:
         if all(_iou(b, k) < iou_dedup for k in kept):
             kept.append(b)
 
-    # Tile-edge truncations produce a second, shorter box on the same bottle
-    # with low IoU; merge pairs where the intersection covers most of the
-    # smaller box, keeping the larger (more complete) box.
+    # Containment merge, width-aware. Two cases produce a box mostly inside
+    # a bigger one: (a) tile-edge truncation of the SAME bottle -> similar
+    # widths, keep the larger box; (b) a multi-bottle GROUP detection that
+    # contains a single-bottle box -> group is much wider, keep the singles
+    # (a badge on a group box sits between bottles; measured on IMG_8335).
     kept.sort(key=lambda b: b["w"] * b["h"], reverse=True)
     merged: list[dict] = []
-    for b in kept:
-        if all(_containment(b, m) < 0.6 for m in merged):
+    for b in kept:  # area-descending: groups arrive before their singles
+        drop = False
+        for m in list(merged):
+            if _containment(b, m) >= 0.6:
+                if b["w"] >= 0.6 * m["w"]:
+                    drop = True          # same bottle; keep the larger box
+                else:
+                    merged.remove(m)     # m spans multiple bottles; prefer b
+        if not drop:
             merged.append(b)
     return merged
 
 
 # ---------------------------------------------------------------------------
-# Set-of-marks read
+# Per-crop label reading (C3 architecture: crop k IS bottle k, so there is no
+# marker<->bottle correspondence to lose — set-of-marks variants kept breaking
+# id sync on dense lookalike walls, measured as off-by-one swap cascades)
 # ---------------------------------------------------------------------------
 
-READ_PROMPT = """This wine-shelf photo has numbered yellow markers, one per detected bottle. Marker N sits centered at the TOP of bottle N's box, directly above/on that bottle's neck.
+CROPS_PROMPT = """Each image after this message is a crop of ONE wine bottle from a shelf photo (mostly the label area). The crops correspond, in order, to ids {ids}.
 
-For EACH marker {first}..{last}, read the label of THAT bottle (not a neighbor's) and identify the wine.
+Identify the wine on each crop's dominant/centered bottle.
 
-Return ONLY a JSON array, no prose, no fences. One compact entry per marker, every marker exactly once:
+Return ONLY a JSON array, no prose, no fences, one compact entry per crop in the same order:
 [[id, "Producer Wine Name" or null, confidence, rating], ...]
 
 - confidence: 0.0-1.0 that the name is right. rating: your best Vivino-style estimate 1.0-5.0.
-- Adjacent bottles often share a producer but differ in varietal/cuvée. Read the varietal text on the marked bottle itself; if you cannot make it out, use confidence below 0.55.
-- Use null for the name if the label is unreadable; never guess or copy a neighbor's label.
-- If you clearly read a bottle that has NO marker, append [-1, "Name", confidence, rating, [x, y, w, h]] with that bottle's normalized bbox in THIS image."""
-
-REREAD_PROMPT = """Each image after this message is a crop of ONE wine bottle. The crops correspond, in order, to ids {ids}.
-
-Identify the wine on each crop's centered/dominant bottle.
-
-Return ONLY a JSON array, no prose, no fences, one compact entry per crop in order:
-[[id, "Producer Wine Name" or null, confidence, rating], ...]"""
-
-
-def draw_marks_panel(base: Image.Image, boxes: list[dict], ids: list[int],
-                     py1: float, py2: float) -> bytes:
-    """Crop the normalized [py1, py2) horizontal band from `base`, draw the
-    numbered yellow boxes for `ids` (full-image-normalized), return JPEG."""
-    W, H = base.size
-    panel = base.crop((0, int(py1 * H), W, int(py2 * H))).convert("RGB")
-    ph = panel.height
-    draw = ImageDraw.Draw(panel)
-    try:
-        f = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", max(18, int(H * 0.025)))
-    except Exception:
-        f = ImageFont.load_default()
-    for i in ids:
-        b = boxes[i]
-        x1, x2 = b["x"] * W, (b["x"] + b["w"]) * W
-        y1 = (b["y"] - py1) / (py2 - py1) * ph
-        y2 = (b["y"] + b["h"] - py1) / (py2 - py1) * ph
-        draw.rectangle([x1, y1, x2, y2], outline=(255, 220, 0), width=3)
-        # Center the tag on the bottle: a top-left tag visually hovers over
-        # the left neighbor in tight packs (measured neighbor-copy swaps).
-        tw = draw.textlength(str(i), font=f)
-        tx = (x1 + x2) / 2 - tw / 2
-        tb = draw.textbbox((tx, y1 + 2), str(i), font=f)
-        draw.rectangle([tb[0] - 3, tb[1] - 2, tb[2] + 3, tb[3] + 2], fill=(0, 0, 0))
-        draw.text((tx, y1 + 2), str(i), fill=(255, 220, 0), font=f)
-    return _jpeg_bytes(panel, quality=90)
+- Use null for the name if the label is not readable; never guess."""
 
 
 def _image_part(jpeg: bytes) -> dict:
     return {"type": "image_url",
             "image_url": {"url": "data:image/jpeg;base64," + base64.b64encode(jpeg).decode()}}
+
+
+def _crop_jpeg(img: Image.Image, b: dict, zone: str) -> bytes:
+    """Crop one bottle from the full-res image. zone="label" takes the middle
+    band (cheap, ~250-350 image tokens); zone="full" takes the whole bottle
+    (more context for the rescue pass)."""
+    W, H = img.size
+    pad_x = b["w"] * 0.10
+    cx1 = max(0, (b["x"] - pad_x) * W)
+    cx2 = min(W, (b["x"] + b["w"] + pad_x) * W)
+    if zone == "label":
+        cy1 = max(0, (b["y"] + b["h"] * 0.15) * H)
+        cy2 = min(H, (b["y"] + b["h"] * 0.92) * H)
+    else:
+        cy1 = max(0, (b["y"] - b["h"] * 0.05) * H)
+        cy2 = min(H, (b["y"] + b["h"] * 1.05) * H)
+    crop = img.crop((int(cx1), int(cy1), int(cx2), int(cy2)))
+    crop.thumbnail(CROP_MAX if zone == "label" else CROP_MAX_FULL)
+    return _jpeg_bytes(crop)
 
 
 async def _llm_call(model: str, content: list, max_tokens: int, usage_out: list,
@@ -257,9 +248,9 @@ async def _llm_call(model: str, content: list, max_tokens: int, usage_out: list,
         thinking={"type": "disabled"},
     )
     t0 = time.perf_counter()
-    # Run the sync client in a thread: litellm's request prep (image token
-    # counting on multi-MB base64) is CPU-bound and serializes concurrent
-    # acompletion calls on the event loop (measured: panel reads ran serial).
+    # Sync client in a thread: litellm's request prep (image token counting
+    # on multi-MB base64) is CPU-bound and serializes concurrent acompletion
+    # calls on the event loop (measured: parallel calls ran serial).
     response = await asyncio.to_thread(litellm.completion, **kwargs)
     latency_ms = round((time.perf_counter() - t0) * 1000)
     u = getattr(response, "usage", None)
@@ -299,7 +290,7 @@ def _norm_name(name: str) -> str:
 
 def dedup_predictions(preds: list[DetectReadPrediction]) -> list[DetectReadPrediction]:
     """Drop same-wine reads whose boxes overlap (one physical bottle, two
-    marks). Adjacent facings of the same SKU don't overlap and are kept."""
+    boxes). Adjacent facings of the same SKU don't overlap and are kept."""
     preds = sorted(preds, key=lambda p: p.confidence, reverse=True)
     kept: list[DetectReadPrediction] = []
     for p in preds:
@@ -317,53 +308,61 @@ def dedup_predictions(preds: list[DetectReadPrediction]) -> list[DetectReadPredi
 # Orchestration
 # ---------------------------------------------------------------------------
 
-# Panel-split parallel reads were tried and measurably hurt: cropping the
-# shelf into bands broke the model's row context (8122 badge precision
-# .83 -> .69, off-by-one neighbor cascade). One full-frame read only.
-def _split_panels(boxes: list[dict]) -> list[tuple[list[int], float, float]]:
-    return [(list(range(len(boxes))), 0.0, 1.0)]
+# Crops per LLM call. Crops are independent, so chunking across parallel
+# calls halves wall time with no context loss and no extra image tokens
+# (unlike the abandoned marked-image panel split).
+CROPS_PER_CALL = 18
 
 
-async def _read_panel(model: str, base: Image.Image, boxes: list[dict],
-                      panel: tuple[list[int], float, float], usage: list[dict],
-                      call_label: str) -> list[list]:
-    ids, py1, py2 = panel
-    jpeg = await asyncio.to_thread(draw_marks_panel, base, boxes, ids, py1, py2)
-    prompt = READ_PROMPT.format(first=ids[0], last=ids[-1])
-    content = [_image_part(jpeg), {"type": "text", "text": prompt}]
-    text = await _llm_call(model, content, max_tokens=1500, usage_out=usage,
+def _reading_order(boxes: list[dict]) -> list[dict]:
+    """Sort boxes top row first, left-to-right within a row (stable ids for
+    debugging and rendered-proof review)."""
+    rows: list[dict] = []
+    for b in sorted(boxes, key=lambda x: x["y"] + x["h"] / 2):
+        cy = b["y"] + b["h"] / 2
+        for r in rows:
+            if abs(cy - r["cy"]) < 0.5 * r["h"]:
+                r["items"].append(b)
+                r["cy"] = sum(x["y"] + x["h"] / 2 for x in r["items"]) / len(r["items"])
+                r["h"] = sum(x["h"] for x in r["items"]) / len(r["items"])
+                break
+        else:
+            rows.append({"cy": cy, "h": b["h"], "items": [b]})
+    rows.sort(key=lambda r: r["cy"])
+    out: list[dict] = []
+    for r in rows:
+        out.extend(sorted(r["items"], key=lambda x: x["x"]))
+    return out
+
+
+async def _read_crops(model: str, img: Image.Image, boxes: list[dict],
+                      ids: list[int], zone: str, usage: list[dict],
+                      call_label: str) -> dict[int, tuple]:
+    """One LLM call reading the crops for `ids`. Returns id -> (name, conf,
+    rating); unreadable (null-name) crops are omitted."""
+    content: list = [{"type": "text", "text": CROPS_PROMPT.format(ids=ids)}]
+    for i in ids:
+        jpeg = await asyncio.to_thread(_crop_jpeg, img, boxes[i], zone)
+        content.append(_image_part(jpeg))
+    text = await _llm_call(model, content, max_tokens=1200, usage_out=usage,
                            call_label=call_label)
     entries = _parse_entries(text)
     if not entries:
-        # Sonnet 5 occasionally returns empty content on the marks call.
-        logger.warning("detect_read: empty/unparseable marks response, retrying once")
-        text = await _llm_call(model, content, max_tokens=1500, usage_out=usage,
+        # Sonnet 5 occasionally returns empty content — retry once.
+        logger.warning("detect_read: empty/unparseable crops response, retrying once")
+        text = await _llm_call(model, content, max_tokens=1200, usage_out=usage,
                                call_label=f"{call_label}_retry")
         entries = _parse_entries(text)
-    # Map any -1 extra-bottle bboxes from panel coords to full-image coords.
+    out: dict[int, tuple] = {}
     for e in entries:
-        if e[0] == -1 and len(e) >= 5 and isinstance(e[4], list) and len(e[4]) == 4:
-            x, y, w, h = e[4]
-            e[4] = [x, py1 + y * (py2 - py1), w, h * (py2 - py1)]
-    return entries
-
-
-def _brand_dupe_ids(named: dict[int, tuple]) -> list[int]:
-    """Marker ids whose read shares a leading brand token with a marker that
-    read a DIFFERENT wine — the measured swap mode is same-producer varietal
-    mixups (Frontera Cab vs Frontera Merlot). Identical names are duplicate
-    facings, not ambiguity. Returns dupes ordered by ascending confidence."""
-    groups: dict[str, list[int]] = {}
-    for i, (name, _conf, _rating) in named.items():
-        tok = _norm_name(name).split()
-        if tok and len(tok[0]) >= 3:
-            groups.setdefault(tok[0], []).append(i)
-    dupes = [
-        i for g in groups.values()
-        if len({_norm_name(named[j][0]) for j in g}) >= 2
-        for i in g
-    ]
-    return sorted(dupes, key=lambda i: named[i][1])
+        idx, name, conf, rating = e[0], e[1], e[2], e[3]
+        if name and isinstance(idx, int) and idx in ids:
+            out[idx] = (
+                str(name),
+                float(conf) if isinstance(conf, (int, float)) else 0.5,
+                float(rating) if isinstance(rating, (int, float)) else None,
+            )
+    return out
 
 
 async def run_detect_read(image_bytes: bytes, model: str,
@@ -383,111 +382,46 @@ async def run_detect_read(image_bytes: bytes, model: str,
     if not boxes:
         return DetectReadResult(predictions=[], usage=usage, notes="no bottles detected")
 
-    boxes.sort(key=lambda b: b["y"] + b["h"] / 2)  # reading order; panels get
-    panels = _split_panels(boxes)                  # contiguous id ranges
-    base = _downscale(img, MARKED_LONG_EDGE)
-    entry_lists = await asyncio.gather(*[
-        _read_panel(model, base, boxes, p, usage, call_label) for p in panels
+    boxes = _reading_order(boxes)
+    all_ids = list(range(len(boxes)))
+    chunks = [all_ids[i:i + CROPS_PER_CALL] for i in range(0, len(all_ids), CROPS_PER_CALL)]
+    results = await asyncio.gather(*[
+        _read_crops(model, img, boxes, chunk, "label", usage, call_label)
+        for chunk in chunks
     ])
+    named: dict[int, tuple] = {}
+    for r in results:
+        named.update(r)
 
-    named: dict[int, tuple] = {}   # marker id -> (name, conf, rating)
-    weak: list[int] = []           # ids with null/low-confidence reads
-    extras: list[DetectReadPrediction] = []
-    for entries in entry_lists:
-        for e in entries:
-            idx, name, conf, rating = e[0], e[1], e[2], e[3]
-            conf = float(conf) if isinstance(conf, (int, float)) else 0.5
-            rating = float(rating) if isinstance(rating, (int, float)) else None
-            if isinstance(idx, int) and 0 <= idx < len(boxes):
-                if not name or conf < REREAD_CONF_THRESHOLD:
-                    weak.append(idx)
-                else:
-                    named[idx] = (str(name), conf, rating)
-            elif idx == -1 and name and len(e) >= 5 and isinstance(e[4], list) and len(e[4]) == 4:
-                b = e[4]
-                extras.append(DetectReadPrediction(
-                    wine_name=str(name),
-                    bbox={"x": float(b[0]), "y": float(b[1]),
-                          "w": float(b[2]), "h": float(b[3])},
-                    confidence=conf, rating=rating,
-                ))
+    # Rescue pass: unreadable or low-confidence label-zone crops get one
+    # full-bottle re-read (wider context). Tiny boxes can't be read at all.
+    weak = [i for i in all_ids
+            if (i not in named or named[i][1] < REREAD_CONF_THRESHOLD)
+            and boxes[i]["w"] * img.width >= 140]
+    weak = weak[:REREAD_MAX_CROPS]
+    if weak:
+        rescued = await _read_crops(model, img, boxes, weak, "full", usage,
+                                    f"{call_label}_rescue")
+        for i, (name, conf, rating) in rescued.items():
+            orig = named.get(i)
+            if orig is None or conf >= orig[1]:
+                named[i] = (name, conf, rating)
 
-    missing = [i for i in range(len(boxes)) if i not in named and i not in weak]
-    reread_ids = list(dict.fromkeys(weak + missing + _brand_dupe_ids(named)))
-    # A crop narrower than ~140px at full res carries no readable label —
-    # re-reading it wastes a call and can overwrite a decent marks read.
-    W = img.width
-    reread_ids = [i for i in reread_ids if boxes[i]["w"] * W >= 140]
-    reread_ids = reread_ids[:REREAD_MAX_CROPS]
-    reread_named: dict[int, DetectReadPrediction] = {}
-    if reread_ids:
-        reread_named = await _reread_crops(model, img, boxes, reread_ids, usage, call_label)
-
-    preds: list[DetectReadPrediction] = list(extras)
-    for i, (name, conf, rating) in named.items():
-        if i in reread_ids:
-            continue  # replaced (or dropped) by the crop re-read below
-        preds.append(DetectReadPrediction(
+    preds = [
+        DetectReadPrediction(
             wine_name=name,
             bbox={k: boxes[i][k] for k in ("x", "y", "w", "h")},
             confidence=conf, rating=rating,
-        ))
-    for i in reread_ids:
-        rr = reread_named.get(i)
-        orig = named.get(i)
-        # A crop re-read only outranks a confident marks read when it is
-        # itself confident — low-res crops produce garbage rewrites otherwise.
-        if rr and (orig is None or rr.confidence >= max(0.6, orig[1] - 0.1)):
-            preds.append(rr)
-        elif orig:
-            name, conf, rating = orig
-            preds.append(DetectReadPrediction(
-                wine_name=name,
-                bbox={k: boxes[i][k] for k in ("x", "y", "w", "h")},
-                confidence=conf, rating=rating,
-            ))
-
+        )
+        for i, (name, conf, rating) in named.items()
+    ]
     n_before = len(preds)
     preds = dedup_predictions(preds)
     n_dedup = n_before - len(preds)
     preds = [p for p in preds if p.confidence >= MIN_CONFIDENCE]
     return DetectReadResult(
         predictions=preds, usage=usage,
-        notes=(f"detected={len(boxes)} panels={len(panels)} "
-               f"reread={len(reread_ids)} deduped={n_dedup}"),
+        notes=(f"detected={len(boxes)} chunks={len(chunks)} "
+               f"rescued={len(weak)} deduped={n_dedup}"),
         wall_ms=round((time.perf_counter() - wall_start) * 1000),
     )
-
-
-async def _reread_crops(model: str, img: Image.Image, boxes: list[dict],
-                        ids: list[int], usage: list[dict],
-                        call_label: str) -> dict[int, DetectReadPrediction]:
-    """One multi-crop call re-reading weak marks from the full-res image."""
-    W, H = img.size
-    content: list = [{"type": "text", "text": REREAD_PROMPT.format(ids=ids)}]
-    for i in ids:
-        b = boxes[i]
-        # Label zone: middle band of the bottle (labels sit below the shoulder).
-        pad_x = b["w"] * 0.10
-        cx1 = max(0, (b["x"] - pad_x) * W)
-        cx2 = min(W, (b["x"] + b["w"] + pad_x) * W)
-        cy1 = max(0, (b["y"] + b["h"] * 0.20) * H)
-        cy2 = min(H, (b["y"] + b["h"] * 0.90) * H)
-        crop = img.crop((int(cx1), int(cy1), int(cx2), int(cy2)))
-        crop.thumbnail(CROP_MAX)
-        content.append(_image_part(_jpeg_bytes(crop)))
-
-    text = await _llm_call(model, content, max_tokens=1000, usage_out=usage,
-                           call_label=f"{call_label}_reread")
-    out: dict[int, DetectReadPrediction] = {}
-    for e in _parse_entries(text):
-        idx, name, conf, rating = e[0], e[1], e[2], e[3]
-        if not name or not (isinstance(idx, int) and idx in ids):
-            continue
-        out[idx] = DetectReadPrediction(
-            wine_name=str(name),
-            bbox={k: boxes[idx][k] for k in ("x", "y", "w", "h")},
-            confidence=min(float(conf) if isinstance(conf, (int, float)) else 0.5, 0.75),
-            rating=float(rating) if isinstance(rating, (int, float)) else None,
-        )
-    return out

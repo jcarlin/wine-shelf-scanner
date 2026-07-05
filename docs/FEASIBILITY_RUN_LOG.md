@@ -48,6 +48,76 @@ Still blocked on owner: rotated OPENROUTER_API_KEY (not yet provided anywhere re
 
 ## Rounds
 
+### Round 3 — Detect+Read tuning + production port (2026-07-05, in progress)
+
+**Diagnosis (from recorded Gate 2 usage, `out/bakeoff/c2_marks_sonnet5*.json` / `c3_crops_sonnet5*.json`):**
+1. The "image payload dominates cost/latency" hypothesis was WRONG. C2+Sonnet5: prompt was a flat
+   5,041 tok (marked image ≈4.7k image tok), completions ran 1.3k–3k tok and tracked latency at
+   ~8.5 ms/tok (~118 tok/s). Output tokens = ~70% of LLM cost, ~90% of LLM latency. Cause: Sonnet 5
+   adaptive thinking (on by default when `thinking` omitted) + verbose per-mark JSON. IMG_8080's C2
+   read hit the 3,000-token cap (truncated).
+2. Recorded Sonnet 5 costs use INTRO pricing ($2/$10 per MTok, litellm model_cost; sticker $3/$15
+   after 2026-08-31). Verdict must quote both.
+3. C3's 74% top-3 confirmed as duplicate-mark + GT-coverage artifact: on IMG_8080 C3 scored 13/13
+   targets correct, 0 swaps, yet 0/3 top-3 — 17 badges for 13 targets, and the 4 extra
+   (duplicate/unannotated-bottle) reads carried the highest ratings. Mark dedup is the fix.
+   Without 8080, C3 top-3 was 14/16.
+
+**Round 3 changes (all in `app/services/detect_read.py`, shared verbatim by eval candidate
+`c4_daread_sonnet5` and production `PIPELINE_MODE=detect_read` — eval measures shipping code):**
+- `thinking={"type":"disabled"}` (verified live: 13→3 compl tok on a probe; read call 3,000→~950 tok)
+  + compact `[[id, name, conf, rating]]` output.
+- Vision: 5 concurrent calls on a shared client with downscaled tiles (~1.3–2.5s wall).
+  Tried `batch_annotate_images` first — SLOWER (3.4–12.2s, server processes batch serially). Reverted.
+- Same-name+overlap mark dedup (keeps adjacent same-SKU facings); retry-once on empty response;
+  final conf<0.45 filter (production hides those badges anyway).
+- Label-zone crop re-read (≤8 crops, 512×768 max) for weak/null marks AND same-brand groups with
+  distinct names (the measured swap mode: Frontera Cab↔Merlot etc.). Guarded: a crop re-read only
+  overwrites a confident marks read if itself confident (ungated it rewrote good reads into garbage
+  on low-res images: 8080 badgeP 0.80→0.61). Boxes <140px full-res width never re-read.
+- Markers centered on bottle top (top-left tags visually hover over the LEFT neighbor in tight
+  packs → measured off-by-one neighbor-copy cascades; 8122 swaps 3→0 after centering).
+- TRIED AND REVERTED: two-panel parallel read (halve output tokens per call). Cropping the shelf
+  into bands broke row context: 8122 badgeP .83→.69. Latency stays single-call-bound.
+
+**Production port (commit f4a1007):** `DetectReadPipeline` subclasses `SingleLLMPipeline` (reuses
+DB override, rating cache, log_usage). Route dispatch `PIPELINE_MODE=detect_read` added; local
+`.env` switched. Verified live: POST /scan on IMG_8080 → 200, 11 results, contract bbox
+{x,y,width,height} intact, usage records written. Legacy pipelines untouched.
+
+**Measurements (7-image iteration set, corpus v2, all full re-runs):**
+| run | badgeP | top3 | swap | cov (acc) | $/scan | paid-lat |
+|---|---|---|---|---|---|---|
+| c4 v1 marks (batched vision, 10-crop re-read) | .831 | .952 | .029 | .710 | .0303 | 23.3s |
+| c4 v2 marks (+parallel vision, label-zone crops, conf filter) | .839 | 1.000 | .024 | .676 | .0261 | 18.4s |
+| c4 v3 marks (+brand re-read guard, centered marks) | .787 | .900 | .024 | .676 | .0302 | 18.5s |
+| c4 v4 marks (+reading-order numbering + seq prompt) | .560* | — | .150 | .560 | — | — |
+| **c5 v5 CROPS-primary** (C3 arch + all economies) | **.906** | **1.000** | **.000** | .744 | .0357 | 16.5s |
+| **c5 v6 crops (label-crop height 640px) — LOCKED** | **.910** | **1.000** | **.000** | .729 | .0323 | 16.7s |
+
+**Why the architecture flipped mid-round (marks → crops):** the set-of-marks read kept breaking
+marker↔bottle correspondence on dense lookalike walls, a failure mode that MOVED but never died:
+v2's swaps were same-brand varietal copies; v3 collapsed IMG_8335 to .44 (row-level desync);
+v4's "markers are in reading order" prompt line made the model pattern-fill sequentially — one
+detector-skipped bottle shifted entire rows (off-by-one swap chains, swap rate 15%). Visual
+audits of the actual marked images (out/render_checks/panelA_8122.jpg, marked_8335_v3/v4.jpg)
+drove each diagnosis. Per-crop reading has no correspondence to lose (crop k IS bottle k) —
+v5/v6 have ZERO swaps across 207 targets, and the dense walls became the best images
+(8334 badgeP 1.00, 8335 1.00, 8262 .96). Kept from the marks era: width-aware group-box merge
+(multi-bottle Vision detections were killing single boxes in the containment merge), reading-order
+ids, parallel chunked calls (crops chunk freely — no context loss, unlike marked-image panels),
+thinking-off, compact output, dedup, rescue pass, conf filter.
+
+**v6 cost structure (intro pricing, per scan):** vision $.0075 + crop input $.0133 (6.7k tok)
++ output $.0087 (866 tok) + rescue $.0028 = $.0323. iOS-adjusted (on-device detection): $.0248 ✓.
+Sticker-price (post 2026-08-31, $3/$15): ≈ $.045 web / $.037 iOS — verdict must carry this.
+
+**Bar status on iteration set (v6):** top3 1.000 ✓ · badgeP .910 ✓ · swap .000 ✓ · coverage .729 ✓
+· cost $.0323 marginal ✗ (iOS ✓) · latency ~16s wall ✗ (10s bar; production e2e to be measured in
+webapp; presenting as the known tradeoff per owner's Gate 1 note).
+
+**Next:** webapp rendered proof on iteration images → Gate 3 held-out run + 6 screenshots + verdict.
+
 ### Round 2 — Bake-off on corpus v2 (2026-07-04/05) — COMPLETE, at Gate 2
 
 12 candidates × 7 iteration images (207 targets). Full table in `backend/out/bakeoff/` (JSONs+logs);

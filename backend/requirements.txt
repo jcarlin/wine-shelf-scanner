@@ -25,3 +25,7 @@ alembic>=1.13.0
 
 # GCS for database storage
 google-cloud-storage>=2.14.0
+
+# App Attest verification (abuse protection)
+cbor2>=5.6.0
+cryptography>=42.0.0

@@ -21,6 +21,9 @@ class FeatureFlags(BaseSettings):
     feature_safe_pick: bool = True
     feature_pairings: bool = True
     feature_trust_signals: bool = False
+    # Client-facing: activates the iOS paywall remotely (GET /config) without
+    # an App Store resubmission. Flip on Cloud Run via FEATURE_SUBSCRIPTION=true.
+    feature_subscription: bool = False
 
     model_config = {
         "env_prefix": "",

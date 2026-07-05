@@ -126,9 +126,28 @@ extension MockURLProtocol {
         lastRequest?.value(forHTTPHeaderField: key)
     }
 
-    /// Get the body data from the last request
+    /// Get the body data from the last request.
+    ///
+    /// URLSession strips `httpBody` into `httpBodyStream` before the request
+    /// reaches a URLProtocol, so fall back to draining the stream.
     static var lastRequestBody: Data? {
-        lastRequest?.httpBody
+        guard let request = lastRequest else { return nil }
+        if let body = request.httpBody {
+            return body
+        }
+        guard let stream = request.httpBodyStream else { return nil }
+        stream.open()
+        defer { stream.close() }
+        var data = Data()
+        let bufferSize = 4096
+        let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
+        defer { buffer.deallocate() }
+        while stream.hasBytesAvailable {
+            let count = stream.read(buffer, maxLength: bufferSize)
+            if count <= 0 { break }
+            data.append(buffer, count: count)
+        }
+        return data
     }
 }
 

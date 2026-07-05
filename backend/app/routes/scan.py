@@ -42,6 +42,48 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+# === Error mapping ===
+# Pipeline failures must land on the failure-handling contract, not bare
+# 500s: retryable provider trouble → 503 (+Retry-After), timeouts → 504.
+# Shared by /scan and /scan/stream.
+
+
+def map_pipeline_error(e: Exception) -> Optional[tuple[int, str, dict]]:
+    """Map known pipeline exceptions to (status_code, detail, headers).
+
+    Returns None for anything unrecognized (callers keep their generic 500).
+    """
+    try:
+        import litellm
+        if isinstance(e, litellm.exceptions.Timeout):
+            return 504, "The scan took too long. Please try again.", {}
+        retryable = (
+            litellm.exceptions.RateLimitError,        # Anthropic 429
+            litellm.exceptions.InternalServerError,   # Anthropic 500/529 overloaded
+            litellm.exceptions.ServiceUnavailableError,
+            litellm.exceptions.BadGatewayError,
+            litellm.exceptions.APIConnectionError,
+        )
+        if isinstance(e, retryable):
+            return (503,
+                    "The scanner is very busy right now. Please try again in a moment.",
+                    {"Retry-After": "15"})
+    except ModuleNotFoundError:
+        pass
+    try:
+        from google.api_core import exceptions as gexc
+        if isinstance(e, gexc.GoogleAPIError):
+            return (503,
+                    "We couldn't analyze the photo right now. Please try again.",
+                    {"Retry-After": "15"})
+    except ModuleNotFoundError:
+        pass
+    import asyncio
+    if isinstance(e, asyncio.TimeoutError):
+        return 504, "The scan took too long. Please try again.", {}
+    return None
+
+
 # === Shared post-processing helpers ===
 # Used by both /scan and /scan/stream endpoints
 
@@ -514,6 +556,12 @@ async def scan_shelf(
         logger.warning(f"Undecodable image: {e}")
         raise HTTPException(status_code=400, detail="Invalid or corrupted image file")
     except Exception as e:
+        mapped = map_pipeline_error(e)
+        if mapped:
+            status_code, detail, headers = mapped
+            logger.warning(f"Pipeline failure mapped to {status_code}: {e}")
+            raise HTTPException(status_code=status_code, detail=detail,
+                                headers=headers or None)
         logger.error(f"Unexpected error processing image: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
 

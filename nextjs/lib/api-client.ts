@@ -129,11 +129,24 @@ export async function scanImage(
     );
 
     if (!response.ok) {
+      // Prefer the backend's human-readable detail (e.g. "scanner is busy,
+      // try again in a moment") over a bare status code.
+      let message = `Server returned ${response.status}`;
+      try {
+        const body = await response.json();
+        if (body && typeof body.detail === 'string') {
+          message = body.detail;
+        } else if (body && typeof body.message === 'string') {
+          message = body.message;
+        }
+      } catch {
+        // Non-JSON error body — keep the generic message.
+      }
       return {
         success: false,
         error: {
           type: 'SERVER_ERROR',
-          message: `Server returned ${response.status}`,
+          message,
           status: response.status,
         },
       };

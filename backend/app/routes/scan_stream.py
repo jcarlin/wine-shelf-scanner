@@ -36,6 +36,7 @@ from .scan import (
     convert_heic_to_jpeg,
     get_wine_matcher,
     is_valid_image_content_type,
+    map_pipeline_error,
 )
 
 logger = logging.getLogger(__name__)
@@ -111,9 +112,13 @@ async def scan_shelf_stream(
                     )
         except Exception as e:
             # Already streaming — status is committed, so signal in-band.
-            logger.error(f"[{image_id}] /scan/stream failed: {e}", exc_info=True)
+            mapped = map_pipeline_error(e)
+            if mapped:
+                logger.warning(f"[{image_id}] /scan/stream pipeline failure: {e}")
+            else:
+                logger.error(f"[{image_id}] /scan/stream failed: {e}", exc_info=True)
             yield _sse("error", {
-                "message": "Scan failed. Please try again.",
+                "message": mapped[1] if mapped else "Scan failed. Please try again.",
             })
 
     return StreamingResponse(

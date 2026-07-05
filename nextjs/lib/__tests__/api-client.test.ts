@@ -106,6 +106,28 @@ describe('api-client', () => {
       }
     });
 
+    it('should surface the backend detail message on non-ok response', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+        json: async () => ({
+          detail: 'The scanner is very busy right now. Please try again in a moment.',
+        }),
+      });
+
+      const { scanImage } = require('../api-client');
+      const file = new File(['test'], 'image.jpg', { type: 'image/jpeg' });
+      const result = await scanImage(file);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.type).toBe('SERVER_ERROR');
+        expect(result.error.message).toBe(
+          'The scanner is very busy right now. Please try again in a moment.'
+        );
+      }
+    });
+
     it('should return NETWORK_ERROR on fetch failure', async () => {
       mockFetch.mockRejectedValueOnce(new Error('Network request failed'));
 

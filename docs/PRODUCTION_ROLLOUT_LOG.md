@@ -101,9 +101,28 @@ verification on `/scan`, per-device daily quota (429), global daily-spend circui
 Work happens on worktree branch `launch-w1` and merges back here when green — please don't
 start parallel rate-limiting work.
 
-## Stream 4 — Error UX
+## Stream 4 — Error UX ✅ (2026-07-05)
 
-_(pending)_
+**What changed:**
+- `map_pipeline_error()` in `routes/scan.py` (shared with `/scan/stream`): litellm
+  RateLimitError / InternalServerError (Anthropic 529 overloaded) / ServiceUnavailable /
+  BadGateway / APIConnectionError → **503** with `Retry-After: 15` and "scanner is very busy…
+  try again in a moment"; litellm/asyncio Timeout → **504** "took too long, try again";
+  Google Vision `GoogleAPIError` → **503** "couldn't analyze the photo right now". Unknown
+  exceptions keep the generic 500. `/scan/stream` emits the same mapped message in its
+  in-band `error` event.
+- Frontend `scanImage`: non-OK responses now surface the backend's `detail` message on the
+  existing error screen (Try Again + Report an Issue link) instead of "Server returned 503".
+  This also covers the launch-w1 session's upcoming 429s — their `detail` will render as-is.
+- (From stream 2, same contract: undecodable image → 400 "Invalid or corrupted image file".)
+
+**Verified:** 7 new backend route tests (each failure class → status/header/message,
+unknown stays 500, stream error event carries mapped message) + 1 frontend test
+(detail surfaced) — written failing-first, all green. Frontend 85/85, type-check clean.
+The dead-end-free error screen itself (Try Again + report link) pre-existed and is unchanged.
+
+**Next:** none for this stream. Note: retry-after isn't auto-honored client-side —
+the user taps Try Again; deliberate (no silent auto-retry spend).
 
 ## Stream 5 — Deploy (gated)
 

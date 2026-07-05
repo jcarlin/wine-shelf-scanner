@@ -83,6 +83,7 @@ class OverlayPrediction:
     bbox: dict  # {x, y, w, h} normalized 0-1
     confidence: float = 1.0
     source: str = "unknown"  # "hungarian" | "ocr_fallback" | "ocr_anchor" | "gemini_synthetic"
+    rating: Optional[float] = None  # rating shown on the badge; drives top-N ranking
 
     @property
     def anchor(self) -> tuple[float, float]:
@@ -253,6 +254,107 @@ def score_image(
         unmatched_predictions=unmatched,
         source_counts=source_counts,
     )
+
+
+# ---------------------------------------------------------------------------
+# Badge-precision view (user-facing: is each RENDERED badge on the right bottle?)
+# ---------------------------------------------------------------------------
+
+@dataclass
+class PrecisionView:
+    """Precision of rendered badges, per the feasibility bar (Gate 1, 2026-07-04).
+
+    Classifies each prediction (= rendered badge) instead of each GT target:
+      on_correct   — anchor inside a GT bbox whose name matches the badge.
+      wrong_bottle — anchor inside a GT bbox, name matches a DIFFERENT GT target
+                     (the user-visible swap).
+      off_bottle   — anchor in no GT bbox, but the badge names an annotated wine
+                     (badge floats in space / wrong spot).
+      unjudgeable  — badge names a wine that no GT target annotates; excluded
+                     from the precision denominator (GT coverage limitation).
+
+    badge_precision = on_correct / (on_correct + wrong_bottle + off_bottle).
+    top3 fields apply the same test to the 3 badges the product emphasizes
+    (highest rating first, confidence as tie-break).
+    """
+
+    on_correct: int = 0
+    wrong_bottle: int = 0
+    off_bottle: int = 0
+    unjudgeable: int = 0
+    top3_judged: int = 0
+    top3_correct: int = 0
+
+    @property
+    def judged(self) -> int:
+        return self.on_correct + self.wrong_bottle + self.off_bottle
+
+    @property
+    def badge_precision(self) -> Optional[float]:
+        return self.on_correct / self.judged if self.judged else None
+
+    @property
+    def top3_precision(self) -> Optional[float]:
+        return self.top3_correct / self.top3_judged if self.top3_judged else None
+
+
+def _classify_badge(
+    pred: OverlayPrediction,
+    targets: list[OverlayTarget],
+    name_threshold: float,
+) -> str:
+    containing = [t for t in targets if _point_in_bbox(pred.anchor, t.bbox)]
+    names_any = any(
+        names_match(pred.wine_name, t.wine_name, threshold=name_threshold)
+        for t in targets
+    )
+    if any(
+        names_match(pred.wine_name, t.wine_name, threshold=name_threshold)
+        for t in containing
+    ):
+        return "on_correct"
+    if not names_any:
+        return "unjudgeable"
+    return "wrong_bottle" if containing else "off_bottle"
+
+
+def precision_view(
+    targets: list[OverlayTarget],
+    predictions: list[OverlayPrediction],
+    name_threshold: float = 0.85,
+) -> PrecisionView:
+    view = PrecisionView()
+    outcomes: list[tuple[OverlayPrediction, str]] = []
+    for pred in predictions:
+        cls = _classify_badge(pred, targets, name_threshold)
+        outcomes.append((pred, cls))
+        setattr(view, cls, getattr(view, cls) + 1)
+
+    # Product top-3: highest rating first, confidence as tie-break.
+    ranked = sorted(
+        outcomes,
+        key=lambda pc: (pc[0].rating or 0.0, pc[0].confidence),
+        reverse=True,
+    )[:3]
+    for _, cls in ranked:
+        if cls == "unjudgeable":
+            continue
+        view.top3_judged += 1
+        if cls == "on_correct":
+            view.top3_correct += 1
+    return view
+
+
+def merge_precision_views(views: list[PrecisionView]) -> PrecisionView:
+    total = PrecisionView()
+    for v in views:
+        total.on_correct += v.on_correct
+        total.wrong_bottle += v.wrong_bottle
+        total.off_bottle += v.off_bottle
+        total.unjudgeable += v.unjudgeable
+        total.top3_judged += v.top3_judged
+        total.top3_correct += v.top3_correct
+    return total
 
 
 # ---------------------------------------------------------------------------

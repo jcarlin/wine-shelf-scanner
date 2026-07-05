@@ -48,10 +48,13 @@ from tests.accuracy.overlay_metrics import (  # noqa: E402
     ImageMetrics,
     OverlayPrediction,
     OverlayTarget,
+    PrecisionView,
     aggregate,
     format_aggregate,
     format_per_image_table,
     format_swap_details,
+    merge_precision_views,
+    precision_view,
     score_image,
 )
 
@@ -116,11 +119,44 @@ def _gt_files_with_targets() -> list[Path]:
 # Pipeline runner
 # ---------------------------------------------------------------------------
 
+# When set (via --candidate), _run_pipeline routes to a bake-off candidate from
+# scripts.candidates instead of the production SingleLLMPipeline. Candidate
+# ratings are LLM-estimated (no DB override) — fine for placement scoring.
+_ACTIVE_CANDIDATE: Optional[str] = None
+
+
 async def _run_pipeline(image_path: Path) -> tuple[list[OverlayPrediction], dict]:
     img = _load_image(str(image_path))
     buf = io.BytesIO()
     img.save(buf, format="JPEG", quality=95)
     image_bytes = buf.getvalue()
+
+    if _ACTIVE_CANDIDATE:
+        from scripts.candidates import CANDIDATES
+        fn = CANDIDATES[_ACTIVE_CANDIDATE]
+        t0 = time.perf_counter()
+        result = await fn(image_bytes, image_path.name)
+        elapsed_ms = round((time.perf_counter() - t0) * 1000)
+        predictions = [
+            OverlayPrediction(
+                wine_name=p.wine_name,
+                bbox=p.bbox,
+                confidence=p.confidence,
+                source=_ACTIVE_CANDIDATE,
+                rating=p.rating,
+            )
+            for p in result.predictions
+        ]
+        info = {
+            "elapsed_ms": elapsed_ms,
+            "candidate": _ACTIVE_CANDIDATE,
+            "usage": result.usage,
+            "cost_usd": result.total_cost_usd,
+            "paid_latency_ms": result.total_latency_ms,
+            "recognized_count": len(predictions),
+            "notes": result.notes,
+        }
+        return predictions, info
 
     pipeline = SingleLLMPipeline()
     t0 = time.perf_counter()
@@ -144,6 +180,7 @@ async def _run_pipeline(image_path: Path) -> tuple[list[OverlayPrediction], dict
                 },
                 confidence=rw.confidence,
                 source="single_llm",
+                rating=rw.rating,
             )
         )
 
@@ -506,6 +543,18 @@ async def _evaluate_one(
     predictions, info = await _run_pipeline(image_path)
     metrics = score_image(image_path.name, targets, predictions)
 
+    view = precision_view(targets, predictions)
+    info["precision"] = {
+        "on_correct": view.on_correct,
+        "wrong_bottle": view.wrong_bottle,
+        "off_bottle": view.off_bottle,
+        "unjudgeable": view.unjudgeable,
+        "badge_precision": view.badge_precision,
+        "top3_judged": view.top3_judged,
+        "top3_correct": view.top3_correct,
+        "top3_precision": view.top3_precision,
+    }
+
     if render_visual:
         # Pull cached Vision bbox + OCR data so the diff PNG can label each
         # detected bottle with its OCR fingerprint (helps spot swaps by eye).
@@ -542,6 +591,11 @@ def main():
     )
     parser.add_argument("--json", help="Write per-image + aggregate metrics JSON.")
     parser.add_argument(
+        "--candidate",
+        help="Run a bake-off candidate from scripts.candidates instead of the "
+             "production pipeline (e.g. c1_lean_sonnet).",
+    )
+    parser.add_argument(
         "--visual",
         action="store_true",
         help="Render diff PNGs into backend/out/visuals/.",
@@ -564,6 +618,15 @@ def main():
         ),
     )
     args = parser.parse_args()
+
+    if args.candidate:
+        from scripts.candidates import CANDIDATES
+        if args.candidate not in CANDIDATES:
+            print(f"Unknown candidate '{args.candidate}'. "
+                  f"Available: {', '.join(sorted(CANDIDATES))}")
+            sys.exit(1)
+        global _ACTIVE_CANDIDATE
+        _ACTIVE_CANDIDATE = args.candidate
 
     if args.compare:
         before = _load_metrics_json(Path(args.compare[0]))
@@ -628,6 +691,38 @@ def main():
     agg = aggregate(per_image)
     print(format_aggregate(agg))
     print()
+
+    # Badge-precision view (the Gate 1 bar metrics)
+    views = []
+    print("Badge precision (per rendered badge, bar metrics):")
+    print(f"{'image_id':<45}{'judged':>7}{'corr':>6}{'wrong':>6}{'off':>5}{'unjdg':>6}{'prec':>7}{'top3':>7}")
+    for m in per_image:
+        p = info_by_image.get(m.image_id, {}).get("precision")
+        if not p:
+            continue
+        v = PrecisionView(
+            on_correct=p["on_correct"], wrong_bottle=p["wrong_bottle"],
+            off_bottle=p["off_bottle"], unjudgeable=p["unjudgeable"],
+            top3_judged=p["top3_judged"], top3_correct=p["top3_correct"],
+        )
+        views.append(v)
+        prec = f"{v.badge_precision:.2f}" if v.badge_precision is not None else "  -"
+        top3 = f"{v.top3_correct}/{v.top3_judged}"
+        print(f"{m.image_id[:44]:<45}{v.judged:>7}{v.on_correct:>6}{v.wrong_bottle:>6}{v.off_bottle:>5}{v.unjudgeable:>6}{prec:>7}{top3:>7}")
+    total = merge_precision_views(views)
+    bp = f"{total.badge_precision:.3f}" if total.badge_precision is not None else "N/A"
+    t3 = f"{total.top3_precision:.3f}" if total.top3_precision is not None else "N/A"
+    print(f"AGGREGATE badge_precision={bp}  top3_precision={t3} "
+          f"({total.top3_correct}/{total.top3_judged})  unjudgeable={total.unjudgeable}")
+    print()
+
+    # Cost / latency summary (measured, candidate runs only)
+    costs = [i.get("cost_usd") for i in info_by_image.values() if i.get("cost_usd") is not None]
+    lats = [i.get("paid_latency_ms") for i in info_by_image.values() if i.get("paid_latency_ms")]
+    if costs:
+        print(f"COST: total=${sum(costs):.4f}  mean=${sum(costs)/len(costs):.4f}/scan  "
+              f"paid-latency mean={sum(lats)/len(lats)/1000:.1f}s max={max(lats)/1000:.1f}s")
+        print()
     print(format_swap_details(per_image))
 
     if args.json:

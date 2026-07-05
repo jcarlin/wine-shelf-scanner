@@ -6,9 +6,19 @@
 
 ## Run status
 
-- **Phase:** Round 0 — baseline measurement (pre-Gate 1)
+- **Phase:** Round 1 — GT audit + bake-off prep (Gate 1 bar APPROVED by owner 2026-07-04)
 - **Branch:** `rating-overlays`
 - **Started:** 2026-07-04
+
+## Approved success bar (Gate 1, owner-approved 2026-07-04)
+
+Judged on audited + expanded held-out set, harness + rendered screenshots:
+1. Top-3-by-rating badge precision ≥ 90% (incl. BEST PICK)
+2. Badge precision ≥ 85%; wrong-bottle (swap) ≤ 5%
+3. Coverage ≥ 60% of GT-annotated bottles get a correct badge
+4. Cost ≤ $0.03/scan blended (measured)
+5. Latency ≤ 10s p50 / 15s p95 end-to-end
+Still blocked on owner: rotated OPENROUTER_API_KEY (not yet provided anywhere readable).
 
 ## Session-verified facts (2026-07-04)
 
@@ -75,3 +85,24 @@ from FlashNamesPipeline to SingleLLMPipeline; `max_tokens` default 2500→8000.
 **Next (pending Gate 1 approval):** GT audit + corpus fix, then candidate bake-off (Gate 2).
 Blocked on owner for: rotated `OPENROUTER_API_KEY` (compromised key), optional `GOOGLE_API_KEY`
 for direct Gemini. Without them, only Anthropic-hosted models are testable.
+
+### Round 1 — GT audit + metric extension + bake-off scaffolding (2026-07-04, in progress)
+
+- Round 0 checkpoint committed as `2e3541a`. Gate 1 bar approved by owner (see "Approved success bar").
+- Visual render audit of IMG_8080 rendered scan: **6 of 11 badges on the wrong bottle**, 3 correct,
+  2 edge/ambiguous — annotated proof at `backend/out/render_checks/render_check_IMG_8080_annotated.png`.
+- GT audit assets generated (`backend/out/gt_audit/<stem>/`: numbered overview + per-target zoom crops);
+  10 parallel agents auditing every target name/bbox against pixels.
+- **GT provenance discovered:** IMG_8080's 6 GT bboxes are byte-identical to Google Vision
+  OBJECT_LOCALIZATION output — GT was seeded from Vision detections, which explains why only ~6 of
+  15 bottles per image are annotated.
+- **Google Vision recall ceiling measured (live call):** raw API returns 10 objects (5 "Wine bottle",
+  5 "Bottle") for the 15-bottle IMG_8080; 6 after IoU dedup. High precision, low recall on dense
+  shelves. TEXT_DETECTION returned 56 blocks (much higher label coverage) — OCR-cluster anchors are
+  a viable candidate ingredient. Tile-based detection (2x2 crops) is the recall-boost hypothesis to test.
+- Metric extended per approved bar: `PrecisionView` in `overlay_metrics.py` (badge precision /
+  top-3 precision / unjudgeable) + printed in `eval_overlays.py`.
+- Bake-off scaffolding: `backend/scripts/candidates.py` registry + `--candidate` flag in the harness.
+  C1 lean-output variants registered (sonnet/opus/haiku). Planned: C2 set-of-marks (Vision boxes +
+  numbered markers, LLM assigns names to IDs — no LLM coordinates), C3 per-crop label reading,
+  C6 OCR-cluster anchors. C2/C3/C6 build specs to be delegated to parallel agents after GT fixes.

@@ -47,6 +47,9 @@ def ensure_schema(db_path: str) -> None:
     alembic_cfg = AlembicConfig(str(BACKEND_DIR / "alembic.ini"))
     alembic_cfg.set_main_option("script_location", str(BACKEND_DIR / "alembic"))
     alembic_cfg.set_main_option("sqlalchemy.url", f"sqlite:///{db_path}")
+    # Don't let env.py's fileConfig reconfigure logging: this runs at request
+    # time in production and was wiping app loggers/handlers (see env.py).
+    alembic_cfg.attributes["configure_logger"] = False
 
     # Suppress Alembic's default logging to avoid noise in tests
     logging.getLogger("alembic").setLevel(logging.WARNING)

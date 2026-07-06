@@ -16,8 +16,13 @@ from alembic import context
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 config = context.config
-if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+# Programmatic callers (app.db.ensure_schema, invoked at request time in
+# production) set configure_logger=False: fileConfig was resetting the root
+# logger to WARN + alembic's handler and disabling existing app loggers, so
+# scan logs and llm_usage cost records vanished after the first request.
+# The alembic CLI still configures logging from alembic.ini as before.
+if config.config_file_name is not None and config.attributes.get("configure_logger", True):
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 
 def get_database_url() -> str:

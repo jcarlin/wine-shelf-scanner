@@ -22,6 +22,123 @@ final class BackgroundScanManagerTests: XCTestCase {
         XCTAssertEqual(decoded.startedAt, Date(timeIntervalSince1970: 1700000000))
     }
 
+    func testPendingScanDecodesLegacyJSONWithoutAttestFields() throws {
+        // Entries persisted by older builds have no attest fields —
+        // restorePendingScans must still decode them
+        let legacyJSON = """
+        {"taskIdentifier": 7, "imageFilePath": "/tmp/i.jpg", "bodyFilePath": "/tmp/b.tmp", "startedAt": 1700000000}
+        """
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .secondsSince1970
+
+        let decoded = try decoder.decode(PendingScan.self, from: legacyJSON.data(using: .utf8)!)
+
+        XCTAssertEqual(decoded.taskIdentifier, 7)
+        XCTAssertNil(decoded.attested)
+        XCTAssertNil(decoded.requestURL)
+        XCTAssertNil(decoded.contentType)
+    }
+
+    func testPendingScanRoundTripsAttestFields() throws {
+        let scan = PendingScan(
+            taskIdentifier: 42,
+            imageFilePath: "/tmp/test.jpg",
+            bodyFilePath: "/tmp/body.tmp",
+            startedAt: Date(timeIntervalSince1970: 1700000000),
+            attested: true,
+            requestURL: "https://api.example.com/scan?debug=true",
+            contentType: "multipart/form-data; boundary=abc"
+        )
+
+        let data = try JSONEncoder().encode(scan)
+        let decoded = try JSONDecoder().decode(PendingScan.self, from: data)
+
+        XCTAssertEqual(decoded.attested, true)
+        XCTAssertEqual(decoded.requestURL, "https://api.example.com/scan?debug=true")
+        XCTAssertEqual(decoded.contentType, "multipart/form-data; boundary=abc")
+    }
+
+    // MARK: - Attested 403 Recovery (background)
+
+    private func pendingScan(attested: Bool?, bodyFilePath: String = "/tmp/b.tmp") -> PendingScan {
+        PendingScan(
+            taskIdentifier: 1,
+            imageFilePath: "/tmp/i.jpg",
+            bodyFilePath: bodyFilePath,
+            startedAt: Date(),
+            attested: attested,
+            requestURL: "https://api.example.com/scan",
+            contentType: "multipart/form-data; boundary=test-boundary"
+        )
+    }
+
+    func testShouldRetryUnattestedOnlyForAttested403() {
+        XCTAssertTrue(BackgroundScanManager.shouldRetryUnattested(statusCode: 403, pending: pendingScan(attested: true)))
+
+        // Unattested 403s surface normally
+        XCTAssertFalse(BackgroundScanManager.shouldRetryUnattested(statusCode: 403, pending: pendingScan(attested: false)))
+        XCTAssertFalse(BackgroundScanManager.shouldRetryUnattested(statusCode: 403, pending: pendingScan(attested: nil)))
+
+        // Other statuses are not attest rejections
+        XCTAssertFalse(BackgroundScanManager.shouldRetryUnattested(statusCode: 500, pending: pendingScan(attested: true)))
+        XCTAssertFalse(BackgroundScanManager.shouldRetryUnattested(statusCode: 200, pending: pendingScan(attested: true)))
+    }
+
+    func testMakeUnattestedResubmissionBuildsCleanRequestAndCopiesBody() throws {
+        // A real body file on disk
+        let bodyURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("bg_retry_test_\(UUID().uuidString).tmp")
+        let bodyContents = Data("multipart-body-bytes".utf8)
+        try bodyContents.write(to: bodyURL)
+        defer { try? FileManager.default.removeItem(at: bodyURL) }
+
+        let pending = pendingScan(attested: true, bodyFilePath: bodyURL.path)
+
+        let resubmission = try XCTUnwrap(
+            BackgroundScanManager.shared.makeUnattestedResubmission(from: pending)
+        )
+        defer { try? FileManager.default.removeItem(at: resubmission.bodyFileURL) }
+
+        // Same endpoint and content type, but NO attest headers
+        XCTAssertEqual(resubmission.request.url?.absoluteString, "https://api.example.com/scan")
+        XCTAssertEqual(resubmission.request.httpMethod, "POST")
+        XCTAssertEqual(
+            resubmission.request.value(forHTTPHeaderField: "Content-Type"),
+            "multipart/form-data; boundary=test-boundary"
+        )
+        XCTAssertNil(resubmission.request.value(forHTTPHeaderField: "X-Attest-Key-Id"))
+        XCTAssertNil(resubmission.request.value(forHTTPHeaderField: "X-Attest-Assertion"))
+        XCTAssertNil(resubmission.request.value(forHTTPHeaderField: "X-Attest-Challenge"))
+
+        // Body copied to a fresh file (the original is deleted by the
+        // completion handler's cleanup)
+        XCTAssertNotEqual(resubmission.bodyFileURL.path, bodyURL.path)
+        XCTAssertEqual(try Data(contentsOf: resubmission.bodyFileURL), bodyContents)
+    }
+
+    func testMakeUnattestedResubmissionReturnsNilWhenBodyFileMissing() {
+        let pending = pendingScan(attested: true, bodyFilePath: "/nonexistent/body.tmp")
+
+        XCTAssertNil(BackgroundScanManager.shared.makeUnattestedResubmission(from: pending))
+    }
+
+    func testMakeUnattestedResubmissionReturnsNilWithoutPersistedURL() throws {
+        let bodyURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("bg_retry_test_\(UUID().uuidString).tmp")
+        try Data("x".utf8).write(to: bodyURL)
+        defer { try? FileManager.default.removeItem(at: bodyURL) }
+
+        // Legacy entry: no requestURL persisted → resubmission impossible
+        let pending = PendingScan(
+            taskIdentifier: 1,
+            imageFilePath: "/tmp/i.jpg",
+            bodyFilePath: bodyURL.path,
+            startedAt: Date()
+        )
+
+        XCTAssertNil(BackgroundScanManager.shared.makeUnattestedResubmission(from: pending))
+    }
+
     // MARK: - CompletedBackgroundScan Tests
 
     func testCompletedBackgroundScanEncodesAndDecodes() throws {

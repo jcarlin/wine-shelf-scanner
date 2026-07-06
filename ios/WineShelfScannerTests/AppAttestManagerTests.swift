@@ -277,6 +277,106 @@ final class AppAttestManagerTests: XCTestCase {
         XCTAssertEqual(attestService.attestKeyCallCount, 2)
     }
 
+    // MARK: - Attested 403 → Unattested Retry (foreground)
+
+    /// Route like installServerHandler, but /scan returns a sequence of
+    /// status codes (one per request; the last repeats).
+    private func installServerHandler(scanStatusSequence: [Int]) {
+        let challenge = self.challenge
+        var scanCallIndex = 0
+        MockURLProtocol.requestHandler = { request in
+            let path = request.url!.path
+            switch path {
+            case "/device/challenge":
+                let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+                return (response, Data(#"{"challenge": "\#(challenge)"}"#.utf8))
+            case "/device/register":
+                let response = HTTPURLResponse(url: request.url!, statusCode: 204, httpVersion: nil, headerFields: nil)!
+                return (response, Data())
+            case "/scan":
+                let status = scanStatusSequence[min(scanCallIndex, scanStatusSequence.count - 1)]
+                scanCallIndex += 1
+                let response = HTTPURLResponse(url: request.url!, statusCode: status, httpVersion: nil, headerFields: nil)!
+                return (response, Data(#"{"image_id":"t","results":[],"fallback_list":[]}"#.utf8))
+            default:
+                let response = HTTPURLResponse(url: request.url!, statusCode: 404, httpVersion: nil, headerFields: nil)!
+                return (response, Data())
+            }
+        }
+    }
+
+    func testAttested403RetriesOnceUnattestedAndSucceeds() async throws {
+        // Server registry wiped (e.g. redeploy): attested scan 403s, the
+        // unattested retry succeeds — the user still gets their scan
+        installServerHandler(scanStatusSequence: [403, 200])
+        let client = ScanAPIClient(
+            baseURL: URL(string: "https://api.example.com")!,
+            session: MockURLProtocol.mockSession(),
+            attestManager: manager
+        )
+
+        let response = try await client.scan(image: TestFixtures.testImage, debug: false)
+
+        XCTAssertEqual(response.imageId, "t")
+
+        // Exactly two /scan requests: attested, then unattested retry
+        let scanRequests = requests(to: "/scan")
+        XCTAssertEqual(scanRequests.count, 2)
+        XCTAssertNotNil(scanRequests[0].value(forHTTPHeaderField: "X-Attest-Key-Id"))
+        XCTAssertNil(scanRequests[1].value(forHTTPHeaderField: "X-Attest-Key-Id"))
+        XCTAssertNil(scanRequests[1].value(forHTTPHeaderField: "X-Attest-Assertion"))
+        XCTAssertNil(scanRequests[1].value(forHTTPHeaderField: "X-Attest-Challenge"))
+
+        // Registration cleared so a later scan re-registers
+        XCTAssertFalse(defaults.bool(forKey: AppAttestManager.registeredDefaultsKey))
+    }
+
+    func testNonAttested403DoesNotRetry() async {
+        // Attestation unavailable (e.g. simulator) → scan goes out unattested;
+        // a 403 there is a real rejection and must surface without a retry
+        attestService.isSupported = false
+        installServerHandler(scanStatusSequence: [403])
+        let client = ScanAPIClient(
+            baseURL: URL(string: "https://api.example.com")!,
+            session: MockURLProtocol.mockSession(),
+            attestManager: manager
+        )
+
+        do {
+            _ = try await client.scan(image: TestFixtures.testImage, debug: false)
+            XCTFail("Expected serverError(403)")
+        } catch {
+            guard case ScanError.serverError(403) = error else {
+                return XCTFail("Expected serverError(403), got \(error)")
+            }
+        }
+
+        XCTAssertEqual(requests(to: "/scan").count, 1, "No retry for unattested 403")
+    }
+
+    func testAttested403RetryAlsoFailingSurfacesErrorAfterOneRetry() async {
+        // Both the attested attempt and the single unattested retry fail
+        installServerHandler(scanStatusSequence: [403, 403])
+        let client = ScanAPIClient(
+            baseURL: URL(string: "https://api.example.com")!,
+            session: MockURLProtocol.mockSession(),
+            attestManager: manager
+        )
+
+        do {
+            _ = try await client.scan(image: TestFixtures.testImage, debug: false)
+            XCTFail("Expected serverError(403)")
+        } catch {
+            guard case ScanError.serverError(403) = error else {
+                return XCTFail("Expected serverError(403), got \(error)")
+            }
+        }
+
+        // Exactly one retry — no loop
+        XCTAssertEqual(requests(to: "/scan").count, 2)
+        XCTAssertFalse(defaults.bool(forKey: AppAttestManager.registeredDefaultsKey))
+    }
+
     // MARK: - Helpers
 
     /// URLSession moves httpBody into httpBodyStream before URLProtocol sees it.

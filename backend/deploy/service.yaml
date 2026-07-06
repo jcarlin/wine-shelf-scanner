@@ -93,8 +93,13 @@ spec:
               value: "log"
             - name: APP_BUNDLE_ID
               value: "com.wineshelfscanner.app"
-            # APPLE_TEAM_ID intentionally unset — human gate (Apple Developer
-            # enrollment). /device/register returns 503 until it is set.
+            - name: APPLE_TEAM_ID
+              value: "3STS9R446B"
+            # Accept development-environment attestations (Xcode dev builds).
+            # Flip to "false" for public launch — TestFlight/App Store builds
+            # always attest in the production environment.
+            - name: APP_ATTEST_ALLOW_DEV
+              value: "true"
             - name: DEVICE_DAILY_SCAN_LIMIT
               value: "40"
             - name: DAILY_SPEND_LIMIT_USD

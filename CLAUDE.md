@@ -1,5 +1,69 @@
 # Wine Shelf Scanner
 
+## Working Guidelines
+
+Behavioral guidelines to reduce common LLM coding mistakes. These bias toward caution over speed; use judgment for trivial tasks. Project-specific rules below override these where they conflict.
+
+### 1. Think Before Coding
+
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
+
+Before implementing:
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them — don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
+
+### 2. Simplicity First
+
+**Minimum code that solves the problem. Nothing speculative.**
+
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
+
+Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+
+### 3. Surgical Changes
+
+**Touch only what you must. Clean up only your own mess.**
+
+When editing existing code:
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it — don't delete it.
+
+When your changes create orphans:
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
+
+The test: Every changed line should trace directly to the user's request.
+
+### 4. Goal-Driven Execution
+
+**Define success criteria. Loop until verified.**
+
+Transform tasks into verifiable goals:
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
+
+For multi-step tasks, state a brief plan:
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
+```
+
+Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+
+**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+
+---
+
 ## Goal
 Photo-based wine shelf scanner. Take photo → see ratings overlaid on bottles → choose confidently in <10 seconds.
 
@@ -19,6 +83,53 @@ If it doesn't help the user choose a bottle faster, leave it out.
 ## Project Status
 
 See `ROADMAP.md` for current project status and next steps.
+
+### Current architecture (2026-07-05 — Detect + Read)
+
+> **SUPERSEDES the single-LLM pivot below.** The feasibility run (see `docs/FEASIBILITY_VERDICT.md`,
+> CONDITIONAL GO) measured single_llm at 31.2% placement accuracy and replaced it with
+> **`PIPELINE_MODE=detect_read`**: tiled Google Vision object localization finds bottle boxes,
+> Claude Sonnet 5 (`DETECT_READ_MODEL`) reads each bottle's label from a per-bottle crop — the LLM
+> never emits coordinates, so name↔bottle swaps are structurally eliminated (1 swap / 368 targets).
+> Files: `backend/app/services/detect_read.py` (core, shared with the eval harness) +
+> `detect_read_pipeline.py` (DB match / cache / usage logging via `SingleLLMPipeline`).
+> Held-out: badge precision .905, $0.021/scan (Sonnet 5 intro pricing), ~12–18s e2e.
+> Local `.env` runs detect_read. `backend/deploy/service.yaml` (on the `rating-overlays`
+> branch) sets `PIPELINE_MODE=detect_read` + `DETECT_READ_MODEL` + `minScale=1` — it goes
+> live when PR #51 merges (merge = deploy via `.github/workflows/deploy.yml`). Before that
+> merge, deployed Cloud Run runs the old `flash_names` config. Production rollout work
+> (progressive SSE render, input-quality gate, error mapping) is logged in
+> `docs/PRODUCTION_ROLLOUT_LOG.md`.
+> Gotcha: Sonnet 5 defaults to adaptive thinking when `thinking` is omitted — perception reads must
+> pass `thinking={"type":"disabled"}` or completion tokens (cost and latency) roughly triple.
+
+### Previous architecture (2026-05-02 — single-LLM pivot)
+
+The backend was rearchitected to use **one multimodal LLM call per scan** (`PIPELINE_MODE=single_llm`, still the deployed production default). The previous multi-stage flash_names pipeline (Vision API + Gemini Flash + Hungarian spatial-merge) is being deprecated and will be deleted in Phase G of the pivot.
+
+- **Default model**: `anthropic/claude-sonnet-4-6` (strong 2D bbox quality, ~$0.02–0.04/scan, ~18s latency). Swap via `SINGLE_LLM_MODEL` env to `anthropic/claude-opus-4-7` (strongest, ~$0.05–0.07, ~25s), `gemini/gemini-2.5-pro`, etc. **Do NOT use `anthropic/claude-haiku-4-5-20251001`** — see Known limitations.
+- **Pipeline file**: `backend/app/services/single_llm_pipeline.py`. Single class, no fallback to legacy on failure (errors propagate so they surface). Logs `prompt`/`completion`/`cached` token counts on every successful call so cost is observable from logs.
+- **Vintage** is a first-class field on the response (`WineResult.vintage`), populated when the model can read a year off the label.
+- **`temperature` deprecation**: Anthropic deprecated `temperature` for Opus 4.7+ (returns 400 if passed). The pipeline conditionally skips it for `opus-4-7` models and passes `drop_params=True` to litellm for forward-compat.
+
+**Status of the pivot (`docs/SINGLE_LLM_PIVOT_PLAN.md`):**
+- Phases A-E (build pipeline, route, schema, frontend types, tests) — ✅ landed in commit `ec65c06`.
+- Phase F (live benchmark vs `out/baseline.json`) — ⏳ partial: per-image validation done on IMG_8080 with Sonnet 4.6 + Opus 4.7. Full eval-harness comparison still pending (eval_overlays.py uses FlashNamesPipeline; needs Phase F follow-up to point at SingleLLMPipeline).
+- Phase G (delete `flash_names_pipeline.py`, `turbo_pipeline.py`, `claude_vision.py`, `ocr_processor.py`, `vision.py`) — ⏳ deferred until F validates the new pipeline.
+
+**Cost-optimization plan applied** (`~/.claude/plans/ok-lets-not-limit-crystalline-cocke.md`): trimmed prompt (no `blurb`, strict JSON-only output rules), `max_tokens=2500`, truncation canary in `_call_llm`. The default-model-to-Haiku piece of that plan was reverted after diagnosis showed Haiku produces degenerate output (see Known limitations).
+
+### Known limitations
+
+- **Haiku 4.5 cannot do 2D spatial detection on dense shelves.** Diagnosed 2026-05-02 on IMG_8080: two consecutive Haiku calls returned byte-identical bboxes — 12 vertical strips with `y=0, h=1, w=0.08`, varying only in `x` on an evenly-spaced 0.06 grid. The model collapses to 1D lane indices instead of producing 2D bboxes. With the overlay-anchor formula (`y + h*0.25`), every star ends up at 25% of image height regardless of which bottle the wine belongs to. **Do not use Haiku 4.5 for this app.** Sonnet 4.6 and Opus 4.7 produce clean two-row output on the same image.
+- **Claude bbox precision is still imperfect even on Sonnet/Opus.** Anthropic's vision docs admit "Claude's spatial reasoning abilities are limited." The single-LLM pivot fixed the *swap* bug (Hungarian merge misrouting names to bottles) but does NOT fix bbox precision itself. Dense shelves still see some overlay misplacement at the per-bottle level.
+- **Mitigation paths if bbox accuracy matters more:**
+  1. Use Opus 4.7 instead of Sonnet 4.6 (~3× cost, ~1.5× latency, marginally better).
+  2. Hybrid YOLO + per-crop architecture: object detection (YOLO/Apple Vision) for sub-pixel-accurate bboxes, then LLM only for label OCR per crop. Not yet planned/built (would be a Phase H plan).
+
+### Reference baselines
+
+`test-images/corpus/baselines/IMG_8080_opus_4_7.json` — 15-bottle Opus 4.7 baseline scan. Use as upper-bound when comparing new pipeline outputs. Bbox format is `{x, y, w, h}` (NOT `width/height` — convert before diff). See `test-images/corpus/baselines/README.md`.
 
 ---
 
@@ -188,6 +299,31 @@ Tap rating badge → modal sheet.
 
 ## Backend Pipeline — Detailed Scan Flow
 
+> **Current default**: `single_llm` (one multimodal LLM call per scan). The legacy multi-stage description below describes the deprecated `flash_names` / `legacy` modes — kept for reference until Phase G deletes them.
+
+### Single-LLM pipeline (default)
+
+**File:** `backend/app/services/single_llm_pipeline.py`. **Route:** `routes/scan.py:_run_single_llm_pipeline()`. **Mode:** `PIPELINE_MODE=single_llm`.
+
+Flow:
+1. HEIC→JPEG conversion (if needed) and size validation.
+2. Image compressed to fit Anthropic's 5 MB base64 limit (`_compress_image_for_vision` with raw budget ~3.6 MB).
+3. **One** `litellm.acompletion(...)` call with the configured model (`Config.single_llm_model()`, default Haiku 4.5). Prompt asks for an array of `{wine_name, vintage, confidence, estimated_rating, bbox, wine_type, brand, region, varietal}`.
+4. Parse JSON, build `RecognizedWine` objects.
+5. DB cross-match via `WineMatcher.match()` — DB-matched wines (confidence ≥ 0.80) get the canonical name + DB rating; LLM-only wines get the LLM-estimated rating with confidence capped at 0.75.
+6. Cache LLM-only wines in `llm_rating_cache` (with vintage).
+7. Enrich DB-matched wines with review snippets, apply feature flags, return `ScanResponse`.
+
+**No fallback to other pipelines.** If the LLM call fails (rate limit, credit exhausted, etc.) the exception propagates — by design.
+
+**Truncation canary:** if the response uses ≥ 95% of `max_tokens` (default 2500), a warning is logged. Bump `max_tokens` if you see this for dense shelves.
+
+---
+
+### Legacy multi-stage pipeline (DEPRECATED — kept until Phase G)
+
+The flash_names / turbo / hybrid / fast / legacy modes are no longer the default and will be deleted in Phase G of the single-LLM pivot. Documentation below applies to those modes only.
+
 ### Entry Point: `POST /scan` → `routes/scan.py:scan_shelf()`
 
 The scan endpoint receives an image and runs it through a multi-stage pipeline. Each stage has fallbacks for unmatched bottles, making the pipeline progressively more expensive but more thorough.
@@ -337,25 +473,36 @@ Final catch-all for remaining unmatched bottles AND orphaned texts:
 - `mock_scenario` — Select fixture (full_shelf, partial_detection, etc.)
 - `use_vision_fixture` — Path to captured Vision API fixture for replay
 
-### SSE Streaming Endpoint
+### SSE Streaming Endpoint (detect_read only — built 2026-07-05)
 
-`POST /scan/stream` — Progressive scan via Server-Sent Events. Streams results in two phases:
+`POST /scan/stream` — Progressive scan via Server-Sent Events. Detect+Read makes 2-4
+parallel crop-read LLM calls per scan; each completed chunk is a streaming boundary, so
+first badges reach the client at ~7-8s (typical photo) instead of after the slowest
+chunk + rescue pass (~12-18s).
 
-- **event: phase1** — Turbo-quality results from Vision API + DB matching (~3.5s). Subset of bottles that matched the DB.
-- **event: phase2** — Gemini-enhanced results with full metadata (~6-8s). Complete replacement of phase1.
-- **event: done** — Stream complete.
+- **event: partial** (0+ times) — complete `ScanResponse` JSON with the wines read so far.
+  Cumulative replacement — the client swaps its entire state. Partials skip review
+  enrichment and DB-sync.
+- **event: done** (once, on success) — final complete `ScanResponse`, identical to what
+  `POST /scan` returns (including `scan_quality` when the input-quality gate fired).
+- **event: error** (terminal, on pipeline failure) — `{"message": str}`. Clients keep any
+  partials already rendered, or fall back to `POST /scan` if nothing arrived.
 
-Both phase1 and phase2 data are complete `ScanResponse` JSON objects (same schema as `POST /scan`). Phase2 is a full replacement — the frontend swaps its entire state.
+Returns **501** unless `PIPELINE_MODE=detect_read` (clients fall back to `POST /scan`).
 
-**File:** `backend/app/routes/scan_stream.py`
-**Pipeline method:** `FlashNamesPipeline.scan_progressive()` in `backend/app/services/flash_names_pipeline.py`
+**Files:** route `backend/app/routes/scan_stream.py`; core generator
+`run_detect_read_stream()` in `backend/app/services/detect_read.py` (`run_detect_read`
+consumes the same generator, so `/scan` and `/scan/stream` share one measured code path);
+pipeline method `DetectReadPipeline.scan_stream()`.
 
 **Graceful degradation:**
-- If SSE connection drops after phase1, client still has turbo-quality results.
-- If Gemini fails, phase2 emits with turbo-only data.
+- Stream dies after partials → frontend keeps the last partial as the result.
+- Endpoint missing/501/network failure before any event → frontend falls back to `POST /scan`.
 - `POST /scan` is unchanged — iOS and other clients keep working.
 
-**Frontend:** Next.js uses `scanImageStream()` in `nextjs/lib/api-client.ts` with `partial_results` state in `useScanState.ts`.
+**Frontend:** `scanImageStream()` in `nextjs/lib/api-client.ts`; `useScanState.ts` streams
+by default and marks in-flight results with `partial: true` (ResultsView shows a
+"Reading labels…" pill).
 
 ### Bug Report Endpoint
 
@@ -603,7 +750,17 @@ Instead of OCR → fuzzy match → LLM validate → Vision fallback → LLM resc
 
 The backend supports multiple scan pipeline modes, selected via `PIPELINE_MODE` env var. Production runs `flash_names`.
 
-### `flash_names` (Production Default)
+### `single_llm` (Production Default — 2026-05-02)
+
+**File:** `backend/app/services/single_llm_pipeline.py`
+
+Single multimodal LLM call per scan. See "Single-LLM pipeline (default)" section above for full flow. Replaces flash_names as the production default.
+
+**Total external calls:** 1 LLM call.
+**Estimated latency:** 3-8s depending on model (Haiku ~3s, Sonnet ~5s, Opus ~8s).
+**Estimated cost per scan:** $0.006 (Haiku) → $0.018 (Sonnet) → much more (Opus).
+
+### `flash_names` (Deprecated, scheduled for removal in Phase G)
 
 **File:** `backend/app/services/flash_names_pipeline.py`
 
@@ -656,15 +813,23 @@ Combines flash_names approach with additional validation. Experimental.
 
 ### Pipeline Mode Selection
 
-Set `PIPELINE_MODE` env var. All modes fall back to legacy pipeline on failure.
+Set `PIPELINE_MODE` env var. `detect_read` and `single_llm` have NO fallback (errors
+propagate — mapped to 503/504 by the route, see `map_pipeline_error`). The legacy modes
+still fall back to the legacy pipeline on failure.
 
-| Mode | Env Value | Prod? | LLM Calls | Vision API Calls |
-|------|-----------|-------|-----------|------------------|
-| Flash Names | `flash_names` | **Yes** | 1 | 1 |
-| Turbo | `turbo` | No | 0-1 | 1 |
-| Legacy | `legacy` | No | 1-3 | 1 (+0-1 Claude) |
-| Fast | `fast` | No | 1 | 0 |
-| Hybrid | `hybrid` | No | 1-2 | 1 |
+**Source of truth for what production runs is `backend/deploy/service.yaml`, not this
+table.** (Historical doc rot: this table long claimed `single_llm` was deployed while
+service.yaml actually ran `flash_names`.)
+
+| Mode | Env Value | Prod? | LLM Calls | Vision API Calls | Status |
+|------|-----------|-------|-----------|------------------|--------|
+| **Detect+Read** | `detect_read` | **Yes (service.yaml, PR #51)** | 1-5 (crop reads + rescue) | 5 (tiled, concurrent) | Active; supports `/scan/stream` |
+| Single-LLM | `single_llm` | No | 1 | 0 | Superseded by detect_read (31.2% placement accuracy, verdict §4) |
+| Flash Names | `flash_names` | Previous prod | 1 | 1 | Deprecated, deletes in Phase G |
+| Turbo | `turbo` | No | 0-1 | 1 | Deprecated, deletes in Phase G |
+| Legacy | `legacy` | No | 1-3 | 1 (+0-1 Claude) | Deprecated, deletes in Phase G |
+| Fast | `fast` | No | 1 | 0 | Deprecated, deletes in Phase G |
+| Hybrid | `hybrid` | No | 1-2 | 1 | Deprecated, deletes in Phase G |
 
 ---
 

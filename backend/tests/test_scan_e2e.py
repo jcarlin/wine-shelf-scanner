@@ -6,7 +6,13 @@ Tests complete workflow:
 - Response matches API contract
 - Confidence thresholds enforced
 - Fallback list populated correctly
+
+NOTE: SingleLLMPipeline.scan is autouse-mocked at module scope to keep these
+tests offline and free. Tests that need real pipeline behaviour should pass
+mock_scenario=... or override the fixture explicitly.
 """
+
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from io import BytesIO
@@ -14,9 +20,23 @@ from fastapi.testclient import TestClient
 
 from main import app
 from app.models import ScanResponse, WineResult, FallbackWine, BoundingBox
+from app.services.single_llm_pipeline import SingleLLMResult
 
 
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def _mock_single_llm():
+    """Stub the LLM call so e2e tests never hit a real API."""
+    fake_result = SingleLLMResult(
+        recognized_wines=[], raw_llm_wines=[], timings={"total_ms": 0},
+    )
+    with patch(
+        "app.services.single_llm_pipeline.SingleLLMPipeline.scan",
+        new=AsyncMock(return_value=fake_result),
+    ):
+        yield
 
 
 def create_test_image() -> BytesIO:
@@ -319,7 +339,26 @@ class TestScanEndpointInputValidation:
 
     def test_accepts_png(self):
         """Test PNG content type is accepted."""
-        # Create minimal PNG
+        from PIL import Image
+        buf = BytesIO()
+        Image.new("RGB", (64, 64), (90, 30, 30)).save(buf, format="PNG")
+        buf.seek(0)
+        response = client.post(
+            "/scan",
+            files={"image": ("test.png", buf, "image/png")}
+        )
+
+        assert response.status_code == 200
+
+    def test_corrupt_image_returns_400(self, monkeypatch):
+        """A truncated/undecodable image is client error, not a 500.
+
+        Pin the env: mocks off so the image actually reaches the pipeline,
+        detect_read mode so PIL decodes (and raises) before any network call.
+        """
+        monkeypatch.setenv("USE_MOCKS", "false")
+        monkeypatch.setenv("PIPELINE_MODE", "detect_read")
+        # PNG signature + header, but broken IDAT — PIL raises OSError on decode.
         png_bytes = bytes([
             0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
             0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
@@ -336,7 +375,8 @@ class TestScanEndpointInputValidation:
             files={"image": ("test.png", BytesIO(png_bytes), "image/png")}
         )
 
-        assert response.status_code == 200
+        assert response.status_code == 400
+        assert "image" in response.json()["detail"].lower()
 
     def test_missing_image_returns_error(self):
         """Test missing image parameter returns error."""

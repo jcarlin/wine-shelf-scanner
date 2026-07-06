@@ -1,0 +1,10 @@
+{
+  "image_file": "red-wine-shelf-in-a-supermarket-B7WY9Y.jpg",
+  "notes": "5 Vision bottles. V4 OCR is very sparse ('5 MO ala'); skipped.",
+  "targets": [
+    {"wine_name": "Chateau Balan Bordeaux", "v_idx": 0, "distinctive_tokens": ["chateau", "balan"]},
+    {"wine_name": "Ribeaupierre Medoc", "v_idx": 1, "distinctive_tokens": ["ribeaupierre", "medoc"]},
+    {"wine_name": "Mouton Cadet", "v_idx": 2, "distinctive_tokens": ["mouton", "cadet"]},
+    {"wine_name": "Medoc", "v_idx": 3, "distinctive_tokens": ["medoc"]}
+  ]
+}

@@ -10,6 +10,7 @@ import { BugReportModal } from './BugReportModal';
 import { DebugPanel } from './DebugPanel';
 import { Toast } from './Toast';
 import { FallbackList } from './FallbackList';
+import { LowQualityNotice } from './LowQualityNotice';
 import { getImageBounds } from '@/lib/image-bounds';
 import { isVisible } from '@/lib/overlay-math';
 import { useFeatureFlags } from '@/lib/feature-flags';
@@ -20,10 +21,11 @@ interface ResultsViewProps {
   response: ScanResponse;
   imageUri: string;
   onReset: () => void;
-  isPartial?: boolean;
+  /** Streaming scan still in flight — more badges may arrive */
+  scanning?: boolean;
 }
 
-export function ResultsView({ response, imageUri, onReset, isPartial = false }: ResultsViewProps) {
+export function ResultsView({ response, imageUri, onReset, scanning = false }: ResultsViewProps) {
   const t = useTranslations('results');
   const tBug = useTranslations('bugReport');
   const containerRef = useRef<HTMLDivElement>(null);
@@ -113,8 +115,13 @@ export function ResultsView({ response, imageUri, onReset, isPartial = false }: 
     }
   }, [imageSize, calculateBounds]);
 
-  // If no visible results, show fallback list
-  if (visibleCount === 0) {
+  // Input-quality gate fired: bottles too small to read — ask for a retake
+  if (visibleCount === 0 && !scanning && response.scan_quality?.status === 'low_resolution') {
+    return <LowQualityNotice onReset={onReset} />;
+  }
+
+  // If no visible results, show fallback list (unless more may still arrive)
+  if (visibleCount === 0 && !scanning) {
     return <FallbackList wines={response.fallback_list} onReset={onReset} />;
   }
 
@@ -190,13 +197,11 @@ export function ResultsView({ response, imageUri, onReset, isPartial = false }: 
         )}
       </div>
 
-      {/* Partial scan indicator */}
-      {isPartial && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30
-          bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-full">
-          <span className="text-white/80 text-xs animate-pulse">
-            Finding more bottles...
-          </span>
+      {/* Streaming: more labels are still being read */}
+      {scanning && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 bg-black/70 text-white text-sm px-4 py-2 rounded-full backdrop-blur-sm">
+          <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
+          {t('stillScanning')}
         </div>
       )}
 

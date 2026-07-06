@@ -1,0 +1,461 @@
+{
+  "image_file": "IMG_8124.HEIC",
+  "wines": [],
+  "audit": {
+    "date": "2026-07-04",
+    "notes": "Corpus v2: rebuilt via detection-seeded annotation (tiled-Vision boxes, per-box zoom-crop reading, no-guessing rule). source=annotator_approx boxes are approximate hand boxes."
+  },
+  "overlay_targets": [
+    {
+      "wine_name": "Marques de Casa Concha Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "marques",
+        "casa",
+        "concha",
+        "cabernet"
+      ],
+      "bbox": {
+        "x": 0.7695,
+        "y": 0.6602,
+        "w": 0.1055,
+        "h": 0.2891
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Kendall-Jackson Vintner's Reserve Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "kendall",
+        "jackson",
+        "vintner's",
+        "reserve"
+      ],
+      "bbox": {
+        "x": 0.2734,
+        "y": 0.6914,
+        "w": 0.0957,
+        "h": 0.3047
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Catena Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "catena",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.457,
+        "y": 0.6641,
+        "w": 0.1016,
+        "h": 0.2812
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Vina Maipo Classic Series Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "vina",
+        "maipo",
+        "classic",
+        "series"
+      ],
+      "bbox": {
+        "x": 0.0254,
+        "y": 0.0803,
+        "w": 0.1088,
+        "h": 0.2184
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Casillero del Diablo Reserva Privada Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "casillero",
+        "diablo",
+        "reserva",
+        "privada"
+      ],
+      "bbox": {
+        "x": 0.0024,
+        "y": 0.6992,
+        "w": 0.0728,
+        "h": 0.3008
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Vina Maipo Classic Series Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "vina",
+        "maipo",
+        "classic",
+        "series"
+      ],
+      "bbox": {
+        "x": 0.1338,
+        "y": 0.0864,
+        "w": 0.0996,
+        "h": 0.2144
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Stags' Leap Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "stags'",
+        "leap",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.3887,
+        "y": 0.3594,
+        "w": 0.084,
+        "h": 0.2539
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Catena Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "catena",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.3841,
+        "y": 0.6698,
+        "w": 0.0809,
+        "h": 0.2583
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Navarro Correas Reserve Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "navarro",
+        "correas",
+        "reserve",
+        "cabernet"
+      ],
+      "bbox": {
+        "x": 0.2527,
+        "y": 0.3459,
+        "w": 0.0887,
+        "h": 0.2269
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Frontera Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "frontera",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.2358,
+        "y": 0.0932,
+        "w": 0.0966,
+        "h": 0.2078
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Frontera Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "frontera",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.3359,
+        "y": 0.0952,
+        "w": 0.0938,
+        "h": 0.2075
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "J. Lohr Hilltop Cabernet Sauvignon Paso Robles",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "lohr",
+        "hilltop",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.7237,
+        "y": 0.3526,
+        "w": 0.0876,
+        "h": 0.2201
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Navarro Correas Reserve Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "navarro",
+        "correas",
+        "reserve",
+        "cabernet"
+      ],
+      "bbox": {
+        "x": 0.1685,
+        "y": 0.4258,
+        "w": 0.0898,
+        "h": 0.1958
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Wente Southern Hills Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "wente",
+        "southern",
+        "hills",
+        "cabernet"
+      ],
+      "bbox": {
+        "x": 0.0006,
+        "y": 0.425,
+        "w": 0.0831,
+        "h": 0.2055
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Joel Gott 815 Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "joel",
+        "gott",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.6451,
+        "y": 0.425,
+        "w": 0.0921,
+        "h": 0.1785
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Stags' Leap Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "stags'",
+        "leap",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.4685,
+        "y": 0.3616,
+        "w": 0.0772,
+        "h": 0.2111
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Frontera Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "frontera",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.5979,
+        "y": 0.1112,
+        "w": 0.0797,
+        "h": 0.1965
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "La Junta Gran Reserva Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "junta",
+        "gran",
+        "reserva",
+        "cabernet"
+      ],
+      "bbox": {
+        "x": 0.8967,
+        "y": 0.4256,
+        "w": 0.0876,
+        "h": 0.1701
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Frontera Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "frontera",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.447,
+        "y": 0.1151,
+        "w": 0.0786,
+        "h": 0.1881
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Frontera Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "frontera",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.5272,
+        "y": 0.1174,
+        "w": 0.0764,
+        "h": 0.1904
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Caymus Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "caymus",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.7617,
+        "y": 0.1279,
+        "w": 0.0703,
+        "h": 0.1826
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Finca Las Moras Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "finca",
+        "moras",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.8585,
+        "y": 0.1539,
+        "w": 0.0764,
+        "h": 0.1539
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "1865 Selected Vineyards Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "selected",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.56,
+        "y": 0.7,
+        "w": 0.1,
+        "h": 0.28
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Kendall-Jackson Vintner's Reserve Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "kendall",
+        "jackson",
+        "vintner's",
+        "reserve"
+      ],
+      "bbox": {
+        "x": 0.18,
+        "y": 0.69,
+        "w": 0.09,
+        "h": 0.3
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Joel Gott 815 Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "joel",
+        "gott",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.55,
+        "y": 0.42,
+        "w": 0.09,
+        "h": 0.2
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Finca Las Moras Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "finca",
+        "moras",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.8,
+        "y": 0.15,
+        "w": 0.06,
+        "h": 0.17
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "La Junta Gran Reserva Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "junta",
+        "gran",
+        "reserva",
+        "cabernet"
+      ],
+      "bbox": {
+        "x": 0.83,
+        "y": 0.42,
+        "w": 0.07,
+        "h": 0.17
+      },
+      "source": "annotator_approx"
+    }
+  ],
+  "overlay_target_count": 27
+}

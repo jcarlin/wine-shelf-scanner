@@ -156,8 +156,93 @@ class Config:
     # === Pipeline Mode ===
     @staticmethod
     def pipeline_mode() -> str:
-        """Pipeline mode: legacy, turbo, flash_names, hybrid, fast. Default: turbo."""
-        return os.getenv("PIPELINE_MODE", "turbo").lower()
+        """Pipeline mode. Default: single_llm (one multimodal LLM call per scan)."""
+        return os.getenv("PIPELINE_MODE", "single_llm").lower()
+
+    # === Token Usage Logging ===
+    @staticmethod
+    def token_usage_log_path() -> str:
+        """Path for the per-call token-usage JSONL file.
+
+        Empty string disables the file write (e.g., Cloud Run, where the
+        filesystem is ephemeral tmpfs and burns container memory). The
+        structured stdout JSON line is still emitted in either case —
+        capture it via Cloud Logging in production.
+        """
+        return os.getenv("TOKEN_USAGE_LOG_PATH", "backend/logs/token_usage.jsonl")
+
+    # === Single-LLM Pipeline ===
+    @staticmethod
+    def single_llm_model() -> str:
+        """Multimodal model for the single-LLM pipeline.
+
+        Any LiteLLM-supported multimodal model works — e.g.:
+          - anthropic/claude-sonnet-4-6 (default — strong 2D bbox quality, ~$0.02-0.04/scan)
+          - anthropic/claude-opus-4-7 (strongest, ~$0.05-0.07/scan, ~25s latency)
+          - anthropic/claude-haiku-4-5-20251001 (NOT recommended — degenerates to
+            1D-lane bboxes on dense shelves; see CLAUDE.md "Known limitations")
+          - gemini/gemini-2.5-pro
+        """
+        return os.getenv("SINGLE_LLM_MODEL", "anthropic/claude-sonnet-4-6")
+
+    @staticmethod
+    def detect_read_model() -> str:
+        """Label-reading model for the detect_read pipeline (set-of-marks +
+        crop re-reads; the LLM never emits coordinates)."""
+        return os.getenv("DETECT_READ_MODEL", "anthropic/claude-sonnet-5")
+
+    @staticmethod
+    def detect_read_min_bottle_px() -> float:
+        """Input-quality floor: reject scans whose median detected bottle width
+        (full-resolution px) is below this — label text is illegible below
+        ~140px, so coverage collapses while cost is still spent
+        (FEASIBILITY_VERDICT.md §1 note 3). 0 disables the gate."""
+        return float(os.getenv("DETECT_READ_MIN_BOTTLE_PX", "140"))
+
+    # === Abuse Protection (W1) ===
+    @staticmethod
+    def app_attest_enforce() -> str:
+        """Enforcement mode for /scan identity: 'off' (default; dev/tests),
+        'log' (admit unattested callers but log + quota them), 'require'
+        (401 without a valid App Attest assertion or web proxy secret)."""
+        mode = os.getenv("APP_ATTEST_ENFORCE", "off").lower()
+        return mode if mode in ("off", "log", "require") else "off"
+
+    @staticmethod
+    def app_attest_team_id() -> str:
+        """Apple Developer Team ID (empty until the human gate provides it)."""
+        return os.getenv("APPLE_TEAM_ID", "")
+
+    @staticmethod
+    def app_attest_bundle_id() -> str:
+        return os.getenv("APP_BUNDLE_ID", "com.wineshelfscanner.app")
+
+    @staticmethod
+    def app_attest_app_id() -> str:
+        """App ID as used in the App Attest RP ID hash: TEAMID.bundle.id"""
+        return f"{Config.app_attest_team_id()}.{Config.app_attest_bundle_id()}"
+
+    @staticmethod
+    def app_attest_allow_development() -> bool:
+        """Accept development-environment attestations (sandbox/TestFlight dev)."""
+        return os.getenv("APP_ATTEST_ALLOW_DEV", "false").lower() == "true"
+
+    @staticmethod
+    def device_daily_scan_limit() -> int:
+        """Per-identity daily scan cap (safety, not monetization). 0 disables."""
+        return int(os.getenv("DEVICE_DAILY_SCAN_LIMIT", "40"))
+
+    @staticmethod
+    def daily_spend_limit_usd() -> float:
+        """Global daily-spend circuit breaker; /scan returns 503 above it.
+        0 disables."""
+        return float(os.getenv("DAILY_SPEND_LIMIT_USD", "25"))
+
+    @staticmethod
+    def api_client_secret() -> Optional[str]:
+        """Shared secret for server-side web clients (Vercel proxy) that
+        cannot do App Attest. None disables the web credential path."""
+        return os.getenv("API_CLIENT_SECRET") or None
 
     # === Fast Pipeline ===
     @staticmethod

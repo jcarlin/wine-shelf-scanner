@@ -26,13 +26,17 @@
     "scannedWith": "Gescannt mit Weinregal-Scanner",
     "topPicks": "Top-Auswahl aus dem Regal:",
     "stars": "Sterne",
-    "more": "+ {count} weitere"
+    "more": "+ {count} weitere",
+    "stillScanning": "Etiketten werden gelesen…"
   },
   "fallback": {
     "couldNotIdentify": "Flaschen konnten nicht identifiziert werden",
     "tryDifferentAngle": "Versuchen Sie ein näheres Foto oder einen anderen Winkel",
     "tryAnother": "Anderes Foto versuchen",
-    "winesFound": "Weine gefunden"
+    "winesFound": "Weine gefunden",
+    "tooFarTitle": "Zu weit entfernt",
+    "tooFarMessage": "Die Weinetiketten sind aus dieser Entfernung zu klein zum Lesen. Gehen Sie näher ans Regal und machen Sie das Foto erneut.",
+    "retake": "Foto wiederholen"
   },
   "error": {
     "tryAgain": "Erneut versuchen"

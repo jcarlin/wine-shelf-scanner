@@ -1,0 +1,13 @@
+{
+  "image_file": "195476.jpeg",
+  "wines": [
+    {
+      "wine_name": "Aristov Cuv\u00e9e Alexander Rose de Pinot Extra Brut",
+      "expected_rating": null,
+      "rating_tolerance": 0.5,
+      "notes": "Winery: Aristov, Region: Taman Peninsula (\u0422\u0430\u043c\u0430\u043d\u0441\u043a\u0438\u0439 \u043f\u043e\u043b\u0443\u043e\u0441\u0442\u0440\u043e\u0432), Type: Sparkling"
+    }
+  ],
+  "total_visible_bottles": 1,
+  "notes": "XWines evaluation image. Country: Russia. Simple name: Cuv\u00e9e Alexander Rose de Pinot Extra Brut"
+}

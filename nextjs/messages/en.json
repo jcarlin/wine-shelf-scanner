@@ -30,13 +30,17 @@
     "scannedWith": "Scanned with Wine Shelf Scanner",
     "topPicks": "Top picks from the shelf:",
     "stars": "stars",
-    "more": "+ {count} more"
+    "more": "+ {count} more",
+    "stillScanning": "Reading labels…"
   },
   "fallback": {
     "couldNotIdentify": "Could not identify bottles",
     "tryDifferentAngle": "Try a closer photo or a different angle",
     "tryAnother": "Try Another Photo",
-    "winesFound": "Wines Found"
+    "winesFound": "Wines Found",
+    "tooFarTitle": "Too far away",
+    "tooFarMessage": "The wine labels are too small to read at this distance. Move closer to the shelf and retake the photo.",
+    "retake": "Retake Photo"
   },
   "error": {
     "tryAgain": "Try Again"

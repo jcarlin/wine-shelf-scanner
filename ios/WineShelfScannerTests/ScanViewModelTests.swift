@@ -9,11 +9,16 @@ final class ScanViewModelTests: XCTestCase {
 
     override func setUp() async throws {
         try await super.setUp()
+        // These tests exercise the foreground scan path with an injected
+        // service; the background path (feature_background_processing,
+        // compiled default true) bypasses the injected service entirely.
+        UserDefaults.standard.set(false, forKey: "feature_background_processing")
         mockScanService = MockScanServiceForTests()
         viewModel = ScanViewModel(scanService: mockScanService)
     }
 
     override func tearDown() async throws {
+        UserDefaults.standard.removeObject(forKey: "feature_background_processing")
         viewModel = nil
         mockScanService = nil
         try await super.tearDown()

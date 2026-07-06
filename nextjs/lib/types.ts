@@ -34,12 +34,16 @@ export interface WineResult {
   rating: number | null;
   confidence: number;
   bbox: BoundingBox;
+  identified?: boolean;
+  source?: 'database' | 'llm' | 'vision';
+  rating_source?: 'database' | 'llm_estimated' | 'default' | 'none';
   // Extended metadata (optional - populated from DB or LLM)
   wine_type?: string;  // 'Red', 'White', 'Rosé', 'Sparkling', etc.
   brand?: string;      // Winery or brand name
   region?: string;     // Wine region (e.g., 'Napa Valley', 'Burgundy')
   varietal?: string;   // Grape varietal (e.g., 'Cabernet Sauvignon')
   blurb?: string;      // Brief description of the wine or producer
+  vintage?: string;    // Wine year (e.g., '2021'), undefined for NV / unreadable
   review_count?: number;        // Number of reviews
   review_snippets?: string[];   // Sample review quotes
   // Feature-flagged fields (null when feature is off)
@@ -73,18 +77,27 @@ export interface FallbackWine {
   rating: number;
 }
 
+/** Input-quality signal — set when the backend gated the scan (e.g. bottles
+ * too small for label text to be legible). Additive, optional field. */
+export interface ScanQuality {
+  status: 'low_resolution' | string;
+  median_bottle_px?: number | null;
+  bottles_detected?: number | null;
+}
+
 export interface ScanResponse {
   image_id: string;
   results: WineResult[];
   fallback_list: FallbackWine[];
+  scan_quality?: ScanQuality | null;
   debug?: DebugData;
 }
 
 export type ScanState =
   | { status: 'idle' }
   | { status: 'processing'; imageUri: string | null }
-  | { status: 'partial_results'; response: ScanResponse; imageUri: string }
-  | { status: 'results'; response: ScanResponse; imageUri: string }
+  // partial: streaming scan still in flight — more badges may arrive
+  | { status: 'results'; response: ScanResponse; imageUri: string; partial?: boolean }
   | { status: 'error'; message: string };
 
 export interface Size {
@@ -132,7 +145,7 @@ export interface FuzzyMatchDebug {
 export interface LLMValidationDebug {
   is_valid_match: boolean;
   wine_name: string | null;
-  confidence: number | null;
+  confidence: number;
   reasoning: string | null;
 }
 
@@ -166,8 +179,24 @@ export interface DebugPipelineStep {
   normalization_trace?: NormalizationTrace | null;
   llm_raw?: LLMRawDebug | null;
   final_result: DebugFinalResult | null;
-  step_failed: boolean;
+  identification_source?: string | null;
+  step_failed: string | boolean | null;
   included_in_results: boolean;
+}
+
+export interface PipelineStats {
+  bottles_detected: number;
+  bottles_with_text: number;
+  bottles_empty: number;
+  fuzzy_matched: number;
+  llm_validated: number;
+  unmatched_count: number;
+  vision_attempted: number;
+  vision_identified: number;
+  vision_error?: string | null;
+  llm_rescue_attempted: number;
+  llm_rescue_identified: number;
+  final_results: number;
 }
 
 export interface DebugData {
@@ -176,6 +205,7 @@ export interface DebugData {
   bottles_detected: number;
   texts_matched: number;
   llm_calls_made: number;
+  pipeline_stats?: PipelineStats;
 }
 
 // MARK: - API Error Types

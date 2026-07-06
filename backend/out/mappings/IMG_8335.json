@@ -1,0 +1,12 @@
+{
+  "image_file": "IMG_8335.HEIC",
+  "notes": "Spanish red wine shelf. V0 has empty OCR (skipped). V6, V8 ambiguous due to OCR bleed (skipped).",
+  "targets": [
+    {"wine_name": "Beronia Reserva 2020", "v_idx": 1, "distinctive_tokens": ["beronia", "reserva"]},
+    {"wine_name": "Mimado Garnacha", "v_idx": 2, "distinctive_tokens": ["mimado", "garnacha"]},
+    {"wine_name": "Tinto Quera", "v_idx": 3, "distinctive_tokens": ["tinto", "quera"]},
+    {"wine_name": "Beronia Mazuelo Reserva", "v_idx": 4, "distinctive_tokens": ["beronia", "mazuelo"]},
+    {"wine_name": "Quinta Quietud Tinta de Toro", "v_idx": 5, "distinctive_tokens": ["quinta", "quietud"]},
+    {"wine_name": "Tunante de Azarache Tempranillo", "v_idx": 7, "distinctive_tokens": ["tunante", "azarache"]}
+  ]
+}

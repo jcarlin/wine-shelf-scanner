@@ -7,6 +7,7 @@ from .response import (
     RatingSourceDetail,
     WineResult,
     FallbackWine,
+    ScanQuality,
     ScanResponse,
 )
 from .debug import (
@@ -28,6 +29,7 @@ __all__ = [
     "RatingSourceDetail",
     "WineResult",
     "FallbackWine",
+    "ScanQuality",
     "ScanResponse",
     "PipelineStats",
     "FuzzyMatchScores",

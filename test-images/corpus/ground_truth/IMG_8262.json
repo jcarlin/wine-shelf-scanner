@@ -1,0 +1,644 @@
+{
+  "image_file": "IMG_8262.HEIC",
+  "wines": [],
+  "audit": {
+    "date": "2026-07-04",
+    "notes": "Corpus v2: rebuilt via detection-seeded annotation (tiled-Vision boxes, per-box zoom-crop reading, no-guessing rule). source=annotator_approx boxes are approximate hand boxes."
+  },
+  "overlay_targets": [
+    {
+      "wine_name": "Frontera Merlot",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "frontera",
+        "merlot"
+      ],
+      "bbox": {
+        "x": 0.6094,
+        "y": 0.3105,
+        "w": 0.0508,
+        "h": 0.2246
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Apothic Red",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "apothic",
+        "red"
+      ],
+      "bbox": {
+        "x": 0.8203,
+        "y": 0.3301,
+        "w": 0.0508,
+        "h": 0.2129
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Pasqua Montepulciano d'Abruzzo",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "pasqua",
+        "montepulciano",
+        "d'abruzzo"
+      ],
+      "bbox": {
+        "x": 0.6215,
+        "y": 0.5553,
+        "w": 0.0483,
+        "h": 0.2044
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Pasqua Merlot Trevenezie",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "pasqua",
+        "merlot",
+        "trevenezie"
+      ],
+      "bbox": {
+        "x": 0.6676,
+        "y": 0.5581,
+        "w": 0.0494,
+        "h": 0.1993
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Trapiche Vineyards Malbec",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "trapiche",
+        "malbec"
+      ],
+      "bbox": {
+        "x": 0.7114,
+        "y": 0.0449,
+        "w": 0.0438,
+        "h": 0.2235
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Frontera Merlot",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "frontera",
+        "merlot"
+      ],
+      "bbox": {
+        "x": 0.5193,
+        "y": 0.3167,
+        "w": 0.0466,
+        "h": 0.2089
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Circus Malbec",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "circus",
+        "malbec"
+      ],
+      "bbox": {
+        "x": 0.8765,
+        "y": 0.0519,
+        "w": 0.0449,
+        "h": 0.2142
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Frontera Merlot",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "frontera",
+        "merlot"
+      ],
+      "bbox": {
+        "x": 0.7383,
+        "y": 0.334,
+        "w": 0.0469,
+        "h": 0.2051
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Marie-Louise Parisot Bourgogne Pinot Noir",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "marie",
+        "louise",
+        "parisot",
+        "bourgogne"
+      ],
+      "bbox": {
+        "x": 0.8068,
+        "y": 0.589,
+        "w": 0.0494,
+        "h": 0.1932
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Santa Julia Malbec",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "santa",
+        "julia",
+        "malbec"
+      ],
+      "bbox": {
+        "x": 0.6294,
+        "y": 0.0519,
+        "w": 0.0427,
+        "h": 0.2198
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Trapiche Reserva Malbec",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "trapiche",
+        "reserva",
+        "malbec"
+      ],
+      "bbox": {
+        "x": 0.7934,
+        "y": 0.0598,
+        "w": 0.0449,
+        "h": 0.203
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Catena Malbec",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "catena",
+        "malbec"
+      ],
+      "bbox": {
+        "x": 0.2871,
+        "y": 0.0603,
+        "w": 0.043,
+        "h": 0.2092
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Apothic Red",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "apothic",
+        "red"
+      ],
+      "bbox": {
+        "x": 0.8675,
+        "y": 0.3279,
+        "w": 0.0427,
+        "h": 0.2044
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Pasqua Soave",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "pasqua",
+        "soave"
+      ],
+      "bbox": {
+        "x": 0.5211,
+        "y": 0.7776,
+        "w": 0.0449,
+        "h": 0.1842
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Viu Manent Reserva Rose",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "viu",
+        "manent",
+        "reserva",
+        "rose"
+      ],
+      "bbox": {
+        "x": 0.7979,
+        "y": 0.8203,
+        "w": 0.0449,
+        "h": 0.1752
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Finca Las Moras Malbec",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "finca",
+        "moras",
+        "malbec"
+      ],
+      "bbox": {
+        "x": 0.4312,
+        "y": 0.0595,
+        "w": 0.0382,
+        "h": 0.2055
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Pasqua Capitolo 08 Soave",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "pasqua",
+        "capitolo",
+        "soave"
+      ],
+      "bbox": {
+        "x": 0.4814,
+        "y": 0.7799,
+        "w": 0.0435,
+        "h": 0.1774
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Phebus Malbec",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "phebus",
+        "malbec"
+      ],
+      "bbox": {
+        "x": 0.3257,
+        "y": 0.0651,
+        "w": 0.0382,
+        "h": 0.1898
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Finca Las Moras Barrel Select Malbec",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "finca",
+        "moras",
+        "barrel",
+        "select"
+      ],
+      "bbox": {
+        "x": 0.3976,
+        "y": 0.0542,
+        "w": 0.0359,
+        "h": 0.1974
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Beronia Crianza Rioja",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "beronia",
+        "crianza",
+        "rioja"
+      ],
+      "bbox": {
+        "x": 0.1286,
+        "y": 0.5255,
+        "w": 0.0376,
+        "h": 0.187
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Fabre Montmayou Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "fabre",
+        "montmayou",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.2572,
+        "y": 0.071,
+        "w": 0.0371,
+        "h": 0.1817
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Pasqua Desire Lush & Zin",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "pasqua",
+        "desire",
+        "lush",
+        "zin"
+      ],
+      "bbox": {
+        "x": 0.5474,
+        "y": 0.5766,
+        "w": 0.0371,
+        "h": 0.1786
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Phebus MMC",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "phebus",
+        "mmc"
+      ],
+      "bbox": {
+        "x": 0.3616,
+        "y": 0.0646,
+        "w": 0.0382,
+        "h": 0.1668
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Tunante Tempranillo Rioja",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "tunante",
+        "tempranillo",
+        "rioja"
+      ],
+      "bbox": {
+        "x": 0.31,
+        "y": 0.5553,
+        "w": 0.0359,
+        "h": 0.1752
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Tuna Club Verdejo Sauvignon Blanc",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "tuna",
+        "club",
+        "verdejo",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.571,
+        "y": 0.8001,
+        "w": 0.0371,
+        "h": 0.1617
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Castillo de Eneriz Crianza",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "castillo",
+        "eneriz",
+        "crianza"
+      ],
+      "bbox": {
+        "x": 0.3773,
+        "y": 0.5564,
+        "w": 0.0314,
+        "h": 0.1696
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Coleccion Privada Malbec",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "coleccion",
+        "privada",
+        "malbec"
+      ],
+      "bbox": {
+        "x": 0.5,
+        "y": 0.08,
+        "w": 0.04,
+        "h": 0.24
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Pequena Vasija Malbec-Syrah",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "pequena",
+        "vasija",
+        "malbec",
+        "syrah"
+      ],
+      "bbox": {
+        "x": 0.545,
+        "y": 0.04,
+        "w": 0.05,
+        "h": 0.26
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Trivento Reserva Malbec",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "trivento",
+        "reserva",
+        "malbec"
+      ],
+      "bbox": {
+        "x": 0.585,
+        "y": 0.06,
+        "w": 0.05,
+        "h": 0.24
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Alamos Malbec",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "alamos",
+        "malbec"
+      ],
+      "bbox": {
+        "x": 0.665,
+        "y": 0.09,
+        "w": 0.05,
+        "h": 0.22
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Trapiche Vineyards Malbec",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "trapiche",
+        "malbec"
+      ],
+      "bbox": {
+        "x": 0.765,
+        "y": 0.06,
+        "w": 0.05,
+        "h": 0.23
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Trapiche Reserva Merlot",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "trapiche",
+        "reserva",
+        "merlot"
+      ],
+      "bbox": {
+        "x": 0.85,
+        "y": 0.06,
+        "w": 0.05,
+        "h": 0.22
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Circus Malbec",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "circus",
+        "malbec"
+      ],
+      "bbox": {
+        "x": 0.945,
+        "y": 0.05,
+        "w": 0.05,
+        "h": 0.23
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Finca Las Moras Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "finca",
+        "moras",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.485,
+        "y": 0.05,
+        "w": 0.04,
+        "h": 0.24
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Fabre Montmayou",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "fabre",
+        "montmayou"
+      ],
+      "bbox": {
+        "x": 0.235,
+        "y": 0.06,
+        "w": 0.04,
+        "h": 0.22
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Viu Manent Reserva",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "viu",
+        "manent",
+        "reserva"
+      ],
+      "bbox": {
+        "x": 0.27,
+        "y": 0.34,
+        "w": 0.05,
+        "h": 0.21
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Rayuela Reserva",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "rayuela",
+        "reserva"
+      ],
+      "bbox": {
+        "x": 0.14,
+        "y": 0.34,
+        "w": 0.05,
+        "h": 0.21
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Frontera Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "frontera",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.7,
+        "y": 0.35,
+        "w": 0.05,
+        "h": 0.2
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Casillero del Diablo Reserva Red Blend",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "casillero",
+        "diablo",
+        "reserva",
+        "red"
+      ],
+      "bbox": {
+        "x": 0.795,
+        "y": 0.34,
+        "w": 0.05,
+        "h": 0.21
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Don Aurelio Crianza",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "don",
+        "aurelio",
+        "crianza"
+      ],
+      "bbox": {
+        "x": 0.72,
+        "y": 0.56,
+        "w": 0.045,
+        "h": 0.19
+      },
+      "source": "annotator_approx"
+    }
+  ],
+  "overlay_target_count": 40
+}

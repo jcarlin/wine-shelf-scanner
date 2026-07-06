@@ -166,12 +166,21 @@ class VisionService:
         self, text_annotations, image_bytes: bytes
     ) -> tuple[int, int]:
         """
-        Extract image dimensions from annotations or image bytes.
+        Extract image dimensions from image bytes, with annotation fallback.
 
-        The first text annotation from Vision API contains the full image
-        bounds in pixel coordinates. Falls back to decoding image header.
+        PIL gives exact dimensions. The text annotation heuristic only covers
+        the text bounding polygon, which may not span the full image.
         """
-        # Try to get dimensions from first text annotation's bounding poly
+        # Primary: decode image header for exact dimensions
+        try:
+            from PIL import Image
+            import io
+            img = Image.open(io.BytesIO(image_bytes))
+            return img.size
+        except Exception:
+            pass
+
+        # Fallback: try text annotation bounding poly (may underestimate)
         if text_annotations and len(text_annotations) > 0:
             first_ann = text_annotations[0]
             if first_ann.bounding_poly and first_ann.bounding_poly.vertices:
@@ -182,15 +191,8 @@ class VisionService:
                     if x_coords and y_coords:
                         return (max(x_coords), max(y_coords))
 
-        # Fallback: decode image to get dimensions
-        try:
-            from PIL import Image
-            import io
-            img = Image.open(io.BytesIO(image_bytes))
-            return img.size
-        except Exception:
-            # Last resort: use reasonable defaults
-            return (1000, 1000)
+        # Last resort: use reasonable defaults
+        return (1000, 1000)
 
     def _parse_objects(self, annotations) -> list[DetectedObject]:
         """Parse object localization results, filtering for bottles."""

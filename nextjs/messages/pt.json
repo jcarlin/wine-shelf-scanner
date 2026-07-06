@@ -26,13 +26,17 @@
     "scannedWith": "Digitalizado com Scanner de Prateleira de Vinhos",
     "topPicks": "Melhores escolhas da prateleira:",
     "stars": "estrelas",
-    "more": "+ {count} mais"
+    "more": "+ {count} mais",
+    "stillScanning": "Lendo rótulos…"
   },
   "fallback": {
     "couldNotIdentify": "Não foi possível identificar as garrafas",
     "tryDifferentAngle": "Tente uma foto mais próxima ou um ângulo diferente",
     "tryAnother": "Tentar Outra Foto",
-    "winesFound": "Vinhos Encontrados"
+    "winesFound": "Vinhos Encontrados",
+    "tooFarTitle": "Muito longe",
+    "tooFarMessage": "Os rótulos dos vinhos são pequenos demais para serem lidos a esta distância. Aproxime-se da prateleira e tire a foto novamente.",
+    "retake": "Tirar foto novamente"
   },
   "error": {
     "tryAgain": "Tentar Novamente"

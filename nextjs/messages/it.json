@@ -26,13 +26,17 @@
     "scannedWith": "Scansionato con Scanner Scaffale Vini",
     "topPicks": "Migliori scelte dallo scaffale:",
     "stars": "stelle",
-    "more": "+ {count} altri"
+    "more": "+ {count} altri",
+    "stillScanning": "Lettura delle etichette…"
   },
   "fallback": {
     "couldNotIdentify": "Impossibile identificare le bottiglie",
     "tryDifferentAngle": "Prova una foto più ravvicinata o un'angolazione diversa",
     "tryAnother": "Prova un'Altra Foto",
-    "winesFound": "Vini Trovati"
+    "winesFound": "Vini Trovati",
+    "tooFarTitle": "Troppo lontano",
+    "tooFarMessage": "Le etichette dei vini sono troppo piccole per essere lette a questa distanza. Avvicinati allo scaffale e scatta di nuovo la foto.",
+    "retake": "Scatta di nuovo"
   },
   "error": {
     "tryAgain": "Riprova"

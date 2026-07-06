@@ -1,0 +1,95 @@
+{
+  "image_file": "IMG_8080.jpg",
+  "wines": [],
+  "audit": {
+    "date": "2026-07-04",
+    "notes": "Full visual audit (feasibility Round 1). Renamed 3 mislabeled targets (old 'Do Mo' box contains the back-row Giacondi; old 'Pedras Negras Sobre Monte' label reads only 'Sobre Monte'; old 'Corte Balda' box contains the front Dardines). Added 7 readable front/back-row bottles that had no targets. Boxes for added targets are tiled-Vision detections, each visually verified against the pixels."
+  },
+  "overlay_targets": [
+    {
+      "wine_name": "Giacondi Sangiovese Rubicone",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": ["giacondi", "sangiovese", "rubicone"],
+      "bbox": {"x": 0.5625, "y": 0.068359375, "w": 0.1015625, "h": 0.486328125},
+      "v_idx": 0
+    },
+    {
+      "wine_name": "Sobre Monte",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": ["sobre", "monte"],
+      "bbox": {"x": 0.21875, "y": 0.07080078125, "w": 0.103515625, "h": 0.54638671875},
+      "v_idx": 1
+    },
+    {
+      "wine_name": "Vina Cruz Tempranillo",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": ["vina", "cruz", "tempranillo"],
+      "bbox": {"x": 0.671875, "y": 0.068359375, "w": 0.1015625, "h": 0.513671875},
+      "v_idx": 2
+    },
+    {
+      "wine_name": "Cloud Break Zinfandel California",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": ["cloud", "break", "zinfandel"],
+      "bbox": {"x": 0.83984375, "y": 0.318359375, "w": 0.1015625, "h": 0.611328125},
+      "v_idx": 3
+    },
+    {
+      "wine_name": "Dardines Tempranillo Merlot",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": ["dardines", "tempranillo", "merlot"],
+      "bbox": {"x": 0.39, "y": 0.43, "w": 0.1, "h": 0.5},
+      "v_idx": 4
+    },
+    {
+      "wine_name": "Escondida",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": ["escondida"],
+      "bbox": {"x": 0.33203125, "y": 0.0693359375, "w": 0.09765625, "h": 0.4892578125},
+      "v_idx": 5
+    },
+    {
+      "wine_name": "Do Mo",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": ["do", "mo"],
+      "bbox": {"x": 0.45, "y": 0.07, "w": 0.1, "h": 0.5}
+    },
+    {
+      "wine_name": "Corte Balda Rosso Puglia",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": ["corte", "balda"],
+      "bbox": {"x": 0.51, "y": 0.43, "w": 0.1, "h": 0.5}
+    },
+    {
+      "wine_name": "Marchigue Mahuida Syrah",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": ["marchigue", "mahuida", "syrah"],
+      "bbox": {"x": 0.04, "y": 0.43, "w": 0.1, "h": 0.51}
+    },
+    {
+      "wine_name": "Giacondi Sangiovese Rubicone",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": ["giacondi", "sangiovese", "rubicone"],
+      "bbox": {"x": 0.16, "y": 0.43, "w": 0.1, "h": 0.5}
+    },
+    {
+      "wine_name": "Vina Cruz Tempranillo",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": ["vina", "cruz", "tempranillo"],
+      "bbox": {"x": 0.28, "y": 0.43, "w": 0.1, "h": 0.51}
+    },
+    {
+      "wine_name": "Brave Step Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": ["brave", "step"],
+      "bbox": {"x": 0.62, "y": 0.43, "w": 0.1, "h": 0.51}
+    },
+    {
+      "wine_name": "Pedras Negras Vinho Tinto",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": ["pedras", "negras"],
+      "bbox": {"x": 0.73, "y": 0.43, "w": 0.09, "h": 0.5}
+    }
+  ],
+  "overlay_target_count": 13
+}

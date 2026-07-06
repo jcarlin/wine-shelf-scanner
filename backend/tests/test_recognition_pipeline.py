@@ -442,6 +442,8 @@ class TestRecognitionPipelineRecognizedWine:
         assert wine.source in ("database", "llm")
         assert isinstance(wine.identified, bool)
         assert isinstance(wine.bottle_text, BottleText)
+        # Vintage is an additive optional field on RecognizedWine.
+        assert wine.vintage is None or isinstance(wine.vintage, str)
 
     @pytest.mark.asyncio
     async def test_recognized_wine_preserves_bottle_text(self, pipeline):

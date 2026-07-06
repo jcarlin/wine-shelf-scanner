@@ -124,11 +124,24 @@ export async function scanImage(
     );
 
     if (!response.ok) {
+      // Prefer the backend's human-readable detail (e.g. "scanner is busy,
+      // try again in a moment") over a bare status code.
+      let message = `Server returned ${response.status}`;
+      try {
+        const body = await response.json();
+        if (body && typeof body.detail === 'string') {
+          message = body.detail;
+        } else if (body && typeof body.message === 'string') {
+          message = body.message;
+        }
+      } catch {
+        // Non-JSON error body — keep the generic message.
+      }
       return {
         success: false,
         error: {
           type: 'SERVER_ERROR',
-          message: `Server returned ${response.status}`,
+          message,
           status: response.status,
         },
       };
@@ -168,165 +181,134 @@ export async function scanImage(
   }
 }
 
+export interface ScanStreamOptions extends ScanOptions {
+  /** Called with each cumulative partial ScanResponse as chunks complete */
+  onPartial?: (partial: ScanResponse) => void;
+}
+
+/** Overall budget for a streaming scan (backend p95 ~19s + headroom) */
+const STREAM_TIMEOUT_MS = 90000;
+
 /**
- * Scan a wine shelf image via SSE streaming for progressive results.
+ * Progressive scan via SSE (POST /scan/stream).
  *
- * Sends a POST to /scan/stream and parses SSE events.
- * Calls onPhase1 when turbo-quality results arrive (~3.5s),
- * then onPhase2 when Gemini-enhanced results arrive (~6-8s).
- *
- * If streaming fails or is unavailable, falls back to regular scanImage().
+ * Emits cumulative partial results through onPartial while the backend is
+ * still reading labels; resolves with the final response. Falls back to
+ * plain POST /scan when streaming is unavailable (older backend, proxies,
+ * non-detect_read pipeline). If the stream dies after partials arrived,
+ * resolves with the last partial rather than discarding rendered badges.
  */
 export async function scanImageStream(
   file: File,
-  callbacks: {
-    onPhase1: (data: ScanResponse) => void;
-    onPhase2: (data: ScanResponse) => void;
-    onMetadata?: (data: Record<string, Record<string, unknown>>) => void;
-    onError: (error: ApiError) => void;
-  },
-  options: ScanOptions = {}
-): Promise<void> {
-  // Use mock service if configured — no streaming for mocks
+  options: ScanStreamOptions = {}
+): Promise<ScanResult> {
   if (Config.USE_MOCKS) {
-    const result = await scanImage(file, options);
-    if (result.success) {
-      callbacks.onPhase2(result.data);
-    } else {
-      callbacks.onError(result.error);
-    }
-    return;
+    return scanImage(file, options);
   }
 
-  const debug = options.debug ?? Config.DEBUG_MODE;
   const formData = new FormData();
   formData.append('image', file, file.name);
 
-  const url = new URL(`${Config.API_BASE_URL}/scan/stream`);
-  if (debug) {
-    url.searchParams.set('debug', 'true');
-  }
-
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), Config.STREAM_TIMEOUT);
+  const timeout = setTimeout(() => controller.abort(), STREAM_TIMEOUT_MS);
+
+  let lastPartial: ScanResponse | null = null;
 
   try {
-    const response = await fetch(url.toString(), {
+    const response = await fetch(`${Config.API_BASE_URL}/scan/stream`, {
       method: 'POST',
       body: formData,
       headers: { Accept: 'text/event-stream' },
       signal: controller.signal,
     });
 
-    if (!response.ok) {
-      callbacks.onError({
-        type: 'SERVER_ERROR',
-        message: `Server returned ${response.status}`,
-        status: response.status,
-      });
-      return;
-    }
-
-    if (!response.body) {
-      // No streaming support — fall back to regular scan
-      const result = await scanImage(file, options);
-      if (result.success) {
-        callbacks.onPhase2(result.data);
-      } else {
-        callbacks.onError(result.error);
-      }
-      return;
+    if (!response.ok || !response.body) {
+      // Endpoint missing/disabled (404/501) or proxy trouble — fall back.
+      clearTimeout(timeout);
+      return scanImage(file, options);
     }
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
+    let errorMessage: string | null = null;
 
-    while (true) {
+    const handleEvent = (block: string): ScanResponse | null => {
+      let event: string | null = null;
+      let data: string | null = null;
+      for (const line of block.split('\n')) {
+        if (line.startsWith('event: ')) event = line.slice(7).trim();
+        else if (line.startsWith('data: ')) data = line.slice(6);
+      }
+      if (!event || data === null) return null;
+      if (event === 'error') {
+        try {
+          errorMessage = (JSON.parse(data) as { message?: string }).message ?? null;
+        } catch {
+          errorMessage = null;
+        }
+        return null;
+      }
+      let parsed: ScanResponse;
+      try {
+        parsed = JSON.parse(data) as ScanResponse;
+      } catch {
+        return null;
+      }
+      if (event === 'done') return parsed;
+      if (event === 'partial') {
+        lastPartial = parsed;
+        options.onPartial?.(parsed);
+      }
+      return null;
+    };
+
+    for (;;) {
       const { done, value } = await reader.read();
       if (done) break;
-
       buffer += decoder.decode(value, { stream: true });
-
-      // Parse SSE events from buffer
-      const events = buffer.split('\n\n');
-      // Keep the last incomplete chunk in the buffer
-      buffer = events.pop() || '';
-
-      for (const event of events) {
-        if (!event.trim()) continue;
-
-        let eventType = '';
-        let eventData = '';
-
-        for (const line of event.split('\n')) {
-          if (line.startsWith('event: ')) {
-            eventType = line.slice(7).trim();
-          } else if (line.startsWith('data: ')) {
-            eventData = line.slice(6);
-          }
+      let sep;
+      while ((sep = buffer.indexOf('\n\n')) !== -1) {
+        const block = buffer.slice(0, sep);
+        buffer = buffer.slice(sep + 2);
+        const final = handleEvent(block);
+        if (final) {
+          clearTimeout(timeout);
+          return { success: true, data: final };
         }
-
-        if (eventType === 'done') {
-          return;
-        }
-
-        // Handle backend error events
-        if (eventType === 'error' && eventData) {
-          try {
-            const errPayload = JSON.parse(eventData);
-            callbacks.onError({
-              type: 'SERVER_ERROR',
-              message: errPayload.error || 'Pipeline error',
-              status: 500,
-            });
-          } catch {
-            callbacks.onError({
-              type: 'SERVER_ERROR',
-              message: 'Pipeline error',
-              status: 500,
-            });
-          }
-          // Don't return — backend sends 'done' next, let the loop exit naturally
-        }
-
-        if (eventData && (eventType === 'phase1' || eventType === 'phase2')) {
-          try {
-            const data = JSON.parse(eventData) as ScanResponse;
-            if (eventType === 'phase1') {
-              callbacks.onPhase1(data);
-            } else {
-              callbacks.onPhase2(data);
-            }
-          } catch {
-            // Skip malformed JSON
-          }
-        }
-
-        if (eventData && eventType === 'metadata' && callbacks.onMetadata) {
-          try {
-            const data = JSON.parse(eventData) as Record<string, Record<string, unknown>>;
-            callbacks.onMetadata(data);
-          } catch {
-            // Skip malformed JSON
-          }
-        }
+        if (errorMessage !== null) break;
       }
+      if (errorMessage !== null) break;
     }
+
+    clearTimeout(timeout);
+
+    // Stream ended without a done event (error event or connection cut).
+    if (lastPartial) {
+      // Keep what the user can already see rather than erroring out.
+      return { success: true, data: lastPartial };
+    }
+    if (errorMessage !== null) {
+      return {
+        success: false,
+        error: { type: 'SERVER_ERROR', message: errorMessage, status: 500 },
+      };
+    }
+    // Nothing arrived at all — one plain-scan fallback.
+    return scanImage(file, options);
   } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') {
-      callbacks.onError({
-        type: 'TIMEOUT',
-        message: 'Request timed out. Please try again.',
-      });
-    } else {
-      callbacks.onError({
-        type: 'NETWORK_ERROR',
-        message: 'Unable to connect. Please check your internet connection.',
-      });
+    clearTimeout(timeout);
+    if (lastPartial) {
+      return { success: true, data: lastPartial };
     }
-  } finally {
-    clearTimeout(timeoutId);
+    if (isAbortError(error)) {
+      return {
+        success: false,
+        error: { type: 'TIMEOUT', message: 'Request timed out. Please try again.' },
+      };
+    }
+    // Network/transport failure before any event — fall back once.
+    return scanImage(file, options);
   }
 }
 

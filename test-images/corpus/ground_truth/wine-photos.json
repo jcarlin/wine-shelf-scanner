@@ -1,0 +1,13 @@
+{
+  "image_file": "wine-photos.jpg",
+  "wines": [
+    {
+      "wine_name": "Example Wine Name",
+      "expected_rating": 4.0,
+      "rating_tolerance": 0.5,
+      "notes": "Placeholder - update with actual wine names after running pipeline"
+    }
+  ],
+  "total_visible_bottles": 1,
+  "notes": "Sample ground truth file - needs manual verification"
+}

@@ -1,0 +1,14 @@
+{
+  "image_file": "IMG_8121.HEIC",
+  "notes": "9 Vision bottles, mixed shelves. V2 ('Alma Negra') is not in Gemini's list — Gemini missed it; skipped from GT.",
+  "targets": [
+    {"wine_name": "Wente Sandstone Merlot", "v_idx": 0, "distinctive_tokens": ["wente", "sandstone"]},
+    {"wine_name": "Casillero del Diablo Reserva Merlot", "v_idx": 1, "distinctive_tokens": ["casillero", "diablo"]},
+    {"wine_name": "Marques de Casa Concha Merlot 2017", "v_idx": 3, "distinctive_tokens": ["marques", "concha"]},
+    {"wine_name": "Casillero del Diablo Organic Merlot", "v_idx": 4, "distinctive_tokens": ["casillero", "diablo"]},
+    {"wine_name": "Cecchi Chianti 2023", "v_idx": 5, "distinctive_tokens": ["cecchi", "chianti"]},
+    {"wine_name": "1000 Stories Zinfandel", "v_idx": 6, "distinctive_tokens": ["stories", "zinfandel"]},
+    {"wine_name": "Finca Las Moras Malbec", "v_idx": 7, "distinctive_tokens": ["finca", "moras"]},
+    {"wine_name": "El Enemigo Malbec 2022", "v_idx": 8, "distinctive_tokens": ["enemigo", "malbec"]}
+  ]
+}

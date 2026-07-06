@@ -114,16 +114,20 @@ final class OverlayMathTests: XCTestCase {
     }
 
     func testAdjustedAnchorPointPartialBottle() {
-        // Partial bottle (height < 0.15)
-        let point = CGPoint(x: 200, y: 300)
+        // Partial bottle (height < 0.15): anchor snaps to the top-most
+        // visible region of the bbox instead of the given anchor point.
+        let point = CGPoint(x: 200, y: 330) // mid-bottle anchor
         let bbox = CGRect(x: 0.4, y: 0.5, width: 0.1, height: 0.10) // Small height
         let containerSize = CGSize(width: 400, height: 600)
         let badgeSize = CGSize(width: 44, height: 24)
 
         let adjusted = OverlayMath.adjustedAnchorPoint(point, bbox: bbox, geo: containerSize, badgeSize: badgeSize)
 
-        // Should anchor higher for partial bottles
+        // Should anchor higher (nearer bbox top) than the mid-bottle point,
+        // while keeping the badge fully inside the bbox top edge
         XCTAssertLessThan(adjusted.y, point.y)
+        let bboxTopY = bbox.origin.y * containerSize.height
+        XCTAssertGreaterThanOrEqual(adjusted.y, bboxTopY)
     }
 
     // MARK: - Corner Brackets Tests

@@ -1,0 +1,417 @@
+{
+  "image_file": "82790424-8E50-471A-89E1-60003E30AFB2_1_105_c.jpeg",
+  "wines": [],
+  "audit": {
+    "date": "2026-07-04",
+    "notes": "Corpus v2: rebuilt via detection-seeded annotation (tiled-Vision boxes, per-box zoom-crop reading, no-guessing rule). source=annotator_approx boxes are approximate hand boxes."
+  },
+  "overlay_targets": [
+    {
+      "wine_name": "Rutherford Ranch Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "rutherford",
+        "ranch",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.8944,
+        "y": 0.1084,
+        "w": 0.0988,
+        "h": 0.2218
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Cotes-du-Rhone",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "cotes",
+        "rhone"
+      ],
+      "bbox": {
+        "x": 0.2156,
+        "y": 0.1016,
+        "w": 0.0854,
+        "h": 0.242
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Predator Old Vine Zinfandel",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "predator",
+        "vine",
+        "zinfandel"
+      ],
+      "bbox": {
+        "x": 0.6799,
+        "y": 0.0988,
+        "w": 0.0842,
+        "h": 0.2358
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Beaujolais",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "beaujolais"
+      ],
+      "bbox": {
+        "x": 0.0562,
+        "y": 0.1005,
+        "w": 0.0831,
+        "h": 0.2386
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Collection Cabernet Sauvignon 2023",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "collection",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.3796,
+        "y": 0.1039,
+        "w": 0.0809,
+        "h": 0.2398
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Macon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "macon"
+      ],
+      "bbox": {
+        "x": 0.1357,
+        "y": 0.1089,
+        "w": 0.083,
+        "h": 0.2271
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Predator Old Vine Zinfandel",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "predator",
+        "vine",
+        "zinfandel"
+      ],
+      "bbox": {
+        "x": 0.6047,
+        "y": 0.1011,
+        "w": 0.0797,
+        "h": 0.2358
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Beefsteak Malbec",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "beefsteak",
+        "malbec"
+      ],
+      "bbox": {
+        "x": 0.4582,
+        "y": 0.1028,
+        "w": 0.0741,
+        "h": 0.2386
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Primitivo",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "primitivo"
+      ],
+      "bbox": {
+        "x": 0.1432,
+        "y": 0.6507,
+        "w": 0.0792,
+        "h": 0.1763
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Amaranta",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "amaranta"
+      ],
+      "bbox": {
+        "x": 0.2123,
+        "y": 0.653,
+        "w": 0.073,
+        "h": 0.1763
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Amaranta",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "amaranta"
+      ],
+      "bbox": {
+        "x": 0.2808,
+        "y": 0.653,
+        "w": 0.0719,
+        "h": 0.1763
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Tre Saggi",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "tre",
+        "saggi"
+      ],
+      "bbox": {
+        "x": 0.6114,
+        "y": 0.4065,
+        "w": 0.0708,
+        "h": 0.164
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Eisberg Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "eisberg",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.0825,
+        "y": 0.3998,
+        "w": 0.0679,
+        "h": 0.1707
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Santa Margherita Merlot",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "santa",
+        "margherita",
+        "merlot"
+      ],
+      "bbox": {
+        "x": 0.4268,
+        "y": 0.3886,
+        "w": 0.06,
+        "h": 0.1864
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Conte Gastone",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "conte",
+        "gastone"
+      ],
+      "bbox": {
+        "x": 0.4758,
+        "y": 0.6631,
+        "w": 0.0649,
+        "h": 0.1662
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Duca Fedele",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "duca",
+        "fedele"
+      ],
+      "bbox": {
+        "x": 0.6024,
+        "y": 0.6507,
+        "w": 0.0618,
+        "h": 0.1741
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Marchese MariaBella",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "marchese",
+        "mariabella"
+      ],
+      "bbox": {
+        "x": 0.5396,
+        "y": 0.6642,
+        "w": 0.064,
+        "h": 0.1651
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Giacobazzi Lambrusco",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "giacobazzi",
+        "lambrusco"
+      ],
+      "bbox": {
+        "x": 0.7866,
+        "y": 0.8697,
+        "w": 0.0719,
+        "h": 0.1258
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Chianti",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "chianti"
+      ],
+      "bbox": {
+        "x": 0.1044,
+        "y": 0.872,
+        "w": 0.0663,
+        "h": 0.1235
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Fantini",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "fantini"
+      ],
+      "bbox": {
+        "x": 0.5087,
+        "y": 0.8652,
+        "w": 0.0679,
+        "h": 0.119
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Fantini",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "fantini"
+      ],
+      "bbox": {
+        "x": 0.4493,
+        "y": 0.8697,
+        "w": 0.0616,
+        "h": 0.1146
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Bourgogne Pinot Noir",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "bourgogne",
+        "pinot",
+        "noir"
+      ],
+      "bbox": {
+        "x": 0.0,
+        "y": 0.1,
+        "w": 0.055,
+        "h": 0.24
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Artis",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "artis"
+      ],
+      "bbox": {
+        "x": 0.43,
+        "y": 0.1,
+        "w": 0.06,
+        "h": 0.24
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Predator Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "predator",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.79,
+        "y": 0.1,
+        "w": 0.09,
+        "h": 0.24
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Eisberg Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "eisberg",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.13,
+        "y": 0.4,
+        "w": 0.07,
+        "h": 0.24
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Eisberg Merlot",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "eisberg",
+        "merlot"
+      ],
+      "bbox": {
+        "x": 0.18,
+        "y": 0.4,
+        "w": 0.07,
+        "h": 0.24
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Black Tower",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "black",
+        "tower"
+      ],
+      "bbox": {
+        "x": 0.28,
+        "y": 0.42,
+        "w": 0.08,
+        "h": 0.23
+      },
+      "source": "annotator_approx"
+    }
+  ],
+  "overlay_target_count": 27
+}

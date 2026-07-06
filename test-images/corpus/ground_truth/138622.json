@@ -1,0 +1,13 @@
+{
+  "image_file": "138622.jpeg",
+  "wines": [
+    {
+      "wine_name": "Giordano Ricarico Prestige Cuv\u00e9e",
+      "expected_rating": null,
+      "rating_tolerance": 0.5,
+      "notes": "Winery: Giordano, Region: Puglia, Type: Red"
+    }
+  ],
+  "total_visible_bottles": 1,
+  "notes": "XWines evaluation image. Country: Italy. Simple name: Ricarico Prestige Cuv\u00e9e"
+}

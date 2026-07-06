@@ -293,7 +293,7 @@ function createFailedPipelineStep(
     llm_validation: {
       is_valid_match: false,
       wine_name: null,
-      confidence: null,
+      confidence: 0,
       reasoning: 'Insufficient text for wine identification',
     },
     final_result: null,

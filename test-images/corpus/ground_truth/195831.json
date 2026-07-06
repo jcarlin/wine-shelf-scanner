@@ -1,0 +1,13 @@
+{
+  "image_file": "195831.jpeg",
+  "wines": [
+    {
+      "wine_name": "Tsantali Kormilitsa Red",
+      "expected_rating": null,
+      "rating_tolerance": 0.5,
+      "notes": "Winery: Tsantali, Region: Chalkidiki, Type: Red"
+    }
+  ],
+  "total_visible_bottles": 1,
+  "notes": "XWines evaluation image. Country: Greece. Simple name: Kormilitsa Red"
+}

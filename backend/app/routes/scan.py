@@ -19,9 +19,10 @@ from pillow_heif import register_heif_opener
 from ..config import Config
 from ..feature_flags import FeatureFlags, get_feature_flags
 from ..mocks.fixtures import get_mock_response
-from ..models import BoundingBox, DebugData, FallbackWine, RatingSourceDetail, ScanResponse, WineResult
+from ..models import BoundingBox, DebugData, FallbackWine, RatingSourceDetail, ScanQuality, ScanResponse, WineResult
 from ..models.debug import PipelineStats
 from ..models.enums import RatingSource, WineSource
+from ..services.abuse_protection import enforce_abuse_protection, record_scan_spend
 from ..services.claude_vision import get_claude_vision_service, VisionIdentifiedWine
 from ..services.llm_rating_cache import get_llm_rating_cache
 from ..services.ocr_processor import BottleText, OCRProcessor, OCRProcessingResult, OrphanedText, extract_wine_names
@@ -33,11 +34,55 @@ from ..services.wine_matcher import WineMatcher, _is_llm_generic_response
 from ..services.fast_pipeline import FastPipeline
 from ..services.flash_names_pipeline import FlashNamesPipeline
 from ..services.hybrid_pipeline import HybridPipeline
+from ..services.single_llm_pipeline import SingleLLMPipeline
+from ..services.detect_read_pipeline import DetectReadPipeline
 from ..services.turbo_pipeline import TurboPipeline
 from ..services.wine_sync import sync_discovered_wines
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+# === Error mapping ===
+# Pipeline failures must land on the failure-handling contract, not bare
+# 500s: retryable provider trouble → 503 (+Retry-After), timeouts → 504.
+# Shared by /scan and /scan/stream.
+
+
+def map_pipeline_error(e: Exception) -> Optional[tuple[int, str, dict]]:
+    """Map known pipeline exceptions to (status_code, detail, headers).
+
+    Returns None for anything unrecognized (callers keep their generic 500).
+    """
+    try:
+        import litellm
+        if isinstance(e, litellm.exceptions.Timeout):
+            return 504, "The scan took too long. Please try again.", {}
+        retryable = (
+            litellm.exceptions.RateLimitError,        # Anthropic 429
+            litellm.exceptions.InternalServerError,   # Anthropic 500/529 overloaded
+            litellm.exceptions.ServiceUnavailableError,
+            litellm.exceptions.BadGatewayError,
+            litellm.exceptions.APIConnectionError,
+        )
+        if isinstance(e, retryable):
+            return (503,
+                    "The scanner is very busy right now. Please try again in a moment.",
+                    {"Retry-After": "15"})
+    except ModuleNotFoundError:
+        pass
+    try:
+        from google.api_core import exceptions as gexc
+        if isinstance(e, gexc.GoogleAPIError):
+            return (503,
+                    "We couldn't analyze the photo right now. Please try again.",
+                    {"Retry-After": "15"})
+    except ModuleNotFoundError:
+        pass
+    import asyncio
+    if isinstance(e, asyncio.TimeoutError):
+        return 504, "The scan took too long. Please try again.", {}
+    return None
 
 
 # === Shared post-processing helpers ===
@@ -165,10 +210,10 @@ def _to_wine_result(wine: RecognizedWine) -> WineResult:
         rating=wine.rating,
         confidence=wine.confidence,
         bbox=BoundingBox(
-            x=wine.bottle_text.bottle.bbox.x,
-            y=wine.bottle_text.bottle.bbox.y,
-            width=wine.bottle_text.bottle.bbox.width,
-            height=wine.bottle_text.bottle.bbox.height
+            x=max(0.0, min(1.0, wine.bottle_text.bottle.bbox.x)),
+            y=max(0.0, min(1.0, wine.bottle_text.bottle.bbox.y)),
+            width=max(0.0, min(1.0, wine.bottle_text.bottle.bbox.width)),
+            height=max(0.0, min(1.0, wine.bottle_text.bottle.bbox.height)),
         ),
         identified=wine.identified,
         source=wine.source,
@@ -178,6 +223,7 @@ def _to_wine_result(wine: RecognizedWine) -> WineResult:
         region=wine.region,
         varietal=wine.varietal,
         blurb=wine.blurb,
+        vintage=wine.vintage,
         review_count=wine.review_count,
         review_snippets=wine.review_snippets,
     )
@@ -444,6 +490,7 @@ async def scan_shelf(
     use_vision_fixture: Optional[str] = Query(None, description="Path to captured Vision API response fixture for replay"),
     wine_matcher: WineMatcher = Depends(get_wine_matcher),
     flags: FeatureFlags = Depends(get_feature_flags),
+    device_key: str = Depends(enforce_abuse_protection),
 ) -> ScanResponse:
     """
     Scan a wine shelf image and return detected wines with ratings.
@@ -506,9 +553,96 @@ async def scan_shelf(
     except ValueError as e:
         logger.warning(f"Invalid image format: {e}")
         raise HTTPException(status_code=400, detail="Invalid image format")
+    except OSError as e:
+        # PIL raises OSError on truncated/undecodable image data.
+        logger.warning(f"Undecodable image: {e}")
+        raise HTTPException(status_code=400, detail="Invalid or corrupted image file")
     except Exception as e:
+        mapped = map_pipeline_error(e)
+        if mapped:
+            status_code, detail, headers = mapped
+            logger.warning(f"Pipeline failure mapped to {status_code}: {e}")
+            raise HTTPException(status_code=status_code, detail=detail,
+                                headers=headers or None)
         logger.error(f"Unexpected error processing image: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
+
+
+async def _run_single_llm_pipeline(
+    image_id: str,
+    image_bytes: bytes,
+    wine_matcher: WineMatcher,
+    flags: Optional[FeatureFlags] = None,
+) -> ScanResponse:
+    """Run the single-LLM pipeline.
+
+    No fallback — exceptions propagate to the caller so failures surface
+    instead of silently degrading.
+    """
+    t0 = time.perf_counter()
+
+    pipeline = SingleLLMPipeline(wine_matcher=wine_matcher)
+    result = await pipeline.scan(image_bytes, image_id=image_id)
+
+    results, fallback = build_results_from_recognized(
+        result.recognized_wines,
+        wine_matcher,
+        flags=flags,
+    )
+
+    elapsed = time.perf_counter() - t0
+    logger.info(
+        f"[{image_id}] Single-LLM pipeline completed in {elapsed:.2f}s: "
+        f"{len(results)} results, {len(fallback)} fallback "
+        f"(model={result.timings.get('model')}, "
+        f"llm={result.timings.get('llm_call_ms')}ms)"
+    )
+    record_scan_spend(result.timings.get("cost_usd"))
+
+    return ScanResponse(
+        image_id=image_id,
+        results=results,
+        fallback_list=fallback,
+    )
+
+
+async def _run_detect_read_pipeline(
+    image_id: str,
+    image_bytes: bytes,
+    wine_matcher: WineMatcher,
+    flags: Optional[FeatureFlags] = None,
+) -> ScanResponse:
+    """Run the Detect+Read pipeline (Vision boxes + Claude label reads).
+
+    No fallback — exceptions propagate to the caller so failures surface
+    instead of silently degrading.
+    """
+    t0 = time.perf_counter()
+
+    pipeline = DetectReadPipeline(wine_matcher=wine_matcher)
+    result = await pipeline.scan(image_bytes, image_id=image_id)
+
+    results, fallback = build_results_from_recognized(
+        result.recognized_wines,
+        wine_matcher,
+        flags=flags,
+    )
+
+    elapsed = time.perf_counter() - t0
+    logger.info(
+        f"[{image_id}] Detect+Read pipeline completed in {elapsed:.2f}s: "
+        f"{len(results)} results, {len(fallback)} fallback "
+        f"(model={result.timings.get('model')}, "
+        f"cost=${result.timings.get('cost_usd')}, {result.timings.get('notes')})"
+    )
+    record_scan_spend(result.timings.get("cost_usd"))
+
+    return ScanResponse(
+        image_id=image_id,
+        results=results,
+        fallback_list=fallback,
+        scan_quality=ScanQuality(**result.scan_quality) if result.scan_quality else None,
+    )
 
 
 async def _run_fast_pipeline(
@@ -825,6 +959,16 @@ async def process_image(
     """
     # === Pipeline Mode Routing ===
     mode = Config.pipeline_mode()
+
+    if mode == "single_llm":
+        return await _run_single_llm_pipeline(
+            image_id, image_bytes, wine_matcher, flags
+        )
+
+    if mode == "detect_read":
+        return await _run_detect_read_pipeline(
+            image_id, image_bytes, wine_matcher, flags
+        )
 
     if mode == "turbo":
         try:

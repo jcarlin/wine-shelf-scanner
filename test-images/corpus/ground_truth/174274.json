@@ -1,0 +1,13 @@
+{
+  "image_file": "174274.jpeg",
+  "wines": [
+    {
+      "wine_name": "Oxford Landing Cabernet Sauvignon-Shiraz",
+      "expected_rating": null,
+      "rating_tolerance": 0.5,
+      "notes": "Winery: Oxford Landing, Region: South Australia, Type: Red"
+    }
+  ],
+  "total_visible_bottles": 1,
+  "notes": "XWines evaluation image. Country: Australia. Simple name: Cabernet Sauvignon-Shiraz"
+}

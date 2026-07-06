@@ -1,0 +1,606 @@
+{
+  "image_file": "IMG_8121.HEIC",
+  "wines": [],
+  "audit": {
+    "date": "2026-07-04",
+    "notes": "Corpus v2: rebuilt via detection-seeded annotation (tiled-Vision boxes, per-box zoom-crop reading, no-guessing rule). source=annotator_approx boxes are approximate hand boxes."
+  },
+  "overlay_targets": [
+    {
+      "wine_name": "Cecchi Chianti 2023",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "cecchi",
+        "chianti"
+      ],
+      "bbox": {
+        "x": 0.0719,
+        "y": 0.7125,
+        "w": 0.0809,
+        "h": 0.2875
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "1000 Stories Zinfandel",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "stories",
+        "zinfandel"
+      ],
+      "bbox": {
+        "x": 0.0082,
+        "y": 0.7103,
+        "w": 0.08,
+        "h": 0.2897
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Cecchi Chianti 2022",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "cecchi",
+        "chianti"
+      ],
+      "bbox": {
+        "x": 0.1336,
+        "y": 0.7125,
+        "w": 0.0764,
+        "h": 0.2875
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Root:1 Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "root",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.7687,
+        "y": 0.6766,
+        "w": 0.0674,
+        "h": 0.3234
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Wente Vineyards Sandstone Merlot 2016",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "wente",
+        "sandstone",
+        "merlot"
+      ],
+      "bbox": {
+        "x": 0.209,
+        "y": 0.2852,
+        "w": 0.0664,
+        "h": 0.3242
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Luigi Bosca Insignia Cabernet Sauvignon 2023",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "luigi",
+        "bosca",
+        "insignia",
+        "cabernet"
+      ],
+      "bbox": {
+        "x": 0.6754,
+        "y": 0.6777,
+        "w": 0.0663,
+        "h": 0.3223
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Wente Vineyards Sandstone Merlot 2016",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "wente",
+        "sandstone",
+        "merlot"
+      ],
+      "bbox": {
+        "x": 0.2715,
+        "y": 0.2852,
+        "w": 0.0645,
+        "h": 0.3242
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Marques de Casa Concha Merlot 2017",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "marques",
+        "casa",
+        "concha",
+        "merlot"
+      ],
+      "bbox": {
+        "x": 0.1073,
+        "y": 0.292,
+        "w": 0.0747,
+        "h": 0.2785
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Adobe Reserva Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "adobe",
+        "reserva",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.3481,
+        "y": 0.7024,
+        "w": 0.0696,
+        "h": 0.2976
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Franciscan Estate Cabernet Sauvignon 2019",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "franciscan",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.8899,
+        "y": 0.6878,
+        "w": 0.0651,
+        "h": 0.3122
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Cecchi Chianti 2023",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "cecchi",
+        "chianti"
+      ],
+      "bbox": {
+        "x": 0.1943,
+        "y": 0.7103,
+        "w": 0.0708,
+        "h": 0.2853
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Luigi Bosca Insignia Cabernet Sauvignon 2023",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "luigi",
+        "bosca",
+        "insignia",
+        "cabernet"
+      ],
+      "bbox": {
+        "x": 0.6159,
+        "y": 0.6777,
+        "w": 0.0606,
+        "h": 0.3223
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Adobe Reserva Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "adobe",
+        "reserva",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.411,
+        "y": 0.7013,
+        "w": 0.0629,
+        "h": 0.2987
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Bread & Butter Cabernet Sauvignon 2022",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "bread",
+        "butter",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.4747,
+        "y": 0.7013,
+        "w": 0.0609,
+        "h": 0.2987
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Ruffino Chianti",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "ruffino",
+        "chianti"
+      ],
+      "bbox": {
+        "x": 0.2504,
+        "y": 0.7192,
+        "w": 0.0595,
+        "h": 0.2808
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Casillero del Diablo Reserva Merlot 2022",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "casillero",
+        "diablo",
+        "reserva",
+        "merlot"
+      ],
+      "bbox": {
+        "x": 0.3369,
+        "y": 0.3032,
+        "w": 0.0606,
+        "h": 0.2718
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Santa Julia Malbec 2024",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "santa",
+        "julia",
+        "malbec"
+      ],
+      "bbox": {
+        "x": 0.3571,
+        "y": 0.0007,
+        "w": 0.0629,
+        "h": 0.2183
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "19 Crimes Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "crimes",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.9079,
+        "y": 0.0081,
+        "w": 0.0629,
+        "h": 0.2176
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Vina Maipo Classic Series Merlot",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "vina",
+        "maipo",
+        "classic",
+        "series"
+      ],
+      "bbox": {
+        "x": 0.1651,
+        "y": 0.0018,
+        "w": 0.0618,
+        "h": 0.2082
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Frontera Merlot",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "frontera",
+        "merlot"
+      ],
+      "bbox": {
+        "x": 0.5699,
+        "y": 0.0003,
+        "w": 0.0562,
+        "h": 0.2209
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Frontera Merlot Suave & Sedoso",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "frontera",
+        "merlot",
+        "suave",
+        "sedoso"
+      ],
+      "bbox": {
+        "x": 0.6215,
+        "y": 0.0018,
+        "w": 0.0562,
+        "h": 0.2195
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Finca Las Moras Malbec",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "finca",
+        "moras",
+        "malbec"
+      ],
+      "bbox": {
+        "x": 0.2729,
+        "y": 0.002,
+        "w": 0.055,
+        "h": 0.2091
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Santa Julia Malbec 2021",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "santa",
+        "julia",
+        "malbec"
+      ],
+      "bbox": {
+        "x": 0.4178,
+        "y": 0.0016,
+        "w": 0.0517,
+        "h": 0.2174
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "El Enemigo Malbec 2022",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "enemigo",
+        "malbec"
+      ],
+      "bbox": {
+        "x": 0.4702,
+        "y": 0.0007,
+        "w": 0.0514,
+        "h": 0.2183
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "El Enemigo Malbec 2022",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "enemigo",
+        "malbec"
+      ],
+      "bbox": {
+        "x": 0.5216,
+        "y": 0.001,
+        "w": 0.0494,
+        "h": 0.2203
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Secrets Red Blend",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "secrets",
+        "red",
+        "blend"
+      ],
+      "bbox": {
+        "x": 0.7147,
+        "y": 0.0483,
+        "w": 0.0562,
+        "h": 0.1729
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Catena Malbec 2022",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "catena",
+        "malbec"
+      ],
+      "bbox": {
+        "x": 0.7934,
+        "y": 0.425,
+        "w": 0.0517,
+        "h": 0.1786
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Catena Malbec 2022",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "catena",
+        "malbec"
+      ],
+      "bbox": {
+        "x": 0.8428,
+        "y": 0.425,
+        "w": 0.0472,
+        "h": 0.1763
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Catena Malbec 2022",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "catena",
+        "malbec"
+      ],
+      "bbox": {
+        "x": 0.7507,
+        "y": 0.425,
+        "w": 0.0427,
+        "h": 0.1786
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Vina Maipo Classic Series Merlot",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "vina",
+        "maipo",
+        "classic",
+        "series"
+      ],
+      "bbox": {
+        "x": 0.0,
+        "y": 0.0,
+        "w": 0.16,
+        "h": 0.22
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Finca Las Moras Malbec",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "finca",
+        "moras",
+        "malbec"
+      ],
+      "bbox": {
+        "x": 0.23,
+        "y": 0.0,
+        "w": 0.05,
+        "h": 0.21
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Casillero del Diablo Reserva Merlot 2022",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "casillero",
+        "diablo",
+        "reserva",
+        "merlot"
+      ],
+      "bbox": {
+        "x": 0.4,
+        "y": 0.3,
+        "w": 0.06,
+        "h": 0.27
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Bread & Butter Cabernet Sauvignon 2022",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "bread",
+        "butter",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.545,
+        "y": 0.7,
+        "w": 0.055,
+        "h": 0.29
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Luigi Bosca Insignia Cabernet Sauvignon 2022",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "luigi",
+        "bosca",
+        "insignia",
+        "cabernet"
+      ],
+      "bbox": {
+        "x": 0.585,
+        "y": 0.68,
+        "w": 0.05,
+        "h": 0.32
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Navarro Correas Reserve Malbec 2023",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "navarro",
+        "correas",
+        "reserve",
+        "malbec"
+      ],
+      "bbox": {
+        "x": 0.71,
+        "y": 0.42,
+        "w": 0.05,
+        "h": 0.18
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Barton & Guestier 1725 Reserve Bordeaux",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "barton",
+        "guestier",
+        "reserve",
+        "bordeaux"
+      ],
+      "bbox": {
+        "x": 0.855,
+        "y": 0.01,
+        "w": 0.045,
+        "h": 0.21
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Catena Malbec 2022",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "catena",
+        "malbec"
+      ],
+      "bbox": {
+        "x": 0.62,
+        "y": 0.42,
+        "w": 0.1,
+        "h": 0.19
+      },
+      "source": "annotator_approx"
+    }
+  ],
+  "overlay_target_count": 37
+}

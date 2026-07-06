@@ -1,0 +1,596 @@
+{
+  "image_file": "IMG_8334.HEIC",
+  "wines": [],
+  "audit": {
+    "date": "2026-07-04",
+    "notes": "Corpus v2: rebuilt via detection-seeded annotation (tiled-Vision boxes, per-box zoom-crop reading, no-guessing rule). source=annotator_approx boxes are approximate hand boxes."
+  },
+  "overlay_targets": [
+    {
+      "wine_name": "Rutherford Ranch Cabernet Sauvignon Napa Valley 2021",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "rutherford",
+        "ranch",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.8944,
+        "y": 0.1095,
+        "w": 0.0988,
+        "h": 0.2229
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Marie-Louise Parisot Cotes-du-Rhone",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "marie",
+        "louise",
+        "parisot",
+        "cotes"
+      ],
+      "bbox": {
+        "x": 0.2156,
+        "y": 0.1022,
+        "w": 0.0831,
+        "h": 0.237
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Marie-Louise Parisot Beaujolais",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "marie",
+        "louise",
+        "parisot",
+        "beaujolais"
+      ],
+      "bbox": {
+        "x": 0.0573,
+        "y": 0.1005,
+        "w": 0.0814,
+        "h": 0.2342
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Artis Merlot",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "artis",
+        "merlot"
+      ],
+      "bbox": {
+        "x": 0.3773,
+        "y": 0.1044,
+        "w": 0.0786,
+        "h": 0.2347
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Predator Old Vine Zinfandel Lodi 2023",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "predator",
+        "vine",
+        "zinfandel",
+        "lodi"
+      ],
+      "bbox": {
+        "x": 0.6822,
+        "y": 0.0983,
+        "w": 0.0775,
+        "h": 0.2364
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Beefsteak Club Malbec",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "beefsteak",
+        "club",
+        "malbec"
+      ],
+      "bbox": {
+        "x": 0.4531,
+        "y": 0.1064,
+        "w": 0.0781,
+        "h": 0.2334
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Predator Old Vine Zinfandel Lodi 2022",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "predator",
+        "vine",
+        "zinfandel",
+        "lodi"
+      ],
+      "bbox": {
+        "x": 0.6047,
+        "y": 0.1022,
+        "w": 0.0775,
+        "h": 0.2347
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Marie-Louise Parisot Cabernet Sauvignon 2023",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "marie",
+        "louise",
+        "parisot",
+        "cabernet"
+      ],
+      "bbox": {
+        "x": 0.2969,
+        "y": 0.1221,
+        "w": 0.084,
+        "h": 0.2139
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Arrogant Frog Pinot Noir",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "arrogant",
+        "frog",
+        "pinot",
+        "noir"
+      ],
+      "bbox": {
+        "x": 0.5311,
+        "y": 0.1044,
+        "w": 0.0747,
+        "h": 0.2325
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "10 Vendemmie",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "vendemmie"
+      ],
+      "bbox": {
+        "x": 0.0691,
+        "y": 0.6563,
+        "w": 0.0803,
+        "h": 0.1685
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Talamonti",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "talamonti"
+      ],
+      "bbox": {
+        "x": 0.8742,
+        "y": 0.4088,
+        "w": 0.0809,
+        "h": 0.164
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Eisberg Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "eisberg",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.0161,
+        "y": 0.3931,
+        "w": 0.0731,
+        "h": 0.1752
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Eisberg Merlot",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "eisberg",
+        "merlot"
+      ],
+      "bbox": {
+        "x": 0.1482,
+        "y": 0.4021,
+        "w": 0.0741,
+        "h": 0.1662
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Talamonti Moda Montepulciano d'Abruzzo",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "talamonti",
+        "moda",
+        "montepulciano",
+        "d'abruzzo"
+      ],
+      "bbox": {
+        "x": 0.7529,
+        "y": 0.411,
+        "w": 0.0719,
+        "h": 0.1617
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Eisberg Cabernet Sauvignon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "eisberg",
+        "cabernet",
+        "sauvignon"
+      ],
+      "bbox": {
+        "x": 0.0848,
+        "y": 0.3976,
+        "w": 0.0646,
+        "h": 0.1752
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Santa Margherita Merlot Veneto 2021",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "santa",
+        "margherita",
+        "merlot",
+        "veneto"
+      ],
+      "bbox": {
+        "x": 0.427,
+        "y": 0.4253,
+        "w": 0.0609,
+        "h": 0.1851
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Collezione di Campaccio Arillo Terrabianca",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "collezione",
+        "campaccio",
+        "arillo",
+        "terrabianca"
+      ],
+      "bbox": {
+        "x": 0.6653,
+        "y": 0.6519,
+        "w": 0.0629,
+        "h": 0.1707
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Talamonti Tre Saggi",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "talamonti",
+        "tre",
+        "saggi"
+      ],
+      "bbox": {
+        "x": 0.6114,
+        "y": 0.4133,
+        "w": 0.0685,
+        "h": 0.155
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Duca Fedele Valpolicella 2023",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "duca",
+        "fedele",
+        "valpolicella"
+      ],
+      "bbox": {
+        "x": 0.6024,
+        "y": 0.6519,
+        "w": 0.0618,
+        "h": 0.1707
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "L'Amico Ciliegia Guerrieri",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "l'amico",
+        "ciliegia",
+        "guerrieri"
+      ],
+      "bbox": {
+        "x": 0.4856,
+        "y": 0.3976,
+        "w": 0.059,
+        "h": 0.1752
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Marchesa MariaBella Valpolicella Ripasso 2022",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "marchesa",
+        "mariabella",
+        "valpolicella",
+        "ripasso"
+      ],
+      "bbox": {
+        "x": 0.5384,
+        "y": 0.6698,
+        "w": 0.0651,
+        "h": 0.1572
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Colli Pesaresi Sangiovese Guerrieri",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "colli",
+        "pesaresi",
+        "sangiovese",
+        "guerrieri"
+      ],
+      "bbox": {
+        "x": 0.5407,
+        "y": 0.4088,
+        "w": 0.064,
+        "h": 0.1595
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Conte Gastone Amarone della Valpolicella 2020",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "conte",
+        "gastone",
+        "amarone",
+        "della"
+      ],
+      "bbox": {
+        "x": 0.475,
+        "y": 0.6698,
+        "w": 0.0657,
+        "h": 0.155
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Giacobazzi Lambrusco",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "giacobazzi",
+        "lambrusco"
+      ],
+      "bbox": {
+        "x": 0.7844,
+        "y": 0.8675,
+        "w": 0.0786,
+        "h": 0.1258
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Pasqua Case Vecie Sangiovese Puglia 2022",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "pasqua",
+        "case",
+        "vecie",
+        "sangiovese"
+      ],
+      "bbox": {
+        "x": 0.5766,
+        "y": 0.8585,
+        "w": 0.0674,
+        "h": 0.1235
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Bottega Acino d'Oro Chianti",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "bottega",
+        "acino",
+        "d'oro",
+        "chianti"
+      ],
+      "bbox": {
+        "x": 0.105,
+        "y": 0.8697,
+        "w": 0.0668,
+        "h": 0.1235
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Pasqua Passione Sentimento",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "pasqua",
+        "passione",
+        "sentimento"
+      ],
+      "bbox": {
+        "x": 0.1685,
+        "y": 0.8697,
+        "w": 0.0651,
+        "h": 0.1235
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Pasqua Montepulciano",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "pasqua",
+        "montepulciano"
+      ],
+      "bbox": {
+        "x": 0.2853,
+        "y": 0.8675,
+        "w": 0.0562,
+        "h": 0.119
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Pasqua Merlot Trevenezie",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "pasqua",
+        "merlot",
+        "trevenezie"
+      ],
+      "bbox": {
+        "x": 0.3414,
+        "y": 0.8675,
+        "w": 0.0562,
+        "h": 0.1146
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Marie-Louise Parisot Bourgogne Pinot Noir",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "marie",
+        "louise",
+        "parisot",
+        "bourgogne"
+      ],
+      "bbox": {
+        "x": 0.0,
+        "y": 0.1,
+        "w": 0.055,
+        "h": 0.24
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Marie-Louise Parisot Macon",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "marie",
+        "louise",
+        "parisot",
+        "macon"
+      ],
+      "bbox": {
+        "x": 0.13,
+        "y": 0.1,
+        "w": 0.08,
+        "h": 0.23
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Predator Cabernet Sauvignon Lodi",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "predator",
+        "cabernet",
+        "sauvignon",
+        "lodi"
+      ],
+      "bbox": {
+        "x": 0.76,
+        "y": 0.1,
+        "w": 0.075,
+        "h": 0.22
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Predator Six Spot Red Wine Lodi 2023",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "predator",
+        "six",
+        "spot",
+        "red"
+      ],
+      "bbox": {
+        "x": 0.83,
+        "y": 0.1,
+        "w": 0.075,
+        "h": 0.22
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Peter Brum Vino Noir",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "peter",
+        "brum",
+        "noir"
+      ],
+      "bbox": {
+        "x": 0.23,
+        "y": 0.4,
+        "w": 0.08,
+        "h": 0.17
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Black Tower",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "black",
+        "tower"
+      ],
+      "bbox": {
+        "x": 0.29,
+        "y": 0.4,
+        "w": 0.07,
+        "h": 0.17
+      },
+      "source": "annotator_approx"
+    },
+    {
+      "wine_name": "Georgiano Kindzmarauli",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "georgiano",
+        "kindzmarauli"
+      ],
+      "bbox": {
+        "x": 0.35,
+        "y": 0.4,
+        "w": 0.07,
+        "h": 0.17
+      },
+      "source": "annotator_approx"
+    }
+  ],
+  "overlay_target_count": 36
+}

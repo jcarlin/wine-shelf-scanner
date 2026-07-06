@@ -1,0 +1,12 @@
+{
+  "image_file": "IMG_8080.jpg",
+  "notes": "Visually re-audited 2026-05-02 against the rendered diff PNG. V0's prominent label is 'DO MO' (OCR pulled in tokens from the neighboring GIACONDI bottle, which Vision did not detect as a separate bbox). V2's visible label is 'VIÑA CRUZ TEMPRANILLO' (the front-row DARDINES bottle is what bled into the OCR). Other Vs unchanged.",
+  "targets": [
+    {"wine_name": "Do Mo", "v_idx": 0, "distinctive_tokens": ["do", "mo"]},
+    {"wine_name": "Pedras Negras Sobre Monte", "v_idx": 1, "distinctive_tokens": ["pedras", "negras", "sobre"]},
+    {"wine_name": "Vina Cruz Tempranillo", "v_idx": 2, "distinctive_tokens": ["vina", "cruz", "tempranillo"]},
+    {"wine_name": "Cloud Break Zinfandel California", "v_idx": 3, "distinctive_tokens": ["cloud", "break", "zinfandel"]},
+    {"wine_name": "Corte Balda Rosso Puglia", "v_idx": 4, "distinctive_tokens": ["corte", "balda"]},
+    {"wine_name": "Escondida", "v_idx": 5, "distinctive_tokens": ["escondida"]}
+  ]
+}

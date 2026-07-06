@@ -3,5 +3,8 @@ from .scan_stream import router as scan_stream_router
 from .feedback import router as feedback_router
 from .report import router as report_router
 from .reviews import router as reviews_router
+from .device import router as device_router
+from .client_config import router as client_config_router
 
-__all__ = ["scan_router", "scan_stream_router", "feedback_router", "report_router", "reviews_router"]
+__all__ = ["scan_router", "scan_stream_router", "feedback_router", "report_router",
+           "reviews_router", "device_router", "client_config_router"]

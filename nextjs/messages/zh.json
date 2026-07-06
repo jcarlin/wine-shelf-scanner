@@ -26,13 +26,17 @@
     "scannedWith": "使用葡萄酒货架扫描仪扫描",
     "topPicks": "货架精选：",
     "stars": "星",
-    "more": "+ {count} 更多"
+    "more": "+ {count} 更多",
+    "stillScanning": "正在识别酒标…"
   },
   "fallback": {
     "couldNotIdentify": "无法识别酒瓶",
     "tryDifferentAngle": "尝试拍摄更近的照片或换个角度",
     "tryAnother": "尝试另一张照片",
-    "winesFound": "找到的葡萄酒"
+    "winesFound": "找到的葡萄酒",
+    "tooFarTitle": "距离太远",
+    "tooFarMessage": "在这个距离下酒标太小，无法识别。请靠近酒架后重新拍照。",
+    "retake": "重新拍照"
   },
   "error": {
     "tryAgain": "重试"

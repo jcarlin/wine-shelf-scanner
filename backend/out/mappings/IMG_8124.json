@@ -1,0 +1,14 @@
+{
+  "image_file": "IMG_8124.HEIC",
+  "notes": "9 Vision bottles, almost all Cabernet Sauvignon. V5 ambiguous (skipped). V2 and V7 are both Vina Maipo (different bottles or duplicate facing).",
+  "targets": [
+    {"wine_name": "Joel Gott 815 Cabernet Sauvignon 2021", "v_idx": 0, "distinctive_tokens": ["joel", "gott"]},
+    {"wine_name": "J. Lohr Cabernet Sauvignon Paso Robles", "v_idx": 1, "distinctive_tokens": ["lohr", "paso"]},
+    {"wine_name": "Vina Maipo Classic Series Cabernet Sauvignon", "v_idx": 2, "distinctive_tokens": ["maipo", "classic"]},
+    {"wine_name": "Navarro Correas Cabernet Sauvignon", "v_idx": 3, "distinctive_tokens": ["navarro", "correas"]},
+    {"wine_name": "Kendall-Jackson Vintner's Reserve Cabernet Sauvignon", "v_idx": 4, "distinctive_tokens": ["kendall", "jackson"]},
+    {"wine_name": "Wente Cabernet Sauvignon Southern Hills", "v_idx": 6, "distinctive_tokens": ["wente", "southern"]},
+    {"wine_name": "Vina Maipo Classic Series Cabernet Sauvignon", "v_idx": 7, "distinctive_tokens": ["maipo", "classic"]},
+    {"wine_name": "Caymus Cabernet Sauvignon", "v_idx": 8, "distinctive_tokens": ["caymus"]}
+  ]
+}

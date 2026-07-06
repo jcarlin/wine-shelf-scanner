@@ -1,0 +1,13 @@
+{
+  "image_file": "IMG_8122.HEIC",
+  "notes": "7 Vision bottles. Gemini returned 0 wines for this image — every bottle should score as MISS in baseline (no prediction to match against).",
+  "targets": [
+    {"wine_name": "Santa Julia Malbec 2021", "v_idx": 0, "distinctive_tokens": ["santa", "julia", "malbec"]},
+    {"wine_name": "Concha y Toro Frontera Merlot", "v_idx": 1, "distinctive_tokens": ["frontera", "merlot"]},
+    {"wine_name": "Santa Julia Malbec 2024", "v_idx": 2, "distinctive_tokens": ["santa", "julia", "malbec"]},
+    {"wine_name": "Casillero del Diablo Reserva Merlot", "v_idx": 3, "distinctive_tokens": ["casillero", "diablo"]},
+    {"wine_name": "Familia Arizu Algarrobo", "v_idx": 4, "distinctive_tokens": ["arizu", "algarrobo"]},
+    {"wine_name": "El Enemigo Malbec 2022", "v_idx": 5, "distinctive_tokens": ["enemigo", "malbec"]},
+    {"wine_name": "Frontera Merlot", "v_idx": 6, "distinctive_tokens": ["frontera", "merlot"]}
+  ]
+}

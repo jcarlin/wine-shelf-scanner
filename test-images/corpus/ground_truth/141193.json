@@ -1,0 +1,13 @@
+{
+  "image_file": "141193.jpeg",
+  "wines": [
+    {
+      "wine_name": "Il Falchetto Brachetto d'Acqui",
+      "expected_rating": null,
+      "rating_tolerance": 0.5,
+      "notes": "Winery: Il Falchetto, Region: Brachetto d'Acqui, Type: Sparkling"
+    }
+  ],
+  "total_visible_bottles": 1,
+  "notes": "XWines evaluation image. Country: Italy. Simple name: Brachetto d'Acqui"
+}

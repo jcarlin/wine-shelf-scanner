@@ -1,0 +1,13 @@
+{
+  "image_file": "108974.jpeg",
+  "wines": [
+    {
+      "wine_name": "Wachtstetter Felix Lemberger Trocken",
+      "expected_rating": null,
+      "rating_tolerance": 0.5,
+      "notes": "Winery: Wachtstetter, Region: W\u00fcrttemberg, Type: Red"
+    }
+  ],
+  "total_visible_bottles": 1,
+  "notes": "XWines evaluation image. Country: Germany. Simple name: Felix Lemberger Trocken"
+}

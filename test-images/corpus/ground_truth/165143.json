@@ -1,0 +1,13 @@
+{
+  "image_file": "165143.jpeg",
+  "wines": [
+    {
+      "wine_name": "Erasmo Cabernet Franc",
+      "expected_rating": null,
+      "rating_tolerance": 0.5,
+      "notes": "Winery: Erasmo, Region: Maule Valley, Type: Red"
+    }
+  ],
+  "total_visible_bottles": 1,
+  "notes": "XWines evaluation image. Country: Chile. Simple name: Cabernet Franc"
+}

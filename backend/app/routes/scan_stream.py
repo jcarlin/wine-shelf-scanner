@@ -1,80 +1,81 @@
 """
-SSE streaming scan endpoint for progressive wine recognition.
+POST /scan/stream — progressive scan via Server-Sent Events.
 
-Streams results in two phases:
-- phase1: Vision API + DB matching (turbo-quality, ~3.5s)
-- phase2: Gemini-enhanced full results (~6-8s)
-- done: stream complete
+Detect+Read makes 2-4 parallel crop-read LLM calls per scan; each completed
+chunk is a natural streaming boundary. First badges reach the client as soon
+as detection + the fastest chunk finish (~6-8s) instead of after the slowest
+chunk + rescue pass (~12-18s).
 
-Both phase1 and phase2 emit complete ScanResponse JSON.
-Phase2 is a full replacement — the frontend swaps its entire state.
+Events:
+  - `partial` (0+ times): complete ScanResponse JSON with the wines read so
+    far. Cumulative replacement — the client swaps its entire state.
+  - `done` (exactly once on success): the final complete ScanResponse,
+    identical to what POST /scan would have returned.
+  - `error` (terminal, on pipeline failure): {"message": str}. Clients
+    should keep any partial results they already rendered, or fall back to
+    POST /scan if nothing arrived.
+
+Only PIPELINE_MODE=detect_read supports streaming; other modes return 501 so
+clients fall back to POST /scan. POST /scan itself is unchanged (iOS uses it).
 """
 
-import io
 import json
 import logging
 import uuid
-from typing import Optional
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
-from PIL import Image
-from pillow_heif import register_heif_opener
 
 from ..config import Config
 from ..feature_flags import FeatureFlags, get_feature_flags
-from ..models import DebugData, DebugPipelineStep, ScanResponse
-from ..models.enums import WineSource
-from ..services.flash_names_pipeline import FlashNamesPipeline
+from ..models import ScanQuality, ScanResponse
+from ..services.abuse_protection import enforce_abuse_protection, record_scan_spend
+from ..services.detect_read_pipeline import DetectReadPipeline
 from ..services.wine_matcher import WineMatcher
-from .scan import build_results_from_recognized, convert_heic_to_jpeg, get_wine_matcher, is_valid_image_content_type
+from .scan import (
+    build_results_from_recognized,
+    convert_heic_to_jpeg,
+    get_wine_matcher,
+    is_valid_image_content_type,
+    map_pipeline_error,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# Ensure HEIF opener is registered
-register_heif_opener()
+
+def _sse(event: str, data: dict) -> str:
+    return f"event: {event}\ndata: {json.dumps(data)}\n\n"
 
 
 @router.post("/scan/stream")
-async def scan_stream(
+async def scan_shelf_stream(
     image: UploadFile = File(..., description="Wine shelf image"),
-    debug: bool = Query(default=None, description="Include pipeline debug info"),
     wine_matcher: WineMatcher = Depends(get_wine_matcher),
     flags: FeatureFlags = Depends(get_feature_flags),
-):
-    """
-    Progressive scan endpoint using Server-Sent Events (SSE).
+    device_key: str = Depends(enforce_abuse_protection),
+) -> StreamingResponse:
+    """Progressive scan: stream partial results as crop-read chunks complete."""
+    if Config.pipeline_mode() != "detect_read":
+        raise HTTPException(
+            status_code=501,
+            detail="Streaming scan requires PIPELINE_MODE=detect_read; use POST /scan.",
+        )
 
-    Streams wine recognition results in two phases:
-    - event: phase1 — turbo-quality results from Vision API + DB matching (~3.5s)
-    - event: phase2 — Gemini-enhanced results with full metadata (~6-8s)
-    - event: done — stream complete
-
-    Both phase1 and phase2 data are complete ScanResponse JSON objects.
-    Phase2 is a full replacement of phase1.
-
-    If the SSE connection drops after phase1, the client still has usable results.
-    If Gemini fails, phase2 still emits with turbo-only data (graceful degradation).
-    """
-    # Validate content type
     if not is_valid_image_content_type(image.content_type):
         raise HTTPException(
             status_code=400,
             detail="Invalid image type. Supported formats: JPEG, PNG, HEIC, WebP."
         )
 
-    # Read image
     try:
         image_bytes = await image.read()
     except IOError as e:
         logger.error(f"Failed to read uploaded image: {e}")
         raise HTTPException(status_code=400, detail="Failed to read image file")
 
-    # Convert HEIC/HEIF to JPEG
     image_bytes = convert_heic_to_jpeg(image_bytes, image.content_type)
 
-    # Validate file size
     if len(image_bytes) > Config.MAX_IMAGE_SIZE_BYTES:
         raise HTTPException(
             status_code=400,
@@ -82,143 +83,54 @@ async def scan_stream(
         )
 
     image_id = str(uuid.uuid4())
-    logger.info(f"[{image_id}] SSE scan request received ({len(image_bytes)} bytes)")
 
-    async def event_generator():
-        pipeline = FlashNamesPipeline(
-            wine_matcher=wine_matcher,
-            model=f"gemini/{Config.fast_pipeline_model()}",
-        )
-
-        locked_ratings: dict[str, float] = {}
-        all_recognized = []
-        last_fallback = []
-
+    async def event_stream():
         try:
-            async for partial in pipeline.scan_progressive(image_bytes):
-                phase = partial.timings.get('phase', 1)
-                all_recognized = partial.recognized_wines
-                last_fallback = partial.fallback
-
+            pipeline = DetectReadPipeline(wine_matcher=wine_matcher)
+            async for result in pipeline.scan_stream(image_bytes, image_id=image_id):
+                # Partial snapshots skip enrichment/DB-sync (fast, repeated);
+                # the final one gets the full POST /scan treatment.
                 results, fallback = build_results_from_recognized(
-                    partial.recognized_wines,
+                    result.recognized_wines,
                     wine_matcher,
-                    pipeline_fallback=partial.fallback,
                     flags=flags,
-                    skip_enrichment=True,
+                    skip_enrichment=result.partial,
                 )
-
-                # IMMUTABILITY: restore locked ratings for wines already sent
-                for r in results:
-                    key = r.wine_name.lower().strip()
-                    if key in locked_ratings:
-                        r.rating = locked_ratings[key]
-
-                # Lock all new ratings
-                for r in results:
-                    key = r.wine_name.lower().strip()
-                    if key not in locked_ratings and r.rating is not None:
-                        locked_ratings[key] = r.rating
-
-                debug_data = None
-                if debug:
-                    pipeline_steps = []
-                    for idx, rw in enumerate(partial.recognized_wines):
-                        bt = rw.bottle_text
-                        # Determine how this wine was identified
-                        if bt and bt.combined_text:
-                            id_source = "ocr"
-                        elif rw.source == WineSource.VISION:
-                            id_source = "vision"
-                        else:
-                            id_source = "gemini"
-                        pipeline_steps.append(DebugPipelineStep(
-                            raw_text=(bt.combined_text or "") if bt else "",
-                            normalized_text=(bt.normalized_name or "") if bt else rw.wine_name,
-                            bottle_index=idx,
-                            identification_source=id_source,
-                            final_result={
-                                "wine_name": rw.wine_name,
-                                "confidence": rw.confidence,
-                                "source": rw.source.value,
-                            },
-                            included_in_results=True,
-                        ))
-                    for fw in partial.fallback:
-                        wine_name = fw.get("wine_name", "") if isinstance(fw, dict) else str(fw)
-                        pipeline_steps.append(DebugPipelineStep(
-                            raw_text=wine_name,
-                            normalized_text=wine_name,
-                            bottle_index=-1,
-                            final_result=None,
-                            included_in_results=False,
-                        ))
-                    timings = partial.timings
-                    debug_data = DebugData(
-                        pipeline_steps=pipeline_steps,
-                        total_ocr_texts=timings.get('ocr_texts_count', 0),
-                        bottles_detected=timings.get('vision_bottles', 0),
-                        texts_matched=len(partial.recognized_wines),
-                        llm_calls_made=1 if timings.get('llm_wines', 0) > 0 else 0,
-                    )
-
                 response = ScanResponse(
                     image_id=image_id,
                     results=results,
                     fallback_list=fallback,
-                    debug=debug_data,
+                    scan_quality=(ScanQuality(**result.scan_quality)
+                                  if result.scan_quality else None),
                 )
-
-                data = response.model_dump_json()
-                yield f"event: phase{phase}\ndata: {data}\n\n"
-
-                logger.info(
-                    f"[{image_id}] SSE phase{phase}: "
-                    f"{len(results)} results, {len(fallback)} fallback "
-                    f"({partial.timings.get('total_ms', 0)}ms)"
-                )
+                event = "partial" if result.partial else "done"
+                yield _sse(event, response.model_dump(mode="json"))
+                if not result.partial:
+                    record_scan_spend(result.timings.get("cost_usd"))
+                    logger.info(
+                        f"[{image_id}] /scan/stream done: {len(results)} results "
+                        f"(model={result.timings.get('model')}, "
+                        f"cost=${result.timings.get('cost_usd')}, "
+                        f"{result.timings.get('notes')})"
+                    )
         except Exception as e:
-            logger.error(f"[{image_id}] SSE pipeline error: {e}", exc_info=True)
-            error_data = json.dumps({"error": str(e)})
-            yield f"event: error\ndata: {error_data}\n\n"
-
-        # Async metadata enrichment: run enrichment and emit metadata event
-        try:
-            enriched_results, enriched_fallback = build_results_from_recognized(
-                all_recognized,
-                wine_matcher,
-                pipeline_fallback=last_fallback,
-                flags=flags,
-                skip_enrichment=False,
-            )
-
-            metadata: dict[str, dict] = {}
-            for r in enriched_results:
-                metadata[r.wine_name] = {
-                    "wine_type": r.wine_type,
-                    "brand": r.brand,
-                    "region": r.region,
-                    "varietal": r.varietal,
-                    "blurb": r.blurb,
-                    "review_count": r.review_count,
-                    "review_snippets": r.review_snippets,
-                    "wine_id": r.wine_id,
-                    "pairing": r.pairing,
-                    "is_safe_pick": r.is_safe_pick,
-                }
-
-            yield f"event: metadata\ndata: {json.dumps(metadata)}\n\n"
-        except Exception as e:
-            logger.warning(f"[{image_id}] Metadata enrichment failed: {e}")
-
-        yield f"event: done\ndata: {{}}\n\n"
+            # Already streaming — status is committed, so signal in-band.
+            mapped = map_pipeline_error(e)
+            if mapped:
+                logger.warning(f"[{image_id}] /scan/stream pipeline failure: {e}")
+            else:
+                logger.error(f"[{image_id}] /scan/stream failed: {e}", exc_info=True)
+            yield _sse("error", {
+                "message": mapped[1] if mapped else "Scan failed. Please try again.",
+            })
 
     return StreamingResponse(
-        event_generator(),
+        event_stream(),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
-            "X-Accel-Buffering": "no",  # Disable nginx buffering
+            # Disable proxy buffering so partials actually reach the client.
+            "X-Accel-Buffering": "no",
         },
     )

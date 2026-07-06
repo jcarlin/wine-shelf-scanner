@@ -1,0 +1,400 @@
+{
+  "image_file": "IMG_8123.HEIC",
+  "wines": [],
+  "audit": {
+    "date": "2026-07-04",
+    "notes": "Corpus v2: rebuilt via detection-seeded annotation (tiled-Vision boxes, per-box zoom-crop reading, no-guessing rule). source=annotator_approx boxes are approximate hand boxes."
+  },
+  "overlay_targets": [
+    {
+      "wine_name": "Rombauer Vineyards Carneros Chardonnay",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "rombauer",
+        "carneros",
+        "chardonnay"
+      ],
+      "bbox": {
+        "x": 0.3301,
+        "y": 0.1167,
+        "w": 0.1074,
+        "h": 0.2739
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Bread & Butter Chardonnay 2022",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "bread",
+        "butter",
+        "chardonnay"
+      ],
+      "bbox": {
+        "x": 0.8271,
+        "y": 0.1185,
+        "w": 0.1146,
+        "h": 0.2499
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Rombauer Vineyards Carneros Chardonnay",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "rombauer",
+        "carneros",
+        "chardonnay"
+      ],
+      "bbox": {
+        "x": 0.4291,
+        "y": 0.1202,
+        "w": 0.1026,
+        "h": 0.2729
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Bread & Butter Chardonnay 2022",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "bread",
+        "butter",
+        "chardonnay"
+      ],
+      "bbox": {
+        "x": 0.7215,
+        "y": 0.1252,
+        "w": 0.1101,
+        "h": 0.2454
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Bread & Butter Chardonnay 2022",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "bread",
+        "butter",
+        "chardonnay"
+      ],
+      "bbox": {
+        "x": 0.5912,
+        "y": 0.1275,
+        "w": 0.1022,
+        "h": 0.2454
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Lindeman's Bin 50 Shiraz",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "lindeman's",
+        "bin",
+        "shiraz"
+      ],
+      "bbox": {
+        "x": 0.0026,
+        "y": 0.1241,
+        "w": 0.0968,
+        "h": 0.242
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Decoy Chardonnay 2022",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "decoy",
+        "chardonnay"
+      ],
+      "bbox": {
+        "x": 0.1763,
+        "y": 0.1393,
+        "w": 0.1,
+        "h": 0.2313
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Gran Syrah",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "gran",
+        "syrah"
+      ],
+      "bbox": {
+        "x": 0.3953,
+        "y": 0.7282,
+        "w": 0.0898,
+        "h": 0.2403
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Undurraga Chardonnay",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "undurraga",
+        "chardonnay"
+      ],
+      "bbox": {
+        "x": 0.8242,
+        "y": 0.7344,
+        "w": 0.082,
+        "h": 0.2461
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Decoy Chardonnay 2022",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "decoy",
+        "chardonnay"
+      ],
+      "bbox": {
+        "x": 0.3887,
+        "y": 0.4766,
+        "w": 0.0918,
+        "h": 0.2188
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Frontera Chardonnay",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "frontera",
+        "chardonnay"
+      ],
+      "bbox": {
+        "x": 0.7731,
+        "y": 0.4722,
+        "w": 0.0898,
+        "h": 0.2212
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Santa Julia Chenin Blanc",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "santa",
+        "julia",
+        "chenin",
+        "blanc"
+      ],
+      "bbox": {
+        "x": 0.5379,
+        "y": 0.7114,
+        "w": 0.0758,
+        "h": 0.2594
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Gran Syrah",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "gran",
+        "syrah"
+      ],
+      "bbox": {
+        "x": 0.3369,
+        "y": 0.7237,
+        "w": 0.0831,
+        "h": 0.2246
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Undurraga Chardonnay",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "undurraga",
+        "chardonnay"
+      ],
+      "bbox": {
+        "x": 0.6777,
+        "y": 0.726,
+        "w": 0.0797,
+        "h": 0.2313
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Decoy Chardonnay 2022",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "decoy",
+        "chardonnay"
+      ],
+      "bbox": {
+        "x": 0.4764,
+        "y": 0.4797,
+        "w": 0.08,
+        "h": 0.2193
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Frontera Chardonnay",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "frontera",
+        "chardonnay"
+      ],
+      "bbox": {
+        "x": 0.6114,
+        "y": 0.4713,
+        "w": 0.0797,
+        "h": 0.2187
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Lindeman's Bin 50 Shiraz",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "lindeman's",
+        "bin",
+        "shiraz"
+      ],
+      "bbox": {
+        "x": 0.1162,
+        "y": 0.1505,
+        "w": 0.0803,
+        "h": 0.2156
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Undurraga Chardonnay",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "undurraga",
+        "chardonnay"
+      ],
+      "bbox": {
+        "x": 0.7529,
+        "y": 0.7282,
+        "w": 0.0741,
+        "h": 0.2313
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Casal Mendes Rose",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "casal",
+        "mendes",
+        "rose"
+      ],
+      "bbox": {
+        "x": 0.0491,
+        "y": 0.7372,
+        "w": 0.0896,
+        "h": 0.1887
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Casal Mendes Rose",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "casal",
+        "mendes",
+        "rose"
+      ],
+      "bbox": {
+        "x": 0.137,
+        "y": 0.7395,
+        "w": 0.0842,
+        "h": 0.1909
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Gran Syrah",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "gran",
+        "syrah"
+      ],
+      "bbox": {
+        "x": 0.4762,
+        "y": 0.726,
+        "w": 0.0674,
+        "h": 0.2313
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Casal Mendes Vinho Verde",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "casal",
+        "mendes",
+        "verde"
+      ],
+      "bbox": {
+        "x": 0.1314,
+        "y": 0.4946,
+        "w": 0.0898,
+        "h": 0.1718
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Casal Mendes Vinho Verde",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "casal",
+        "mendes",
+        "verde"
+      ],
+      "bbox": {
+        "x": 0.219,
+        "y": 0.4932,
+        "w": 0.082,
+        "h": 0.1766
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Casal Mendes Vinho Verde",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "casal",
+        "mendes",
+        "verde"
+      ],
+      "bbox": {
+        "x": 0.3257,
+        "y": 0.496,
+        "w": 0.0584,
+        "h": 0.1659
+      },
+      "source": "detector_box_verified"
+    },
+    {
+      "wine_name": "Decoy Chardonnay 2022",
+      "bbox_kind": "bottle",
+      "distinctive_tokens": [
+        "decoy",
+        "chardonnay"
+      ],
+      "bbox": {
+        "x": 0.28,
+        "y": 0.19,
+        "w": 0.075,
+        "h": 0.28
+      },
+      "source": "annotator_approx"
+    }
+  ],
+  "overlay_target_count": 25
+}

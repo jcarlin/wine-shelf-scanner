@@ -1,0 +1,10 @@
+{
+  "image_file": "IMG_8262.HEIC",
+  "notes": "4 Vision bottles. V3 ('Bosca Montmayou') is not in Gemini's list — Gemini missed it.",
+  "targets": [
+    {"wine_name": "Alamos Malbec", "v_idx": 0, "distinctive_tokens": ["alamos", "malbec"]},
+    {"wine_name": "Trapiche Reserva Malbec", "v_idx": 1, "distinctive_tokens": ["trapiche", "reserva"]},
+    {"wine_name": "Finca Las Moras Malbec", "v_idx": 2, "distinctive_tokens": ["finca", "moras"]},
+    {"wine_name": "Bosca Montmayou Malbec", "v_idx": 3, "distinctive_tokens": ["bosca", "montmayou"]}
+  ]
+}

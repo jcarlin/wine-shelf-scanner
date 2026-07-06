@@ -1,0 +1,13 @@
+{
+  "image_file": "150384.jpeg",
+  "wines": [
+    {
+      "wine_name": "Saglietti Flavio Cerequio Barolo",
+      "expected_rating": null,
+      "rating_tolerance": 0.5,
+      "notes": "Winery: Saglietti Flavio, Region: Barolo, Type: Red"
+    }
+  ],
+  "total_visible_bottles": 1,
+  "notes": "XWines evaluation image. Country: Italy. Simple name: Cerequio Barolo"
+}

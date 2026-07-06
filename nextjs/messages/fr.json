@@ -26,13 +26,17 @@
     "scannedWith": "Scanné avec Scanner de Rayon à Vins",
     "topPicks": "Meilleurs choix du rayon :",
     "stars": "étoiles",
-    "more": "+ {count} de plus"
+    "more": "+ {count} de plus",
+    "stillScanning": "Lecture des étiquettes…"
   },
   "fallback": {
     "couldNotIdentify": "Impossible d'identifier les bouteilles",
     "tryDifferentAngle": "Essayez une photo plus proche ou un angle différent",
     "tryAnother": "Essayer une Autre Photo",
-    "winesFound": "Vins Trouvés"
+    "winesFound": "Vins Trouvés",
+    "tooFarTitle": "Trop loin",
+    "tooFarMessage": "Les étiquettes des vins sont trop petites pour être lues à cette distance. Rapprochez-vous du rayon et reprenez la photo.",
+    "retake": "Reprendre la photo"
   },
   "error": {
     "tryAgain": "Réessayer"

@@ -50,12 +50,12 @@ export default function Home() {
         )
       )}
 
-      {(state.status === 'results' || state.status === 'partial_results') && (
+      {state.status === 'results' && (
         <ResultsView
           response={state.response}
           imageUri={state.imageUri}
           onReset={reset}
-          isPartial={state.status === 'partial_results'}
+          scanning={state.partial}
         />
       )}
 

@@ -68,6 +68,7 @@ class WineResult(BaseModel):
     region: Optional[str] = Field(None, description="Wine region (e.g., 'Napa Valley', 'Burgundy')")
     varietal: Optional[str] = Field(None, description="Grape varietal (e.g., 'Cabernet Sauvignon')")
     blurb: Optional[str] = Field(None, description="Brief description of the wine or producer")
+    vintage: Optional[str] = Field(None, description="Wine vintage year, e.g. '2021', or None if NV / unreadable")
     review_count: Optional[int] = Field(None, description="Number of reviews")
     review_snippets: Optional[list[str]] = Field(None, description="Sample review quotes")
     # Feature-flagged fields (null when feature is off)
@@ -90,6 +91,18 @@ class FallbackWine(BaseModel):
     rating: float = Field(..., ge=1, le=5, description="Star rating (1-5)")
 
 
+class ScanQuality(BaseModel):
+    """Input-quality signal for a scan (additive, optional — existing clients
+    that don't know the field simply ignore it)."""
+    status: str = Field(..., description="Quality verdict, e.g. 'low_resolution'")
+    median_bottle_px: Optional[float] = Field(
+        None, description="Median detected bottle width in full-resolution pixels"
+    )
+    bottles_detected: Optional[int] = Field(
+        None, description="Number of bottles detected before the gate fired"
+    )
+
+
 class ScanResponse(BaseModel):
     """Response from /scan endpoint."""
     image_id: str = Field(..., description="Unique identifier for this scan")
@@ -100,6 +113,13 @@ class ScanResponse(BaseModel):
     fallback_list: list[FallbackWine] = Field(
         default_factory=list,
         description="Wines detected but not positioned"
+    )
+    # Optional, additive: set when the input image fails the quality gate
+    # (bottles too small to read). Frozen results/fallback_list contract is
+    # untouched; clients unaware of this field keep working.
+    scan_quality: Optional[ScanQuality] = Field(
+        None,
+        description="Input-quality signal (e.g. low_resolution) when the scan was gated"
     )
     # Debug data is only included when ?debug=true
     debug: Optional["DebugData"] = Field(

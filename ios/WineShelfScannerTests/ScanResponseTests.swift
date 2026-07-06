@@ -216,4 +216,89 @@ final class ScanResponseTests: XCTestCase {
         XCTAssertTrue(tappable.isTappable)
         XCTAssertFalse(notTappable.isTappable)
     }
+
+    // MARK: - Scan Quality Tests
+
+    func testDecodingScanQuality() throws {
+        let json = """
+        {
+          "image_id": "test-quality",
+          "results": [],
+          "fallback_list": [],
+          "scan_quality": {
+            "status": "low_resolution",
+            "median_bottle_px": 42.5,
+            "bottles_detected": 12
+          }
+        }
+        """
+        let response = try JSONDecoder().decode(ScanResponse.self, from: json.data(using: .utf8)!)
+
+        XCTAssertEqual(response.scanQuality?.status, "low_resolution")
+        XCTAssertEqual(response.scanQuality?.medianBottlePx, 42.5)
+        XCTAssertEqual(response.scanQuality?.bottlesDetected, 12)
+    }
+
+    func testDecodingWithoutScanQuality() throws {
+        // Older servers omit scan_quality entirely
+        let json = """
+        {"image_id":"test","results":[],"fallback_list":[]}
+        """
+        let response = try JSONDecoder().decode(ScanResponse.self, from: json.data(using: .utf8)!)
+
+        XCTAssertNil(response.scanQuality)
+    }
+
+    func testDecodingScanQualityWithOptionalFieldsOmitted() throws {
+        let json = """
+        {
+          "image_id": "test",
+          "results": [],
+          "fallback_list": [],
+          "scan_quality": {"status": "ok"}
+        }
+        """
+        let response = try JSONDecoder().decode(ScanResponse.self, from: json.data(using: .utf8)!)
+
+        XCTAssertEqual(response.scanQuality?.status, "ok")
+        XCTAssertNil(response.scanQuality?.medianBottlePx)
+        XCTAssertNil(response.scanQuality?.bottlesDetected)
+    }
+
+    func testIsLowResolutionFailure() {
+        let lowRes = ScanResponse(
+            imageId: "t", results: [], fallbackList: [], debug: nil,
+            scanQuality: ScanQuality(status: "low_resolution", medianBottlePx: 40, bottlesDetected: 10)
+        )
+        XCTAssertTrue(lowRes.isLowResolutionFailure)
+
+        // Visible results present → not a low-res failure even if flagged
+        let withResults = ScanResponse(
+            imageId: "t",
+            results: [WineResult(wineName: "A", rating: 4.5, confidence: 0.9, bbox: BoundingBox(x: 0, y: 0, width: 0.1, height: 0.3))],
+            fallbackList: [], debug: nil,
+            scanQuality: ScanQuality(status: "low_resolution", medianBottlePx: 40, bottlesDetected: 10)
+        )
+        XCTAssertFalse(withResults.isLowResolutionFailure)
+
+        // No scan_quality → plain empty result, not a low-res failure
+        let noQuality = ScanResponse(imageId: "t", results: [], fallbackList: [], debug: nil)
+        XCTAssertFalse(noQuality.isLowResolutionFailure)
+
+        // Different status → not a low-res failure
+        let okQuality = ScanResponse(
+            imageId: "t", results: [], fallbackList: [], debug: nil,
+            scanQuality: ScanQuality(status: "ok", medianBottlePx: 200, bottlesDetected: 10)
+        )
+        XCTAssertFalse(okQuality.isLowResolutionFailure)
+
+        // Only hidden-confidence results (below visibility) still counts as zero visible
+        let hiddenOnly = ScanResponse(
+            imageId: "t",
+            results: [WineResult(wineName: "A", rating: 4.5, confidence: 0.30, bbox: BoundingBox(x: 0, y: 0, width: 0.1, height: 0.3))],
+            fallbackList: [], debug: nil,
+            scanQuality: ScanQuality(status: "low_resolution", medianBottlePx: 40, bottlesDetected: 10)
+        )
+        XCTAssertTrue(hiddenOnly.isLowResolutionFailure)
+    }
 }

@@ -75,11 +75,30 @@ the ≥20-photo accuracy re-proof (W2-A) is a **human gate** (photo trip).
 - W4 server piece also on `launch-w1` (commit `5e8f2be`): `GET /config` returns
   `feature_subscription` (env-flippable on Cloud Run — paywall activates without resubmission).
 
-## W2-i — iOS pre-upload quality check — pending
+## W2-i — iOS input-quality UX — ✅ DONE (merged `19b129d`)
 
-## W3 — Staged waiting UX + warmup — pending
+`ScanQuality` parsing (additive, older-server safe); guided-retake "Too far away" screen
+replaces the fallback path when the backend gate fires (same copy as the webapp, 10 locales);
+non-blocking <2MP pre-upload warning with "Scan Anyway". 12 new tests.
 
-## W4 — Monthly reset, .storekit, remote paywall flag — pending
+## W3 — Staged waiting UX + warmup — ✅ DONE (merged `19b129d`)
+
+Pure `ScanProgressModel.stage(forElapsed:)` — "Finding bottles…" → "Reading labels…" →
+"Ranking picks…" + reassurance line at 25s, TimelineView-driven, 10 locales.
+`WarmupService.ping()` fires GET /health on scene-active (hides the Cloud Run wake-up).
+10 new tests. (Staged-UI screenshot not capturable: mock scans resolve in 0.1s and UI
+automation is broken on this host — the pure-function tests are the verification.)
+
+## W4 — Monthly reset, .storekit, remote paywall flag — ✅ DONE (merged `19b129d`)
+
+ScanCounter is now per-calendar-month (period key + injectable clock; 9 tests incl. month/yr
+boundaries). `WineShelfScanner.storekit` with the two products, wired into the scheme —
+**verified with a real SKTestSession**: SubscriptionManager loads both products with correct
+names/prices. `RemoteFlagsService` fetches GET /config on launch and overrides
+`feature_subscription`; failures leave the persisted state untouched. 6 tests.
+iOS `AppAttestManager` (W1 client): registers + asserts per scan, all failures degrade to an
+unattested scan (server admits in log mode); scan-403 clears registration for self-heal;
+11 tests. **All 164 unit tests pass — independently re-run by the session lead.**
 
 ## Human gates (exact asks)
 
@@ -103,4 +122,20 @@ the ≥20-photo accuracy re-proof (W2-A) is a **human gate** (photo trip).
    `API_CLIENT_SECRET` on Cloud Run + Vercel. Until then prod runs `log` mode
    (quota + spend breaker active; attestation optional).
 
-## Deploy — blocked on W0-B + W1 + gate-conflict resolution
+## Deploy — ✅ LIVE (2026-07-05)
+
+The owner exercised the rollout plan's sign-off gate: PR #51 and follow-up #52
+(rating-overlays → main, containing all backend W0/W1/W2/W4-server work merged by this
+session plus the rollout session's streams) were merged; the GitHub Actions **Deploy
+workflow succeeded**. The gate conflict noted at the top of this log resolved itself —
+the owner merged, so no unilateral deploy decision was needed from this session.
+
+**Production smoke test (this session, post-deploy):**
+- `GET /health` → healthy (warm instance, minScale=1).
+- `GET /config` → `{"feature_subscription": false}` — W4 remote paywall flag live, off.
+- `POST /device/challenge` → issues challenges — W1 endpoints live.
+- `POST /scan` (wine1.jpeg, unattested with X-Device-Id, log mode) → **6 detect_read
+  results in 7.6s** (correct wines incl. one the local run missed; `scan_quality: null`).
+  Quota + spend breaker armed (40/day/identity, $25/day global).
+- Stream 6 (rollout session) independently confirmed accuracy on an unseen 24.5MP device
+  photo: badge precision .941, 0 swaps, coverage .762, $0.0285/scan.

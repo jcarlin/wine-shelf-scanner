@@ -79,3 +79,17 @@
 "bugReport.thanksImprove" = "개선에 도움을 주셔서 감사합니다!";
 "bugReport.done" = "완료";
 "bugReport.cancel" = "취소";
+
+/* Input Quality */
+"fallback.tooFarTitle" = "너무 멀리 있습니다";
+"fallback.tooFarMessage" = "이 거리에서는 와인 라벨이 너무 작아 읽을 수 없습니다. 진열대에 더 가까이 가서 다시 촬영해 주세요.";
+"fallback.retake" = "다시 촬영";
+"quality.lowResTitle" = "이 사진은 읽기 어려울 수 있습니다";
+"quality.lowResMessage" = "저해상도 사진은 와인 라벨을 읽기 어렵습니다. 더 가까이에서 밝은 곳에서 촬영해 주세요.";
+"quality.scanAnyway" = "그대로 스캔";
+
+/* Processing Stages */
+"processing.findingBottles" = "병을 찾는 중…";
+"processing.readingLabels" = "라벨 읽는 중…";
+"processing.rankingPicks" = "추천 순위를 매기는 중…";
+"processing.stillWorking" = "계속 처리 중입니다 — 큰 진열대는 시간이 조금 더 걸립니다";

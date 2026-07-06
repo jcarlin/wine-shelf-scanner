@@ -33,21 +33,26 @@ struct ResultsView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Show fallback list if full failure, otherwise show overlay view
-            if response.isFullFailure {
-                FallbackListView(wines: response.fallbackList)
+            // Guided retake when the photo was too far away to read anything
+            if response.isLowResolutionFailure {
+                TooFarView(onRetake: onNewScan)
             } else {
-                resultsSummaryHeader
-                overlayImageView
-            }
+                // Show fallback list if full failure, otherwise show overlay view
+                if response.isFullFailure {
+                    FallbackListView(wines: response.fallbackList)
+                } else {
+                    resultsSummaryHeader
+                    overlayImageView
+                }
 
-            // Debug tray (when debug data present)
-            if let debugData = response.debug {
-                DebugTray(debugData: debugData)
-            }
+                // Debug tray (when debug data present)
+                if let debugData = response.debug {
+                    DebugTray(debugData: debugData)
+                }
 
-            // Bottom action bar
-            bottomBar
+                // Bottom action bar
+                bottomBar
+            }
         }
         .accessibilityIdentifier("resultsView")
         .sheet(item: $selectedWine) { wine in
@@ -259,6 +264,50 @@ struct ToastView: View {
             )
             .shadow(color: .black.opacity(0.3), radius: 8, y: 4)
             .padding(.top, 8)
+    }
+}
+
+/// Guided retake screen shown when the backend flagged the photo as too
+/// far away to read (scan_quality.status == "low_resolution").
+struct TooFarView: View {
+    let onRetake: () -> Void
+
+    var body: some View {
+        VStack(spacing: 24) {
+            Spacer()
+
+            Image(systemName: "arrow.up.left.and.down.right.magnifyingglass")
+                .font(.system(size: 60))
+                .foregroundColor(.white.opacity(0.7))
+
+            Text(NSLocalizedString("fallback.tooFarTitle", comment: "Too far away title"))
+                .font(.title2)
+                .fontWeight(.semibold)
+                .foregroundColor(.white)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
+
+            Text(NSLocalizedString("fallback.tooFarMessage", comment: "Too far away message"))
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.6))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+
+            Button(action: onRetake) {
+                Label(NSLocalizedString("fallback.retake", comment: "Retake photo button"), systemImage: "camera.fill")
+                    .font(.headline)
+                    .foregroundColor(.black)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(Color.white)
+                    .cornerRadius(12)
+            }
+            .accessibilityIdentifier("retakeButton")
+            .padding(.horizontal, 40)
+
+            Spacer()
+        }
+        .accessibilityIdentifier("tooFarView")
     }
 }
 

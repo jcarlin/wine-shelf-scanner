@@ -11,6 +11,7 @@ struct ContentView: View {
     @State private var showAbout = false
     @State private var showCachedScans = false
     @State private var showPaywall = false
+    @State private var lowResPendingImage: UIImage?
     @Environment(\.scenePhase) private var scenePhase
 
     /// Whether we're running in UI test mode (bypass photo picker)
@@ -250,9 +251,35 @@ struct ContentView: View {
                 PaywallView(subscriptionManager: subscriptionManager)
             }
             .onChange(of: capturedImage) { newImage in
-                if let image = newImage {
+                guard let image = newImage else { return }
+                // Pre-upload heuristic: warn (non-blocking) when the photo is
+                // likely too small for labels to be readable. Skipped in UI
+                // test mode (mock images are intentionally tiny).
+                if !isUITesting && ImageQualityCheck.isBelowRecommendedResolution(image) {
+                    lowResPendingImage = image
+                } else {
                     viewModel.performScan(with: image)
                 }
+            }
+            .alert(
+                NSLocalizedString("quality.lowResTitle", comment: "Low resolution warning title"),
+                isPresented: Binding(
+                    get: { lowResPendingImage != nil },
+                    set: { if !$0 { lowResPendingImage = nil } }
+                )
+            ) {
+                Button(NSLocalizedString("quality.scanAnyway", comment: "Scan anyway button")) {
+                    if let image = lowResPendingImage {
+                        viewModel.performScan(with: image)
+                    }
+                    lowResPendingImage = nil
+                }
+                Button(NSLocalizedString("fallback.retake", comment: "Retake photo button"), role: .cancel) {
+                    lowResPendingImage = nil
+                    capturedImage = nil
+                }
+            } message: {
+                Text(NSLocalizedString("quality.lowResMessage", comment: "Low resolution warning message"))
             }
             .onAppear {
                 // Restore completed background scan from previous session
@@ -262,6 +289,8 @@ struct ContentView: View {
                 if newPhase == .active {
                     // Check for completed background scan when returning to foreground
                     viewModel.restoreBackgroundScanIfNeeded()
+                    // Warm the backend while the user picks a photo (hides cold start)
+                    WarmupService.shared.warmUp()
                 }
             }
         }
@@ -416,27 +445,44 @@ struct ProcessingView: View {
     ]
 
     @State private var currentTipIndex = 0
+    @State private var startDate = Date()
     let timer = Timer.publish(every: 3, on: .main, in: .common).autoconnect()
 
     var body: some View {
-        VStack(spacing: 16) {
-            ProgressView()
-                .scaleEffect(1.5)
-                .tint(.white)
-                .accessibilityIdentifier("processingSpinner")
+        // Staged, honest waiting: stage text follows what the backend is
+        // actually doing at this point in a scan (see ScanProgressModel).
+        TimelineView(.periodic(from: .now, by: 1)) { context in
+            let elapsed = context.date.timeIntervalSince(startDate)
 
-            Text(NSLocalizedString("processing.analyzing", comment: "Processing status"))
-                .font(.headline)
-                .foregroundColor(.white)
+            VStack(spacing: 16) {
+                ProgressView()
+                    .scaleEffect(1.5)
+                    .tint(.white)
+                    .accessibilityIdentifier("processingSpinner")
 
-            Text(tips[currentTipIndex])
-                .font(.subheadline)
-                .foregroundColor(.white.opacity(0.5))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
-                .id(currentTipIndex)
-                .transition(.opacity)
-                .animation(.easeInOut(duration: 0.5), value: currentTipIndex)
+                Text(ScanProgressModel.stage(forElapsed: elapsed).localizedText)
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .accessibilityIdentifier("processingStageLabel")
+
+                if ScanProgressModel.showsReassurance(forElapsed: elapsed) {
+                    Text(NSLocalizedString("processing.stillWorking", comment: "Reassurance for long scans"))
+                        .font(.footnote)
+                        .foregroundColor(.white.opacity(0.6))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
+                        .accessibilityIdentifier("processingReassuranceLabel")
+                }
+
+                Text(tips[currentTipIndex])
+                    .font(.subheadline)
+                    .foregroundColor(.white.opacity(0.5))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+                    .id(currentTipIndex)
+                    .transition(.opacity)
+                    .animation(.easeInOut(duration: 0.5), value: currentTipIndex)
+            }
         }
         .onReceive(timer) { _ in
             currentTipIndex = (currentTipIndex + 1) % tips.count

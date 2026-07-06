@@ -79,3 +79,17 @@
 "bugReport.thanksImprove" = "Danke, dass Sie uns helfen, besser zu werden!";
 "bugReport.done" = "Fertig";
 "bugReport.cancel" = "Abbrechen";
+
+/* Input Quality */
+"fallback.tooFarTitle" = "Zu weit entfernt";
+"fallback.tooFarMessage" = "Die Weinetiketten sind aus dieser Entfernung zu klein zum Lesen. Gehen Sie näher ans Regal und machen Sie das Foto erneut.";
+"fallback.retake" = "Foto wiederholen";
+"quality.lowResTitle" = "Dieses Foto ist möglicherweise schwer lesbar";
+"quality.lowResMessage" = "Bei niedriger Auflösung sind Weinetiketten schwer lesbar. Gehen Sie näher heran und sorgen Sie für gutes Licht.";
+"quality.scanAnyway" = "Trotzdem scannen";
+
+/* Processing Stages */
+"processing.findingBottles" = "Flaschen werden gesucht…";
+"processing.readingLabels" = "Etiketten werden gelesen…";
+"processing.rankingPicks" = "Empfehlungen werden sortiert…";
+"processing.stillWorking" = "Wir arbeiten noch — große Regale dauern etwas länger";

@@ -60,8 +60,9 @@ final class BackgroundScanManager: NSObject, ObservableObject {
     /// - Parameters:
     ///   - image: The wine shelf photo to scan.
     ///   - debug: Whether to request debug data from the API.
+    ///   - extraHeaders: Additional HTTP headers (e.g. X-Attest-* attestation).
     /// - Throws: `ScanError.invalidImage` if JPEG conversion fails.
-    func startScan(image: UIImage, debug: Bool) throws {
+    func startScan(image: UIImage, debug: Bool, extraHeaders: [String: String] = [:]) throws {
         guard let imageData = image.jpegData(compressionQuality: 0.8) else {
             throw ScanError.invalidImage
         }
@@ -94,6 +95,9 @@ final class BackgroundScanManager: NSObject, ObservableObject {
             "multipart/form-data; boundary=\(boundary)",
             forHTTPHeaderField: "Content-Type"
         )
+        for (key, value) in extraHeaders {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
 
         // Create background upload task
         let task = backgroundSession.uploadTask(with: request, fromFile: bodyFileURL)

@@ -43,10 +43,12 @@ enum ScanError: LocalizedError {
 class ScanAPIClient: ScanServiceProtocol {
     private let baseURL: URL
     private let session: URLSession
+    private let attestManager: AppAttestManager?
 
-    init(baseURL: URL, session: URLSession = .shared) {
+    init(baseURL: URL, session: URLSession = .shared, attestManager: AppAttestManager? = nil) {
         self.baseURL = baseURL
         self.session = session
+        self.attestManager = attestManager
     }
 
     func scan(image: UIImage, debug: Bool = false, compressionQuality: CGFloat = 0.8) async throws -> ScanResponse {
@@ -62,6 +64,16 @@ class ScanAPIClient: ScanServiceProtocol {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.timeoutInterval = Config.requestTimeout
+
+        // Merge device attestation headers ([:] whenever attestation is
+        // unavailable — never blocks or fails the scan)
+        var attestHeaders: [String: String] = [:]
+        if let attestManager = attestManager {
+            attestHeaders = await attestManager.prepareHeaders()
+            for (key, value) in attestHeaders {
+                request.setValue(value, forHTTPHeaderField: key)
+            }
+        }
 
         // Create multipart form data
         let boundary = UUID().uuidString
@@ -84,6 +96,11 @@ class ScanAPIClient: ScanServiceProtocol {
             }
 
             guard (200...299).contains(httpResponse.statusCode) else {
+                // Server rejected our assertion — clear registered state so
+                // the next scan re-registers the key
+                if httpResponse.statusCode == 403, !attestHeaders.isEmpty {
+                    attestManager?.clearRegistration()
+                }
                 throw ScanError.serverError(httpResponse.statusCode)
             }
 

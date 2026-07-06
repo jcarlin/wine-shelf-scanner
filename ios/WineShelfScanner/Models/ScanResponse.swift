@@ -22,12 +22,33 @@ struct ScanResponse: Codable, Equatable {
     let results: [WineResult]
     let fallbackList: [FallbackWine]
     let debug: DebugData?
+    /// Input-quality signal (optional — older servers omit it)
+    var scanQuality: ScanQuality? = nil
 
     enum CodingKeys: String, CodingKey {
         case imageId = "image_id"
         case results
         case fallbackList = "fallback_list"
         case debug
+        case scanQuality = "scan_quality"
+    }
+}
+
+/// Input-quality assessment from the backend.
+///
+/// `status == "low_resolution"` means the backend refused to spend on a
+/// photo whose bottles are too small to read.
+struct ScanQuality: Codable, Equatable {
+    let status: String
+    let medianBottlePx: Double?
+    let bottlesDetected: Int?
+
+    static let lowResolutionStatus = "low_resolution"
+
+    enum CodingKeys: String, CodingKey {
+        case status
+        case medianBottlePx = "median_bottle_px"
+        case bottlesDetected = "bottles_detected"
     }
 }
 
@@ -270,6 +291,12 @@ extension ScanResponse {
     /// Whether detection completely failed (fallback only)
     var isFullFailure: Bool {
         results.isEmpty && !fallbackList.isEmpty
+    }
+
+    /// Whether the scan failed because the photo was taken too far away
+    /// (no visible results and the backend flagged low resolution).
+    var isLowResolutionFailure: Bool {
+        visibleResults.isEmpty && scanQuality?.status == ScanQuality.lowResolutionStatus
     }
 }
 

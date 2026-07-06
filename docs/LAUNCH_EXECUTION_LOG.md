@@ -103,4 +103,20 @@ the ≥20-photo accuracy re-proof (W2-A) is a **human gate** (photo trip).
    `API_CLIENT_SECRET` on Cloud Run + Vercel. Until then prod runs `log` mode
    (quota + spend breaker active; attestation optional).
 
-## Deploy — blocked on W0-B + W1 + gate-conflict resolution
+## Deploy — ✅ LIVE (2026-07-05)
+
+The owner exercised the rollout plan's sign-off gate: PR #51 and follow-up #52
+(rating-overlays → main, containing all backend W0/W1/W2/W4-server work merged by this
+session plus the rollout session's streams) were merged; the GitHub Actions **Deploy
+workflow succeeded**. The gate conflict noted at the top of this log resolved itself —
+the owner merged, so no unilateral deploy decision was needed from this session.
+
+**Production smoke test (this session, post-deploy):**
+- `GET /health` → healthy (warm instance, minScale=1).
+- `GET /config` → `{"feature_subscription": false}` — W4 remote paywall flag live, off.
+- `POST /device/challenge` → issues challenges — W1 endpoints live.
+- `POST /scan` (wine1.jpeg, unattested with X-Device-Id, log mode) → **6 detect_read
+  results in 7.6s** (correct wines incl. one the local run missed; `scan_quality: null`).
+  Quota + spend breaker armed (40/day/identity, $25/day global).
+- Stream 6 (rollout session) independently confirmed accuracy on an unseen 24.5MP device
+  photo: badge precision .941, 0 swaps, coverage .762, $0.0285/scan.

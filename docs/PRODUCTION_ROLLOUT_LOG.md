@@ -152,7 +152,36 @@ deploying so production never exposes the unprotected endpoint. service.yaml not
 - To later flip `APP_ATTEST_ENFORCE=require`: webapp must call via a server-side proxy
   sending `API_CLIENT_SECRET`; browser-direct calls can't hold a secret.
 
-_(nothing reaches production before the owner gate)_
+**DEPLOYED ✅ (2026-07-06 UTC).** Owner approved at the gate; PR #51 merged
+(`0e0c...`→`main`, deploy run 28761140105 succeeded, health verified). Production
+service: **https://wine-scanner-api-82762985464.us-central1.run.app** (Cloud Run
+`wine-scanner-api`, project `wine-shelf-scanner`); webapp **https://wine-shelf-scanner.vercel.app**.
+
+- **Config verified on the live revision** (`gcloud run revisions describe`):
+  `PIPELINE_MODE=detect_read`, `DETECT_READ_MODEL=anthropic/claude-sonnet-5`,
+  `DETECT_READ_MIN_BOTTLE_PX=140`, `DEBUG_MODE=false`, `APP_ATTEST_ENFORCE=log`,
+  `DEVICE_DAILY_SCAN_LIMIT=40`, `DAILY_SPEND_LIMIT_USD=25`, minScale=1, maxScale=1.
+- **Live production scans (recorded, not estimated):** `POST /scan/stream` with wine1.jpeg —
+  first badges **7.3s**, done **11.9s** (earlier run: 10.5s/14.9s). Recorded cost for scan
+  `0f8ea2d2` from Cloud Logging `llm_usage` records: 3 Sonnet-5 calls $0.002832 + $0.005392 +
+  $0.001638 + Vision $0.0075 = **$0.017362**, reconciling exactly with the pipeline's own
+  logged total ("5 results … cost=$0.017362, detected=12 chunks=2 rescued=4").
+- **Production frontend verified** (Playwright on vercel.app): wine1.jpeg upload → 6 badges
+  all on correct bottles, single BEST PICK + ranks; enrichment calls (`/wines/{id}/reviews`)
+  visible in the Cloud Run request log. Screenshot
+  `backend/out/render_checks/rollout_prod_partial_wine1.png`.
+- **Post-deploy bug found & fixed (PR #52, deployed as revision 00078-tsd):** request-time
+  `ensure_schema` re-ran alembic's `fileConfig`, which disabled app loggers and reset root to
+  WARN — production scan logs and `llm_usage` cost records vanished after the first request
+  (the first prod scans left only alembic lines in Cloud Logging). Programmatic callers now
+  set `configure_logger=False` (failing-first test in `tests/test_db.py`). Cost records
+  confirmed flowing after the fix — that's where the $0.017362 evidence above comes from.
+- **Rollback:** `gcloud run services update-traffic wine-scanner-api --region us-central1
+  --to-revisions wine-scanner-api-00076-<id>=100` (pre-rollout flash_names revision), or
+  revert the merge commits on main. Webapp falls back to `POST /scan` automatically.
+- Known cosmetic follow-up: Vercel prod still sets `NEXT_PUBLIC_DEBUG_MODE=true` (wrench
+  toggle visible). Harmless — detect_read never returns debug payloads — but should be
+  flipped to false in the Vercel dashboard.
 
 ## Stream 6 — Confirmatory accuracy run ✅ (2026-07-05, subagent)
 

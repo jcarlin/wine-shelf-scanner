@@ -206,9 +206,14 @@ def verify_assertion(
         raise AttestationError("app ID mismatch")
 
     public_key = serialization.load_pem_public_key(public_key_pem.encode())
-    message = auth_data + hashlib.sha256(client_data).digest()
+    # The device signs the *nonce* as an ECDSA-SHA256 message (i.e. the
+    # signed digest is SHA256(nonce)), where
+    # nonce = SHA256(authenticatorData || clientDataHash).
+    # Verified against real Secure-Enclave assertions 2026-07-06 — treating
+    # the nonce itself as the digest (single hash) rejects genuine devices.
+    nonce = hashlib.sha256(auth_data + hashlib.sha256(client_data).digest()).digest()
     try:
-        public_key.verify(signature, message, ec.ECDSA(hashes.SHA256()))
+        public_key.verify(signature, nonce, ec.ECDSA(hashes.SHA256()))
     except InvalidSignature:
         raise AttestationError("bad assertion signature")
 

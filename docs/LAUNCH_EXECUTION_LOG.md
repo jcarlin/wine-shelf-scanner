@@ -37,7 +37,24 @@ the ≥20-photo accuracy re-proof (W2-A) is a **human gate** (photo trip).
 - Prod URL alive; measured **~80s cold start** on /health (quantifies the W3 warmup need).
 - Deploy itself: pending the deploy gate (see bottom).
 
-## W0-i — iOS compile + localizations — in progress (subagent, isolated worktree)
+## W0-i — iOS compile + localizations — ✅ DONE (merged as `1f0eb68`)
+
+- pbxproj wired: `CornerBracketsView.swift` (the compile blocker), all orphaned test suites
+  (ConfigTests, FeedbackServiceTests, ScanAPIClientTests, ScanViewModelTests, TestFixtures,
+  new LocalizationTests), 3 UI-test files, and a 10-locale `Localizable.strings` variant group
+  (10 lproj dirs exist on disk, not the 11 the plan assumed) + `knownRegions`.
+- `Debug.xcconfig` trailing-space bug fixed; API_BASE_URL now deterministic:
+  Debug → `http://localhost:8000`, Release → prod (verified in both built bundles).
+- `ScanViewModel.debugMode` now `#if DEBUG` gated — off in Release. Release build compiles.
+- **Verified:** `xcodebuild build` (Debug + Release) succeed; unit-test target
+  **115/115 passed** (first run surfaced 24 failures — mock-injection and flag-routing
+  issues in never-before-run tests — all fixed); localization proven via bundle contents +
+  a passing runtime NSLocalizedString test + simulator screenshot (no raw keys).
+- Machine caveats found: Xcode 26.5 needed `simctl runtime match set` to pair with the
+  installed iOS 26.0 runtime; **host disk nearly full (~434 MiB free)** → simulator boot
+  flakiness. UI-test suite has pre-existing logic failures (accessibility identifiers
+  propagate onto child buttons; tests assume idle state but offline-cache restores results) —
+  product-side work, reported not fixed.
 
 ## W1 — App Attest + quota + spend breaker — ✅ backend complete (commit `6f09eac`, branch `launch-w1`)
 

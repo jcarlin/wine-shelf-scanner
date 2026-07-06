@@ -49,6 +49,7 @@
 		APP0040 /* ScanProgressModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0033 /* ScanProgressModel.swift */; };
 		APP0041 /* WarmupService.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0034 /* WarmupService.swift */; };
 		APP0042 /* RemoteFlagsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0035 /* RemoteFlagsService.swift */; };
+		APP0043 /* AppAttestManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0036 /* AppAttestManager.swift */; };
 		TEST0001 /* ScanResponseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0001 /* ScanResponseTests.swift */; };
 		TEST0002 /* OverlayMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0002 /* OverlayMathTests.swift */; };
 		TEST0003 /* BackgroundScanManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0003 /* BackgroundScanManagerTests.swift */; };
@@ -67,6 +68,7 @@
 		TEST0016 /* RemoteFlagsServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0016 /* RemoteFlagsServiceTests.swift */; };
 		TEST0017 /* SubscriptionManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0017 /* SubscriptionManagerTests.swift */; };
 		TESTRES01 /* WineShelfScanner.storekit in Resources */ = {isa = PBXBuildFile; fileRef = STKC0001 /* WineShelfScanner.storekit */; };
+		TEST0018 /* AppAttestManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0018 /* AppAttestManagerTests.swift */; };
 		UITST001 /* AccessibilityIdentifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = UISRC001 /* AccessibilityIdentifiers.swift */; };
 		UITST002 /* BaseUITestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = UISRC002 /* BaseUITestCase.swift */; };
 		UITST003 /* HappyPathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = UISRC003 /* HappyPathTests.swift */; };
@@ -154,6 +156,7 @@
 		SRC0033 /* ScanProgressModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanProgressModel.swift; sourceTree = "<group>"; };
 		SRC0034 /* WarmupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WarmupService.swift; sourceTree = "<group>"; };
 		SRC0035 /* RemoteFlagsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteFlagsService.swift; sourceTree = "<group>"; };
+		SRC0036 /* AppAttestManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppAttestManager.swift; sourceTree = "<group>"; };
 		STKC0001 /* WineShelfScanner.storekit */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = WineShelfScanner.storekit; sourceTree = "<group>"; };
 		TST0001 /* ScanResponseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanResponseTests.swift; sourceTree = "<group>"; };
 		TST0002 /* OverlayMathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayMathTests.swift; sourceTree = "<group>"; };
@@ -172,6 +175,7 @@
 		TST0015 /* ScanCounterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanCounterTests.swift; sourceTree = "<group>"; };
 		TST0016 /* RemoteFlagsServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteFlagsServiceTests.swift; sourceTree = "<group>"; };
 		TST0017 /* SubscriptionManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionManagerTests.swift; sourceTree = "<group>"; };
+		TST0018 /* AppAttestManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppAttestManagerTests.swift; sourceTree = "<group>"; };
 		UISRC001 /* AccessibilityIdentifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityIdentifiers.swift; sourceTree = "<group>"; };
 		UISRC002 /* BaseUITestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseUITestCase.swift; sourceTree = "<group>"; };
 		UISRC003 /* HappyPathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HappyPathTests.swift; sourceTree = "<group>"; };
@@ -302,6 +306,7 @@
 				SRC0029 /* BugReportService.swift */,
 				SRC0034 /* WarmupService.swift */,
 				SRC0035 /* RemoteFlagsService.swift */,
+				SRC0036 /* AppAttestManager.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -343,6 +348,7 @@
 				TST0015 /* ScanCounterTests.swift */,
 				TST0016 /* RemoteFlagsServiceTests.swift */,
 				TST0017 /* SubscriptionManagerTests.swift */,
+				TST0018 /* AppAttestManagerTests.swift */,
 				GRP00015 /* Helpers */,
 			);
 			path = WineShelfScannerTests;
@@ -583,6 +589,7 @@
 				APP0040 /* ScanProgressModel.swift in Sources */,
 				APP0041 /* WarmupService.swift in Sources */,
 				APP0042 /* RemoteFlagsService.swift in Sources */,
+				APP0043 /* AppAttestManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -607,6 +614,7 @@
 				TEST0015 /* ScanCounterTests.swift in Sources */,
 				TEST0016 /* RemoteFlagsServiceTests.swift in Sources */,
 				TEST0017 /* SubscriptionManagerTests.swift in Sources */,
+				TEST0018 /* AppAttestManagerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

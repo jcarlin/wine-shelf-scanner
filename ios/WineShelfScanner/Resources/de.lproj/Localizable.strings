@@ -87,3 +87,9 @@
 "quality.lowResTitle" = "Dieses Foto ist möglicherweise schwer lesbar";
 "quality.lowResMessage" = "Bei niedriger Auflösung sind Weinetiketten schwer lesbar. Gehen Sie näher heran und sorgen Sie für gutes Licht.";
 "quality.scanAnyway" = "Trotzdem scannen";
+
+/* Processing Stages */
+"processing.findingBottles" = "Flaschen werden gesucht…";
+"processing.readingLabels" = "Etiketten werden gelesen…";
+"processing.rankingPicks" = "Empfehlungen werden sortiert…";
+"processing.stillWorking" = "Wir arbeiten noch — große Regale dauern etwas länger";

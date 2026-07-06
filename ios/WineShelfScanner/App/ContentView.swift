@@ -289,6 +289,8 @@ struct ContentView: View {
                 if newPhase == .active {
                     // Check for completed background scan when returning to foreground
                     viewModel.restoreBackgroundScanIfNeeded()
+                    // Warm the backend while the user picks a photo (hides cold start)
+                    WarmupService.shared.warmUp()
                 }
             }
         }
@@ -443,27 +445,44 @@ struct ProcessingView: View {
     ]
 
     @State private var currentTipIndex = 0
+    @State private var startDate = Date()
     let timer = Timer.publish(every: 3, on: .main, in: .common).autoconnect()
 
     var body: some View {
-        VStack(spacing: 16) {
-            ProgressView()
-                .scaleEffect(1.5)
-                .tint(.white)
-                .accessibilityIdentifier("processingSpinner")
+        // Staged, honest waiting: stage text follows what the backend is
+        // actually doing at this point in a scan (see ScanProgressModel).
+        TimelineView(.periodic(from: .now, by: 1)) { context in
+            let elapsed = context.date.timeIntervalSince(startDate)
 
-            Text(NSLocalizedString("processing.analyzing", comment: "Processing status"))
-                .font(.headline)
-                .foregroundColor(.white)
+            VStack(spacing: 16) {
+                ProgressView()
+                    .scaleEffect(1.5)
+                    .tint(.white)
+                    .accessibilityIdentifier("processingSpinner")
 
-            Text(tips[currentTipIndex])
-                .font(.subheadline)
-                .foregroundColor(.white.opacity(0.5))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
-                .id(currentTipIndex)
-                .transition(.opacity)
-                .animation(.easeInOut(duration: 0.5), value: currentTipIndex)
+                Text(ScanProgressModel.stage(forElapsed: elapsed).localizedText)
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .accessibilityIdentifier("processingStageLabel")
+
+                if ScanProgressModel.showsReassurance(forElapsed: elapsed) {
+                    Text(NSLocalizedString("processing.stillWorking", comment: "Reassurance for long scans"))
+                        .font(.footnote)
+                        .foregroundColor(.white.opacity(0.6))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
+                        .accessibilityIdentifier("processingReassuranceLabel")
+                }
+
+                Text(tips[currentTipIndex])
+                    .font(.subheadline)
+                    .foregroundColor(.white.opacity(0.5))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+                    .id(currentTipIndex)
+                    .transition(.opacity)
+                    .animation(.easeInOut(duration: 0.5), value: currentTipIndex)
+            }
         }
         .onReceive(timer) { _ in
             currentTipIndex = (currentTipIndex + 1) % tips.count

@@ -87,3 +87,9 @@
 "quality.lowResTitle" = "この写真は読み取りにくい可能性があります";
 "quality.lowResMessage" = "解像度が低い写真ではワインのラベルが読み取りにくくなります。近づいて明るい場所で撮影してください。";
 "quality.scanAnyway" = "このままスキャン";
+
+/* Processing Stages */
+"processing.findingBottles" = "ボトルを検出中…";
+"processing.readingLabels" = "ラベルを読み取り中…";
+"processing.rankingPicks" = "おすすめを順位付け中…";
+"processing.stillWorking" = "処理中です — 大きな棚は少し時間がかかります";

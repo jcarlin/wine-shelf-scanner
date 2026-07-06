@@ -87,3 +87,9 @@
 "quality.lowResTitle" = "Это фото может быть трудно распознать";
 "quality.lowResMessage" = "На фото с низким разрешением этикетки трудно распознать. Подойдите ближе и обеспечьте хорошее освещение.";
 "quality.scanAnyway" = "Всё равно сканировать";
+
+/* Processing Stages */
+"processing.findingBottles" = "Ищем бутылки…";
+"processing.readingLabels" = "Читаем этикетки…";
+"processing.rankingPicks" = "Ранжируем лучшие…";
+"processing.stillWorking" = "Ещё работаем — большие полки занимают чуть больше времени";

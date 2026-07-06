@@ -87,3 +87,9 @@
 "quality.lowResTitle" = "Esta foto puede ser difícil de leer";
 "quality.lowResMessage" = "Con fotos de baja resolución es difícil leer las etiquetas. Acércate más y busca buena iluminación para mejores resultados.";
 "quality.scanAnyway" = "Escanear de todos modos";
+
+/* Processing Stages */
+"processing.findingBottles" = "Buscando botellas…";
+"processing.readingLabels" = "Leyendo etiquetas…";
+"processing.rankingPicks" = "Clasificando selecciones…";
+"processing.stillWorking" = "Seguimos trabajando: los estantes grandes tardan un poco más";

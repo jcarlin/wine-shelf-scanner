@@ -46,6 +46,8 @@
 		APP0037 /* CornerBracketsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0031 /* CornerBracketsView.swift */; };
 		APP0038 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = VARGRP01 /* Localizable.strings */; };
 		APP0039 /* ImageQualityCheck.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0032 /* ImageQualityCheck.swift */; };
+		APP0040 /* ScanProgressModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0033 /* ScanProgressModel.swift */; };
+		APP0041 /* WarmupService.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0034 /* WarmupService.swift */; };
 		TEST0001 /* ScanResponseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0001 /* ScanResponseTests.swift */; };
 		TEST0002 /* OverlayMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0002 /* OverlayMathTests.swift */; };
 		TEST0003 /* BackgroundScanManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0003 /* BackgroundScanManagerTests.swift */; };
@@ -58,6 +60,8 @@
 		TEST0010 /* TestFixtures.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0010 /* TestFixtures.swift */; };
 		TEST0011 /* LocalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0011 /* LocalizationTests.swift */; };
 		TEST0012 /* ImageQualityCheckTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0012 /* ImageQualityCheckTests.swift */; };
+		TEST0013 /* ScanProgressModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0013 /* ScanProgressModelTests.swift */; };
+		TEST0014 /* WarmupServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0014 /* WarmupServiceTests.swift */; };
 		UITST001 /* AccessibilityIdentifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = UISRC001 /* AccessibilityIdentifiers.swift */; };
 		UITST002 /* BaseUITestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = UISRC002 /* BaseUITestCase.swift */; };
 		UITST003 /* HappyPathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = UISRC003 /* HappyPathTests.swift */; };
@@ -142,6 +146,8 @@
 		SRC0030 /* BugReportSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BugReportSheet.swift; sourceTree = "<group>"; };
 		SRC0031 /* CornerBracketsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CornerBracketsView.swift; sourceTree = "<group>"; };
 		SRC0032 /* ImageQualityCheck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageQualityCheck.swift; sourceTree = "<group>"; };
+		SRC0033 /* ScanProgressModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanProgressModel.swift; sourceTree = "<group>"; };
+		SRC0034 /* WarmupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WarmupService.swift; sourceTree = "<group>"; };
 		TST0001 /* ScanResponseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanResponseTests.swift; sourceTree = "<group>"; };
 		TST0002 /* OverlayMathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayMathTests.swift; sourceTree = "<group>"; };
 		TST0003 /* BackgroundScanManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundScanManagerTests.swift; sourceTree = "<group>"; };
@@ -154,6 +160,8 @@
 		TST0010 /* TestFixtures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestFixtures.swift; sourceTree = "<group>"; };
 		TST0011 /* LocalizationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationTests.swift; sourceTree = "<group>"; };
 		TST0012 /* ImageQualityCheckTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageQualityCheckTests.swift; sourceTree = "<group>"; };
+		TST0013 /* ScanProgressModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanProgressModelTests.swift; sourceTree = "<group>"; };
+		TST0014 /* WarmupServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WarmupServiceTests.swift; sourceTree = "<group>"; };
 		UISRC001 /* AccessibilityIdentifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityIdentifiers.swift; sourceTree = "<group>"; };
 		UISRC002 /* BaseUITestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseUITestCase.swift; sourceTree = "<group>"; };
 		UISRC003 /* HappyPathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HappyPathTests.swift; sourceTree = "<group>"; };
@@ -236,6 +244,7 @@
 				SRC0003 /* ScanResponse.swift */,
 				SRC0004 /* ScanState.swift */,
 				SRC0005 /* ScanViewModel.swift */,
+				SRC0033 /* ScanProgressModel.swift */,
 				SRC0028 /* BugReport.swift */,
 			);
 			path = Models;
@@ -280,6 +289,7 @@
 				SRC0025 /* BackgroundScanManager.swift */,
 				SRC0026 /* NetworkMonitor.swift */,
 				SRC0029 /* BugReportService.swift */,
+				SRC0034 /* WarmupService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -316,6 +326,8 @@
 				TST0009 /* ScanViewModelTests.swift */,
 				TST0011 /* LocalizationTests.swift */,
 				TST0012 /* ImageQualityCheckTests.swift */,
+				TST0013 /* ScanProgressModelTests.swift */,
+				TST0014 /* WarmupServiceTests.swift */,
 				GRP00015 /* Helpers */,
 			);
 			path = WineShelfScannerTests;
@@ -552,6 +564,8 @@
 				APP0036 /* BugReportSheet.swift in Sources */,
 				APP0037 /* CornerBracketsView.swift in Sources */,
 				APP0039 /* ImageQualityCheck.swift in Sources */,
+				APP0040 /* ScanProgressModel.swift in Sources */,
+				APP0041 /* WarmupService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -571,6 +585,8 @@
 				TEST0010 /* TestFixtures.swift in Sources */,
 				TEST0011 /* LocalizationTests.swift in Sources */,
 				TEST0012 /* ImageQualityCheckTests.swift in Sources */,
+				TEST0013 /* ScanProgressModelTests.swift in Sources */,
+				TEST0014 /* WarmupServiceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

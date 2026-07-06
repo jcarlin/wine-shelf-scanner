@@ -87,3 +87,9 @@
 "quality.lowResTitle" = "This photo may be hard to read";
 "quality.lowResMessage" = "Low-resolution photos make wine labels hard to read. Move closer with good lighting for best results.";
 "quality.scanAnyway" = "Scan Anyway";
+
+/* Processing Stages */
+"processing.findingBottles" = "Finding bottles…";
+"processing.readingLabels" = "Reading labels…";
+"processing.rankingPicks" = "Ranking picks…";
+"processing.stillWorking" = "Still working — large shelves take a little longer";

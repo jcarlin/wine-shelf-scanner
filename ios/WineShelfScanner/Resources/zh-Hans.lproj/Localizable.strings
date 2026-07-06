@@ -87,3 +87,9 @@
 "quality.lowResTitle" = "这张照片可能难以识别";
 "quality.lowResMessage" = "低分辨率照片难以识别酒标。请靠近一些并在光线充足的环境下拍摄。";
 "quality.scanAnyway" = "仍然扫描";
+
+/* Processing Stages */
+"processing.findingBottles" = "正在查找酒瓶…";
+"processing.readingLabels" = "正在识别酒标…";
+"processing.rankingPicks" = "正在排序推荐…";
+"processing.stillWorking" = "仍在处理中 — 大型酒架需要更长时间";

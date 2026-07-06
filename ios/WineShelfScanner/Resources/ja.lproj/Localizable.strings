@@ -79,3 +79,11 @@
 "bugReport.thanksImprove" = "改善にご協力いただきありがとうございます！";
 "bugReport.done" = "完了";
 "bugReport.cancel" = "キャンセル";
+
+/* Input Quality */
+"fallback.tooFarTitle" = "遠すぎます";
+"fallback.tooFarMessage" = "この距離ではワインのラベルが小さすぎて読み取れません。棚に近づいて撮り直してください。";
+"fallback.retake" = "撮り直す";
+"quality.lowResTitle" = "この写真は読み取りにくい可能性があります";
+"quality.lowResMessage" = "解像度が低い写真ではワインのラベルが読み取りにくくなります。近づいて明るい場所で撮影してください。";
+"quality.scanAnyway" = "このままスキャン";

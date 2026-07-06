@@ -79,3 +79,11 @@
 "bugReport.thanksImprove" = "Obrigado por nos ajudar a melhorar!";
 "bugReport.done" = "Concluído";
 "bugReport.cancel" = "Cancelar";
+
+/* Input Quality */
+"fallback.tooFarTitle" = "Muito longe";
+"fallback.tooFarMessage" = "Os rótulos dos vinhos são pequenos demais para serem lidos a esta distância. Aproxime-se da prateleira e tire a foto novamente.";
+"fallback.retake" = "Tirar foto novamente";
+"quality.lowResTitle" = "Esta foto pode ser difícil de ler";
+"quality.lowResMessage" = "Fotos de baixa resolução dificultam a leitura dos rótulos. Aproxime-se e procure boa iluminação para melhores resultados.";
+"quality.scanAnyway" = "Escanear mesmo assim";

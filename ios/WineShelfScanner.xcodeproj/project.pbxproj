@@ -45,6 +45,7 @@
 		APP0036 /* BugReportSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0030 /* BugReportSheet.swift */; };
 		APP0037 /* CornerBracketsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0031 /* CornerBracketsView.swift */; };
 		APP0038 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = VARGRP01 /* Localizable.strings */; };
+		APP0039 /* ImageQualityCheck.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC0032 /* ImageQualityCheck.swift */; };
 		TEST0001 /* ScanResponseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0001 /* ScanResponseTests.swift */; };
 		TEST0002 /* OverlayMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0002 /* OverlayMathTests.swift */; };
 		TEST0003 /* BackgroundScanManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0003 /* BackgroundScanManagerTests.swift */; };
@@ -56,6 +57,7 @@
 		TEST0009 /* ScanViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0009 /* ScanViewModelTests.swift */; };
 		TEST0010 /* TestFixtures.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0010 /* TestFixtures.swift */; };
 		TEST0011 /* LocalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0011 /* LocalizationTests.swift */; };
+		TEST0012 /* ImageQualityCheckTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TST0012 /* ImageQualityCheckTests.swift */; };
 		UITST001 /* AccessibilityIdentifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = UISRC001 /* AccessibilityIdentifiers.swift */; };
 		UITST002 /* BaseUITestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = UISRC002 /* BaseUITestCase.swift */; };
 		UITST003 /* HappyPathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = UISRC003 /* HappyPathTests.swift */; };
@@ -139,6 +141,7 @@
 		SRC0029 /* BugReportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BugReportService.swift; sourceTree = "<group>"; };
 		SRC0030 /* BugReportSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BugReportSheet.swift; sourceTree = "<group>"; };
 		SRC0031 /* CornerBracketsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CornerBracketsView.swift; sourceTree = "<group>"; };
+		SRC0032 /* ImageQualityCheck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageQualityCheck.swift; sourceTree = "<group>"; };
 		TST0001 /* ScanResponseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanResponseTests.swift; sourceTree = "<group>"; };
 		TST0002 /* OverlayMathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayMathTests.swift; sourceTree = "<group>"; };
 		TST0003 /* BackgroundScanManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundScanManagerTests.swift; sourceTree = "<group>"; };
@@ -150,6 +153,7 @@
 		TST0009 /* ScanViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanViewModelTests.swift; sourceTree = "<group>"; };
 		TST0010 /* TestFixtures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestFixtures.swift; sourceTree = "<group>"; };
 		TST0011 /* LocalizationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationTests.swift; sourceTree = "<group>"; };
+		TST0012 /* ImageQualityCheckTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageQualityCheckTests.swift; sourceTree = "<group>"; };
 		UISRC001 /* AccessibilityIdentifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityIdentifiers.swift; sourceTree = "<group>"; };
 		UISRC002 /* BaseUITestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseUITestCase.swift; sourceTree = "<group>"; };
 		UISRC003 /* HappyPathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HappyPathTests.swift; sourceTree = "<group>"; };
@@ -284,6 +288,7 @@
 			isa = PBXGroup;
 			children = (
 				SRC0008 /* OverlayMath.swift */,
+				SRC0032 /* ImageQualityCheck.swift */,
 			);
 			path = Utils;
 			sourceTree = "<group>";
@@ -310,6 +315,7 @@
 				TST0008 /* ScanAPIClientTests.swift */,
 				TST0009 /* ScanViewModelTests.swift */,
 				TST0011 /* LocalizationTests.swift */,
+				TST0012 /* ImageQualityCheckTests.swift */,
 				GRP00015 /* Helpers */,
 			);
 			path = WineShelfScannerTests;
@@ -545,6 +551,7 @@
 				APP0035 /* BugReportService.swift in Sources */,
 				APP0036 /* BugReportSheet.swift in Sources */,
 				APP0037 /* CornerBracketsView.swift in Sources */,
+				APP0039 /* ImageQualityCheck.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -563,6 +570,7 @@
 				TEST0009 /* ScanViewModelTests.swift in Sources */,
 				TEST0010 /* TestFixtures.swift in Sources */,
 				TEST0011 /* LocalizationTests.swift in Sources */,
+				TEST0012 /* ImageQualityCheckTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

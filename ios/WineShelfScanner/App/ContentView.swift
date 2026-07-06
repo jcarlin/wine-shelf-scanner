@@ -11,6 +11,7 @@ struct ContentView: View {
     @State private var showAbout = false
     @State private var showCachedScans = false
     @State private var showPaywall = false
+    @State private var lowResPendingImage: UIImage?
     @Environment(\.scenePhase) private var scenePhase
 
     /// Whether we're running in UI test mode (bypass photo picker)
@@ -250,9 +251,35 @@ struct ContentView: View {
                 PaywallView(subscriptionManager: subscriptionManager)
             }
             .onChange(of: capturedImage) { newImage in
-                if let image = newImage {
+                guard let image = newImage else { return }
+                // Pre-upload heuristic: warn (non-blocking) when the photo is
+                // likely too small for labels to be readable. Skipped in UI
+                // test mode (mock images are intentionally tiny).
+                if !isUITesting && ImageQualityCheck.isBelowRecommendedResolution(image) {
+                    lowResPendingImage = image
+                } else {
                     viewModel.performScan(with: image)
                 }
+            }
+            .alert(
+                NSLocalizedString("quality.lowResTitle", comment: "Low resolution warning title"),
+                isPresented: Binding(
+                    get: { lowResPendingImage != nil },
+                    set: { if !$0 { lowResPendingImage = nil } }
+                )
+            ) {
+                Button(NSLocalizedString("quality.scanAnyway", comment: "Scan anyway button")) {
+                    if let image = lowResPendingImage {
+                        viewModel.performScan(with: image)
+                    }
+                    lowResPendingImage = nil
+                }
+                Button(NSLocalizedString("fallback.retake", comment: "Retake photo button"), role: .cancel) {
+                    lowResPendingImage = nil
+                    capturedImage = nil
+                }
+            } message: {
+                Text(NSLocalizedString("quality.lowResMessage", comment: "Low resolution warning message"))
             }
             .onAppear {
                 // Restore completed background scan from previous session

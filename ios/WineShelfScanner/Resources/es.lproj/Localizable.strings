@@ -79,3 +79,11 @@
 "bugReport.thanksImprove" = "¡Gracias por ayudarnos a mejorar!";
 "bugReport.done" = "Listo";
 "bugReport.cancel" = "Cancelar";
+
+/* Input Quality */
+"fallback.tooFarTitle" = "Demasiado lejos";
+"fallback.tooFarMessage" = "Las etiquetas de los vinos son demasiado pequeñas para leerse a esta distancia. Acércate al estante y vuelve a tomar la foto.";
+"fallback.retake" = "Volver a tomar la foto";
+"quality.lowResTitle" = "Esta foto puede ser difícil de leer";
+"quality.lowResMessage" = "Con fotos de baja resolución es difícil leer las etiquetas. Acércate más y busca buena iluminación para mejores resultados.";
+"quality.scanAnyway" = "Escanear de todos modos";

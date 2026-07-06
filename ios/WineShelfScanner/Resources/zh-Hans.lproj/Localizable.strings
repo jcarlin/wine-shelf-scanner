@@ -79,3 +79,11 @@
 "bugReport.thanksImprove" = "感谢您帮助我们改进！";
 "bugReport.done" = "完成";
 "bugReport.cancel" = "取消";
+
+/* Input Quality */
+"fallback.tooFarTitle" = "距离太远";
+"fallback.tooFarMessage" = "在这个距离下酒标太小，无法识别。请靠近酒架后重新拍照。";
+"fallback.retake" = "重新拍照";
+"quality.lowResTitle" = "这张照片可能难以识别";
+"quality.lowResMessage" = "低分辨率照片难以识别酒标。请靠近一些并在光线充足的环境下拍摄。";
+"quality.scanAnyway" = "仍然扫描";

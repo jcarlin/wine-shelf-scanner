@@ -79,3 +79,17 @@
 "bugReport.thanksImprove" = "Grazie per aiutarci a migliorare!";
 "bugReport.done" = "Fine";
 "bugReport.cancel" = "Annulla";
+
+/* Input Quality */
+"fallback.tooFarTitle" = "Troppo lontano";
+"fallback.tooFarMessage" = "Le etichette dei vini sono troppo piccole per essere lette a questa distanza. Avvicinati allo scaffale e scatta di nuovo la foto.";
+"fallback.retake" = "Scatta di nuovo";
+"quality.lowResTitle" = "Questa foto potrebbe essere difficile da leggere";
+"quality.lowResMessage" = "Con foto a bassa risoluzione le etichette sono difficili da leggere. Avvicinati e cerca una buona illuminazione.";
+"quality.scanAnyway" = "Scansiona comunque";
+
+/* Processing Stages */
+"processing.findingBottles" = "Ricerca delle bottiglie…";
+"processing.readingLabels" = "Lettura delle etichette…";
+"processing.rankingPicks" = "Classifica delle selezioni…";
+"processing.stillWorking" = "Ci stiamo ancora lavorando — gli scaffali grandi richiedono un po' più di tempo";

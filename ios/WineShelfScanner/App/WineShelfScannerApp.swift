@@ -10,6 +10,9 @@ struct WineShelfScannerApp: App {
         WindowGroup {
             ContentView()
                 .onAppear {
+                    // Fetch server-driven feature flags (paywall activation)
+                    RemoteFlagsService.shared.refreshOnLaunch()
+
                     // Configure notification service on launch
                     NotificationService.shared.configure()
 

@@ -31,8 +31,8 @@ class ScanViewModel: ObservableObject {
         if let scanService = scanService {
             self.scanService = scanService
         } else {
-            // Use centralized Config for API URL
-            self.scanService = ScanAPIClient(baseURL: Config.apiBaseURL)
+            // Use centralized Config for API URL; attach device attestation
+            self.scanService = ScanAPIClient(baseURL: Config.apiBaseURL, attestManager: .shared)
         }
 
         self.networkMonitor = networkMonitor ?? NetworkMonitor.shared
@@ -142,10 +142,14 @@ class ScanViewModel: ObservableObject {
     private func performBackgroundScan(with image: UIImage) {
         state = .processing
 
-        do {
-            try backgroundManager.startScan(image: image, debug: debugMode)
-        } catch {
-            state = .error(error.localizedDescription)
+        Task {
+            // [:] whenever attestation is unavailable — never blocks the scan
+            let attestHeaders = await AppAttestManager.shared.prepareHeaders()
+            do {
+                try backgroundManager.startScan(image: image, debug: debugMode, extraHeaders: attestHeaders)
+            } catch {
+                state = .error(error.localizedDescription)
+            }
         }
     }
 

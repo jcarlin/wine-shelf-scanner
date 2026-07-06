@@ -75,11 +75,30 @@ the ≥20-photo accuracy re-proof (W2-A) is a **human gate** (photo trip).
 - W4 server piece also on `launch-w1` (commit `5e8f2be`): `GET /config` returns
   `feature_subscription` (env-flippable on Cloud Run — paywall activates without resubmission).
 
-## W2-i — iOS pre-upload quality check — pending
+## W2-i — iOS input-quality UX — ✅ DONE (merged `19b129d`)
 
-## W3 — Staged waiting UX + warmup — pending
+`ScanQuality` parsing (additive, older-server safe); guided-retake "Too far away" screen
+replaces the fallback path when the backend gate fires (same copy as the webapp, 10 locales);
+non-blocking <2MP pre-upload warning with "Scan Anyway". 12 new tests.
 
-## W4 — Monthly reset, .storekit, remote paywall flag — pending
+## W3 — Staged waiting UX + warmup — ✅ DONE (merged `19b129d`)
+
+Pure `ScanProgressModel.stage(forElapsed:)` — "Finding bottles…" → "Reading labels…" →
+"Ranking picks…" + reassurance line at 25s, TimelineView-driven, 10 locales.
+`WarmupService.ping()` fires GET /health on scene-active (hides the Cloud Run wake-up).
+10 new tests. (Staged-UI screenshot not capturable: mock scans resolve in 0.1s and UI
+automation is broken on this host — the pure-function tests are the verification.)
+
+## W4 — Monthly reset, .storekit, remote paywall flag — ✅ DONE (merged `19b129d`)
+
+ScanCounter is now per-calendar-month (period key + injectable clock; 9 tests incl. month/yr
+boundaries). `WineShelfScanner.storekit` with the two products, wired into the scheme —
+**verified with a real SKTestSession**: SubscriptionManager loads both products with correct
+names/prices. `RemoteFlagsService` fetches GET /config on launch and overrides
+`feature_subscription`; failures leave the persisted state untouched. 6 tests.
+iOS `AppAttestManager` (W1 client): registers + asserts per scan, all failures degrade to an
+unattested scan (server admits in log mode); scan-403 clears registration for self-heal;
+11 tests. **All 164 unit tests pass — independently re-run by the session lead.**
 
 ## Human gates (exact asks)
 

@@ -133,8 +133,10 @@ def make_assertion(device_key, client_data: bytes, counter: int,
                    app_id: str = APP_ID) -> bytes:
     rp_hash = hashlib.sha256(app_id.encode()).digest()
     auth_data = rp_hash + b"\x00" + counter.to_bytes(4, "big")
-    message = auth_data + hashlib.sha256(client_data).digest()
-    signature = device_key.sign(message, ec.ECDSA(hashes.SHA256()))
+    # Real devices sign the nonce as an ECDSA-SHA256 *message* (double hash),
+    # not as a prehashed digest — confirmed on hardware 2026-07-06.
+    nonce = hashlib.sha256(auth_data + hashlib.sha256(client_data).digest()).digest()
+    signature = device_key.sign(nonce, ec.ECDSA(hashes.SHA256()))
     return cbor2.dumps({"signature": signature, "authenticatorData": auth_data})
 
 

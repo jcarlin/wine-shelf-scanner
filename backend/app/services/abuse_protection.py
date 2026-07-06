@@ -241,10 +241,14 @@ def _verify_attest_headers(request: Request) -> str:
     challenge_b64 = request.headers["x-attest-challenge"]
 
     if not get_challenge_store().consume(challenge_b64):
+        logger.warning(
+            f"attest 403: unknown/expired challenge (key_id={key_id_b64[:12]}…)"
+        )
         raise HTTPException(status_code=403, detail="Unknown or expired challenge")
 
     device = get_device_registry().get(key_id_b64)
     if device is None:
+        logger.warning(f"attest 403: unregistered key_id={key_id_b64[:12]}…")
         raise HTTPException(
             status_code=403, detail="Unknown device key; register via /device/register"
         )
@@ -256,7 +260,11 @@ def _verify_attest_headers(request: Request) -> str:
             app_id=Config.app_attest_app_id(),
             last_counter=device.counter,
         )
-    except (app_attest.AttestationError, ValueError):
+    except (app_attest.AttestationError, ValueError) as e:
+        logger.warning(
+            f"attest 403: assertion failed for key_id={key_id_b64[:12]}… "
+            f"(stored_counter={device.counter}): {e}"
+        )
         raise HTTPException(status_code=403, detail="Assertion verification failed")
 
     get_device_registry().update_counter(key_id_b64, new_counter)

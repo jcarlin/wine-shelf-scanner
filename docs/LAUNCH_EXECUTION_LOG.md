@@ -102,16 +102,18 @@ unattested scan (server admits in log mode); scan-403 clears registration for se
 
 ## Human gates (exact asks)
 
-1. **Apple Developer Program / Team ID** — needed for: `DEVELOPMENT_TEAM` in the Xcode project
-   (signing, W5), `APPLE_TEAM_ID` env on Cloud Run (App Attest verification; `/device/register`
-   returns 503 until set), and real-device App Attest verification (the crypto is fully
-   unit-tested against a synthetic CA; one TestFlight/device run must confirm Apple's real
-   chain verifies — then flip nothing, it's already wired).
-2. **App Store Connect products** — create ONE auto-renewable subscription group ("Pro") with:
-   `com.wineshelfscanner.monthly` — $4.99/month, display name "Monthly";
-   `com.wineshelfscanner.annual` — $29.99/year, display name "Annual" ("SAVE 50%" framing is
-   client-side). Submit them **with** the v1 binary. The local `.storekit` file mirrors these
-   for pre-ASC testing.
+1. **Apple Developer Program / Team ID** — ✅ MOSTLY CLOSED (2026-07-05 evening): owner enrolled,
+   Team ID `3STS9R446B` wired into all 6 Xcode config blocks + App Attest entitlement
+   (production) + `APPLE_TEAM_ID`/`APP_ATTEST_ALLOW_DEV=true` deployed to Cloud Run (PR #55,
+   deploy verified: `/device/register` now answers 403 unknown-challenge, not 503
+   not-configured). **Remaining:** sign into Xcode with the Apple ID, run on a physical
+   iPhone once to confirm Apple's real attestation chain verifies; flip
+   `APP_ATTEST_ALLOW_DEV=false` at public launch.
+2. **App Store Connect products** — ✅ CREATED by owner (2026-07-05 evening): app record
+   ("Wine Shelf Scanner", `com.wineshelfscanner.app`, iOS only) + subscription group "Pro"
+   with `com.wineshelfscanner.monthly` $4.99/mo and `.annual` $29.99/yr, matching the
+   hardcoded product IDs. **Remaining:** review screenshot per subscription (paywall
+   screenshot, can be produced from the simulator) and submitting them with the v1 binary.
 3. **Liquor-store photo trip (W2-A)** — ≥20 device-quality shelf photos (24MP iPhone,
    close range) from real stores, for the held-out accuracy re-proof
    (gate: badge precision ≥ 90%, swap ≤ 2%, coverage ≥ 60%). The eval harness is ready;

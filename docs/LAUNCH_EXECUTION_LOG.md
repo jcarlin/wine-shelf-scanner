@@ -100,6 +100,24 @@ iOS `AppAttestManager` (W1 client): registers + asserts per scan, all failures d
 unattested scan (server admits in log mode); scan-403 clears registration for self-heal;
 11 tests. **All 164 unit tests pass — independently re-run by the session lead.**
 
+## Real-device verification — ✅ COMPLETE (2026-07-06)
+
+App built, signed (Team 3STS9R446B), and installed on a physical iPhone 16 Pro via devicectl.
+Two real bugs found and fixed by the first on-device scans:
+1. **Assertion signature construction** (`app_attest.py`): real Secure-Enclave assertions sign
+   the nonce as an ECDSA-SHA256 *message* (double hash); the verifier treated the nonce as the
+   prehashed digest. Synthetic tests had mirrored the bug — fixture corrected to hardware
+   behavior. Fixed + deployed (PR #57).
+2. **Attest-wedge resilience** (iOS): backend redeploys wipe the ephemeral device registry;
+   the app kept believing it was registered and every scan 403'd forever (background path
+   never cleared state). Now: attested 403 → clear registration → ONE unattested retry
+   (foreground inline; background via full resubmission without headers). 173/173 unit tests.
+Proven live end-to-end (Cloud Run logs, 2026-07-06 18:17 UTC): /config fetch → attestation
+→ registration 204 → **attested /scan 200 with verified assertion** → input-quality gate
+fired correctly on a too-distant photo (5 bottles, median 102px < 140 floor, $0.0075
+detection-only cost, 2.1s) → localized guided-retake screen on device.
+**W1 is proven on real hardware. All W0–W4 engineering is closed.**
+
 ## Human gates (exact asks)
 
 1. **Apple Developer Program / Team ID** — ✅ MOSTLY CLOSED (2026-07-05 evening): owner enrolled,

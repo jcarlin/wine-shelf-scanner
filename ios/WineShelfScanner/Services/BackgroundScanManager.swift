@@ -102,12 +102,16 @@ final class BackgroundScanManager: NSObject, ObservableObject {
         // Create background upload task
         let task = backgroundSession.uploadTask(with: request, fromFile: bodyFileURL)
 
-        // Persist pending scan context
+        // Persist pending scan context (incl. what's needed to resubmit
+        // unattested if the server rejects our attestation)
         let pendingScan = PendingScan(
             taskIdentifier: task.taskIdentifier,
             imageFilePath: imageFileURL.path,
             bodyFilePath: bodyFileURL.path,
-            startedAt: Date()
+            startedAt: Date(),
+            attested: !extraHeaders.isEmpty,
+            requestURL: request.url?.absoluteString,
+            contentType: "multipart/form-data; boundary=\(boundary)"
         )
         pendingScans[task.taskIdentifier] = pendingScan
         savePendingScans()
@@ -184,6 +188,21 @@ extension BackgroundScanManager: URLSessionDataDelegate {
               let httpResponse = task.response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode) else {
             let statusCode = (task.response as? HTTPURLResponse)?.statusCode ?? -1
+
+            // Attest rejection (e.g. the server's device registry was wiped
+            // by a redeploy): attestation must never cost the user a scan.
+            // Clear the registered state and resubmit this upload once
+            // WITHOUT attest headers (the retry entry is marked unattested,
+            // so a second 403 surfaces normally — no loop).
+            if Self.shouldRetryUnattested(statusCode: statusCode, pending: pending) {
+                AppAttestManager.shared.clearRegistration()
+                if resubmitUnattested(from: pending) {
+                    return // recovery upload in flight; don't surface failure
+                }
+                // Resubmission impossible (context/body missing) — state is
+                // cleared, so the user's manual retry goes out unattested.
+            }
+
             handleScanFailure(
                 pending: pending,
                 error: ScanError.serverError(statusCode)
@@ -233,6 +252,69 @@ extension BackgroundScanManager: URLSessionDataDelegate {
             self?.systemCompletionHandler?()
             self?.systemCompletionHandler = nil
         }
+    }
+}
+
+// MARK: - Attested 403 Recovery
+
+extension BackgroundScanManager {
+
+    /// Whether a failed upload is an attest rejection that should be
+    /// resubmitted without attestation. Only attested uploads qualify —
+    /// the resubmitted entry is marked unattested, so at most one retry
+    /// happens per scan attempt.
+    static func shouldRetryUnattested(statusCode: Int, pending: PendingScan) -> Bool {
+        statusCode == 403 && pending.attested == true
+    }
+
+    /// Build the unattested resubmission for a rejected attested upload:
+    /// same URL and multipart body (copied to a fresh temp file, since the
+    /// completion handler deletes the original), NO X-Attest-* headers.
+    /// Returns nil when the persisted context or body file is missing.
+    func makeUnattestedResubmission(from pending: PendingScan) -> (request: URLRequest, bodyFileURL: URL)? {
+        guard let urlString = pending.requestURL,
+              let url = URL(string: urlString),
+              let contentType = pending.contentType,
+              FileManager.default.fileExists(atPath: pending.bodyFilePath) else {
+            return nil
+        }
+
+        let newBodyURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("scan_upload_\(UUID().uuidString).tmp")
+        do {
+            try FileManager.default.copyItem(atPath: pending.bodyFilePath, toPath: newBodyURL.path)
+        } catch {
+            return nil
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue(contentType, forHTTPHeaderField: "Content-Type")
+        return (request, newBodyURL)
+    }
+
+    /// Start the unattested resubmission upload. Returns whether it started.
+    @discardableResult
+    func resubmitUnattested(from pending: PendingScan) -> Bool {
+        guard let resubmission = makeUnattestedResubmission(from: pending) else {
+            return false
+        }
+
+        let task = backgroundSession.uploadTask(with: resubmission.request, fromFile: resubmission.bodyFileURL)
+        let retryScan = PendingScan(
+            taskIdentifier: task.taskIdentifier,
+            imageFilePath: pending.imageFilePath,
+            bodyFilePath: resubmission.bodyFileURL.path,
+            startedAt: Date(),
+            attested: false,
+            requestURL: pending.requestURL,
+            contentType: pending.contentType
+        )
+        pendingScans[task.taskIdentifier] = retryScan
+        savePendingScans()
+        isScanning = true
+        task.resume()
+        return true
     }
 }
 
@@ -365,6 +447,13 @@ struct PendingScan: Codable {
     let imageFilePath: String
     let bodyFilePath: String
     let startedAt: Date
+    /// Whether X-Attest-* headers were attached (nil in legacy entries).
+    var attested: Bool? = nil
+    /// Request URL, persisted so a rejected attested upload can be
+    /// resubmitted unattested (nil in legacy entries).
+    var requestURL: String? = nil
+    /// Content-Type (with multipart boundary) for resubmission.
+    var contentType: String? = nil
 }
 
 /// Result from a completed background scan, persisted to disk so it

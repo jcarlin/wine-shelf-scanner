@@ -56,6 +56,26 @@ class ScanAPIClient: ScanServiceProtocol {
             throw ScanError.invalidImage
         }
 
+        // Merge device attestation headers ([:] whenever attestation is
+        // unavailable — never blocks or fails the scan)
+        var attestHeaders: [String: String] = [:]
+        if let attestManager = attestManager {
+            attestHeaders = await attestManager.prepareHeaders()
+        }
+
+        do {
+            return try await performScan(imageData: imageData, debug: debug, attestHeaders: attestHeaders)
+        } catch ScanError.serverError(403) where !attestHeaders.isEmpty {
+            // The server rejected our assertion (e.g. its device registry was
+            // wiped by a redeploy). Attestation must never cost the user a
+            // scan: clear the registered state so a later scan re-registers,
+            // and retry this scan exactly once WITHOUT attest headers.
+            attestManager?.clearRegistration()
+            return try await performScan(imageData: imageData, debug: debug, attestHeaders: [:])
+        }
+    }
+
+    private func performScan(imageData: Data, debug: Bool, attestHeaders: [String: String]) async throws -> ScanResponse {
         var urlComponents = URLComponents(url: baseURL.appendingPathComponent("scan"), resolvingAgainstBaseURL: true)!
         if debug {
             urlComponents.queryItems = [URLQueryItem(name: "debug", value: "true")]
@@ -65,14 +85,8 @@ class ScanAPIClient: ScanServiceProtocol {
         request.httpMethod = "POST"
         request.timeoutInterval = Config.requestTimeout
 
-        // Merge device attestation headers ([:] whenever attestation is
-        // unavailable — never blocks or fails the scan)
-        var attestHeaders: [String: String] = [:]
-        if let attestManager = attestManager {
-            attestHeaders = await attestManager.prepareHeaders()
-            for (key, value) in attestHeaders {
-                request.setValue(value, forHTTPHeaderField: key)
-            }
+        for (key, value) in attestHeaders {
+            request.setValue(value, forHTTPHeaderField: key)
         }
 
         // Create multipart form data
@@ -96,11 +110,6 @@ class ScanAPIClient: ScanServiceProtocol {
             }
 
             guard (200...299).contains(httpResponse.statusCode) else {
-                // Server rejected our assertion — clear registered state so
-                // the next scan re-registers the key
-                if httpResponse.statusCode == 403, !attestHeaders.isEmpty {
-                    attestManager?.clearRegistration()
-                }
                 throw ScanError.serverError(httpResponse.statusCode)
             }
 

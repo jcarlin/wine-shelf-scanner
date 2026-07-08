@@ -39,6 +39,12 @@ export function ResultsView({ response, imageUri, onReset, scanning = false }: R
   const [showBugReport, setShowBugReport] = useState(false);
   const { shelfRanking, share: shareEnabled, bugReport: bugReportEnabled } = useFeatureFlags();
 
+  // Derive selectedWine from current results — stays in sync when response updates (e.g. SSE phase2)
+  const selectedWine = useMemo(() => {
+    if (!selectedWineName) return null;
+    return response.results.find((w) => w.wine_name === selectedWineName) ?? null;
+  }, [selectedWineName, response.results]);
+
   // Prefetch reviews for all DB-matched wines as soon as results arrive
   const wineReviews = useWineReviews(response.results);
 
